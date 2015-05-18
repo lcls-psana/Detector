@@ -1,0 +1,18 @@
+#--------------------------------------------------------------------------
+# File and Version Information:
+#  $Id$
+#
+# Description:
+#  ChangeLog file for package Detector
+#------------------------------------------------------------------------
+
+Package author: Mikhail S. Dubrovin
+
+Please describe any modifications that you made to the package in the
+reverse time order.
+
+Tag: V00-00-01
+2015-05-18 Mikhail S. Dubrovin
+- Package pytopsana was re-named to Detector
+	
+#------------------------------
