@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
 import sys
-from psana import *
+import psana
 import Detector
 
 # psana -m EventKeys -n 5 exp=amob5114:run=16
 # psana -m EventKeys -n 5 exp=xcsi0112:run=15
 
-ds  = DataSource('exp=xcsi0112:run=15')
+ds  = psana.DataSource('exp=xcsi0112:run=15')
 evt = ds.events().next()
 env = ds.env()
 
-src = Source('DetInfo(XcsBeamline.0:Princeton.0)')
+src = psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 
 det = Detector.DetectorAccess(src,0) # , 0xffff)
 

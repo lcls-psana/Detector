@@ -25,12 +25,12 @@ __version__ = "$Revision$"
 ##-----------------------------
 
 import sys
-from psana import *
+import psana
 import Detector
 
 ##-----------------------------
 
-class DetPyAccess :
+class PyDetector :
     """Brief description of a class.
 
     Full description of this class.
@@ -46,6 +46,8 @@ class DetPyAccess :
         @param source - data source, ex: psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
         @param pbits  - print control bit-word
         """
+
+        #print 'In c-tor DetPyAccess'
 
         self.source = source
         self.pbits = pbits
@@ -92,13 +94,18 @@ class DetPyAccess :
 
 ##-----------------------------
 
+    def inst(self, env) :
+        return self.da.inst(env)
+
+##-----------------------------
+
     def print_config(self, evt, env) :
         self.da.print_config(evt,env)
 
 ##-----------------------------
 
     def set_print_bits(self, pbits) :
-        self.da.setPrintBits(pbits)
+        self.da.set_print_bits(pbits)
 
 ##-----------------------------
 
@@ -109,8 +116,7 @@ class DetPyAccess :
 
 if __name__ == "__main__" :
 
-    #ds = psana.DataSource('exp=cxif5315:run=169')
-    ds = DataSource('exp=cxif5315:run=169')
+    ds = psana.DataSource('exp=cxif5315:run=169')
 
     env = ds.env()
     cls = env.calibStore()
@@ -119,14 +125,14 @@ if __name__ == "__main__" :
 
     for key in evt.keys() : print key
 
+    src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
     #src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-    src = Source('DetInfo(CxiDs2.0:Cspad.0)')
 
-    det = DetPyAccess(src) #, pbits=0xffff)
+    det = PyDetector(src)
 
-    nda = det.set_print_bits(255)
+    det.set_print_bits(255)
 
-    nda = det.pedestals(env,env)
+    nda = det.pedestals(evt,env)
     print '\nnda:\n', nda
     print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
 
@@ -138,6 +144,6 @@ if __name__ == "__main__" :
     #q0_data = q0.data()
     #print 'q0_data.shape: ', q0_data.shape
 
-    sys.exit ( "Module is not supposed to be run as main module" )
+    sys.exit ('Self test is done')
 
 ##-----------------------------

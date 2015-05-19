@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import sys
-from psana import *
+import psana
 import Detector
 
 # psana -m EventKeys -n 5 exp=meca1113:run=376
 
-ds  = DataSource('exp=meca1113:run=376')
+ds  = psana.DataSource('exp=meca1113:run=376')
 evt = ds.events().next()
 env = ds.env()
 
-src = Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
+src = psana.Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
 
 det = Detector.DetectorAccess(src, 0) # , 0xffff)
 

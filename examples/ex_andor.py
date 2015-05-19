@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import sys
-from psana import *
+import psana
 import Detector
 
 # psana -m EventKeys -n 5 exp=mecb3114:run=17
 # psana -m EventKeys -n 5 exp=sxrg3715:run=46
 
-ds, src = DataSource('exp=sxrg3715:run=46'), Source('DetInfo(SxrEndstation.0:Andor.2)')
+ds, src = psana.DataSource('exp=sxrg3715:run=46'), psana.Source('DetInfo(SxrEndstation.0:Andor.2)')
 #ds, src  = DataSource('exp=mecb3114:run=17'), Source('DetInfo(MecTargetChamber.0:Andor.1)')
 evt = ds.events().next()
 env = ds.env()

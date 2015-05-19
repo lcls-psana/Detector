@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import sys
-from psana import *
+import psana
 import Detector
 
 # psana -m EventKeys -n 5 exp=sxrf9414:run=72
 
-ds  = DataSource('exp=sxrf9414:run=72')
+ds  = psana.DataSource('exp=sxrf9414:run=72')
 evt = ds.events().next()
 env = ds.env()
 
-src = Source('DetInfo(SxrEndstation.0:Fccd960.0)')
+src = psana.Source('DetInfo(SxrEndstation.0:Fccd960.0)')
 #src = Source('Camp.0:pnCCD.1')
 
 det = Detector.DetectorAccess(src,0) # , 0xffff)

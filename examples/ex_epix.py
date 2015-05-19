@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import sys
-from psana import *
+import psana
 import Detector
 
 # psana -m EventKeys -n 5 exp=xppi0614:run=74
 
-ds  = DataSource('exp=xppi0614:run=74')
+ds  = psana.DataSource('exp=xppi0614:run=74')
 evt = ds.events().next()
 env = ds.env()
 
-src = Source('DetInfo(NoDetector.0:Epix100a.0)')
+src = psana.Source('DetInfo(NoDetector.0:Epix100a.0)')
 
 det = Detector.DetectorAccess(src,0) # , 0xffff)
 

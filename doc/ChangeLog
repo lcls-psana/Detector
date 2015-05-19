@@ -11,8 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2015-05-19 Mikhail S. Dubrovin
+- Fixed problems with imports.
+	
 Tag: V00-00-01
 2015-05-18 Mikhail S. Dubrovin
-- Package pytopsana was re-named to Detector
+- Package pytopsana was re-named to Detector (PSAS-139)
 	
 #------------------------------

@@ -2,16 +2,16 @@
 ##-----------------------------
 
 import sys
-from psana import *
+import psana
 import Detector
 
 ##-----------------------------
 
-ds  = DataSource('exp=cxif5315:run=169')
+ds  = psana.DataSource('exp=cxif5315:run=169')
 evt = ds.events().next()
 env = ds.env()
 
-src = Source('DetInfo(CxiDs2.0:Cspad.0)')
+src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 #src = Source('Camp.0:pnCCD.1')
 
 det = Detector.DetectorAccess(src,0) # , 0xffff)
