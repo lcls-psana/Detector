@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2015-05-20 Mikhail S. Dubrovin
+- rename examples
+- change names and use of parameters in PyDetector.py
+- add GlobalUtils.py, PyDetectorAccess.py
+
 2015-05-19 Mikhail S. Dubrovin
 - Fixed problems with imports.
 	
