@@ -11,9 +11,23 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-02
+2015-05-22 Mikhail S. Dubrovin
+- DetectorAccess - add methods ndim(.), size(.), shape(.), status(.). (PSAS-139)
+- src/PyDetector.py - return None if calibration parameters are not loaded,
+	- add methods ndim(.), size(.), shape(.), status(.), shaped_array(.), return shaped ndarray.
+- pyext/pyDetector.cpp - support wrapper for new methods.
+- GlobalUtils.py - add enumerated parameters to support CALIB_TYPE and STATUS
+- examples/ex_cspad.py -> ex_all_dets.py - switch between derectors by input integer parameter. 
+	
+2015-05-21 Mikhail S. Dubrovin
+- GlobalUtils.py - add enumerated detector types.
+- src/DetectorAccess.cpp - make sure that calib parameters loaded before ndarray size is reqested.
+- re-name ex_cspad.py -> ex_all_dets.py and update.
+	
 2015-05-20 Mikhail S. Dubrovin
 - rename examples
-- change names and use of parameters in PyDetector.py
+- change names and propagation of parameters in PyDetector.py
 - add GlobalUtils.py, PyDetectorAccess.py
 
 2015-05-19 Mikhail S. Dubrovin
@@ -22,5 +36,9 @@ reverse time order.
 Tag: V00-00-01
 2015-05-18 Mikhail S. Dubrovin
 - Package pytopsana was re-named to Detector (PSAS-139)
-	
+
+#------------------------------
+Chris & Ankush stuff:
+addpkg psana_python HEAD    (boost converters)
+addpkg -u pyAreaDet	
 #------------------------------

@@ -78,33 +78,64 @@ class PyDetector :
 
 ##-----------------------------
 
+    def ndim(self, evt) :
+        """ Returns ndarray number of dimensions. If ndim>3 then returns 3.
+        """
+        nd = self.da.ndim(evt, self.env)
+        return nd if nd<4 else 3
+
+##-----------------------------
+
+    def size(self, evt) :
+        return self.da.size(evt, self.env)
+
+##-----------------------------
+
+    def shape(self, evt) :
+        """ Returns ndarray shape. If ndim>3 shape is reduced to 3-d.
+            Example: the shepe like [4,8,185,388] is reduced to [32,185,388]
+        """
+        sh = self.da.shape(evt, self.env)
+        return sh if len(sh)<4 else np.array((self.size(evt)/sh[-1]/sh[-2], sh[-2], sh[-1]))
+
+##-----------------------------
+
+    def shaped_array(self, evt, arr, calibtype) :
+        """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
+        """
+        if self.da.status(evt, self.env, calibtype) != gu.LOADED : return None
+        if self.size(evt) > 0 : arr.shape = self.shape(evt)
+        return arr
+
+##-----------------------------
+
     def pedestals(self, evt) :
-        return self.da.pedestals(evt, self.env)
+        return self.shaped_array(evt, self.da.pedestals(evt, self.env), gu.PEDESTALS)
 
 ##-----------------------------
 
     def rms(self, evt) :
-        return self.da.pixel_rms(evt, self.env)
+        return self.shaped_array(evt, self.da.pixel_rms(evt, self.env), gu.PIXEL_RMS)
 
 ##-----------------------------
 
     def gain(self, evt) :
-        return self.da.pixel_gain(evt, self.env)
+        return self.shaped_array(evt, self.da.pixel_gain(evt, self.env), gu.PIXEL_GAIN)
 
 ##-----------------------------
 
     def mask(self, evt) :
-        return self.da.pixel_mask(evt, self.env)
+        return self.shaped_array(evt, self.da.pixel_mask(evt, self.env), gu.PIXEL_MASK)
 
 ##-----------------------------
 
     def bkgd(self, evt) :
-        return self.da.pixel_bkgd(evt, self.env)
+        return self.shaped_array(evt, self.da.pixel_bkgd(evt, self.env), gu.PIXEL_BKGD)
 
 ##-----------------------------
 
     def status(self, evt) :
-        return self.da.pixel_status(evt, self.env)
+        return self.shaped_array(evt, self.da.pixel_status(evt, self.env), gu.PIXEL_STATUS)
 
 ##-----------------------------
 
@@ -130,15 +161,13 @@ class PyDetector :
 
     def raw_data(self, evt) :
 
+        rdata = None
         if self.dettype == gu.CSPAD \
-        or self.dettype == gu.CSPAD2X2 :
-            return self.da.data_int16_3(evt, self.env)
+        or self.dettype == gu.CSPAD2X2 : rdata = self.da.data_int16_3 (evt, self.env)
+        elif self.dettype == gu.PNCCD  : rdata = self.da.data_uint16_3(evt, self.env)
+        else :                           rdata = self.da.data_uint16_2(evt, self.env)
 
-        elif self.dettype == gu.PNCCD :
-            return self.da.data_uint16_3(evt, self.env)
-
-        else :
-            return self.da.data_uint16_2(evt, self.env)
+        return rdata if rdata.size else None
 
 ##-----------------------------
 # Geometry info

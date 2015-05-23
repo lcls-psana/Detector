@@ -15,6 +15,8 @@
 //-----------------
 
 #include <string>
+#include <cstddef>  // for size_t
+
 #include <PSEvt/Event.h>
 #include <PSEnv/Env.h>
 
@@ -54,10 +56,10 @@ namespace Detector {
 class DetectorAccess {
  public:
 
-  typedef PSCalib::GeometryAccess::image_t image_t;
+  typedef PSCalib::GeometryAccess::image_t    image_t;
   typedef uint16_t data_t;
 
-  //typedef NDArrProducerCSPAD::data_t          data_i16_t;  
+  typedef PSCalib::CalibPars::shape_t         shape_t;
 
   typedef PSCalib::CalibPars::pedestals_t     pedestals_t;
   typedef PSCalib::CalibPars::pixel_rms_t     pixel_rms_t;
@@ -67,11 +69,17 @@ class DetectorAccess {
   typedef PSCalib::CalibPars::pixel_status_t  pixel_status_t;
   typedef PSCalib::CalibPars::common_mode_t   common_mode_t;
 
+  //typedef NDArrProducerCSPAD::data_t          data_i16_t;  
+
   // Constructor
   DetectorAccess (const PSEvt::Source& source, const unsigned& pbits=0x1) ; // 0xffff
   
   // Destructor
   virtual ~DetectorAccess () ;
+
+  const size_t                    ndim        (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const size_t                    size        (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  ndarray<const shape_t,1>        shape       (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
 
   ndarray<const pedestals_t,1>    pedestals   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const pixel_rms_t,1>    pixel_rms   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
@@ -80,7 +88,9 @@ class DetectorAccess {
   ndarray<const pixel_bkgd_t,1>   pixel_bkgd  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const pixel_status_t,1> pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const common_mode_t,1>  common_mode (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
-  
+
+  const int status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const int& calibtype);  
+
 //-------------------
 
   ndarray<const int16_t, 1>  data_int16_1(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
@@ -118,17 +128,17 @@ class DetectorAccess {
 
 //-------------------
 
-   // Returns instrument as string
-   std::string str_inst(boost::shared_ptr<PSEnv::Env> shp_env);  
+  // Returns instrument as string
+  std::string str_inst(boost::shared_ptr<PSEnv::Env> shp_env);  
 
-   inline void setMode (const unsigned& mode) {m_mode = mode;}
-   inline void setPrintBits (const unsigned& pbits) {m_pbits = pbits;}
-   inline void setDefaultValue (const float& vdef) {m_vdef = vdef;}
+  inline void setMode (const unsigned& mode) {m_mode = mode;}
+  inline void setPrintBits (const unsigned& pbits) {m_pbits = pbits;}
+  inline void setDefaultValue (const float& vdef) {m_vdef = vdef;}
 
 //-------------------
 
-   void print();
-   void print_config(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  void print();
+  void print_config(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
 
 //-------------------
 //-------------------
@@ -137,27 +147,27 @@ class DetectorAccess {
 
  private:
 
-   ImgAlgos::DETECTOR_TYPE  m_dettype;          // numerated detector type source
-   PSCalib::CalibPars*      m_calibpars;        // pointer to calibration store
-   PSCalib::GeometryAccess* m_geometry;         // pointer to GeometryAccess object
-   PSEvt::Source            m_source;
-   std::string              m_str_src;
-   std::string              m_cgroup;
-   int                      m_runnum;
-   int                      m_runnum_geo;
-   unsigned                 m_mode; 
-   unsigned                 m_pbits; 
-   float                    m_vdef; 
-   std::string              m_calibdir;
+  ImgAlgos::DETECTOR_TYPE  m_dettype;          // numerated detector type source
+  PSCalib::CalibPars*      m_calibpars;        // pointer to calibration store
+  PSCalib::GeometryAccess* m_geometry;         // pointer to GeometryAccess object
+  PSEvt::Source            m_source;
+  std::string              m_str_src;
+  std::string              m_cgroup;
+  int                      m_runnum;
+  int                      m_runnum_geo;
+  unsigned                 m_mode; 
+  unsigned                 m_pbits; 
+  float                    m_vdef; 
+  std::string              m_calibdir;
 
-   //NDArrProducerCSPAD*     m_nda_prod;  // direct access
-   NDArrProducerBase*       m_nda_prod;   // factory store access
+  //NDArrProducerCSPAD*     m_nda_prod;  // direct access
+  NDArrProducerBase*       m_nda_prod;   // factory store access
 
-   inline const char* _name_() {return "DetectorAccess";}
+  inline const char* _name_() {return "DetectorAccess";}
 
-   void initCalibStore(PSEvt::Event& evt, PSEnv::Env& env);
-   void initGeometry(PSEvt::Event& evt, PSEnv::Env& env);
-   void initNDArrProducer();
+  void initCalibStore(PSEvt::Event& evt, PSEnv::Env& env);
+  void initGeometry(PSEvt::Event& evt, PSEnv::Env& env);
+  void initNDArrProducer();
 };
 
 //-------------------

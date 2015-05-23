@@ -36,6 +36,7 @@ import os
 ##-----------------------------
 ##-----------------------------
 ##-----------------------------
+#Enumerated type of detectors
 
 list_of_detnames = [ \
       "Cspad2x2" \
@@ -61,9 +62,43 @@ map_det_type_to_name = dict(enumerate(list_of_detnames))
 
 map_det_name_to_type = dict(zip(map_det_type_to_name.values(), map_det_type_to_name.keys()))
 
-CSPAD    = map_det_name_to_type["Cspad"]
-CSPAD2X2 = map_det_name_to_type["Cspad2x2"]
-PNCCD    = map_det_name_to_type["pnCCD"]
+CSPAD     = map_det_name_to_type["Cspad"]
+CSPAD2X2  = map_det_name_to_type["Cspad2x2"]
+PNCCD     = map_det_name_to_type["pnCCD"]
+PRINCETON = map_det_name_to_type["Princeton"]
+ACQIRIS   = map_det_name_to_type["Acqiris"]
+TM6740    = map_det_name_to_type["Tm6740"]
+OPAL1000  = map_det_name_to_type["Opal1000"]
+OPAL2000  = map_det_name_to_type["Opal2000"]
+OPAL4000  = map_det_name_to_type["Opal4000"]
+OPAL8000  = map_det_name_to_type["Opal8000"]
+ANDOR     = map_det_name_to_type["Andor"]
+ORCAFL40  = map_det_name_to_type["OrcaFl40"]
+FCCD960   = map_det_name_to_type["Fccd960"]
+EPIX100A  = map_det_name_to_type["Epix100a"]
+EPIX10K   = map_det_name_to_type["Epix10k"]
+EPIX      = map_det_name_to_type["Epix"]
+OTHER     = map_det_name_to_type["OTHER"]
+
+##-----------------------------
+# Enumerated calibration types. Should be in the same order like in PSCalib::CalibPars
+# enum CALIB_TYPE { PEDESTALS=0, PIXEL_STATUS, PIXEL_RMS, PIXEL_GAIN, PIXEL_MASK, PIXEL_BKGD, COMMON_MODE };
+
+PEDESTALS    = 0
+PIXEL_STATUS = 1
+PIXEL_RMS    = 2
+PIXEL_GAIN   = 3
+PIXEL_MASK   = 4
+PIXEL_BKGD   = 5
+COMMON_MODE  = 6
+##-----------------------------
+# Enumerated calibration constant status. Should be in the same order like in pdscalibdata::NDArrIOV1.h
+# enum STATUS { LOADED=1, DEFAULT, UNREADABLE, UNDEFINED };
+
+LOADED     = 1
+DEFAULT    = 2
+UNREADABLE = 3
+UNDEFINED  = 4
 
 ##-----------------------------
 

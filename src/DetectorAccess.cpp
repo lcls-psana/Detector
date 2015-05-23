@@ -54,7 +54,6 @@ DetectorAccess::DetectorAccess (const PSEvt::Source& source, const unsigned& pbi
          << '\n';
       MsgLog(_name_(), info, ss.str());
   }
-
 }
 
 //--------------
@@ -67,61 +66,109 @@ DetectorAccess::~DetectorAccess ()
 
 //-------------------
 
-ndarray<const DetectorAccess::pedestals_t, 1> DetectorAccess::pedestals(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+const size_t DetectorAccess::ndim(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
-  return make_ndarray(m_calibpars->pedestals(), m_calibpars->size());
+  return m_calibpars->ndim();
 }
 
 //-------------------
 
-ndarray<const DetectorAccess::pixel_rms_t, 1> DetectorAccess::pixel_rms(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+const size_t DetectorAccess::size(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
-  return make_ndarray(m_calibpars->pixel_rms(), m_calibpars->size());
+  return m_calibpars->size();
 }
 
 //-------------------
 
-ndarray<const DetectorAccess::pixel_gain_t, 1> DetectorAccess::pixel_gain(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+ndarray<const DetectorAccess::shape_t, 1>
+DetectorAccess::shape(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
-  return make_ndarray(m_calibpars->pixel_gain(), m_calibpars->size());
+  return make_ndarray(m_calibpars->shape(), m_calibpars->ndim());
 }
 
 //-------------------
 
-ndarray<const DetectorAccess::pixel_mask_t, 1> DetectorAccess::pixel_mask(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+ndarray<const DetectorAccess::pedestals_t, 1> 
+DetectorAccess::pedestals(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
-  return make_ndarray(m_calibpars->pixel_mask(), m_calibpars->size());
+  const DetectorAccess::pedestals_t* p = m_calibpars->pedestals(); // constants loaded before call to size()
+  return make_ndarray(p, m_calibpars->size());
 }
 
 //-------------------
 
-ndarray<const DetectorAccess::pixel_bkgd_t, 1> DetectorAccess::pixel_bkgd(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+ndarray<const DetectorAccess::pixel_rms_t, 1> 
+DetectorAccess::pixel_rms(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
-  return make_ndarray(m_calibpars->pixel_bkgd(), m_calibpars->size());
+  const DetectorAccess::pixel_rms_t* p = m_calibpars->pixel_rms();
+  return make_ndarray(p, m_calibpars->size());
 }
 
 //-------------------
 
-ndarray<const DetectorAccess::pixel_status_t, 1> DetectorAccess::pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+ndarray<const DetectorAccess::pixel_gain_t, 1> 
+DetectorAccess::pixel_gain(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
-  return make_ndarray(m_calibpars->pixel_status(), m_calibpars->size());
+  const DetectorAccess::pixel_gain_t* p = m_calibpars->pixel_gain();
+  return make_ndarray(p, m_calibpars->size());
 }
 
 //-------------------
 
-ndarray<const DetectorAccess::common_mode_t, 1> DetectorAccess::common_mode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+ndarray<const DetectorAccess::pixel_mask_t, 1> 
+DetectorAccess::pixel_mask(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  const DetectorAccess::pixel_mask_t* p = m_calibpars->pixel_mask();
+  return make_ndarray(p, m_calibpars->size());
+}
+
+//-------------------
+
+ndarray<const DetectorAccess::pixel_bkgd_t, 1> 
+DetectorAccess::pixel_bkgd(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  const DetectorAccess::pixel_bkgd_t* p = m_calibpars->pixel_bkgd();
+  return make_ndarray(p, m_calibpars->size());
+}
+
+//-------------------
+
+ndarray<const DetectorAccess::pixel_status_t, 1> 
+DetectorAccess::pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  const DetectorAccess::pixel_status_t* p = m_calibpars->pixel_status();
+  return make_ndarray(p, m_calibpars->size());
+}
+
+//-------------------
+
+ndarray<const DetectorAccess::common_mode_t, 1> 
+DetectorAccess::common_mode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
   //std::cout << "TEST cm[0]: " << m_calibpars->common_mode()[0] << "\n";
   //std::cout << "TEST cm[3]: " << m_calibpars->common_mode()[3] << "\n";
   //std::cout << "TEST  size: " << m_calibpars->size(PSCalib::COMMON_MODE) << "\n";
-  return make_ndarray(m_calibpars->common_mode(), m_calibpars->size(PSCalib::COMMON_MODE));
+  const DetectorAccess::common_mode_t* p = m_calibpars->common_mode();
+  return make_ndarray(p, m_calibpars->size(PSCalib::COMMON_MODE));
+}
+
+//-------------------
+
+const int
+DetectorAccess::status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const int& calibtype) // PSCalib::COMMON_MODE
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->status((const PSCalib::CALIB_TYPE)calibtype);
 }
 
 //-------------------
