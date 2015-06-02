@@ -11,6 +11,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-04
+2015-06-02 Mikhail S. Dubrovin
+- update ChangeLog
+	
+Tag: V00-00-03
+2015-06-02 Mikhail S. Dubrovin
+- update examples, PyDetector returns None if ndarray size is zero (PSAS-139) 
+
 Tag: V00-00-02
 2015-05-22 Mikhail S. Dubrovin
 - DetectorAccess - add methods ndim(.), size(.), shape(.), status(.). (PSAS-139)
