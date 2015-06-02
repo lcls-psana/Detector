@@ -47,7 +47,7 @@ print 80*'_', '\npixel_status:\n', pstat[0:20]
 pcmod = det.common_mode(evt,env)
 print 80*'_', '\ncommon_mode:\n', pcmod
 
-print 80*'_', '\nInstrument: ', det.inst(env)
+print 80*'_', '\nInstrument: ', det.instrument(env)
 print 80*'_'
 
 #det.set_print_bits(255);

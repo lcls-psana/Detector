@@ -144,8 +144,8 @@ class PyDetector :
 
 ##-----------------------------
 
-    def inst(self) :
-        return self.da.inst(self.env)
+    def instrument(self) :
+        return self.da.instrument(self.env)
 
 ##-----------------------------
 
@@ -173,32 +173,43 @@ class PyDetector :
 # Geometry info
 
     def coords_x(self, evt) :
-        return self.da.pixel_coords_x(evt, self.env)
+        nda = self.da.pixel_coords_x(evt, self.env)
+        return nda if nda.size else None
 
     def coords_y(self, evt) :
-        return self.da.pixel_coords_y(evt, self.env)
+        nda = self.da.pixel_coords_y(evt, self.env)
+        return nda if nda.size else None
 
     def coords_z(self, evt) :
-        return self.da.pixel_coords_z(evt, self.env)
+        nda = self.da.pixel_coords_z(evt, self.env)
+        return nda if nda.size else None
 
     def area(self, evt) :
-        return self.da.pixel_area(evt, self.env)
+        nda = self.da.pixel_area(evt, self.env)
+        return nda if nda.size else None
 
     def mask(self, evt) :
-        return self.da.pixel_mask(evt, self.env)
+        nda = self.da.pixel_mask(evt, self.env)
+        return nda if nda.size else None
 
     def indexes_x(self, evt) :
-        return self.da.pixel_indexes_x(evt, self.env)
+        nda = self.da.pixel_indexes_x(evt, self.env)
+        return nda if nda.size else None
 
     def indexes_y(self, evt) :
-        return self.da.pixel_indexes_y(evt, self.env)
+        nda = self.da.pixel_indexes_y(evt, self.env)
+        return nda if nda.size else None
 
     def pixel_size(self, evt) :
-        return self.da.pixel_scale_size(evt, self.env) # Ex: 109.92 [um]
+        psize = self.da.pixel_scale_size(evt, self.env) # Ex: 109.92 [um]
+        return psize if psize != 1 else None
 
     def image(self, evt, nda) :
+        if nda is None : return None
         nda_img = np.array(nda, dtype=np.double).flatten()
-        return self.da.get_image(evt, self.env, nda_img)
+        img = self.da.get_image(evt, self.env, nda_img)
+        return img if img.size else None
+        
 
 ##-----------------------------
 

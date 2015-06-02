@@ -42,7 +42,7 @@ print '\npixel_status:\n', pstat[0:20]
 pcmod = det.common_mode(evt,env)
 print '\ncommon_mode:\n', pcmod
 
-print '\nInstrument: ', det.inst(env)
+print '\nInstrument: ', det.instrument(env)
 
 ##-----------------------------
 

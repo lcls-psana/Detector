@@ -50,6 +50,7 @@ DetectorAccess::DetectorAccess (const PSEvt::Source& source, const unsigned& pbi
       ss << "in ctor:" // "SOURCE: " << m_source
   	 << "\nData source  : " << m_str_src
   	 << "\nCalib group  : " << m_cgroup 
+  	 << "\nCalib dir    : " << m_calibdir 
          << "\nPrint bits   : " << m_pbits
          << '\n';
       MsgLog(_name_(), info, ss.str());
@@ -211,34 +212,40 @@ void
 DetectorAccess::initGeometry(PSEvt::Event& evt, PSEnv::Env& env)
 {
   int runnum = ImgAlgos::getRunNumber(evt);
-  if(runnum == m_runnum_geo) return;
-  m_runnum_geo = runnum;
 
-  if(m_geometry) delete m_geometry;
+  if(m_geometry) {
+    if(runnum == m_runnum_geo) return;
+    delete m_geometry;
+    m_geometry = 0;
+  }
 
   m_calibdir = env.calibDir();
 
   unsigned pbits_cff = (m_pbits & 2) ? 0xffff : 0;
   PSCalib::CalibFileFinder calibfinder(m_calibdir, m_cgroup, pbits_cff);
-  std::string fname = calibfinder.findCalibFile(m_str_src, "geometry", m_runnum_geo);
+  std::string fname = calibfinder.findCalibFile(m_str_src, "geometry", runnum);
 
   if(m_pbits) {
       std::stringstream ss;
       ss << "in initGeometry(...):"
-         << "\nInstrument  : " << env.instrument()
-         << "\nCalib dir   : " << m_calibdir 
-         << "\nCalib group : " << m_cgroup 
-         << "\nCalib file  : " << fname 
-         << "\nData source : " << m_str_src
-         << "\nRun number  : " << m_runnum_geo 
-         << "\nPrint bits  : " << m_pbits 
+         << "\nInstrument     : " << env.instrument()
+         << "\nCalib dir      : " << m_calibdir 
+         << "\nCalib group    : " << m_cgroup 
+         << "\nCalib file     : " << fname 
+         << "\nData source    : " << m_str_src
+         << "\nRun requested  : " << runnum 
+         << "\nRun for loaded : " << m_runnum_geo 
+         << "\nPrint bits     : " << m_pbits 
          << '\n';
       
       MsgLog(_name_(), info, ss.str());
   }
 
+  if(fname.empty()) return;    
+
   unsigned pbits_ga = (m_pbits & 4) ? 0xffff : 0;
   m_geometry = new PSCalib::GeometryAccess(fname, pbits_ga);
+  m_runnum_geo = runnum;
 }
 
 //-------------------
@@ -319,6 +326,8 @@ ndarray<const double, 1> DetectorAccess::pixel_coords_x(boost::shared_ptr<PSEvt:
   const double* pY; 
   const double* pZ; 
   unsigned size;
+
+  if(m_geometry==0) return ndarray<const double, 1>();
   m_geometry -> get_pixel_coords(pX, pY, pZ, size);
   return make_ndarray(pX, size);
 }
@@ -333,6 +342,8 @@ ndarray<const double, 1> DetectorAccess::pixel_coords_y(boost::shared_ptr<PSEvt:
   const double* pY; 
   const double* pZ; 
   unsigned size;
+
+  if(m_geometry==0) return ndarray<const double, 1>();
   m_geometry -> get_pixel_coords(pX, pY, pZ, size);
   return make_ndarray(pY, size);
 }
@@ -347,6 +358,8 @@ ndarray<const double, 1> DetectorAccess::pixel_coords_z(boost::shared_ptr<PSEvt:
   const double* pY; 
   const double* pZ; 
   unsigned size;
+
+  if(m_geometry==0) return ndarray<const double, 1>();
   m_geometry -> get_pixel_coords(pX, pY, pZ, size);
   return make_ndarray(pZ, size);
 }
@@ -359,6 +372,8 @@ ndarray<const double, 1> DetectorAccess::pixel_areas(boost::shared_ptr<PSEvt::Ev
 
   const double* A;
   unsigned   size;
+
+  if(m_geometry==0) return ndarray<const double, 1>();
   m_geometry -> get_pixel_areas(A,size);
   return make_ndarray(A, size);
 }
@@ -372,6 +387,8 @@ ndarray<const int, 1> DetectorAccess::pixel_mask_geo(boost::shared_ptr<PSEvt::Ev
   const int* mask;
   unsigned   size;
   unsigned   mbits=0377; // 1-edges; 2-wide central cols; 4-non-bound; 8-non-bound neighbours
+
+  if(m_geometry==0) return ndarray<const int, 1>();
   m_geometry -> get_pixel_mask(mask, size, std::string(), 0, mbits);
   return make_ndarray(mask, size);
 }
@@ -391,8 +408,8 @@ ndarray<const unsigned, 1> DetectorAccess::pixel_indexes_x(boost::shared_ptr<PSE
   //      const int xy0_off_pix[] = {200,200};
   //      geometry.get_pixel_coord_indexes(iX, iY, isize, ioname, ioindex, pix_scale_size_um, xy0_off_pix, do_tilt);
 
-  m_geometry -> get_pixel_coord_indexes(iX, iY, size);
- 
+  if(m_geometry==0) return ndarray<const unsigned, 1>();
+  m_geometry -> get_pixel_coord_indexes(iX, iY, size); 
   return make_ndarray(iX, size);
 }
 
@@ -405,6 +422,8 @@ ndarray<const unsigned, 1> DetectorAccess::pixel_indexes_y(boost::shared_ptr<PSE
   const unsigned* iX;
   const unsigned* iY; 
   unsigned size;
+
+  if(m_geometry==0) return ndarray<const unsigned, 1>();
   m_geometry -> get_pixel_coord_indexes(iX, iY, size); 
   return make_ndarray(iY, size);
 }
@@ -414,6 +433,8 @@ ndarray<const unsigned, 1> DetectorAccess::pixel_indexes_y(boost::shared_ptr<PSE
 double DetectorAccess::pixel_scale_size(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initGeometry(*shp_evt, *shp_env);
+
+  if(m_geometry==0) return 1;
   return m_geometry -> get_pixel_scale_size ();
 }
 
@@ -427,6 +448,8 @@ DetectorAccess::get_image(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared
   const unsigned* iX;
   const unsigned* iY; 
   unsigned isize;
+
+  if(m_geometry==0) return ndarray<const image_t, 2>();
   m_geometry -> get_pixel_coord_indexes(iX, iY, isize);
 
   //std::cout << "DetectorAccess::get_image isize = " << isize << '\n';

@@ -130,7 +130,7 @@ BOOST_PYTHON_MODULE(detector_ext)
     .def("set_def_value",   set_3)
     .def("print_members",   print_1)
     .def("print_config",    print_2)
-    .def("inst",            &DetectorAccess::str_inst);
+    .def("instrument",      &DetectorAccess::str_inst);
 }
 
 //-------------------

@@ -30,8 +30,10 @@ elif ntest==7 : dsname, src = 'exp=xcsi0112:run=15',  psana.Source('DetInfo(XcsB
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
 # Use non-standard calib directory
-#opts = {'psana.calib_dir':'./calib',}
+#opts = {'psana.calib-dir':'./calib',}
 #psana.setOptions(opts)
+#psana.setOption('psana.calib-dir', './calib')
+psana.setOption('psana.calib-dir', './empty/calib')
 
 ds  = psana.DataSource(dsname)
 evt = ds.events().next()
@@ -42,15 +44,16 @@ env = ds.env()
 ##-----------------------------
 
 def print_ndarr(nda, name='') :
-    print 80*'_', '\n%s:\n%s' % (name, nda)
     if nda is not None :
-        print '  shape:%s  size:%d  dtype:%s' % (str(nda.shape), nda.size, nda.dtype)
+        print '%s\n%s: \n%s\n shape:%s  size:%d  dtype:%s' % (80*'_', name, nda, str(nda.shape), nda.size, nda.dtype)
+    else :
+        print '%s\n%s: %s' % (80*'_', name, nda)
 
 ##-----------------------------
 
-det = PyDetector(src,env)
+det = PyDetector(src, env, pbits=0)
 
-ins = det.inst()
+ins = det.instrument()
 
 print 80*'_', '\nInstrument: ', ins
 #det.set_print_bits(511);
@@ -105,12 +108,13 @@ if nda_raw is None :
     print 'Detector data IS NOT FOUND in %d events' % i
     sys.exit('FURTHER TEST IS TERMINATED')
 
+#det.set_print_bits(511);
 
 # THIS ONLY WORKS IF geometry is available
 #nda = det.coords_x(evt)
 #print_ndarr(nda, 'coords_x')
 
-img_arr = nda_raw.flatten() - peds.flatten()
+img_arr = nda_raw.flatten() - peds.flatten() if peds is not None else nda_raw.flatten()
 img = None
 
 # Image producer is different for 3-d and 2-d arrays 
@@ -124,6 +128,10 @@ print_ndarr(img, 'Image data-peds')
 
 print 80*'_'
 ##-----------------------------
+
+if img is None :
+    print 'Image is not available'
+    sys.exit('FURTHER TEST IS TERMINATED')
 
 import pyimgalgos.GlobalGraphics as gg
 
