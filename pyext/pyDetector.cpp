@@ -76,6 +76,11 @@ ndarray<const image_t, 2> (DetectorAccess::*img_0) (boost::shared_ptr<PSEvt::Eve
 
 //-------------------
 
+void (DetectorAccess::*cmod_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<double, 1>) = &DetectorAccess::common_mode_double;
+void (DetectorAccess::*cmod_2) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<float, 1>)  = &DetectorAccess::common_mode_float;
+
+//-------------------
+
 void (DetectorAccess::*set_1) (const unsigned&) = &DetectorAccess::setMode;
 void (DetectorAccess::*set_2) (const unsigned&) = &DetectorAccess::setPrintBits;
 void (DetectorAccess::*set_3) (const float&)    = &DetectorAccess::setDefaultValue;
@@ -98,39 +103,41 @@ BOOST_PYTHON_MODULE(detector_ext)
   using namespace boost::python;
 
   boost::python::class_<DetectorAccess>("DetectorAccess", init<const PSEvt::Source, const unsigned&>())
-    .def("pedestals",       peds_1)
-    .def("pixel_rms",       prms_1)
-    .def("pixel_gain",      pgain_1)
-    .def("pixel_mask",      pmask_1)
-    .def("pixel_bkgd",      pbkgd_1)
-    .def("pixel_status",    pstat_1)
-    .def("common_mode",     pcmod_1)
-    .def("shape",           pshape_1)
-    .def("size",            psize_1)
-    .def("ndim",            pndim_1)
-    .def("status",          pstatus)
-    .def("data_int16_1",    pdata_1)
-    .def("data_int16_2",    pdata_2)
-    .def("data_int16_3",    pdata_3)
-    .def("data_int16_4",    pdata_4)
-    .def("data_uint16_2",   pdata_5)
-    .def("data_uint16_3",   pdata_6)
-    .def("data_uint8_2",    pdata_7)
-    .def("pixel_coords_x",  pgeo_1)
-    .def("pixel_coords_y",  pgeo_2)
-    .def("pixel_coords_z",  pgeo_3)
-    .def("pixel_areas",     pgeo_4)
-    .def("pixel_mask_geo",  pgeo_5)
-    .def("pixel_indexes_x", pgeo_6)
-    .def("pixel_indexes_y", pgeo_7)
-    .def("pixel_scale_size",pgeo_8)
-    .def("get_image",       img_0)
-    .def("set_mode",        set_1)
-    .def("set_print_bits",  set_2)
-    .def("set_def_value",   set_3)
-    .def("print_members",   print_1)
-    .def("print_config",    print_2)
-    .def("instrument",      &DetectorAccess::str_inst);
+    .def("pedestals",          peds_1)
+    .def("pixel_rms",          prms_1)
+    .def("pixel_gain",         pgain_1)
+    .def("pixel_mask",         pmask_1)
+    .def("pixel_bkgd",         pbkgd_1)
+    .def("pixel_status",       pstat_1)
+    .def("common_mode",        pcmod_1)
+    .def("shape",              pshape_1)
+    .def("size",               psize_1)
+    .def("ndim",               pndim_1)
+    .def("status",             pstatus)
+    .def("data_int16_1",       pdata_1)
+    .def("data_int16_2",       pdata_2)
+    .def("data_int16_3",       pdata_3)
+    .def("data_int16_4",       pdata_4)
+    .def("data_uint16_2",      pdata_5)
+    .def("data_uint16_3",      pdata_6)
+    .def("data_uint8_2",       pdata_7)
+    .def("pixel_coords_x",     pgeo_1)
+    .def("pixel_coords_y",     pgeo_2)
+    .def("pixel_coords_z",     pgeo_3)
+    .def("pixel_areas",        pgeo_4)
+    .def("pixel_mask_geo",     pgeo_5)
+    .def("pixel_indexes_x",    pgeo_6)
+    .def("pixel_indexes_y",    pgeo_7)
+    .def("pixel_scale_size",   pgeo_8)
+    .def("get_image",          img_0)
+    .def("common_mode_double", cmod_1)
+    .def("common_mode_float",  cmod_2)
+    .def("set_mode",           set_1)
+    .def("set_print_bits",     set_2)
+    .def("set_def_value",      set_3)
+    .def("print_members",      print_1)
+    .def("print_config",       print_2)
+    .def("instrument",         &DetectorAccess::str_inst);
 }
 
 //-------------------

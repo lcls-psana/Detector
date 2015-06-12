@@ -24,7 +24,12 @@ __version__ = "$Revision$"
 ##-----------------------------
 
 import sys
+import numpy as np
 import psana
+import Detector.GlobalUtils  as gu
+import Detector.PyDataAccess as pda
+
+from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
 
 ##-----------------------------
 
@@ -49,10 +54,16 @@ class PyDetectorAccess :
         self.source = source
         self.env    = env
         self.pbits  = pbits
-        #self.dettype = ImgAlgos::detectorTypeForSource(m_source);
-        #self.cgroup  = ImgAlgos::calibGroupForDetType(m_dettype); // for ex: "PNCCD::CalibV1";
+        self.dettype = gu.det_type_from_source(source)
+        self.do_offset = False # works for camera
 
-        self.da = Detector.DetectorAccess(source, pbits) # , 0xffff) C++ access methods
+        if self.pbits & 1 : self.print_attributes()
+
+##-----------------------------
+
+    def print_attributes(self) :
+        print 'print_attributes():\n  source: %s\n  dtype : %d\n  pbits : %d' % \
+              (self.source, self.dettype, self.pbits)
 
 ##-----------------------------
 
@@ -61,98 +72,303 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def set_source(self, source) :
+        self.source = source
+
+##-----------------------------
+
     def pedestals(self, evt) :
         return None
-        #return self.da.pedestals(evt, self.env)
     
 ##-----------------------------
 
     def pixel_rms(self, evt) :
         return None
-        #return self.da.pixel_rms(evt, self.env)
 
 ##-----------------------------
 
     def pixel_gain(self, evt) :
         return None
-        #return self.da.pixel_gain(evt, self.env)
 
 ##-----------------------------
 
     def pixel_mask(self, evt) :
         return None
-        #return self.da.pixel_mask(evt, self.env)
 
 ##-----------------------------
 
     def pixel_bkgd(self, evt) :
         return None
-        #return self.da.pixel_bkgd(evt, self.env)
 
 ##-----------------------------
 
     def pixel_status(self, evt) :
         return None
-        #return self.da.pixel_status(evt, self.env)
 
 ##-----------------------------
 
     def common_mode(self, evt) :
         return None
-        #return self.da.common_mode(evt, self.env)
 
 ##-----------------------------
 
     def inst(self) :
         return None
-        #return self.da.inst(self.env)
 
 ##-----------------------------
 
     def print_config(self, evt) :
         pass
-        #self.da.print_config(evt, self.env)
 
 ##-----------------------------
 
     def set_print_bits(self, pbits) :
-        pass
-        #self.da.set_print_bits(pbits)
+        self.pbits  = pbits
 
 ##-----------------------------
 
-    def raw_data(self, evt) :
+    def set_do_offset(self, do_offset=False) :
+        """On/off application of offset in raw_data_camera(...)
+        """
+        self.do_offset = do_offset
+
+##-----------------------------
+
+    def raw_data(self, evt, env) :
+
+        #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
+        #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
+
+        if   self.dettype == gu.CSPAD     : return self.raw_data_cspad(evt, env)     # 3   ms
+        elif self.dettype == gu.CSPAD2X2  : return self.raw_data_cspad2x2(evt, env)  # 0.6 ms
+        elif self.dettype == gu.PRINCETON : return self.raw_data_princeton(evt, env) # 0.7 ms
+        elif self.dettype == gu.PNCCD     : return self.raw_data_pnccd(evt, env)     # 0.8 ms
+        elif self.dettype == gu.ANDOR     : return self.raw_data_andor(evt, env)     # 0.1 ms
+        elif self.dettype == gu.FCCD960   : return self.raw_data_fccd960(evt, env)   # 11  ms
+        elif self.dettype == gu.EPIX100A  : return self.raw_data_epix(evt, env)      # 0.3 ms
+        elif self.dettype == gu.EPIX10K   : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.EPIX      : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.OPAL1000  : return self.raw_data_camera(evt, env)    # 1 ms
+        elif self.dettype == gu.OPAL2000  : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.OPAL4000  : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.OPAL8000  : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.ORCAFL40  : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.TM6740    : return self.raw_data_camera(evt, env)    # 0.24 ms
+        else                              : return None
+
+##-----------------------------
+
+    def raw_data_cspad(self, evt, env) :
+
+        # data object
+        d = pda.get_cspad_data_object(evt, self.source)
+        if d is None : return None
+    
+        # configuration from data
+        c = pda.get_cspad_config_object(env, self.source)
+        if c is None : return None
+    
+        nquads   = d.quads_shape()[0]
+        nquads_c = c.numQuads()
+
+        #print 'd.TypeId: ', d.TypeId
+        #print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
+
+        arr = []
+        for iq in range(nquads) :
+            q = d.quads(iq)
+            qnum = q.quad()
+            qdata = q.data()
+            #n2x1stored = qdata.shape[0]
+            roim = c.roiMask(qnum)
+            #print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
+            #     '  n2x1stored: %d' % (n2x1stored)
+    
+            #roim = 0375 # for test only
+        
+            if roim == 0377 : arr.append(qdata)
+            else :
+                if self.pbits : print 'PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim
+                qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
+                i = 0
+                for s in range(8) :
+                    if roim & (1<<s) :
+                        qdata_full[s,:] = qdata[i,:]
+                        i += 1
+                arr.append(qdata_full)
+    
+        nda = np.array(arr)
+        #print 'nda.shape: ', nda.shape
+        nda.shape = (32,185,388)
+        return nda
+    
+##-----------------------------
+
+    def raw_data_cspad2x2(self, evt, env) :
+
+        # data object
+        d = pda.get_cspad2x2_data_object(evt, self.source)
+        if d is None : return None
+    
+        # configuration object
+        c = pda.get_cspad2x2_config_object(env, self.source)
+        if c is None : return None
+
+        #print 'd.TypeId: ', d.TypeId
+        #print 'common mode 0: %f   1: %f', (d.common_mode(0), d.common_mode(1))
+        #print 'roiMask: ', c.roiMask(), '  numAsicsStored: ', c.numAsicsStored()
+
+        if c.roiMask() != 3 :
+            if self.pbits : print 'PyDetectorAccess: CSPAD2x2 configuration has non-complete mask = %d of included 2x1' % c.roiMask()
+            return None
+
+        return d.data()
+
+##-----------------------------
+
+    def raw_data_camera(self, evt, env) :
+        # data object
+        d = pda.get_camera_data_object(evt, self.source)
+        if d is None : return None
+    
+        # configuration object
+        #c = pda.get_camera_config_object(env, self.source)
+        #if c is None : return None
+
+        print 'data width: %d, height: %d, depth: %d, offset: %f' % (d.width(), d.height(), d.depth(), d.offset())
+        offset = d.offset()
+        
+        d16 = d.data16()
+        if d16 is not None :
+            if self.do_offset : return np.array(d16, dtype=np.int32) - d.offset()        
+            else              : return d16
+        
+        d8 = d.data8()
+        if d8 is not None : 
+            if self.do_offset : return np.array(d8, dtype=np.int32) - d.offset() 
+            else              : return d8
+
         return None
-        #return self.da.data_uint16_2(evt, self.env)
 
 ##-----------------------------
+
+    def raw_data_fccd960(self, evt, env) :
+        # data object
+        d = pda.get_camera_data_object(evt, self.source)
+        if d is None : return None
+    
+        # configuration object
+        #c = pda.get_camera_config_object(env, self.source)
+        #if c is None : return None
+
+        arr = d.data16()
+        if arr is None : return None
+
+        arr_c = (arr>>13)&03
+        arr_v = arr&017777
+        #print 'arr_c:\n', arr_c
+        #print 'arr_v:\n', arr_v
+
+        return np.select([arr_c==0, arr_c==1, arr_c==3], \
+                         [arr_v,    arr_v<<2, arr_v<<3])
+
+##-----------------------------
+
+    def raw_data_princeton(self, evt, env) :
+        # data object
+        d = pda.get_princeton_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_princeton_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_andor(self, evt, env) :
+        d = evt.get(psana.Andor.FrameV1, self.source)
+        if d is None : return None
+
+        #c = env.configStore().get(psana.Andor.ConfigV1, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_pnccd(self, evt, env) :
+        #print '=== in raw_data_pnccd'
+        #d = evt.get(psana.PNCCD.FullFrameV1, self.source)
+        d = evt.get(psana.PNCCD.FramesV1, self.source)
+        if d is None : return None
+
+        #c = pda.get_pnccd_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: numLinks: %d, payloadSizePerLink: %d' % (d.numLinks(), c.payloadSizePerLink())
+
+        arr = []
+        nlinks = d.numLinks()
+        for i in range(nlinks) :
+            frame = d.frame(i)
+            fdata = frame.data()
+            arr.append(fdata)
+            #print '   data.shape: %s' % (str(fdata.shape))
+
+        nda = np.array(arr)
+        #print 'nda.shape: ', nda.shape
+        return nda
+
+##-----------------------------
+
+    def raw_data_epix(self, evt, env) :
+        # data object
+        d = pda.get_epix_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        c = pda.get_epix_config_object(env, self.source)
+        if c is None : return None
+        #print 'config: rows: %d, cols: %d, asics: %d' % (c.numberOfRows(), c.numberOfColumns(), c.numberOfAsics())
+        #print 'config: digitalCardId0: %d, 1: %d' % (c.digitalCardId0(), c.digitalCardId1())
+        #print 'config: analogCardId0 : %d, 1: %d' % (c.analogCardId0(),  c.analogCardId1())
+        #print 'config: version: %d, asicMask: %d' % (c.version(), c.asicMask())
+
+        nda = d.frame()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+from time import time
 
 if __name__ == "__main__" :
 
     ds, src = psana.DataSource('exp=cxif5315:run=169'), psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    #ds, src = psana.DataSource('exp=xcsi0112:run=15'),  psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 
-    env = ds.env()
-    cls = env.calibStore()
-    itr = ds.events()
-    evt = itr.next()
+    env  = ds.env()
+    cls  = env.calibStore()
+    evts = ds.events()
+    evt  = evts.next()
 
     for key in evt.keys() : print key
 
-    det = PyDetectorAccess(src, env)
-
-    det.set_print_bits(255)
+    det = PyDetectorAccess(src, env, pbits=255)
 
     nda = det.pedestals(evt)
-    print '\nnda:\n', nda
-    print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
+    print '\npedestals nda:', nda
+    if nda is not None : print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
 
+    t0_sec = time()
+    nda = det.raw_data(evt, env)
+    print '\nPython consumed time to get raw data (sec) =', time()-t0_sec
 
-    #d = evt.get(psana.CsPad.DataV2, src)
-    #print 'd.TypeId: ', d.TypeId
-
-    #q0 = d.quads(0)
-    #q0_data = q0.data()
-    #print 'q0_data.shape: ', q0_data.shape
+    print '\nraw_data nda:\n', nda
 
     sys.exit ('Self test is done')
 

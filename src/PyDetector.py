@@ -12,6 +12,69 @@
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on C++ or python.
 
+
+Usage::
+    import sys
+    import psana
+    from Detector.PyDetector import PyDetector    
+
+    dsname = 'exp=cxif5315:run=169'
+    src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+
+    ds  = psana.DataSource(dsname)
+    env = ds.env()
+    evt = ds.events().next()
+
+    det = PyDetector(src, env, pbits=0)
+
+    # set parameters, if changed
+    det.set_env(env)
+    det.set_print_bits(pbits)
+
+    det.print_members()    
+    det.print_config(evt)
+
+    # get pixel array shape, size, and nomber of dimensions
+    shape = det.shape(evt)
+    size  = det.size(evt)
+    ndim  = det.ndim(evt)
+    instrument = det.instrument()
+
+    # access intensity calibration parameters
+    peds   = det.pedestals(evt)
+    rms    = det.rms(evt)
+    mask   = det.mask(evt)
+    gain   = det.gain(evt)
+    bkgd   = det.bkgd(evt)
+    status = det.status(evt)
+    status_mask = det.status_as_mask(evt)
+    cmod = det.common_mode(evt)
+
+    # get raw data
+    nda_raw = det.raw_data(evt)
+
+    # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
+    nda_cdata = det.calib_data(evt)
+
+    # access geometry information
+    coords_x = det.coords_x(evt)
+    coords_y = det.coords_y(evt)
+    coords_z = det.coords_z(evt)
+    areas    = det.areas(evt)
+    mask_geo  = det.mask_geo(evt)
+    ind_x     = det.indexes_x(evt)
+    ind_y     = det.indexes_y(evt)
+    pixel_size = det.pixel_size(evt)
+
+    # reconstruct image
+    img = det.image(evt) # uses calib_data by default
+    img = det.image(evt, img_nda)
+
+    # common mode correction for pedestal-subtracted ndarray nda:
+    det.common_mode_apply(evt, nda)
+    cm_corr_nda = det.common_mode_correction(self, evt, nda)
+
+
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
@@ -29,6 +92,7 @@ import psana
 import Detector
 import numpy as np
 import Detector.GlobalUtils as gu
+from Detector.PyDetectorAccess import PyDetectorAccess
 
 ##-----------------------------
 
@@ -55,10 +119,9 @@ class PyDetector :
         self.dettype = gu.det_type_from_source(source)
         self.env     = env
         self.pbits   = pbits
-        #self.dettype = ImgAlgos::detectorTypeForSource(m_source);
-        #self.cgroup  = ImgAlgos::calibGroupForDetType(m_dettype); // for ex: "PNCCD::CalibV1";
 
-        self.da = Detector.DetectorAccess(source, pbits) # , 0xffff) C++ access methods
+        self.da   = Detector.DetectorAccess(source, pbits) # , 0xffff) C++ access methods
+        self.pyda = PyDetectorAccess(self.source, self.env, pbits) # Python data access methods
 
         if pbits : self.print_members()
 
@@ -75,6 +138,15 @@ class PyDetector :
 
     def set_env(self, env) :
         self.env    = env
+        self.pyda.set_env(env)
+        #self.da.set_env(env)
+
+##-----------------------------
+
+    def set_source(self, source) :
+        self.source = source
+        self.pyda.set_source(source)
+        #self.da.set_source(source)
 
 ##-----------------------------
 
@@ -100,7 +172,7 @@ class PyDetector :
 
 ##-----------------------------
 
-    def shaped_array(self, evt, arr, calibtype) :
+    def _shaped_array_(self, evt, arr, calibtype) :
         """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
         """
         if self.da.status(evt, self.env, calibtype) != gu.LOADED : return None
@@ -109,33 +181,47 @@ class PyDetector :
 
 ##-----------------------------
 
+    def _nda_or_none_(self, nda) :
+        return nda if nda.size else None
+
+##-----------------------------
+
     def pedestals(self, evt) :
-        return self.shaped_array(evt, self.da.pedestals(evt, self.env), gu.PEDESTALS)
+        return self._shaped_array_(evt, self.da.pedestals(evt, self.env), gu.PEDESTALS)
 
 ##-----------------------------
 
     def rms(self, evt) :
-        return self.shaped_array(evt, self.da.pixel_rms(evt, self.env), gu.PIXEL_RMS)
+        return self._shaped_array_(evt, self.da.pixel_rms(evt, self.env), gu.PIXEL_RMS)
 
 ##-----------------------------
 
     def gain(self, evt) :
-        return self.shaped_array(evt, self.da.pixel_gain(evt, self.env), gu.PIXEL_GAIN)
+        return self._shaped_array_(evt, self.da.pixel_gain(evt, self.env), gu.PIXEL_GAIN)
 
 ##-----------------------------
 
     def mask(self, evt) :
-        return self.shaped_array(evt, self.da.pixel_mask(evt, self.env), gu.PIXEL_MASK)
+        return self._shaped_array_(evt, self.da.pixel_mask(evt, self.env), gu.PIXEL_MASK)
 
 ##-----------------------------
 
     def bkgd(self, evt) :
-        return self.shaped_array(evt, self.da.pixel_bkgd(evt, self.env), gu.PIXEL_BKGD)
+        return self._shaped_array_(evt, self.da.pixel_bkgd(evt, self.env), gu.PIXEL_BKGD)
 
 ##-----------------------------
 
     def status(self, evt) :
-        return self.shaped_array(evt, self.da.pixel_status(evt, self.env), gu.PIXEL_STATUS)
+        return self._shaped_array_(evt, self.da.pixel_status(evt, self.env), gu.PIXEL_STATUS)
+
+##-----------------------------
+
+    def status_as_mask(self, evt) :
+        """Returns 1/0 for status 0/>0.
+        """
+        stat = self.status(evt)
+        if stat is None : return None
+        return np.select([stat==0, stat>0], [1, 0])
 
 ##-----------------------------
 
@@ -161,61 +247,106 @@ class PyDetector :
 
     def raw_data(self, evt) :
 
-        rdata = None
-        if self.dettype == gu.CSPAD \
-        or self.dettype == gu.CSPAD2X2 : rdata = self.da.data_int16_3 (evt, self.env)
-        elif self.dettype == gu.PNCCD  : rdata = self.da.data_uint16_3(evt, self.env)
-        else :                           rdata = self.da.data_uint16_2(evt, self.env)
+        # get data using python methods
+        rdata = self.pyda.raw_data(evt, self.env)
+        if rdata is not None : return rdata
 
-        return rdata if rdata.size else None
+        if self.pbits :
+            print '!!! PyDetector: Data for source %s is not found in python interface, trying C++' % self.source,
+
+        # get data using C++ methods
+        if   self.dettype == gu.CSPAD    : rdata = self.da.data_int16_3 (evt, self.env)
+        elif self.dettype == gu.CSPAD2X2 : rdata = self.da.data_int16_3 (evt, self.env)
+        elif self.dettype == gu.PNCCD    : rdata = self.da.data_uint16_3(evt, self.env)
+        else :                             rdata = self.da.data_uint16_2(evt, self.env)
+        return self._nda_or_none_(rdata)
+
+##-----------------------------
+
+    def common_mode_apply(self, evt, nda) :
+        """Apply common mode correction to nda (assuming that nda is data ndarray with subtracted pedestals)
+           nda.dtype = np.float32 (or 64) is considered only, because common mode does not make sense for int data.
+        """
+        shape0 = nda.shape
+        nda.shape = (nda.size,)
+        if nda.dtype == np.float64 : self.da.common_mode_double(evt, self.env, nda)
+        if nda.dtype == np.float32 : self.da.common_mode_float (evt, self.env, nda)
+        nda.shape = shape0
+
+##-----------------------------
+
+    def common_mode_correction(self, evt, nda) :
+        """ Returns ndarray with common mode correction offsets. Assumes that nda is data ndarray with subtracted pedestals. 
+        """
+        nda_cm_corr = np.array(nda, dtype=np.float32, copy=True)
+        self.common_mode_apply(evt, nda)
+        return nda_cm_corr - nda
+
+##-----------------------------
+
+    def calib_data(self, evt) :
+        """ Gets raw data ndarray, Applys baic corrections and return thus calibrated data.
+            Applied corrections:
+            - pedestal subtraction
+            - apply mask generated from pixel status
+            - apply common mode correction
+        """        
+        cdata = np.array(self.raw_data(evt), dtype=np.float32, copy=True)
+
+        peds  = self.pedestals(evt)
+        if cdata is not None and peds  is not None : cdata -= peds
+
+        smask = self.status_as_mask(evt)
+        if cdata is not None and smask is not None : cdata *= smask        
+
+        self.common_mode_apply(evt, cdata)
+        return cdata
+
+        #nda_cmcorr = self.common_mode_correction(evt, cdata)
+        #print 'nda_cmcorr[1:5] = ', nda_cmcorr.flatten()[1:5]
+        #return nda_cmcorr
 
 ##-----------------------------
 # Geometry info
 
     def coords_x(self, evt) :
-        nda = self.da.pixel_coords_x(evt, self.env)
-        return nda if nda.size else None
+        return self._nda_or_none_(self.da.pixel_coords_x(evt, self.env))
 
     def coords_y(self, evt) :
-        nda = self.da.pixel_coords_y(evt, self.env)
-        return nda if nda.size else None
+        return self._nda_or_none_(self.da.pixel_coords_y(evt, self.env))
 
     def coords_z(self, evt) :
-        nda = self.da.pixel_coords_z(evt, self.env)
-        return nda if nda.size else None
+        return self._nda_or_none_(self.da.pixel_coords_z(evt, self.env))
 
-    def area(self, evt) :
-        nda = self.da.pixel_area(evt, self.env)
-        return nda if nda.size else None
+    def areas(self, evt) :
+        return self._nda_or_none_(self.da.pixel_areas(evt, self.env))
 
-    def mask(self, evt) :
-        nda = self.da.pixel_mask(evt, self.env)
-        return nda if nda.size else None
+    def mask_geo(self, evt) :
+        return self._nda_or_none_(self.da.pixel_mask_geo(evt, self.env))
 
     def indexes_x(self, evt) :
-        nda = self.da.pixel_indexes_x(evt, self.env)
-        return nda if nda.size else None
+        return self._nda_or_none_(self.da.pixel_indexes_x(evt, self.env))
 
     def indexes_y(self, evt) :
-        nda = self.da.pixel_indexes_y(evt, self.env)
-        return nda if nda.size else None
+        return self._nda_or_none_(self.da.pixel_indexes_y(evt, self.env))
 
     def pixel_size(self, evt) :
         psize = self.da.pixel_scale_size(evt, self.env) # Ex: 109.92 [um]
         return psize if psize != 1 else None
 
-    def image(self, evt, nda) :
-        if nda is None : return None
+    def image(self, evt, nda_in=None) :
+        nda = nda_in if nda_in is not None else self.calib_data(evt)
         nda_img = np.array(nda, dtype=np.double).flatten()
-        img = self.da.get_image(evt, self.env, nda_img)
-        return img if img.size else None
+        return self._nda_or_none_(self.da.get_image(evt, self.env, nda_img))
         
-
 ##-----------------------------
+
+from time import time
 
 if __name__ == "__main__" :
 
     ds, src = psana.DataSource('exp=cxif5315:run=169'), psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    #ds, src = psana.DataSource('exp=xcsi0112:run=15'),  psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 
     env = ds.env()
     cls = env.calibStore()
@@ -226,19 +357,14 @@ if __name__ == "__main__" :
 
     det = PyDetector(src, env, pbits=0)
 
-    det.set_print_bits(255)
-
     nda = det.pedestals(evt)
     print '\nnda:\n', nda
     print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
 
-
-    #d = evt.get(psana.CsPad.DataV2, src)
-    #print 'd.TypeId: ', d.TypeId
-
-    #q0 = d.quads(0)
-    #q0_data = q0.data()
-    #print 'q0_data.shape: ', q0_data.shape
+    t0_sec = time()
+    nda = det.raw_data(evt)
+    print '\nC++ consumed time to get raw data (sec) =', time()-t0_sec
+    print '\nnda:\n', nda.flatten()[0:10]
 
     sys.exit ('Self test is done')
 

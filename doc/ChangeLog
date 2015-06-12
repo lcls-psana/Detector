@@ -11,6 +11,17 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-05
+2015-06-11 Mikhail S. Dubrovin
+- extensive development (PSAS-139) 
+	- add C++/python code for common mode correction
+	- add calib_data(...) method to apply 3 corrections (pedestals, pixel status mask, common mode)
+	- add protection in many places: return None if returning object is non-available
+	- add PyDetectorAccess.py - get all raw data directly from python data objects (it is faster then using boost/python)
+        - add PyDataAccess.py - global methods to access data objects in case of multiple versions.
+	- add examples/ex_cspad.py - for test purpose (may be removed later)
+	- in PyDetector - add beta-version of sphinx documentation
+
 Tag: V00-00-04
 2015-06-02 Mikhail S. Dubrovin
 - update ChangeLog

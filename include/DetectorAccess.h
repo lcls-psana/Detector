@@ -28,6 +28,7 @@
 #include "Detector/NDArrProducerStore.h"
 //#include "Detector/NDArrProducerCSPAD.h"
 #include "PSCalib/GeometryAccess.h"
+#include "ImgAlgos/CommonModeCorrection.h"
 
 //-------------------
 namespace Detector {
@@ -81,6 +82,14 @@ class DetectorAccess {
   const size_t                    size        (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const shape_t,1>        shape       (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
 
+  const pedestals_t*            p_pedestals   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const pixel_rms_t*            p_pixel_rms   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const pixel_gain_t*           p_pixel_gain  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const pixel_mask_t*           p_pixel_mask  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const pixel_bkgd_t*           p_pixel_bkgd  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const pixel_status_t*         p_pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  const common_mode_t*          p_common_mode (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+
   ndarray<const pedestals_t,1>    pedestals   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const pixel_rms_t,1>    pixel_rms   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const pixel_gain_t,1>   pixel_gain  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
@@ -128,6 +137,11 @@ class DetectorAccess {
 
 //-------------------
 
+//  template <typename T>
+//  void apply_common_mode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, T* nda);
+
+//-------------------
+
   // Returns instrument as string
   std::string str_inst(boost::shared_ptr<PSEnv::Env> shp_env);  
 
@@ -150,11 +164,13 @@ class DetectorAccess {
   ImgAlgos::DETECTOR_TYPE  m_dettype;          // numerated detector type source
   PSCalib::CalibPars*      m_calibpars;        // pointer to calibration store
   PSCalib::GeometryAccess* m_geometry;         // pointer to GeometryAccess object
+  ImgAlgos::CommonModeCorrection* m_cmode;     // pointer to CommonModeCorrection object
   PSEvt::Source            m_source;
   std::string              m_str_src;
   std::string              m_cgroup;
   int                      m_runnum;
   int                      m_runnum_geo;
+  int                      m_runnum_cmode;
   unsigned                 m_mode; 
   unsigned                 m_pbits; 
   float                    m_vdef; 
@@ -167,11 +183,30 @@ class DetectorAccess {
 
   void initCalibStore(PSEvt::Event& evt, PSEnv::Env& env);
   void initGeometry(PSEvt::Event& evt, PSEnv::Env& env);
+  void initCommonMode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   void initNDArrProducer();
-};
 
 //-------------------
-} // namespace Detector
+ 
+ public:
+ 
+   template <typename T>
+   void common_mode_apply(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, T* arr)
+     {
+       initCommonMode(shp_evt, shp_env);
+       m_cmode -> do_common_mode<T>(arr);
+     }
+   
+   void common_mode_double(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, ndarray<double, 1> nda)
+      { common_mode_apply<double>(shp_evt, shp_env, nda.data()); }
+
+   void common_mode_float(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, ndarray<float, 1> nda)
+      { common_mode_apply<float>(shp_evt, shp_env, nda.data()); }
+
+//-------------------
+}; // class
+//-------------------
+} // namespace
 //-------------------
 
 #endif // DETECTOR_DETECTORACCESS_H

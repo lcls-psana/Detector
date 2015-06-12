@@ -31,9 +31,11 @@ namespace Detector {
 DetectorAccess::DetectorAccess (const PSEvt::Source& source, const unsigned& pbits)
   : m_calibpars(0)
   , m_geometry(0)
+  , m_cmode(0)
   , m_source(source)
   , m_runnum(-1)
   , m_runnum_geo(-1)
+  , m_runnum_cmode(-1)
   , m_mode(0)
   , m_pbits(pbits)
   , m_vdef(0)
@@ -63,8 +65,125 @@ DetectorAccess::DetectorAccess (const PSEvt::Source& source, const unsigned& pbi
 DetectorAccess::~DetectorAccess ()
 {
   // Does nothing for now
+  if(m_geometry) delete m_geometry;
 }
 
+//-------------------
+
+void 
+DetectorAccess::initCalibStore(PSEvt::Event& evt, PSEnv::Env& env)
+{
+  int runnum = ImgAlgos::getRunNumber(evt);
+  if(runnum == m_runnum) return;
+  m_runnum = runnum;
+
+  if(m_calibpars) delete m_calibpars;
+
+  m_calibdir = env.calibDir();
+
+  if(m_pbits) {
+      std::stringstream ss;
+      ss << "initCalibStore(...):"
+         << "\nInstrument  : " << env.instrument()
+         << "\nCalib dir   : " << m_calibdir 
+         << "\nCalib group : " << m_cgroup 
+         << "\nData source : " << m_str_src
+         << "\nRun number  : " << m_runnum 
+         << "\nPrint bits  : " << m_pbits 
+         << '\n';
+      
+      MsgLog(_name_(), info, ss.str());
+  }
+
+  m_calibpars = PSCalib::CalibParsStore::Create(m_calibdir, m_cgroup, m_str_src, m_runnum, m_pbits);
+}
+
+//-------------------
+
+void 
+DetectorAccess::initGeometry(PSEvt::Event& evt, PSEnv::Env& env)
+{
+  int runnum = ImgAlgos::getRunNumber(evt);
+
+  if(m_geometry) {
+    if(runnum == m_runnum_geo) return;
+    delete m_geometry;
+    m_geometry = 0;
+  }
+
+  m_calibdir = env.calibDir();
+
+  unsigned pbits_cff = (m_pbits & 2) ? 0xffff : 0;
+  PSCalib::CalibFileFinder calibfinder(m_calibdir, m_cgroup, pbits_cff);
+  std::string fname = calibfinder.findCalibFile(m_str_src, "geometry", runnum);
+
+  if(m_pbits) {
+      std::stringstream ss;
+      ss << "initGeometry(...):"
+         << "\nInstrument     : " << env.instrument()
+         << "\nCalib dir      : " << m_calibdir 
+         << "\nCalib group    : " << m_cgroup 
+         << "\nCalib file     : " << fname 
+         << "\nData source    : " << m_str_src
+         << "\nRun requested  : " << runnum 
+         << "\nRun for loaded : " << m_runnum_geo 
+         << "\nPrint bits     : " << m_pbits 
+         << '\n';
+      
+      MsgLog(_name_(), info, ss.str());
+  }
+
+  if(fname.empty()) return;    
+
+  unsigned pbits_ga = (m_pbits & 4) ? 0xffff : 0;
+  m_geometry = new PSCalib::GeometryAccess(fname, pbits_ga);
+  m_runnum_geo = runnum;
+}
+
+
+//-------------------
+
+void 
+DetectorAccess::initNDArrProducer()
+{
+  if(!m_nda_prod) m_nda_prod = NDArrProducerStore::Create(m_source, m_mode, m_pbits, m_vdef); // universal access through the factory store
+}
+
+//-------------------
+
+void 
+DetectorAccess::initCommonMode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  int runnum = ImgAlgos::getRunNumber(*shp_evt);
+  if(runnum == m_runnum_cmode) return;
+  m_runnum_cmode = runnum;
+
+  if(m_cmode) delete m_cmode;
+
+  const DetectorAccess::common_mode_t*  cmod_pars = this->p_common_mode (shp_evt, shp_env); 
+  const DetectorAccess::pixel_status_t* status    = this->p_pixel_status(shp_evt, shp_env);
+  const size_t size = this->size(shp_evt, shp_env);
+
+  if(m_pbits) {
+      std::stringstream ss;
+      ss << "initCommonMode(...):"
+         << "\nInstrument  : " << shp_env->instrument()
+         << "\nData source : " << m_source
+         << "\nRun cmode   : " << m_runnum 
+         << "\nRun number  : " << m_runnum_cmode 
+         << "\nPrint bits  : " << m_pbits 
+         << '\n';
+      
+      MsgLog(_name_(), info, ss.str());
+  }
+
+  m_cmode = new ImgAlgos::CommonModeCorrection(m_source, cmod_pars, size, status, m_pbits);
+}
+
+//-------------------
+//-------------------
+//-------------------
+//-------------------
 //-------------------
 
 const size_t DetectorAccess::ndim(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
@@ -92,12 +211,30 @@ DetectorAccess::shape(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr
 
 //-------------------
 
+const DetectorAccess::pedestals_t*
+DetectorAccess::p_pedestals(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->pedestals(); // constants loaded before call to size()
+}
+
+//-------------------
+
 ndarray<const DetectorAccess::pedestals_t, 1> 
 DetectorAccess::pedestals(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
   const DetectorAccess::pedestals_t* p = m_calibpars->pedestals(); // constants loaded before call to size()
   return make_ndarray(p, m_calibpars->size());
+}
+
+//-------------------
+
+const DetectorAccess::pixel_rms_t*
+DetectorAccess::p_pixel_rms(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->pixel_rms();
 }
 
 //-------------------
@@ -112,12 +249,30 @@ DetectorAccess::pixel_rms(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared
 
 //-------------------
 
+const DetectorAccess::pixel_gain_t*
+DetectorAccess::p_pixel_gain(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->pixel_gain();
+}
+
+//-------------------
+
 ndarray<const DetectorAccess::pixel_gain_t, 1> 
 DetectorAccess::pixel_gain(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
   const DetectorAccess::pixel_gain_t* p = m_calibpars->pixel_gain();
   return make_ndarray(p, m_calibpars->size());
+}
+
+//-------------------
+
+const DetectorAccess::pixel_mask_t*
+DetectorAccess::p_pixel_mask(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->pixel_mask();
 }
 
 //-------------------
@@ -132,6 +287,15 @@ DetectorAccess::pixel_mask(boost::shared_ptr<PSEvt::Event> shp_evt, boost::share
 
 //-------------------
 
+const DetectorAccess::pixel_bkgd_t*
+DetectorAccess::p_pixel_bkgd(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->pixel_bkgd();
+}
+
+//-------------------
+
 ndarray<const DetectorAccess::pixel_bkgd_t, 1> 
 DetectorAccess::pixel_bkgd(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
@@ -142,12 +306,30 @@ DetectorAccess::pixel_bkgd(boost::shared_ptr<PSEvt::Event> shp_evt, boost::share
 
 //-------------------
 
+const DetectorAccess::pixel_status_t*
+DetectorAccess::p_pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->pixel_status();
+}
+
+//-------------------
+
 ndarray<const DetectorAccess::pixel_status_t, 1> 
 DetectorAccess::pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initCalibStore(*shp_evt, *shp_env);
   const DetectorAccess::pixel_status_t* p = m_calibpars->pixel_status();
   return make_ndarray(p, m_calibpars->size());
+}
+
+//-------------------
+
+const DetectorAccess::common_mode_t*
+DetectorAccess::p_common_mode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+{
+  initCalibStore(*shp_evt, *shp_env);
+  return m_calibpars->common_mode();
 }
 
 //-------------------
@@ -170,91 +352,6 @@ DetectorAccess::status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_pt
 {
   initCalibStore(*shp_evt, *shp_env);
   return m_calibpars->status((const PSCalib::CALIB_TYPE)calibtype);
-}
-
-//-------------------
-//-------------------
-//-------------------
-//-------------------
-
-void 
-DetectorAccess::initCalibStore(PSEvt::Event& evt, PSEnv::Env& env)
-{
-  int runnum = ImgAlgos::getRunNumber(evt);
-  if(runnum == m_runnum) return;
-  m_runnum = runnum;
-
-  if(m_calibpars) delete m_calibpars;
-
-  m_calibdir = env.calibDir();
-
-  if(m_pbits) {
-      std::stringstream ss;
-      ss << "in initCalibStore(...):"
-         << "\nInstrument  : " << env.instrument()
-         << "\nCalib dir   : " << m_calibdir 
-         << "\nCalib group : " << m_cgroup 
-         << "\nData source : " << m_str_src
-         << "\nRun number  : " << m_runnum 
-         << "\nPrint bits  : " << m_pbits 
-         << '\n';
-      
-      MsgLog(_name_(), info, ss.str());
-  }
-
-  m_calibpars = PSCalib::CalibParsStore::Create(m_calibdir, m_cgroup, m_str_src, m_runnum, m_pbits);
-}
-
-//-------------------
-//-------------------
-
-void 
-DetectorAccess::initGeometry(PSEvt::Event& evt, PSEnv::Env& env)
-{
-  int runnum = ImgAlgos::getRunNumber(evt);
-
-  if(m_geometry) {
-    if(runnum == m_runnum_geo) return;
-    delete m_geometry;
-    m_geometry = 0;
-  }
-
-  m_calibdir = env.calibDir();
-
-  unsigned pbits_cff = (m_pbits & 2) ? 0xffff : 0;
-  PSCalib::CalibFileFinder calibfinder(m_calibdir, m_cgroup, pbits_cff);
-  std::string fname = calibfinder.findCalibFile(m_str_src, "geometry", runnum);
-
-  if(m_pbits) {
-      std::stringstream ss;
-      ss << "in initGeometry(...):"
-         << "\nInstrument     : " << env.instrument()
-         << "\nCalib dir      : " << m_calibdir 
-         << "\nCalib group    : " << m_cgroup 
-         << "\nCalib file     : " << fname 
-         << "\nData source    : " << m_str_src
-         << "\nRun requested  : " << runnum 
-         << "\nRun for loaded : " << m_runnum_geo 
-         << "\nPrint bits     : " << m_pbits 
-         << '\n';
-      
-      MsgLog(_name_(), info, ss.str());
-  }
-
-  if(fname.empty()) return;    
-
-  unsigned pbits_ga = (m_pbits & 4) ? 0xffff : 0;
-  m_geometry = new PSCalib::GeometryAccess(fname, pbits_ga);
-  m_runnum_geo = runnum;
-}
-
-//-------------------
-//-------------------
-
-void 
-DetectorAccess::initNDArrProducer()
-{
-  if(!m_nda_prod) m_nda_prod = NDArrProducerStore::Create(m_source, m_mode, m_pbits, m_vdef); // universal access through the factory store
 }
 
 //-------------------
@@ -463,6 +560,7 @@ DetectorAccess::get_image(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared
 //-------------------
 //-------------------
 //-------------------
+//-------------------
 
 void DetectorAccess::print()
 {
@@ -484,6 +582,26 @@ std::string DetectorAccess::str_inst(boost::shared_ptr<PSEnv::Env> shp_env)
 {  
   return shp_env->instrument().c_str();
 }
+
+//-------------------
+
+/*
+  template <typename T>
+  void DetectorAccess::apply_common_mode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, T* nda)
+    {
+      initCommonMode(shp_evt, shp_env);
+      m_cmode -> do_common_mode<T>(nda);
+    }
+
+template void DetectorAccess::apply_common_mode<double>  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, double* nda);
+template void DetectorAccess::apply_common_mode<float>   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, float* nda);
+template void DetectorAccess::apply_common_mode<int>     (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, int* nda);
+template void DetectorAccess::apply_common_mode<int16_t> (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, int16_t* nda);
+template void DetectorAccess::apply_common_mode<uint16_t>(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, uint16_t* nda);
+*/
+
+//-------------------
+
 
 //-------------------
 } // namespace Detector
