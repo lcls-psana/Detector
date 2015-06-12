@@ -31,5 +31,4 @@ Import('*')
 #
 #standardSConscript()
 
-standardSConscript(PYEXTMOD="detector_ext")
-#, DOCGEN="doxy-all psana-modules-doxy")
+standardSConscript(PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref")

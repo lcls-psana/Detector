@@ -62,8 +62,8 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def print_attributes(self) :
-        print 'print_attributes():\n  source: %s\n  dtype : %d\n  pbits : %d' % \
-              (self.source, self.dettype, self.pbits)
+        print 'PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d\n  do_offset : %s' % \
+              (self.source, self.dettype, self.pbits, self.do_offset)
 
 ##-----------------------------
 
@@ -235,7 +235,7 @@ class PyDetectorAccess :
         #c = pda.get_camera_config_object(env, self.source)
         #if c is None : return None
 
-        print 'data width: %d, height: %d, depth: %d, offset: %f' % (d.width(), d.height(), d.depth(), d.offset())
+        #print 'data width: %d, height: %d, depth: %d, offset: %f' % (d.width(), d.height(), d.depth(), d.offset())
         offset = d.offset()
         
         d16 = d.data16()

@@ -52,6 +52,7 @@ print 80*'_', '\nInstrument: ', ins
 #det.set_print_bits(511);
 #det.set_def_value(-5.);
 #det.set_mode(1);
+#det.set_do_offset(True); # works for ex. Opal1000
 det.print_members()
 
 shape_nda = det.shape(evt)

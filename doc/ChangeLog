@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-06
+2015-06-12 Mikhail S. Dubrovin
+- fix sphinx documentation, cosmetic changes.
+- set SConscript to generate documentation 
+	
 Tag: V00-00-05
 2015-06-11 Mikhail S. Dubrovin
 - extensive development (PSAS-139) 

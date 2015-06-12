@@ -12,9 +12,10 @@
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on C++ or python.
 
-
 Usage::
-    import sys
+
+    # !!! None is returned everywhere when requested information is missing.
+
     import psana
     from Detector.PyDetector import PyDetector    
 
@@ -29,7 +30,9 @@ Usage::
 
     # set parameters, if changed
     det.set_env(env)
+    det.set_source(source)
     det.set_print_bits(pbits)
+    det.set_do_offset(do_offset=False)
 
     det.print_members()    
     det.print_config(evt)
@@ -47,8 +50,8 @@ Usage::
     gain   = det.gain(evt)
     bkgd   = det.bkgd(evt)
     status = det.status(evt)
-    status_mask = det.status_as_mask(evt)
-    cmod = det.common_mode(evt)
+    stmask = det.status_as_mask(evt)
+    cmod   = det.common_mode(evt)
 
     # get raw data
     nda_raw = det.raw_data(evt)
@@ -56,23 +59,23 @@ Usage::
     # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
     nda_cdata = det.calib_data(evt)
 
+    # common mode correction for pedestal-subtracted numpy array nda:
+    det.common_mode_apply(evt, nda)
+    cm_corr_nda = det.common_mode_correction(self, evt, nda)
+
     # access geometry information
-    coords_x = det.coords_x(evt)
-    coords_y = det.coords_y(evt)
-    coords_z = det.coords_z(evt)
-    areas    = det.areas(evt)
-    mask_geo  = det.mask_geo(evt)
-    ind_x     = det.indexes_x(evt)
-    ind_y     = det.indexes_y(evt)
+    coords_x   = det.coords_x(evt)
+    coords_y   = det.coords_y(evt)
+    coords_z   = det.coords_z(evt)
+    areas      = det.areas(evt)
+    mask_geo   = det.mask_geo(evt)
+    ind_x      = det.indexes_x(evt)
+    ind_y      = det.indexes_y(evt)
     pixel_size = det.pixel_size(evt)
 
     # reconstruct image
-    img = det.image(evt) # uses calib_data by default
+    img = det.image(evt) # uses calib_data(...) by default
     img = det.image(evt, img_nda)
-
-    # common mode correction for pedestal-subtracted ndarray nda:
-    det.common_mode_apply(evt, nda)
-    cm_corr_nda = det.common_mode_correction(self, evt, nda)
 
 
 This software was developed for the LCLS project.
@@ -101,8 +104,8 @@ class PyDetector :
 
     Low level access is implemented on C++ through boost::python wrapper or direct python
 
-    @see DetectorAccess
-    @see PyDetectorAccess
+    @see DetectorAccess - c++ access interface to data
+    @see PyDetectorAccess - Python access interface to data
     """
 
 ##-----------------------------
@@ -128,11 +131,17 @@ class PyDetector :
 ##-----------------------------
 
     def print_members(self) :
-        print 'Members of the class: PyDetector', \
+        print 'PyDetector attributes:', \
               '\n  source : %s' % self.source, \
               '\n  dettype: %d' % self.dettype, \
               '\n  detname: %s' % gu.det_name_from_type(self.dettype), \
               '\n  pbits  : %d\n' % self.pbits
+        self.pyda.print_attributes()
+
+##-----------------------------
+
+    def set_print_bits(self, pbits) :
+        self.da.set_print_bits(pbits)
 
 ##-----------------------------
 
@@ -147,6 +156,13 @@ class PyDetector :
         self.source = source
         self.pyda.set_source(source)
         #self.da.set_source(source)
+
+##-----------------------------
+
+    def set_do_offset(self, do_offset=False) :
+        """On/off application of offset in raw_data_camera(...)
+        """
+        self.pyda.set_do_offset(do_offset)
 
 ##-----------------------------
 
@@ -237,11 +253,6 @@ class PyDetector :
 
     def print_config(self, evt) :
         self.da.print_config(evt, self.env)
-
-##-----------------------------
-
-    def set_print_bits(self, pbits) :
-        self.da.set_print_bits(pbits)
 
 ##-----------------------------
 
