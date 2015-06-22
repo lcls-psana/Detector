@@ -11,6 +11,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-07
+2015-06-22 Mikhail S. Dubrovin
+- Add implementation and access to Acqiris through PyDetector.raw_data() (PSAS-139)
+  - PyDataAccess.py add get_acqiris_data_object(.) and get_acqiris_config_object(.)
+  - PyDetector.py add documentation for Acqiris
+  - PyDetectorAccess.py add implementation raw_data_acqiris(.), set_correct_acqiris_time(.), raw_data(.)
+  - add examples/ex_acqiris.py
+
 Tag: V00-00-06
 2015-06-12 Mikhail S. Dubrovin
 - fix sphinx documentation, cosmetic changes.

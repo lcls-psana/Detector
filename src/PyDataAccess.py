@@ -175,3 +175,26 @@ def get_epix_config_object(env, src) :
     
 ##-----------------------------
 ##-----------------------------
+
+def get_acqiris_data_object(evt, src) :
+    """get acqiris data object
+    """
+    o = evt.get(psana.Acqiris.DataDescV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+##-----------------------------
+
+def get_acqiris_config_object(env, src) :
+    """get acqiris config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(psana.Acqiris.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+##-----------------------------

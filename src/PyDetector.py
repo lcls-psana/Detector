@@ -77,6 +77,11 @@ Usage::
     img = det.image(evt) # uses calib_data(...) by default
     img = det.image(evt, img_nda)
 
+    # access Acqiris data
+    det.set_correct_acqiris_time(correct_time=True) # (by default)
+    wf, wt = det.raw_data(evt)
+    returns two np.array-s with shape = (nbrChannels, nbrSamples) for waveform and associated timestamps.
+    
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.

@@ -56,14 +56,16 @@ class PyDetectorAccess :
         self.pbits  = pbits
         self.dettype = gu.det_type_from_source(source)
         self.do_offset = False # works for camera
-
+        self.correct_time = True # works for acqiris
         if self.pbits & 1 : self.print_attributes()
 
 ##-----------------------------
 
     def print_attributes(self) :
-        print 'PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d\n  do_offset : %s' % \
-              (self.source, self.dettype, self.pbits, self.do_offset)
+        print 'PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d' % \
+              (self.source, self.dettype, self.pbits), \
+              '\n  do_offset (Camera): %s\n  correct_time (Acqiris): %s' % \
+              (self.do_offset, self.correct_time)
 
 ##-----------------------------
 
@@ -134,6 +136,13 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def set_correct_acqiris_time(self, correct_time=True) :
+        """On/off correction of time for acqiris
+        """
+        self.correct_time = correct_time
+
+##-----------------------------
+
     def raw_data(self, evt, env) :
 
         #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
@@ -148,6 +157,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.EPIX100A  : return self.raw_data_epix(evt, env)      # 0.3 ms
         elif self.dettype == gu.EPIX10K   : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.EPIX      : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.ACQIRIS   : return self.raw_data_acqiris(evt, env)
         elif self.dettype == gu.OPAL1000  : return self.raw_data_camera(evt, env)    # 1 ms
         elif self.dettype == gu.OPAL2000  : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.OPAL4000  : return self.raw_data_camera(evt, env)
@@ -341,6 +351,68 @@ class PyDetectorAccess :
 
         nda = d.frame()
         return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_acqiris(self, evt, env) :
+        """returns two 2-d ndarrays wf,wt with shape=(nbrChannels, nbrSamples) or None
+        """
+        # data object
+        d = pda.get_acqiris_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        c = pda.get_acqiris_config_object(env, self.source)
+        if c is None : return None
+
+        #nchan = d.data_shape()[0]
+        nbrChannels = c.nbrChannels()
+
+        h = c.horiz()
+        sampInterval = h.sampInterval()
+        nbrSamples = h.nbrSamples()
+
+        if self.pbits & 4 : print '  nbrChannels: %d, H-nbrSamples: %d, H-sampInterval: %g' \
+           % (nbrChannels, nbrSamples, sampInterval)
+
+        shape = (nbrChannels, nbrSamples)
+        wf = np.zeros(shape, dtype=np.float)
+        wt = np.zeros(shape, dtype=np.float)
+
+        for chan in range(nbrChannels) :
+            elem = d.data(chan)
+            vert = c.vert()[chan]
+
+            slope = vert.slope()
+            offset= vert.offset()
+
+            nbrSegments     = elem.nbrSegments()
+            nbrSamplesInSeg = elem.nbrSamplesInSeg()
+            indexFirstPoint = elem.indexFirstPoint()
+            tstamps         = elem.timestamp()
+            wforms          = elem.waveforms()
+
+            if self.pbits & 4 :
+                print '    chan: %d,  nbrSegments: %d,  nbrSamplesInSeg: %d,  indexFirstPoint: %d,' \
+                  % (chan, nbrSegments, nbrSamplesInSeg, indexFirstPoint), \
+                  '  V-slope: %f,  V-offset: %f,  H-pos[seg=0]: %g' % (slope,  offset, tstamps[0].pos())
+
+            for seg in range(nbrSegments) :
+                raw = wforms[seg]
+                pos = tstamps[seg].pos()       
+                i0_seg = seg * nbrSamplesInSeg + int(pos/sampInterval) if self.correct_time else seg * nbrSamplesInSeg
+                size = nbrSamplesInSeg if (i0_seg + nbrSamplesInSeg) <= nbrSamples else nbrSamples - i0_seg
+
+                if self.correct_time :
+                    if (indexFirstPoint + size) > nbrSamplesInSeg : size = nbrSamplesInSeg - indexFirstPoint
+
+                    wf[chan, i0_seg:i0_seg+size] = raw[indexFirstPoint:indexFirstPoint+size]*slope - offset
+                else :
+                    wf[chan, i0_seg:i0_seg+size] = raw[0:size]*slope - offset
+
+                wt[chan, i0_seg:i0_seg+size] = np.arange(size)*sampInterval + pos
+
+        return wf, wt
 
 ##-----------------------------
 
