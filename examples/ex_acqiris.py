@@ -27,7 +27,7 @@ det = PyDetector(src, env, pbits=0)
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins
 
-det.print_members()
+det.print_attributes()
 
 ##-----------------------------
 
@@ -38,7 +38,7 @@ def print_ndarr(nda, name='', first=0, last=5) :
 
 ##-----------------------------
 
-wf,wt = det.raw_data(evt)
+wf,wt = det.raw(evt)
 
 print_ndarr(wf, 'acqiris waveform')
 print_ndarr(wt, 'acqiris wavetime')

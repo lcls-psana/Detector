@@ -477,13 +477,13 @@ ndarray<const double, 1> DetectorAccess::pixel_areas(boost::shared_ptr<PSEvt::Ev
 
 //-------------------
 
-ndarray<const int, 1> DetectorAccess::pixel_mask_geo(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
+// mbits=0377; // 1-edges; 2-wide central cols; 4-non-bound; 8-non-bound neighbours
+ndarray<const int, 1> DetectorAccess::pixel_mask_geo(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const unsigned& mbits)
 {
   initGeometry(*shp_evt, *shp_env);
 
   const int* mask;
   unsigned   size;
-  unsigned   mbits=0377; // 1-edges; 2-wide central cols; 4-non-bound; 8-non-bound neighbours
 
   if(m_geometry==0) return ndarray<const int, 1>();
   m_geometry -> get_pixel_mask(mask, size, std::string(), 0, mbits);

@@ -53,7 +53,7 @@ print 80*'_', '\nInstrument: ', ins
 #det.set_def_value(-5.);
 #det.set_mode(1);
 #det.set_do_offset(True); # works for ex. Opal1000
-det.print_members()
+det.print_attributes()
 
 shape_nda = det.shape(evt)
 print_ndarr(shape_nda, 'shape of ndarray')
@@ -86,18 +86,18 @@ cmod = det.common_mode(evt)
 print_ndarr(cmod, 'common_mod')
 
 t0_sec = time()
-nda_raw = det.raw_data(evt)
+nda_raw = det.raw(evt)
 print '%s\n **** consumed time to get raw data = %f sec' % (80*'_', time()-t0_sec)
 
 i=0
 if nda_raw is None :
     for i, evt in enumerate(ds.events()) :
-        nda_raw = det.raw_data(evt)
+        nda_raw = det.raw(evt)
         if nda_raw is not None :
             print 'Detector data found in event %d' % i
             break
 
-print_ndarr(nda_raw, 'Raw data')
+print_ndarr(nda_raw, 'raw data')
 
 if nda_raw is None :
     print 'Detector data IS NOT FOUND in %d events' % i
@@ -108,8 +108,8 @@ if nda_raw is None :
 data_sub_peds = nda_raw - peds if peds is not None else nda_raw
 print_ndarr(data_sub_peds, 'data - peds')
 
-nda_cdata = det.calib_data(evt)
-print_ndarr(nda_cdata, 'calib_data')
+nda_cdata = det.calib(evt)
+print_ndarr(nda_cdata, 'calibrated data')
 
 coords_x = det.coords_x(evt)
 print_ndarr(coords_x, 'coords_x')

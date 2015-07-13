@@ -34,7 +34,7 @@ Usage::
     det.set_print_bits(pbits)
     det.set_do_offset(do_offset=False)
 
-    det.print_members()    
+    det.print_attributes()    
     det.print_config(evt)
 
     # get pixel array shape, size, and nomber of dimensions
@@ -46,18 +46,18 @@ Usage::
     # access intensity calibration parameters
     peds   = det.pedestals(evt)
     rms    = det.rms(evt)
-    mask   = det.mask(evt)
     gain   = det.gain(evt)
     bkgd   = det.bkgd(evt)
     status = det.status(evt)
     stmask = det.status_as_mask(evt)
+    mask   = det.mask_calib(evt)
     cmod   = det.common_mode(evt)
 
     # get raw data
-    nda_raw = det.raw_data(evt)
+    nda_raw = det.raw(evt)
 
     # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
-    nda_cdata = det.calib_data(evt)
+    nda_cdata = det.calib(evt)
 
     # common mode correction for pedestal-subtracted numpy array nda:
     det.common_mode_apply(evt, nda)
@@ -68,18 +68,21 @@ Usage::
     coords_y   = det.coords_y(evt)
     coords_z   = det.coords_z(evt)
     areas      = det.areas(evt)
-    mask_geo   = det.mask_geo(evt)
+    mask_geo   = det.mask_geo(evt, mbits=15) # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
     ind_x      = det.indexes_x(evt)
     ind_y      = det.indexes_y(evt)
     pixel_size = det.pixel_size(evt)
 
+    # access to combined mask
+    mask = det.mask(evt, calib=True, status=False, edges=False, central=False, unbound=False, unb_nbrs=False)
+
     # reconstruct image
-    img = det.image(evt) # uses calib_data(...) by default
+    img = det.image(evt) # uses calib(...) by default
     img = det.image(evt, img_nda)
 
     # access Acqiris data
     det.set_correct_acqiris_time(correct_time=True) # (by default)
-    wf, wt = det.raw_data(evt)
+    wf, wt = det.raw(evt)
     returns two np.array-s with shape = (nbrChannels, nbrSamples) for waveform and associated timestamps.
     
 
@@ -104,6 +107,23 @@ from Detector.PyDetectorAccess import PyDetectorAccess
 
 ##-----------------------------
 
+def merge_masks(mask1=None, mask2=None) :
+    """Merging masks using rule: (0,1,0,1)^(0,0,1,1) = (0,0,0,1) 
+    """
+    if mask1 is None : return mask2
+    if mask2 is None : return mask1
+
+    shape1 = mask1.shape
+    shape2 = mask2.shape
+
+    if shape1 != shape2 :
+        if len(shape1) > len(shape2) : mask2.shape = shape1
+        else                         : mask1.shape = shape2
+
+    return np.logical_and(mask1, mask2)
+
+##-----------------------------
+
 class PyDetector :
     """Python access to detector data.
 
@@ -120,7 +140,6 @@ class PyDetector :
         @param source - data source, ex: psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
         @param pbits  - print control bit-word
         """
-
         #print 'In c-tor DetPyAccess'
 
         self.source  = source
@@ -136,7 +155,14 @@ class PyDetector :
 ##-----------------------------
 
     def print_members(self) :
-        print 'PyDetector attributes:', \
+        """Depricated method renamed to print_attributes() 
+        """
+        self.print_attributes()
+
+##-----------------------------
+
+    def print_attributes(self) :
+        print 'PyDetector object attributes:', \
               '\n  source : %s' % self.source, \
               '\n  dettype: %d' % self.dettype, \
               '\n  detname: %s' % gu.det_name_from_type(self.dettype), \
@@ -203,6 +229,8 @@ class PyDetector :
 ##-----------------------------
 
     def _nda_or_none_(self, nda) :
+        """Returns  ndarray or None
+        """
         return nda if nda.size else None
 
 ##-----------------------------
@@ -222,7 +250,7 @@ class PyDetector :
 
 ##-----------------------------
 
-    def mask(self, evt) :
+    def mask_calib(self, evt) :
         return self._shaped_array_(evt, self.da.pixel_mask(evt, self.env), gu.PIXEL_MASK)
 
 ##-----------------------------
@@ -262,7 +290,15 @@ class PyDetector :
 ##-----------------------------
 
     def raw_data(self, evt) :
+        """Depricated method renamed to raw(evt) 
+        """
+        return self.raw(evt)
 
+##-----------------------------
+
+    def raw(self, evt) :
+        """Returns np.array with raw data
+        """
         # get data using python methods
         rdata = self.pyda.raw_data(evt, self.env)
         if rdata is not None : return rdata
@@ -301,13 +337,20 @@ class PyDetector :
 ##-----------------------------
 
     def calib_data(self, evt) :
+        """Depricated method renamed to calib(evt) 
+        """
+        return self.calib(evt)
+
+##-----------------------------
+
+    def calib(self, evt) :
         """ Gets raw data ndarray, Applys baic corrections and return thus calibrated data.
             Applied corrections:
             - pedestal subtraction
             - apply mask generated from pixel status
             - apply common mode correction
         """        
-        cdata = np.array(self.raw_data(evt), dtype=np.float32, copy=True)
+        cdata = np.array(self.raw(evt), dtype=np.float32, copy=True)
 
         peds  = self.pedestals(evt)
         if cdata is not None and peds  is not None : cdata -= peds
@@ -321,6 +364,23 @@ class PyDetector :
         #nda_cmcorr = self.common_mode_correction(evt, cdata)
         #print 'nda_cmcorr[1:5] = ', nda_cmcorr.flatten()[1:5]
         #return nda_cmcorr
+
+##-----------------------------
+
+    def mask(self, evt, calib=True, status=False, edges=False, central=False, unbound=False, unbnbrs=False) :
+        """Returns combined mask
+        """
+        mask_nda = None
+        if calib  : mask_nda = self.mask_calib(evt)
+        if status : mask_nda = merge_masks(mask_nda, self.status_as_mask(evt)) 
+
+        mbits = 0
+        if edges   : mbits += 1
+        if central : mbits += 2
+        if unbound : mbits += 4
+        if unbnbrs : mbits += 8
+        if mbits : mask_nda = merge_masks(mask_nda, self.mask_geo(evt, mbits)) 
+        return mask_nda
 
 ##-----------------------------
 # Geometry info
@@ -337,8 +397,8 @@ class PyDetector :
     def areas(self, evt) :
         return self._nda_or_none_(self.da.pixel_areas(evt, self.env))
 
-    def mask_geo(self, evt) :
-        return self._nda_or_none_(self.da.pixel_mask_geo(evt, self.env))
+    def mask_geo(self, evt, mbits=255) :
+        return self._nda_or_none_(self.da.pixel_mask_geo(evt, self.env, mbits))
 
     def indexes_x(self, evt) :
         return self._nda_or_none_(self.da.pixel_indexes_x(evt, self.env))
@@ -351,7 +411,7 @@ class PyDetector :
         return psize if psize != 1 else None
 
     def image(self, evt, nda_in=None) :
-        nda = nda_in if nda_in is not None else self.calib_data(evt)
+        nda = nda_in if nda_in is not None else self.calib(evt)
         nda_img = np.array(nda, dtype=np.double).flatten()
         return self._nda_or_none_(self.da.get_image(evt, self.env, nda_img))
         
@@ -378,7 +438,7 @@ if __name__ == "__main__" :
     print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
 
     t0_sec = time()
-    nda = det.raw_data(evt)
+    nda = det.raw(evt)
     print '\nC++ consumed time to get raw data (sec) =', time()-t0_sec
     print '\nnda:\n', nda.flatten()[0:10]
 

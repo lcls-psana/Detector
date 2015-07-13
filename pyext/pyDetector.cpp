@@ -58,7 +58,7 @@ ndarray<const double, 1>     (DetectorAccess::*pgeo_2) (boost::shared_ptr<PSEvt:
 ndarray<const double, 1>     (DetectorAccess::*pgeo_3) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_coords_z;
 
 ndarray<const double, 1>     (DetectorAccess::*pgeo_4) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_areas;
-ndarray<const int, 1>        (DetectorAccess::*pgeo_5) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_mask_geo;
+ndarray<const int, 1>        (DetectorAccess::*pgeo_5) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, const unsigned&) = &DetectorAccess::pixel_mask_geo;
 
 ndarray<const unsigned, 1>   (DetectorAccess::*pgeo_6) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_indexes_x;
 ndarray<const unsigned, 1>   (DetectorAccess::*pgeo_7) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_indexes_y;
@@ -137,7 +137,8 @@ BOOST_PYTHON_MODULE(detector_ext)
     .def("set_def_value",      set_3)
     .def("print_members",      print_1)
     .def("print_config",       print_2)
-    .def("instrument",         &DetectorAccess::str_inst);
+    .def("instrument",         &DetectorAccess::str_inst)
+  ;
 }
 
 //-------------------

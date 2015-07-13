@@ -11,6 +11,22 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-08
+2015-07-13 Mikhail S. Dubrovin
+- Re-implement mask method to generate combined mask array, rename methods by user's request (PSAS-139)
+  - DetectorAccess, pyext/pyDetector.cpp add parameter mbits in method pixel_mask_geo
+  - PyDetector.py
+	- rename method raw_data -> raw
+	- rename method calib_data -> calib
+	- rename method mask -> mask_calib
+	- rename method print_members -> print_attributes
+	- add parameter mbits in method mask_geo
+	- add method mask(.)
+	- adjust sphinx doc.
+  - Add examples/ex_mask.py
+  - Adjust other examples for renamed methods.
+
+	
 Tag: V00-00-07
 2015-06-22 Mikhail S. Dubrovin
 - Add implementation and access to Acqiris through PyDetector.raw_data() (PSAS-139)
