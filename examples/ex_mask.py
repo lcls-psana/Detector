@@ -39,8 +39,7 @@ def print_ndarr(nda, name='', first=0, last=5) :
 det = PyDetector(src, env, pbits=0)
 
 det.print_attributes()
-
-mask = det.mask(evt, calib=True, status=True, edges=True, central=True, unbound=True, unbnbrs=True)
+mask = det.mask(evt, calib=True, status=True, edges=True, central=True, unbond=True, unbondnbrs=True)
 print_ndarr(mask, 'mask')
 
 ##-----------------------------

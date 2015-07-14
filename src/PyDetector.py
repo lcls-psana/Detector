@@ -74,7 +74,8 @@ Usage::
     pixel_size = det.pixel_size(evt)
 
     # access to combined mask
-    mask = det.mask(evt, calib=True, status=False, edges=False, central=False, unbound=False, unb_nbrs=False)
+    NOTE: by default none of mask keywords is set to True, returns None.
+    mask = det.mask(evt, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
 
     # reconstruct image
     img = det.image(evt) # uses calib(...) by default
@@ -367,7 +368,7 @@ class PyDetector :
 
 ##-----------------------------
 
-    def mask(self, evt, calib=True, status=False, edges=False, central=False, unbound=False, unbnbrs=False) :
+    def mask(self, evt, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False) :
         """Returns combined mask
         """
         mask_nda = None
@@ -375,11 +376,12 @@ class PyDetector :
         if status : mask_nda = merge_masks(mask_nda, self.status_as_mask(evt)) 
 
         mbits = 0
-        if edges   : mbits += 1
-        if central : mbits += 2
-        if unbound : mbits += 4
-        if unbnbrs : mbits += 8
-        if mbits : mask_nda = merge_masks(mask_nda, self.mask_geo(evt, mbits)) 
+        if edges      : mbits += 1
+        if central    : mbits += 2
+        if unbond     : mbits += 4
+        if unbondnbrs : mbits += 8
+
+        if mbits      : mask_nda = merge_masks(mask_nda, self.mask_geo(evt, mbits)) 
         return mask_nda
 
 ##-----------------------------

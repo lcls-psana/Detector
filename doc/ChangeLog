@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-00-09
+2015-07-14 Mikhail S. Dubrovin
+- PyDetector.py - change interface to mask(.) as users requested (PSAS-139)
+
 Tag: V00-00-08
 2015-07-13 Mikhail S. Dubrovin
 - Re-implement mask method to generate combined mask array, rename methods by user's request (PSAS-139)
