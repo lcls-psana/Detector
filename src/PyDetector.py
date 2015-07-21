@@ -344,20 +344,45 @@ class PyDetector :
 
 ##-----------------------------
 
+    def _print_warning(self, msg='') :
+        print '\nWARNING! %s: %s' % (self.__class__.__name__, msg)
+
+##-----------------------------
+
     def calib(self, evt) :
         """ Gets raw data ndarray, Applys baic corrections and return thus calibrated data.
             Applied corrections:
             - pedestal subtraction
             - apply mask generated from pixel status
             - apply common mode correction
-        """        
-        cdata = np.array(self.raw(evt), dtype=np.float32, copy=True)
+        """
+
+        raw = self.raw(evt) 
+        if raw is None :
+            if self.pbits & 32 : self._print_warning('calib(...) - raw data are missing.')
+            return None
 
         peds  = self.pedestals(evt)
-        if cdata is not None and peds  is not None : cdata -= peds
+        if peds is None :
+            if self.pbits & 32 : self._print_warning('calib(...) - pedestals are missing.')
+            return None
+        
+        if raw.shape != peds.shape :
+            if self.pbits & 32 :
+                msg = 'calib(...) - raw.shape = %s is different from peds.shape = %s' \
+                      % (str(raw.shape), str(peds.shape))
+                self._print_warning(msg)
+            return None
+
+        cdata = np.array(raw, dtype=np.float32, copy=True)
+        cdata -= peds
 
         smask = self.status_as_mask(evt)
-        if cdata is not None and smask is not None : cdata *= smask        
+
+        if smask is None :
+            if self.pbits & 32 : self._print_warning('calib(...) - mask is missing.')
+        else :
+            cdata *= smask        
 
         self.common_mode_apply(evt, cdata)
         return cdata
