@@ -10,6 +10,10 @@ Package author: Mikhail S. Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+Tag: V00-00-11
+2015-08-05 Mikhail S. Dubrovin
+- mainor extension of examples.
+
 Tag: V00-00-10
 2015-07-21 Mikhail S. Dubrovin
 - PyDetector.py - add protection and warnings for missing data/pedestal/mask in calib(.) (PSAS-139)

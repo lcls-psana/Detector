@@ -6,11 +6,13 @@ import Detector
 
 # psana -m EventKeys -n 5 exp=amob5114:run=403
 
-ds  = psana.DataSource('exp=amob5114:run=403')
+# ds  = psana.DataSource('exp=amob5114:run=403')
+ds  = psana.DataSource('exp=amo86615:run=4')
 evt = ds.events().next()
 env = ds.env()
 
-src = psana.Source('DetInfo(Camp.0:pnCCD.0)')
+#src = psana.Source('DetInfo(Camp.0:pnCCD.0)')
+src = psana.Source('DetInfo(Camp.0:pnCCD.1)')
 
 det = Detector.DetectorAccess(src, 0) # , 0xffff)
 

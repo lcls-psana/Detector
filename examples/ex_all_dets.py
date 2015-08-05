@@ -21,6 +21,7 @@ elif ntest==6 : dsname, src = 'exp=sxrf9414:run=72',  psana.Source('DetInfo(SxrE
 elif ntest==7 : dsname, src = 'exp=xcsi0112:run=15',  psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 elif ntest==8 : dsname, src = 'exp=amo42112:run=120', psana.Source('DetInfo(AmoBPS.0:Opal1000.0)')
 elif ntest==9 : dsname, src = 'exp=cxib2313:run=46',  psana.Source('DetInfo(CxiDg2.0:Tm6740.0)')
+elif ntest==10 : dsname, src = 'exp=amo86615:run=4',  psana.Source('DetInfo(Camp.0:pnCCD.0)')
 #elif ntest==10 : dsname, src = '',  psana.Source('DetInfo()')
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
@@ -44,7 +45,7 @@ def print_ndarr(nda, name='', first=0, last=5) :
 
 ##-----------------------------
 
-det = PyDetector(src, env, pbits=0)
+det = PyDetector(src, env, pbits=32)
 
 ins = det.instrument()
 
