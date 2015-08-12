@@ -1,0 +1,132 @@
+#!/usr/bin/env python
+
+##-----------------------------
+import os
+import sys
+import psana
+import numpy as np
+from time import time
+from Detector.PyDetector import PyDetector
+from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
+import pyimgalgos.GlobalGraphics as gg
+
+from optparse import OptionParser
+##-----------------------------
+
+def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
+
+    SKIP   = evskip
+    EVENTS = events + SKIP
+
+    dsname = 'exp=cxif5315:run=169'
+    src    = psana.Source('DetInfo(%s)' % source)
+    if verbos : print 'Calibrated detector data average for\n  dataset: %s\n  source : %s' % (dsname, src)
+
+    # Non-standard calib directory
+    #psana.setOption('psana.calib-dir', './calib')
+
+    ds  = psana.DataSource(dsname)
+    evt = ds.events().next()
+    env = ds.env()
+    
+    det = PyDetector(src, env, pbits=0)
+    shape = det.shape(evt) 
+
+    print '  det.shape() = ', shape 
+    
+    #mask = det.mask(evt)
+    
+    t0_sec = time()
+    counter=0
+    arr_sum = np.zeros(shape, dtype=np.double)
+
+    for i, evt in enumerate(ds.events()) :
+
+        if i<SKIP    : continue
+        if not i<EVENTS : break
+
+        cdata = det.calib(evt)
+        if cdata is None : continue
+        if verbos and not i%10 : print '  Event: %d' % i
+        counter += 1
+        arr_sum += cdata 
+
+    print '  Detector data found in %d events' % counter
+    print '  Total consumed time = %f sec' % (time()-t0_sec)
+
+    arr_ave = arr_sum/counter if counter>0 else arr_sum
+  
+    ##-----------------------------
+    # Plot averaged image
+
+    if plotim :
+        img = det.image(evt, arr_ave)
+        if img is None : sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
+    
+        ave, rms = arr_ave.mean(), arr_ave.std()
+        gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+3*rms))
+        gg.show()
+
+    ##-----------------------------
+    # Save n-d array in text file
+    
+    arr_ave = reshape_nda_to_2d(arr_ave)
+    fname = '%s-%s-r%04d-e%06d.txt' % (ofname, env.experiment(), evt.run(), counter)    
+    print 'Save array in file %s' % fname
+    np.savetxt(fname, arr_ave, fmt='%8.1f', delimiter=' ', newline='\n')
+
+#------------------------------
+
+def usage() :
+    return '\n\nExample of command to average n-d array from detector source and save it in file:\n'+\
+           '\n         %prog -d <dataset> [-s <source>] [-f <file-prefix>]'+\
+           ' [-n <events-collect>] [-m <events-skip>] [-p] [-v]'+\
+           '\n  ex1:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -f nda-ave -n 100 -m 0 -p -v'
+
+##-----------------------------
+
+def input_options_parser() :
+
+    dsname_def = 'exp=cxif5315:run=169'
+    source_def = 'CxiDs2.0:Cspad.0'
+    ofname_def = 'nda-ave'
+    events_def = 100
+    evskip_def = 0
+    verbos_def = True       
+    plotim_def = True       
+    
+    parser = OptionParser(description='Optional input parameters.', usage ='usage: %prog [options]' + usage())
+    parser.add_option('-d', '--dsname',  dest='dsname', default=dsname_def, action='store', type='string', help='dataset name, default = %s' % dsname_def)
+    parser.add_option('-s', '--source',  dest='source', default=source_def, action='store', type='string', help='input ndarray file name, default = %s' % source_def)
+    parser.add_option('-f', '--ofname',  dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
+    parser.add_option('-n', '--events',  dest='events', default=events_def, action='store', type='int',    help='number of events to collect, default = %s' % events_def)
+    parser.add_option('-m', '--evskip',  dest='evskip', default=evskip_def, action='store', type='int',    help='number of events to skip, default = %s' % evskip_def)
+    parser.add_option('-p', '--plotim',  dest='plotim', default=verbos_def, action='store_false',          help='plot averaged image, default = %s' % str(plotim_def))
+    parser.add_option('-v', '--verbos',  dest='verbos', default=verbos_def, action='store_false',          help='verbosity, default = %s' % str(verbos_def))
+ 
+    (opts, args) = parser.parse_args()
+    return (opts, args)
+
+##-----------------------------
+
+if __name__ == "__main__" :
+
+    proc_name = os.path.basename(sys.argv[0])
+    if len(sys.argv)==1 :
+        print 'Try command: %s -h' % proc_name
+        sys.exit ('End of %s' % proc_name)
+        
+    #print '%s\nExample # %d' % (80*'_', ntest)
+
+    (opts, args) = input_options_parser()
+
+    if opts.verbos :
+        print 'Command arguments:', ' '.join(sys.argv)
+        print '  opts: ', opts
+        print '  args: ', args
+
+    example_01(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, opts.plotim, opts.verbos)
+
+    sys.exit(0)
+
+##-----------------------------

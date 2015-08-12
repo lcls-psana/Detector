@@ -10,9 +10,13 @@ Package author: Mikhail S. Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+Tag: V00-00-12
+2015-08-11 Mikhail S. Dubrovin
+- add app/det_ndarr_average and examples/ex_nda_average.py (PSAS-139)
+
 Tag: V00-00-11
 2015-08-05 Mikhail S. Dubrovin
-- mainor extension of examples.
+- minor extension of examples.
 
 Tag: V00-00-10
 2015-07-21 Mikhail S. Dubrovin
