@@ -69,6 +69,10 @@ public:
   virtual ndarray<const uint8_t, 2>  data_nda_uint8_2 (PSEvt::Event& evt, PSEnv::Env& env);
   virtual ndarray<const uint16_t, 2> data_nda_uint16_2(PSEvt::Event& evt, PSEnv::Env& env);
 
+  /// Set mode for output data; variables m_as_data and  m_subtract_offset.
+  void set_mode(const unsigned& mode=0);
+  //inline void set_vdef(const float& vdef=0) {m_vdef = vdef;}; // is set in DetectorAccess.h
+
   /// Print configuration data
   virtual void print_config(PSEvt::Event& evt, PSEnv::Env& env);
 

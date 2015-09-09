@@ -25,19 +25,32 @@ typedef Detector::DetectorAccess::shape_t         shape_t;        // double
 //-------------------
 
 // Create function pointer to each overloaded DetectorAccess::calib method
-ndarray<const pedestals_t, 1>    (DetectorAccess::*peds_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pedestals;
-ndarray<const pixel_rms_t, 1>    (DetectorAccess::*prms_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_rms;
-ndarray<const pixel_gain_t, 1>   (DetectorAccess::*pgain_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_gain;
-ndarray<const pixel_mask_t, 1>   (DetectorAccess::*pmask_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_mask;
-ndarray<const pixel_bkgd_t, 1>   (DetectorAccess::*pbkgd_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_bkgd;
-ndarray<const pixel_status_t, 1> (DetectorAccess::*pstat_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_status;
-ndarray<const common_mode_t, 1>  (DetectorAccess::*pcmod_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::common_mode;
+ndarray<const pedestals_t, 1>    (DetectorAccess::*peds_0)   (const int&) = &DetectorAccess::pedestals;
+ndarray<const pixel_rms_t, 1>    (DetectorAccess::*prms_0)   (const int&) = &DetectorAccess::pixel_rms;
+ndarray<const pixel_gain_t, 1>   (DetectorAccess::*pgain_0)  (const int&) = &DetectorAccess::pixel_gain;
+ndarray<const pixel_mask_t, 1>   (DetectorAccess::*pmask_0)  (const int&) = &DetectorAccess::pixel_mask;
+ndarray<const pixel_bkgd_t, 1>   (DetectorAccess::*pbkgd_0)  (const int&) = &DetectorAccess::pixel_bkgd;
+ndarray<const pixel_status_t, 1> (DetectorAccess::*pstat_0)  (const int&) = &DetectorAccess::pixel_status;
+ndarray<const common_mode_t, 1>  (DetectorAccess::*pcmod_0)  (const int&) = &DetectorAccess::common_mode;
+ndarray<const shape_t, 1>        (DetectorAccess::*pshape_0) (const int&) = &DetectorAccess::shape;
+const size_t                     (DetectorAccess::*psize_0)  (const int&) = &DetectorAccess::size;
+const size_t                     (DetectorAccess::*pndim_0)  (const int&) = &DetectorAccess::ndim;
+const int                        (DetectorAccess::*pstatus_0)(const int&, const int& ) = &DetectorAccess::status;
 
-ndarray<const shape_t, 1>        (DetectorAccess::*pshape_1)(boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::shape;
-const size_t                     (DetectorAccess::*psize_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::size;
-const size_t                     (DetectorAccess::*pndim_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::ndim;
+//-------------------
 
-const int                        (DetectorAccess::*pstatus) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, const int& ) = &DetectorAccess::status;
+// Create function pointer to each overloaded DetectorAccess::calib method
+ndarray<const pedestals_t, 1>    (DetectorAccess::*peds_1)   (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pedestals;
+ndarray<const pixel_rms_t, 1>    (DetectorAccess::*prms_1)   (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_rms;
+ndarray<const pixel_gain_t, 1>   (DetectorAccess::*pgain_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_gain;
+ndarray<const pixel_mask_t, 1>   (DetectorAccess::*pmask_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_mask;
+ndarray<const pixel_bkgd_t, 1>   (DetectorAccess::*pbkgd_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_bkgd;
+ndarray<const pixel_status_t, 1> (DetectorAccess::*pstat_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_status;
+ndarray<const common_mode_t, 1>  (DetectorAccess::*pcmod_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::common_mode;
+ndarray<const shape_t, 1>        (DetectorAccess::*pshape_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::shape;
+const size_t                     (DetectorAccess::*psize_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::size;
+const size_t                     (DetectorAccess::*pndim_1)  (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::ndim;
+const int                        (DetectorAccess::*pstatus_1)(boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, const int& ) = &DetectorAccess::status;
 
 //-------------------
 
@@ -45,34 +58,45 @@ ndarray<const int16_t, 1>     (DetectorAccess::*pdata_1) (boost::shared_ptr<PSEv
 ndarray<const int16_t, 2>     (DetectorAccess::*pdata_2) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::data_int16_2;
 ndarray<const int16_t, 3>     (DetectorAccess::*pdata_3) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::data_int16_3;
 ndarray<const int16_t, 4>     (DetectorAccess::*pdata_4) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::data_int16_4;
-
 ndarray<const uint16_t, 2>    (DetectorAccess::*pdata_5) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::data_uint16_2;
 ndarray<const uint16_t, 3>    (DetectorAccess::*pdata_6) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::data_uint16_3;
-
 ndarray<const uint8_t, 2>     (DetectorAccess::*pdata_7) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::data_uint8_2;
+
+//-------------------
+
+ndarray<const double, 1>     (DetectorAccess::*pgeo_01) (const int&) = &DetectorAccess::pixel_coords_x;
+ndarray<const double, 1>     (DetectorAccess::*pgeo_02) (const int&) = &DetectorAccess::pixel_coords_y;
+ndarray<const double, 1>     (DetectorAccess::*pgeo_03) (const int&) = &DetectorAccess::pixel_coords_z;
+ndarray<const double, 1>     (DetectorAccess::*pgeo_04) (const int&) = &DetectorAccess::pixel_areas;
+ndarray<const int, 1>        (DetectorAccess::*pgeo_05) (const int&, const unsigned&) = &DetectorAccess::pixel_mask_geo;
+ndarray<const unsigned, 1>   (DetectorAccess::*pgeo_06) (const int&) = &DetectorAccess::pixel_indexes_x;
+ndarray<const unsigned, 1>   (DetectorAccess::*pgeo_07) (const int&) = &DetectorAccess::pixel_indexes_y;
+double                       (DetectorAccess::*pgeo_08) (const int&) = &DetectorAccess::pixel_scale_size;
 
 //-------------------
 
 ndarray<const double, 1>     (DetectorAccess::*pgeo_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_coords_x;
 ndarray<const double, 1>     (DetectorAccess::*pgeo_2) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_coords_y;
 ndarray<const double, 1>     (DetectorAccess::*pgeo_3) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_coords_z;
-
 ndarray<const double, 1>     (DetectorAccess::*pgeo_4) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_areas;
 ndarray<const int, 1>        (DetectorAccess::*pgeo_5) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, const unsigned&) = &DetectorAccess::pixel_mask_geo;
-
 ndarray<const unsigned, 1>   (DetectorAccess::*pgeo_6) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_indexes_x;
 ndarray<const unsigned, 1>   (DetectorAccess::*pgeo_7) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_indexes_y;
-
 double                       (DetectorAccess::*pgeo_8) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::pixel_scale_size;
-
 
 //-------------------
 
+ndarray<const image_t, 2> (DetectorAccess::*img_00) (const int&, ndarray<const image_t, 1>) = &DetectorAccess::get_image;
 ndarray<const image_t, 2> (DetectorAccess::*img_0) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<const image_t, 1>) = &DetectorAccess::get_image;
 //ndarray<const float, 2> (DetectorAccess::*img_1) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<const float, 1>&) = &DetectorAccess::get_image_float;
 //ndarray<const double, 2> (DetectorAccess::*img_2) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<const double, 1>&) = &DetectorAccess::get_image_double;
 //ndarray<const int16_t, 2> (DetectorAccess::*img_3) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<const int16_t, 1>&) = &DetectorAccess::get_image_int16;
 //ndarray<const uint16_t, 2>  (DetectorAccess::*img_4) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>, ndarray<const uint16_t, 1>&) = &DetectorAccess::get_image_uint16;
+
+//-------------------
+
+void (DetectorAccess::*cmod_01) (const int&, ndarray<double, 1>) = &DetectorAccess::common_mode_double;
+void (DetectorAccess::*cmod_02) (const int&, ndarray<float, 1>)  = &DetectorAccess::common_mode_float;
 
 //-------------------
 
@@ -102,7 +126,19 @@ BOOST_PYTHON_MODULE(detector_ext)
 {    
   using namespace boost::python;
 
-  boost::python::class_<DetectorAccess>("DetectorAccess", init<const PSEvt::Source, const unsigned&>())
+  boost::python::class_<DetectorAccess>("DetectorAccess", init<const PSEvt::Source, boost::shared_ptr<PSEnv::Env>, const unsigned&>())
+    .def("pedestals_v0",       peds_0)
+    .def("pixel_rms_v0",       prms_0)
+    .def("pixel_gain_v0",      pgain_0)
+    .def("pixel_mask_v0",      pmask_0)
+    .def("pixel_bkgd_v0",      pbkgd_0)
+    .def("pixel_status_v0",    pstat_0)
+    .def("common_mode_v0",     pcmod_0)
+    .def("shape_v0",           pshape_0)
+    .def("size_v0",            psize_0)
+    .def("ndim_v0",            pndim_0)
+    .def("status_v0",          pstatus_0)
+
     .def("pedestals",          peds_1)
     .def("pixel_rms",          prms_1)
     .def("pixel_gain",         pgain_1)
@@ -113,7 +149,8 @@ BOOST_PYTHON_MODULE(detector_ext)
     .def("shape",              pshape_1)
     .def("size",               psize_1)
     .def("ndim",               pndim_1)
-    .def("status",             pstatus)
+    .def("status",             pstat_1)
+
     .def("data_int16_1",       pdata_1)
     .def("data_int16_2",       pdata_2)
     .def("data_int16_3",       pdata_3)
@@ -121,6 +158,19 @@ BOOST_PYTHON_MODULE(detector_ext)
     .def("data_uint16_2",      pdata_5)
     .def("data_uint16_3",      pdata_6)
     .def("data_uint8_2",       pdata_7)
+
+    .def("pixel_coords_x_v0",     pgeo_01)
+    .def("pixel_coords_y_v0",     pgeo_02)
+    .def("pixel_coords_z_v0",     pgeo_03)
+    .def("pixel_areas_v0",        pgeo_04)
+    .def("pixel_mask_geo_v0",     pgeo_05)
+    .def("pixel_indexes_x_v0",    pgeo_06)
+    .def("pixel_indexes_y_v0",    pgeo_07)
+    .def("pixel_scale_size_v0",   pgeo_08)
+    .def("get_image_v0",          img_00)
+    .def("common_mode_double_v0", cmod_01)
+    .def("common_mode_float_v0",  cmod_02)
+
     .def("pixel_coords_x",     pgeo_1)
     .def("pixel_coords_y",     pgeo_2)
     .def("pixel_coords_z",     pgeo_3)
@@ -132,6 +182,7 @@ BOOST_PYTHON_MODULE(detector_ext)
     .def("get_image",          img_0)
     .def("common_mode_double", cmod_1)
     .def("common_mode_float",  cmod_2)
+
     .def("set_mode",           set_1)
     .def("set_print_bits",     set_2)
     .def("set_def_value",      set_3)

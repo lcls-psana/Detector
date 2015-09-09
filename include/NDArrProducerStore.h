@@ -39,11 +39,6 @@
 
 namespace Detector {
 
-/**
- *  @defgroup Detector package
- *  @brief Package Detector provides access to psana data from python
- */
-
 /// @addtogroup Detector
 
 /**

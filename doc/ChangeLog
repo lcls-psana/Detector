@@ -10,6 +10,20 @@ Package author: Mikhail S. Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+
+Tag: V00-01-01
+2015-09-09 Mikhail S. Dubrovin
+- multiple changes (PSAS-139)
+	- add methods (runnum) in addition to (evt,env)
+	- add python interface for geometry, intensity calibration constants
+	- add switch between C++/Python interfaces
+- update/add examples in examples/*
+
+2015-08-24 Mikhail S. Dubrovin
+- Add in GlobalUtils add string_from_source_v2 and change PyDetector.py to accept aliases (PSAS-139)
+
+==============
+	
 Tag: V00-00-12
 2015-08-11 Mikhail S. Dubrovin
 - add app/det_ndarr_average and examples/ex_nda_average.py (PSAS-139)

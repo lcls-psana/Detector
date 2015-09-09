@@ -4,6 +4,7 @@ import sys
 import psana
 from time import time
 from Detector.PyDetector import PyDetector
+from Detector.GlobalUtils import print_ndarr
 
 ##-----------------------------
 
@@ -12,8 +13,8 @@ print 'Test # %d' % ntest
 
 ##-----------------------------
 
-dsname, src                 = 'exp=cxif5315:run=169', psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-if   ntest==2 : dsname, src = 'exp=meca1113:run=376', psana.Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
+dsname, src = 'exp=cxif5315:run=169', psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+if ntest==2 : dsname, src = 'exp=meca1113:run=376', psana.Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
@@ -29,15 +30,7 @@ env = ds.env()
 
 ##-----------------------------
 
-def print_ndarr(nda, name='', first=0, last=5) :
-    if nda is None : print '%s\n%s: %s' % (80*'_', name, nda)
-    else           : print '%s\n%s: \n%s...\n shape:%s  size:%d  dtype:%s' % \
-         (80*'_', name, nda.flatten()[first:last], str(nda.shape), nda.size, nda.dtype)
-
-##-----------------------------
-
 det = PyDetector(src, env, pbits=0)
-
 det.print_attributes()
 mask = det.mask(evt, calib=True, status=True, edges=True, central=True, unbond=True, unbondnbrs=True)
 print_ndarr(mask, 'mask')
@@ -46,7 +39,7 @@ print_ndarr(mask, 'mask')
 
 img_arr = mask
 img = det.image(evt, img_arr)
-print_ndarr(img, 'Image:')
+print_ndarr(img, 'img')
 print 80*'_'
 
 ##-----------------------------

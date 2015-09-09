@@ -14,44 +14,52 @@ Low level implementation is done on C++ or python.
 
 Usage::
 
-    # !!! None is returned everywhere when requested information is missing.
+    # !!! NOTE: None is returned whenever requested information is missing.
 
+
+    # import
     import psana
     from Detector.PyDetector import PyDetector    
 
+    # retreive parameters from psana
     dsname = 'exp=cxif5315:run=169'
     src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
     evt = ds.events().next()
+    runnum = evt.run()
 
-    det = PyDetector(src, env, pbits=0)
+    # parameret "par" can be either runnum or evt    
+    par = runnum # or = evt
+
+    det = PyDetector(src, env, pbits=0, iface='P') # iface='P' or 'C' - preferable low level interface (for test perp.)
 
     # set parameters, if changed
     det.set_env(env)
     det.set_source(source)
     det.set_print_bits(pbits)
-    det.set_do_offset(do_offset=False)
+    det.set_do_offset(do_offset=False) # NOTE: should be called right after det object is created, before getting data
 
+    # print info
     det.print_attributes()    
     det.print_config(evt)
 
     # get pixel array shape, size, and nomber of dimensions
-    shape = det.shape(evt)
-    size  = det.size(evt)
-    ndim  = det.ndim(evt)
+    shape = det.shape(par)
+    size  = det.size(par)
+    ndim  = det.ndim(par)
     instrument = det.instrument()
 
     # access intensity calibration parameters
-    peds   = det.pedestals(evt)
-    rms    = det.rms(evt)
-    gain   = det.gain(evt)
-    bkgd   = det.bkgd(evt)
-    status = det.status(evt)
-    stmask = det.status_as_mask(evt)
-    mask   = det.mask_calib(evt)
-    cmod   = det.common_mode(evt)
+    peds   = det.pedestals(par)
+    rms    = det.rms(par)
+    gain   = det.gain(par)
+    bkgd   = det.bkgd(par)
+    status = det.status(par)
+    stmask = det.status_as_mask(par)
+    mask   = det.mask_calib(par)
+    cmod   = det.common_mode(par)
 
     # get raw data
     nda_raw = det.raw(evt)
@@ -60,22 +68,22 @@ Usage::
     nda_cdata = det.calib(evt)
 
     # common mode correction for pedestal-subtracted numpy array nda:
-    det.common_mode_apply(evt, nda)
-    cm_corr_nda = det.common_mode_correction(self, evt, nda)
+    det.common_mode_apply(par, nda)
+    cm_corr_nda = det.common_mode_correction(self, par, nda)
 
     # access geometry information
-    coords_x   = det.coords_x(evt)
-    coords_y   = det.coords_y(evt)
-    coords_z   = det.coords_z(evt)
-    areas      = det.areas(evt)
-    mask_geo   = det.mask_geo(evt, mbits=15) # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
-    ind_x      = det.indexes_x(evt)
-    ind_y      = det.indexes_y(evt)
-    pixel_size = det.pixel_size(evt)
+    coords_x   = det.coords_x(par)
+    coords_y   = det.coords_y(par)
+    coords_z   = det.coords_z(par)
+    areas      = det.areas(par)
+    mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
+    ind_x      = det.indexes_x(par)
+    ind_y      = det.indexes_y(par)
+    pixel_size = det.pixel_size(par)
 
     # access to combined mask
     NOTE: by default none of mask keywords is set to True, returns None.
-    mask = det.mask(evt, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
+    mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
 
     # reconstruct image
     img = det.image(evt) # uses calib(...) by default
@@ -103,25 +111,8 @@ import sys
 import psana
 import Detector
 import numpy as np
-import Detector.GlobalUtils as gu
+import PSCalib.GlobalUtils as gu
 from Detector.PyDetectorAccess import PyDetectorAccess
-
-##-----------------------------
-
-def merge_masks(mask1=None, mask2=None) :
-    """Merging masks using rule: (0,1,0,1)^(0,0,1,1) = (0,0,0,1) 
-    """
-    if mask1 is None : return mask2
-    if mask2 is None : return mask1
-
-    shape1 = mask1.shape
-    shape2 = mask2.shape
-
-    if shape1 != shape2 :
-        if len(shape1) > len(shape2) : mask2.shape = shape1
-        else                         : mask1.shape = shape2
-
-    return np.logical_and(mask1, mask2)
 
 ##-----------------------------
 
@@ -136,22 +127,46 @@ class PyDetector :
 
 ##-----------------------------
 
-    def __init__(self, source, env, pbits=0) :
+    def __init__(self, src, env, pbits=0, iface='P') :
         """Constructor.
-        @param source - data source, ex: psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+        @param src    - data source, ex: psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+        @param env    - environment, ex: env=ds.env(), where ds=psana.DataSource('exp=cxif5315:run=169')
         @param pbits  - print control bit-word
+        @param iface  - preferable interface: 'C' - C++ (everything) or 'P' - Python based (everything except common mode) 
         """
         #print 'In c-tor DetPyAccess'
 
-        self.source  = source
-        self.dettype = gu.det_type_from_source(source)
         self.env     = env
+        self.set_source(src, set_sub=False)
+        self.dettype = gu.det_type_from_source(self.source)
         self.pbits   = pbits
+        self.iscpp   = True if iface=='C' else False
+        self.ispyt   = True if iface=='P' else False
 
-        self.da   = Detector.DetectorAccess(source, pbits) # , 0xffff) C++ access methods
+        self.da   = Detector.DetectorAccess(self.source, self.env, pbits) # , 0xffff) C++ access methods
         self.pyda = PyDetectorAccess(self.source, self.env, pbits) # Python data access methods
 
-        if pbits : self.print_members()
+        self._shape = None
+        self._size  = None
+        self._ndim  = None
+
+        if pbits & 1 : self.print_members()
+
+##-----------------------------
+
+    def set_source(self, src, set_sub=True) :
+        """Accepts regular source or alias
+        """
+        str_src = gu.string_from_source(src)
+
+        # in case of alias convert it to psana.Src
+        amap = self.env.aliasMap()
+        psasrc = amap.src(str_src)
+        self.source  = src if amap.alias(psasrc) == '' else amap.src(str_src)
+
+        if set_sub :
+            self.pyda.set_source(self.source)
+            self.da.set_source(self.source)
 
 ##-----------------------------
 
@@ -166,28 +181,26 @@ class PyDetector :
         print 'PyDetector object attributes:', \
               '\n  source : %s' % self.source, \
               '\n  dettype: %d' % self.dettype, \
-              '\n  detname: %s' % gu.det_name_from_type(self.dettype), \
-              '\n  pbits  : %d\n' % self.pbits
-        self.pyda.print_attributes()
+              '\n  detname: %s' % gu.dic_det_type_to_name[self.dettype], \
+              '\n  pbits  : %d' % self.pbits, \
+              '\n  iscpp  : %d' % self.iscpp, \
+              '\n  ispyt  : %d' % self.ispyt
+        if self.iscpp : self.da.print_members()
+        else          : self.pyda.print_attributes()
 
 ##-----------------------------
 
     def set_print_bits(self, pbits) :
+        self.pbits = pbits
         self.da.set_print_bits(pbits)
+        self.pyda.set_print_bits(pbits)
 
 ##-----------------------------
 
     def set_env(self, env) :
-        self.env    = env
+        self.env = env
         self.pyda.set_env(env)
-        #self.da.set_env(env)
-
-##-----------------------------
-
-    def set_source(self, source) :
-        self.source = source
-        self.pyda.set_source(source)
-        #self.da.set_source(source)
+        #self.da.set_env(env) # is not implemented and is not used this way
 
 ##-----------------------------
 
@@ -195,36 +208,79 @@ class PyDetector :
         """On/off application of offset in raw_data_camera(...)
         """
         self.pyda.set_do_offset(do_offset)
+        self.da.setMode(0 if do_offset else 1)
 
 ##-----------------------------
 
-    def ndim(self, evt) :
+    def runnum(self, par) :
+        """ Returns run number for parameter par which can be evt or runnum(int)
+        """
+        return par if isinstance(par, int) else par.run()
+
+##-----------------------------
+
+    def ndim(self, par) : # par = evt or runnum(int)
         """ Returns ndarray number of dimensions. If ndim>3 then returns 3.
         """
-        nd = self.da.ndim(evt, self.env)
-        return nd if nd<4 else 3
+        if self._ndim is None :
+            rnum = self.runnum(par)
+            nd = self.da.ndim_v0(rnum) if self.iscpp else self.pyda.ndim(rnum)
+            self._ndim = nd if nd<4 else 3
+        return self._ndim
 
 ##-----------------------------
 
-    def size(self, evt) :
-        return self.da.size(evt, self.env)
-
+    def size(self, par) :
+        if self._size is None :
+            rnum = self.runnum(par)
+            self._size = self.da.size_v0(rnum) if self.iscpp else self.pyda.size(rnum)
+        return self._size
+    
 ##-----------------------------
 
-    def shape(self, evt) :
+    def shape(self, par) :
         """ Returns ndarray shape. If ndim>3 shape is reduced to 3-d.
             Example: the shepe like [4,8,185,388] is reduced to [32,185,388]
         """
-        sh = self.da.shape(evt, self.env)
-        return sh if len(sh)<4 else np.array((self.size(evt)/sh[-1]/sh[-2], sh[-2], sh[-1]))
+        if self._shape is None :
+            rnum = self.runnum(par)
+            sh = self.da.shape_v0(rnum) if self.iscpp else self.pyda.shape(rnum)
+            self._shape = sh if len(sh)<4 else np.array((self.size(rnum)/sh[-1]/sh[-2], sh[-2], sh[-1]))
+        return self._shape        
 
 ##-----------------------------
 
-    def _shaped_array_(self, evt, arr, calibtype) :
+#    def _shaped_array_(self, evt, arr, calibtype) :
+#        """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
+#        """
+#        if self.da.status(evt, self.env, calibtype) != gu.LOADED : return None
+#        if self.size(evt) > 0 : arr.shape = self.shape(evt)
+#        return arr
+
+##-----------------------------
+
+    def _shaped_array_cpp_(self, rnum, arr, calibtype=None) :
         """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
         """
-        if self.da.status(evt, self.env, calibtype) != gu.LOADED : return None
-        if self.size(evt) > 0 : arr.shape = self.shape(evt)
+        if arr is None   : return None
+        if arr.size == 0 : return None
+        if calibtype is not None :
+            status = self.da.status_v0(rnum, calibtype)
+            if status != gu.LOADED and status != gu.DEFAULT : return None
+        if self.size(rnum) : arr.shape = self.shape(rnum)
+        return arr
+
+##-----------------------------
+
+    def _shaped_array_pyt_(self, rnum, arr, calibtype=None) :
+        """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
+        """
+        if arr is None   : return None
+        if arr.size == 0 : return None
+        if calibtype is not None :
+            status = self.pyda.status(rnum, calibtype)
+            if status != gu.LOADED and status != gu.DEFAULT : return None
+        if self.size(rnum) : arr.shape = self.shape(rnum)
         return arr
 
 ##-----------------------------
@@ -236,62 +292,81 @@ class PyDetector :
 
 ##-----------------------------
 
-    def pedestals(self, evt) :
-        return self._shaped_array_(evt, self.da.pedestals(evt, self.env), gu.PEDESTALS)
+    def pedestals(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.pedestals(rnum),  gu.PEDESTALS)
 
 ##-----------------------------
 
-    def rms(self, evt) :
-        return self._shaped_array_(evt, self.da.pixel_rms(evt, self.env), gu.PIXEL_RMS)
+    def rms(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_rms(rnum),  gu.PIXEL_RMS)
 
 ##-----------------------------
 
-    def gain(self, evt) :
-        return self._shaped_array_(evt, self.da.pixel_gain(evt, self.env), gu.PIXEL_GAIN)
+    def gain(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_gain(rnum),  gu.PIXEL_GAIN)
 
 ##-----------------------------
 
-    def mask_calib(self, evt) :
-        return self._shaped_array_(evt, self.da.pixel_mask(evt, self.env), gu.PIXEL_MASK)
+    def mask_calib(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_mask(rnum),  gu.PIXEL_MASK)
 
 ##-----------------------------
 
-    def bkgd(self, evt) :
-        return self._shaped_array_(evt, self.da.pixel_bkgd(evt, self.env), gu.PIXEL_BKGD)
+    def bkgd(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_bkgd(rnum),  gu.PIXEL_BKGD)
 
 ##-----------------------------
 
-    def status(self, evt) :
-        return self._shaped_array_(evt, self.da.pixel_status(evt, self.env), gu.PIXEL_STATUS)
+    def status(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_status(rnum),  gu.PIXEL_STATUS)
 
 ##-----------------------------
 
-    def status_as_mask(self, evt) :
+    def status_as_mask(self, par) :
         """Returns 1/0 for status 0/>0.
         """
-        stat = self.status(evt)
+        rnum = self.runnum(par)
+        stat = self.status(rnum)
         if stat is None : return None
-        return np.select([stat==0, stat>0], [1, 0])
+        smask = np.select([stat==0, stat>0], [1, 0])
+        if self.iscpp : return self._shaped_array_cpp_(rnum, smask, gu.PIXEL_STATUS)
+        else          : return self._shaped_array_pyt_(rnum, smask, gu.PIXEL_STATUS)
 
 ##-----------------------------
 
-    def common_mode(self, evt) :
-        return self.da.common_mode(evt, self.env)
+    def common_mode(self, par) :
+        rnum = self.runnum(par)
+        if self.iscpp : return self.da.common_mode_v0(rnum)
+        else          : return self.pyda.common_mode(rnum)
 
 ##-----------------------------
 
     def instrument(self) :
-        return self.da.instrument(self.env)
+        if self.iscpp : return self.da.instrument(self.env)
+        else          : return self.pyda.inst()
 
 ##-----------------------------
 
     def print_config(self, evt) :
-        self.da.print_config(evt, self.env)
+        if self.iscpp : self.da.print_config(evt, self.env)
+        else          : self.pyda.print_config(evt)
 
 ##-----------------------------
 
     def raw_data(self, evt) :
-        """Depricated method renamed to raw(evt) 
+        """Alias for depricated method renamed to raw(evt) 
         """
         return self.raw(evt)
 
@@ -301,44 +376,48 @@ class PyDetector :
         """Returns np.array with raw data
         """
         # get data using python methods
+        rnum = self.runnum(evt)
         rdata = self.pyda.raw_data(evt, self.env)
-        if rdata is not None : return rdata
+        if rdata is not None : return self._shaped_array_pyt_(rnum, rdata)
 
         if self.pbits :
-            print '!!! PyDetector: Data for source %s is not found in python interface, trying C++' % self.source,
+            print '!!! PyDetector: Data for source %s is not found in python interface, trying C++' % self.source
 
         # get data using C++ methods
         if   self.dettype == gu.CSPAD    : rdata = self.da.data_int16_3 (evt, self.env)
         elif self.dettype == gu.CSPAD2X2 : rdata = self.da.data_int16_3 (evt, self.env)
         elif self.dettype == gu.PNCCD    : rdata = self.da.data_uint16_3(evt, self.env)
         else :                             rdata = self.da.data_uint16_2(evt, self.env)
-        return self._nda_or_none_(rdata)
+        if self.pbits and rdata is None :
+            print '!!! PyDetector: Data for source %s is not found in C++ interface' % self.source
+        return self._shaped_array_cpp_(rnum, rdata)
 
 ##-----------------------------
 
-    def common_mode_apply(self, evt, nda) :
+    def common_mode_apply(self, par, nda) :
         """Apply common mode correction to nda (assuming that nda is data ndarray with subtracted pedestals)
            nda.dtype = np.float32 (or 64) is considered only, because common mode does not make sense for int data.
         """
+        rnum = self.runnum(par)
         shape0 = nda.shape
         nda.shape = (nda.size,)
-        if nda.dtype == np.float64 : self.da.common_mode_double(evt, self.env, nda)
-        if nda.dtype == np.float32 : self.da.common_mode_float (evt, self.env, nda)
+        if nda.dtype == np.float64 : self.da.common_mode_double_v0(rnum, nda)
+        if nda.dtype == np.float32 : self.da.common_mode_float_v0 (rnum, nda)
         nda.shape = shape0
 
 ##-----------------------------
 
-    def common_mode_correction(self, evt, nda) :
+    def common_mode_correction(self, par, nda) :
         """ Returns ndarray with common mode correction offsets. Assumes that nda is data ndarray with subtracted pedestals. 
         """
         nda_cm_corr = np.array(nda, dtype=np.float32, copy=True)
-        self.common_mode_apply(evt, nda)
+        self.common_mode_apply(self.runnum(par), nda)
         return nda_cm_corr - nda
 
 ##-----------------------------
 
     def calib_data(self, evt) :
-        """Depricated method renamed to calib(evt) 
+        """Alias of depricated method renamed to calib(evt) 
         """
         return self.calib(evt)
 
@@ -356,35 +435,38 @@ class PyDetector :
             - apply mask generated from pixel status
             - apply common mode correction
         """
+        rnum = self.runnum(evt)
 
         raw = self.raw(evt) 
         if raw is None :
             if self.pbits & 32 : self._print_warning('calib(...) - raw data are missing.')
             return None
 
-        peds  = self.pedestals(evt)
+        peds  = self.pedestals(rnum)
         if peds is None :
             if self.pbits & 32 : self._print_warning('calib(...) - pedestals are missing.')
             return None
         
         if raw.shape != peds.shape :
             if self.pbits & 32 :
-                msg = 'calib(...) - raw.shape = %s is different from peds.shape = %s' \
+                msg = 'calib(...) - raw.shape = %s is different from peds.shape = %s. Try reshaping to data...' \
                       % (str(raw.shape), str(peds.shape))
                 self._print_warning(msg)
-            return None
+            try    : peds.shape = raw.shape
+            except : return None
 
         cdata = np.array(raw, dtype=np.float32, copy=True)
         cdata -= peds
 
-        smask = self.status_as_mask(evt)
+        smask = self.status_as_mask(rnum)
 
         if smask is None :
             if self.pbits & 32 : self._print_warning('calib(...) - mask is missing.')
         else :
-            cdata *= smask        
+            smask.shape = cdata.shape
+            cdata *= smask      
 
-        self.common_mode_apply(evt, cdata)
+        self.common_mode_apply(rnum, cdata)
         return cdata
 
         #nda_cmcorr = self.common_mode_correction(evt, cdata)
@@ -393,12 +475,14 @@ class PyDetector :
 
 ##-----------------------------
 
-    def mask(self, evt, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False) :
+    def mask(self, par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False) :
         """Returns combined mask
         """
+        rnum = self.runnum(par)
+
         mask_nda = None
-        if calib  : mask_nda = self.mask_calib(evt)
-        if status : mask_nda = merge_masks(mask_nda, self.status_as_mask(evt)) 
+        if calib  : mask_nda = self.mask_calib(rnum)
+        if status : mask_nda = gu.merge_masks(mask_nda, self.status_as_mask(rnum)) 
 
         mbits = 0
         if edges      : mbits += 1
@@ -406,41 +490,67 @@ class PyDetector :
         if unbond     : mbits += 4
         if unbondnbrs : mbits += 8
 
-        if mbits      : mask_nda = merge_masks(mask_nda, self.mask_geo(evt, mbits)) 
+        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits)) 
         return mask_nda
 
 ##-----------------------------
 # Geometry info
 
-    def coords_x(self, evt) :
-        return self._nda_or_none_(self.da.pixel_coords_x(evt, self.env))
+    def coords_x(self, par) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_coords_x_v0(rnum))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_coords_x_v0(rnum))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.coords_x(rnum)) 
+    
+    def coords_y(self, par) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_coords_y_v0(rnum))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_coords_y_v0(rnum))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.coords_y(rnum)) 
 
-    def coords_y(self, evt) :
-        return self._nda_or_none_(self.da.pixel_coords_y(evt, self.env))
+    def coords_z(self, par) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_coords_z_v0(rnum))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_coords_z_v0(rnum))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.coords_z(rnum)) 
 
-    def coords_z(self, evt) :
-        return self._nda_or_none_(self.da.pixel_coords_z(evt, self.env))
+    def areas(self, par) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_areas_v0(rnum))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_areas_v0(rnum))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.areas(rnum)) 
 
-    def areas(self, evt) :
-        return self._nda_or_none_(self.da.pixel_areas(evt, self.env))
+    def mask_geo(self, par, mbits=255) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.mask_geo(rnum, mbits))
 
-    def mask_geo(self, evt, mbits=255) :
-        return self._nda_or_none_(self.da.pixel_mask_geo(evt, self.env, mbits))
+    def indexes_x(self, par) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_x_v0(rnum))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_x_v0(rnum))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.indexes_x(rnum))
 
-    def indexes_x(self, evt) :
-        return self._nda_or_none_(self.da.pixel_indexes_x(evt, self.env))
+    def indexes_y(self, par) :
+        rnum = self.runnum(par)
+        #return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_y_v0(rnum))
+        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_y_v0(rnum))
+        else          : return self._shaped_array_pyt_(rnum, self.pyda.indexes_y(rnum))
 
-    def indexes_y(self, evt) :
-        return self._nda_or_none_(self.da.pixel_indexes_y(evt, self.env))
-
-    def pixel_size(self, evt) :
-        psize = self.da.pixel_scale_size(evt, self.env) # Ex: 109.92 [um]
+    def pixel_size(self, par) :
+        rnum = self.runnum(par)
+        #psize = self.da.pixel_scale_size_v0(rnum)
+        psize = self.da.pixel_scale_size_v0(rnum) if self.iscpp else self.pyda.pixel_size(rnum) # Ex: 109.92 [um]
         return psize if psize != 1 else None
 
     def image(self, evt, nda_in=None) :
+        rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
         nda_img = np.array(nda, dtype=np.double).flatten()
-        return self._nda_or_none_(self.da.get_image(evt, self.env, nda_img))
+        #return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
+        if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
+        else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img))
         
 ##-----------------------------
 
@@ -455,12 +565,13 @@ if __name__ == "__main__" :
     cls = env.calibStore()
     eviter = ds.events()
     evt = eviter.next()
+    rnum = evt.run()
 
     for key in evt.keys() : print key
 
     det = PyDetector(src, env, pbits=0)
 
-    nda = det.pedestals(evt)
+    nda = det.pedestals(rnum)
     print '\nnda:\n', nda
     print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
 

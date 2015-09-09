@@ -73,14 +73,26 @@ class DetectorAccess {
   //typedef NDArrProducerCSPAD::data_t          data_i16_t;  
 
   // Constructor
-  DetectorAccess (const PSEvt::Source& source, const unsigned& pbits=0x1) ; // 0xffff
+  DetectorAccess (const PSEvt::Source& source, boost::shared_ptr<PSEnv::Env> shp_env, const unsigned& pbits=0x1) ; // 0xffff
   
   // Destructor
   virtual ~DetectorAccess () ;
 
+  const size_t                    ndim        (const int& runnum);
+  const size_t                    size        (const int& runnum);
+  ndarray<const shape_t,1>        shape       (const int& runnum);
+
   const size_t                    ndim        (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   const size_t                    size        (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const shape_t,1>        shape       (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+
+  const pedestals_t*            p_pedestals   (const int& runnum);
+  const pixel_rms_t*            p_pixel_rms   (const int& runnum);
+  const pixel_gain_t*           p_pixel_gain  (const int& runnum);
+  const pixel_mask_t*           p_pixel_mask  (const int& runnum);
+  const pixel_bkgd_t*           p_pixel_bkgd  (const int& runnum);
+  const pixel_status_t*         p_pixel_status(const int& runnum);
+  const common_mode_t*          p_common_mode (const int& runnum);
 
   const pedestals_t*            p_pedestals   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   const pixel_rms_t*            p_pixel_rms   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
@@ -90,6 +102,14 @@ class DetectorAccess {
   const pixel_status_t*         p_pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   const common_mode_t*          p_common_mode (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
 
+  ndarray<const pedestals_t,1>    pedestals   (const int& runnum);
+  ndarray<const pixel_rms_t,1>    pixel_rms   (const int& runnum);
+  ndarray<const pixel_gain_t,1>   pixel_gain  (const int& runnum);
+  ndarray<const pixel_mask_t,1>   pixel_mask  (const int& runnum);
+  ndarray<const pixel_bkgd_t,1>   pixel_bkgd  (const int& runnum);
+  ndarray<const pixel_status_t,1> pixel_status(const int& runnum);
+  ndarray<const common_mode_t,1>  common_mode (const int& runnum);
+
   ndarray<const pedestals_t,1>    pedestals   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const pixel_rms_t,1>    pixel_rms   (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const pixel_gain_t,1>   pixel_gain  (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
@@ -98,6 +118,7 @@ class DetectorAccess {
   ndarray<const pixel_status_t,1> pixel_status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const common_mode_t,1>  common_mode (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
 
+  const int status(const int& runnum, const int& calibtype);  
   const int status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const int& calibtype);  
 
 //-------------------
@@ -119,20 +140,27 @@ class DetectorAccess {
 
 //-------------------
 
-  ndarray<const double, 1>   pixel_coords_x(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
-  ndarray<const double, 1>   pixel_coords_y(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
-  ndarray<const double, 1>   pixel_coords_z(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  ndarray<const double, 1>   pixel_coords_x (const int& runnum);
+  ndarray<const double, 1>   pixel_coords_y (const int& runnum);
+  ndarray<const double, 1>   pixel_coords_z (const int& runnum);
+  ndarray<const double, 1>   pixel_areas    (const int& runnum);
+  ndarray<const int, 1>      pixel_mask_geo (const int& runnum, const unsigned& mbits=0377);
+  ndarray<const unsigned, 1> pixel_indexes_x(const int& runnum);
+  ndarray<const unsigned, 1> pixel_indexes_y(const int& runnum);
+  double                    pixel_scale_size(const int& runnum);
 
-  ndarray<const double, 1>   pixel_areas(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
-  ndarray<const int, 1>      pixel_mask_geo(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const unsigned& mbits=0377);
-
+  ndarray<const double, 1>   pixel_coords_x (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  ndarray<const double, 1>   pixel_coords_y (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  ndarray<const double, 1>   pixel_coords_z (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  ndarray<const double, 1>   pixel_areas    (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  ndarray<const int, 1>      pixel_mask_geo (boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const unsigned& mbits=0377);
   ndarray<const unsigned, 1> pixel_indexes_x(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   ndarray<const unsigned, 1> pixel_indexes_y(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
-
-  double  pixel_scale_size(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+  double                    pixel_scale_size(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
 
 //-------------------
 
+  ndarray<const image_t, 2> get_image(const int& runnum, ndarray<const image_t, 1> nda);
   ndarray<const image_t, 2> get_image(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, ndarray<const image_t, 1> nda);
 
 //-------------------
@@ -145,6 +173,7 @@ class DetectorAccess {
   // Returns instrument as string
   std::string str_inst(boost::shared_ptr<PSEnv::Env> shp_env);  
 
+  //inline void setEnv(boost::shared_ptr<PSEnv::Env> shp_env) {m_env = *shp_env;}
   inline void setMode (const unsigned& mode) {m_mode = mode;}
   inline void setPrintBits (const unsigned& pbits) {m_pbits = pbits;}
   inline void setDefaultValue (const float& vdef) {m_vdef = vdef;}
@@ -176,14 +205,25 @@ class DetectorAccess {
   float                    m_vdef; 
   std::string              m_calibdir;
 
+
   //NDArrProducerCSPAD*     m_nda_prod;  // direct access
   NDArrProducerBase*       m_nda_prod;   // factory store access
+  PSEnv::Env&              m_env;
 
   inline const char* _name_() {return "DetectorAccess";}
 
+  void initCalibStore(const int& runnum);
+  void initCalibStore(const std::string& calibdir, const int& runnum);
   void initCalibStore(PSEvt::Event& evt, PSEnv::Env& env);
+
+  void initGeometry(const int& runnum);
+  void initGeometry(const std::string& calibdir, const int& runnum);
   void initGeometry(PSEvt::Event& evt, PSEnv::Env& env);
-  void initCommonMode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
+
+  void initCommonMode(const int& runnum);
+  void initCommonMode(const std::string& calibdir, const int& runnum);
+  //void initCommonMode(PSEvt::Event& evt, PSEnv::Env& env);
+  //void initCommonMode(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env);
   void initNDArrProducer();
 
 //-------------------
@@ -191,17 +231,30 @@ class DetectorAccess {
  public:
  
    template <typename T>
-   void common_mode_apply(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, T* arr)
-     {
-       initCommonMode(shp_evt, shp_env);
-       m_cmode -> do_common_mode<T>(arr);
-     }
+   void common_mode_apply(const int& runnum, T* arr)
+       {
+         initCommonMode(runnum);
+         m_cmode -> do_common_mode<T>(arr);
+       }
+
+   template <typename T>
+   void common_mode_apply(const std::string& calibdir, const int& runnum, T* arr)
+       {
+         m_calibdir = calibdir;  
+         common_mode_apply<T>(runnum, arr);
+       }
    
    void common_mode_double(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, ndarray<double, 1> nda)
-      { common_mode_apply<double>(shp_evt, shp_env, nda.data()); }
+      { common_mode_apply<double>(shp_env->calibDir(), ImgAlgos::getRunNumber(*shp_evt), nda.data()); }
+
+   void common_mode_double(const int& runnum, ndarray<double, 1> nda)
+      { common_mode_apply<double>(runnum, nda.data()); }
 
    void common_mode_float(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, ndarray<float, 1> nda)
-      { common_mode_apply<float>(shp_evt, shp_env, nda.data()); }
+      { common_mode_apply<float>(shp_env->calibDir(), ImgAlgos::getRunNumber(*shp_evt), nda.data()); }
+
+   void common_mode_float(const int& runnum, ndarray<float, 1> nda)
+      { common_mode_apply<float>(runnum, nda.data()); }
 
 //-------------------
 }; // class

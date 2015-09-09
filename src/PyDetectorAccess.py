@@ -26,10 +26,16 @@ __version__ = "$Revision$"
 import sys
 import numpy as np
 import psana
-import Detector.GlobalUtils  as gu
 import Detector.PyDataAccess as pda
 
-from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
+#import Detector.GlobalUtils as gu
+import PSCalib.GlobalUtils as gu
+
+from PSCalib.CalibParsStore import cps
+from PSCalib.CalibFileFinder import CalibFileFinder
+from PSCalib.GeometryAccess import GeometryAccess, img_from_pixel_arrays
+
+#from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
 
 ##-----------------------------
 
@@ -39,7 +45,6 @@ class PyDetectorAccess :
     @see PyDetector
     @see DetectorAccess
     """
-
 ##-----------------------------
 
     def __init__(self, source, env, pbits=0) :
@@ -48,16 +53,61 @@ class PyDetectorAccess :
         @param env    - environment
         @param pbits  - print control bit-word
         """
-
         #print 'In c-tor DetPyAccess'
 
         self.source = source
+        self.str_src= gu.string_from_source(source)
         self.env    = env
         self.pbits  = pbits
-        self.dettype = gu.det_type_from_source(source)
+        self.dettype = gu.det_type_from_source(self.str_src)
         self.do_offset = False # works for camera
         self.correct_time = True # works for acqiris
         if self.pbits & 1 : self.print_attributes()
+
+        self.cpst = None 
+        self.runnum_cps = -1
+
+        self.geo = None 
+        self.runnum_geo = -1
+
+##-----------------------------
+
+    def cpstore(self, par) : # par = evt or runnum
+
+        runnum = par if isinstance(par, int) else par.run()
+        #print 80*'_'
+        #print 'cpstore XXX runnum = %d' % runnum
+
+        # for 1st entry and when runnum is changing:
+        if runnum != self.runnum_cps or self.cpst is None :
+            self.runnum_cps = runnum
+            group = gu.dic_det_type_to_calib_group[self.dettype]
+            self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
+            if self.pbits & 1 : print 'PSCalib.CalibParsStore object is created for run %d' % runnum
+
+        return self.cpst
+
+##-----------------------------
+
+    def geoaccess(self, par) : # par = evt or runnum
+
+        runnum = par if isinstance(par, int) else par.run()
+        #print 'cpstore XXX runnum = %d' % runnum
+
+        # for 1st entry and when runnum is changing:
+        if  runnum != self.runnum_geo or self.geo is None :
+            self.runnum_geo = runnum
+            group = gu.dic_det_type_to_calib_group[self.dettype]
+            cff = CalibFileFinder(self.env.calibDir(), group, 0377 if self.pbits else 0)
+            fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
+            if fname :
+                self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+                if self.pbits & 1 : print 'PSCalib.GeometryAccess object is created for run %d' % runnum
+            else     :
+                self.geo = None
+                if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
+
+        return self.geo
 
 ##-----------------------------
 
@@ -76,51 +126,135 @@ class PyDetectorAccess :
 
     def set_source(self, source) :
         self.source = source
+        self.str_src = gu.string_from_source(source)
 
 ##-----------------------------
 
-    def pedestals(self, evt) :
-        return None
+    def pedestals(self, par) : # par: evt or runnum(int)
+        return self.cpstore(par).pedestals()
     
 ##-----------------------------
 
-    def pixel_rms(self, evt) :
-        return None
+    def pixel_rms(self, par) :
+        return self.cpstore(par).pixel_rms()
 
 ##-----------------------------
 
-    def pixel_gain(self, evt) :
-        return None
+    def pixel_gain(self, par) :
+        return self.cpstore(par).pixel_gain()
 
 ##-----------------------------
 
-    def pixel_mask(self, evt) :
-        return None
+    def pixel_mask(self, par) :
+        return self.cpstore(par).pixel_mask()
 
 ##-----------------------------
 
-    def pixel_bkgd(self, evt) :
-        return None
+    def pixel_bkgd(self, par) :
+        return self.cpstore(par).pixel_bkgd()
 
 ##-----------------------------
 
-    def pixel_status(self, evt) :
-        return None
+    def pixel_status(self, par) :
+        return self.cpstore(par).pixel_status()
 
 ##-----------------------------
 
-    def common_mode(self, evt) :
-        return None
+    def common_mode(self, par) :
+        return self.cpstore(par).common_mode()
 
+##-----------------------------
+
+    def ndim(self, par, ctype=gu.PEDESTALS) :
+        return self.cpstore(par).ndim(ctype)
+
+##-----------------------------
+
+    def size(self, par, ctype=gu.PEDESTALS) :
+        return self.cpstore(par).size(ctype)
+
+##-----------------------------
+
+    def shape(self, par, ctype=gu.PEDESTALS) :
+        return self.cpstore(par).shape(ctype)
+
+##-----------------------------
+
+    def status(self, par, ctype=gu.PEDESTALS) :
+        return self.cpstore(par).status(ctype)
+
+##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------
+
+    def coords_x(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_coords()[0] #oname=None, oindex=0, do_tilt=True)
+
+##-----------------------------
+
+    def coords_y(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_coords()[1] #oname=None, oindex=0, do_tilt=True)
+
+##-----------------------------
+
+    def coords_z(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_coords()[2] #oname=None, oindex=0, do_tilt=True)
+
+##-----------------------------
+
+    def areas(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_areas()
+
+##-----------------------------
+
+    # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
+    def mask_geo(self, par, mbits=15) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_mask(mbits=mbits)
+
+##-----------------------------
+
+    def indexes_x(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_coord_indexes()[0]
+
+##-----------------------------
+
+    def indexes_y(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_coord_indexes()[1]
+
+##-----------------------------
+
+    def pixel_size(self, par) :
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_scale_size()
+
+##-----------------------------
+
+    def image(self, par, img_nda) :
+        if self.geoaccess(par) is None : return None
+        else :
+            iX, iY = self.geo.get_pixel_coord_indexes()
+            return img_from_pixel_arrays(iX,iY,img_nda)
+
+##-----------------------------
+##-----------------------------
+##-----------------------------
 ##-----------------------------
 
     def inst(self) :
-        return None
+        return self.env.instrument()
 
 ##-----------------------------
 
     def print_config(self, evt) :
-        pass
+        print '%s:print_config(evt) - is not implemented in pythonic version' % self.__class__.__name__
 
 ##-----------------------------
 
@@ -171,12 +305,16 @@ class PyDetectorAccess :
     def raw_data_cspad(self, evt, env) :
 
         # data object
-        d = pda.get_cspad_data_object(evt, self.source)
-        if d is None : return None
+        d = pda.get_cspad_data_object(evt, self.source)        
+        if d is None :
+            print 'cspad data object is not found'
+            return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
-        if c is None : return None
+        if c is None :
+            print 'cspad config object is not found'
+            return None
     
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()

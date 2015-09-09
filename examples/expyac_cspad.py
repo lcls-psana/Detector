@@ -3,8 +3,8 @@
 import sys
 import psana
 import numpy as np
-from Detector.PyDetector import PyDetector
 import Detector.PyDataAccess as pda
+from Detector.GlobalUtils import print_ndarr
 
 dsname, src = 'exp=cxif5315:run=169', psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
@@ -20,13 +20,6 @@ evt = ds.events().next()
 env = ds.env()
 
 #for key in evt.keys() : print key
-
-##-----------------------------
-
-def print_ndarr(nda, name='', first=0, last=5) :
-    if nda is None : print '%s\n%s: %s' % (80*'_', name, nda)
-    else           : print '%s\n%s: \n%s...\n shape:%s  size:%d  dtype:%s' % \
-         (80*'_', name, nda.flatten()[first:last], str(nda.shape), nda.size, nda.dtype)
 
 ##-----------------------------
 

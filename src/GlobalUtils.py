@@ -30,6 +30,7 @@ __version__ = "$Revision$"
 #--------------------------------
 import sys
 import os
+import numpy as np
 #import time
 #from time import localtime, gmtime, strftime, clock, time, sleep
 
@@ -102,18 +103,26 @@ UNDEFINED  = 4
 
 ##-----------------------------
 
+def string_from_source_v2(source) :
+  """Returns string like "CxiDs2.0:Cspad.0" from "Source('DetInfo(CxiDs2.0:Cspad.0)')" or "Source('DsaCsPad')"
+  """
+  str_in_quotes = str(source).split('"')[1]
+  str_split = str_in_quotes.split('(') 
+  return str_split[1].rstrip(')') if len(str_split)>1 else str_in_quotes
+
+##-----------------------------
 
 def string_from_source(source) :
-  """Returns string like "CxiDs2.0:Cspad.0" from "Source("DetInfo(CxiDs2.0:Cspad.0)")"
+  """Returns string like "CxiDs2.0:Cspad.0" from "Source('DetInfo(CxiDs2.0:Cspad.0)')"
   """
   return str(source).split('(')[2].split(')')[0]
 
 ##-----------------------------
 
 def det_name_from_source(source) :
-  """Returns detector name like "Cspad" from source like "Source("DetInfo(CxiDs2.0:Cspad.0)")"
+  """Returns detector name like "Cspad" from source like "Source('DetInfo(CxiDs2.0:Cspad.0)')"
   """
-  str_src = string_from_source(source)
+  str_src = string_from_source_v2(source)
   return str_src.split(':')[1].split('.')[0]
 
 ##-----------------------------
@@ -133,6 +142,37 @@ def det_type_from_name(name) :
     return map_det_name_to_type[name]
 
 ##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------
+
+def merge_masks(mask1=None, mask2=None) :
+    """Merging masks using rule: (0,1,0,1)^(0,0,1,1) = (0,0,0,1) 
+    """
+    if mask1 is None : return mask2
+    if mask2 is None : return mask1
+
+    shape1 = mask1.shape
+    shape2 = mask2.shape
+
+    if shape1 != shape2 :
+        if len(shape1) > len(shape2) : mask2.shape = shape1
+        else                         : mask1.shape = shape2
+
+    return np.logical_and(mask1, mask2)
+
+##-----------------------------
+
+def print_ndarr(nda, name='', first=0, last=5) :
+    if nda is None : print '%s\n%s: %s' % (80*'_', name, nda)
+    elif isinstance(nda, tuple) : print_ndarr(np.array(nda), 'ndarray from tuple: %s' % name)
+    elif isinstance(nda, list)  : print_ndarr(np.array(nda), 'ndarray from list: %s' % name)
+    elif not isinstance(nda, np.ndarray) :
+                     print '%s\n%s: %s' % (80*'_', name, type(nda))
+    else           : print '%s\n%s:  shape:%s  size:%d  dtype:%s %s...' % \
+         (80*'_', name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last])
+
+##-----------------------------
 
 #import psana
 
@@ -145,8 +185,13 @@ if __name__ == "__main__" :
 
   print '\nmap_det_type_to_name:'
   for t,n in map_det_type_to_name.items() : print '  %2d : %10s' % (t, n)
+
   print '\nmap_det_name_to_type:'
   for n,t in map_det_name_to_type.items() : print '  %10s : %2d' % (n, t)
+
+  print 'string_from_source_v2 for src: %s' % string_from_source_v2('Source("DetInfo(CxiDs2.0:Cspad.0)")')
+
+  print 'string_from_source_v2 for alias: %s' % string_from_source_v2('Source("DsaCsPad")')
 
 ##-----------------------------
 ##-----------------------------

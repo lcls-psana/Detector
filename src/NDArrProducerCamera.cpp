@@ -33,14 +33,21 @@ NDArrProducerCamera::NDArrProducerCamera(const PSEvt::Source& source, const unsi
   , m_count_evt(0)
   , m_count_msg(0)
 {
-  m_as_data         = (mode&1) ? true  : false;
-  m_subtract_offset = (mode)   ? false : true; 
+  set_mode(mode);
 }
 
 //-----------------------------
 
 NDArrProducerCamera::~NDArrProducerCamera ()
 {
+}
+
+//-----------------------------
+
+void NDArrProducerCamera::set_mode(const unsigned& mode)
+{
+  m_as_data         = (mode&1) ? true  : false;
+  m_subtract_offset = (mode)   ? false : true; 
 }
 
 //-----------------------------

@@ -13,7 +13,7 @@ import pyimgalgos.GlobalGraphics as gg
 def example_01():
 
     SKIP   = 0
-    EVENTS = 1000 + SKIP
+    EVENTS = 100 + SKIP
 
     dsname = 'exp=cxif5315:run=169'
     src    = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
@@ -25,9 +25,10 @@ def example_01():
     ds  = psana.DataSource(dsname)
     evt = ds.events().next()
     env = ds.env()
+    rnum = evt.run()
     
-    det = PyDetector(src, env, pbits=0)
-    shape = det.shape(evt) 
+    det = PyDetector(src, env, pbits=0, iface='P')
+    shape = det.shape(rnum) 
 
     print '  det.shape() = ', shape 
     
@@ -43,6 +44,8 @@ def example_01():
         if not i<EVENTS : break
 
         cdata = det.calib(evt)
+        #cdata = det.raw_data(evt)
+
         if cdata is None : continue
         if not i%10 : print '  Event: %d' % i
         counter += 1
@@ -56,7 +59,7 @@ def example_01():
     ##-----------------------------
     # Plot averaged image
 
-    img = det.image(evt, arr_ave)
+    img = det.image(rnum, arr_ave)
     if img is None : sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
     
     ave, rms = arr_ave.mean(), arr_ave.std()
