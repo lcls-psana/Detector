@@ -11,6 +11,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-02
+2015-09-11 Mikhail S. Dubrovin
+- multiple changes (PSAS-139)
+- DetectorAccess - add setCModPars
+- PyDetector.py - set custom common mode parameters, return cspad2x2 arrays with shape=(2,185,388)
+- pyext/pyDetector.cpp - add set_cmod_pars
+- examples/ex_all_dets.py
+- examples/ex_acqiris.py
+- update examples
+	
 Tag: V00-01-01
 2015-09-09 Mikhail S. Dubrovin
 - multiple changes (PSAS-139)

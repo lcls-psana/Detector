@@ -109,6 +109,9 @@ print_ndarr(data_sub_peds, 'data - peds')
 nda_cdata = det.calib(evt)
 print_ndarr(nda_cdata, 'calibrated data')
 
+nda_cdata_ub = det.calib(evt, cmpars=(5,50))
+print_ndarr(nda_cdata_ub, 'calibrated data for cspad unbond pixels')
+
 coords_x = det.coords_x(par)
 print_ndarr(coords_x, 'coords_x')
 
@@ -127,8 +130,8 @@ print '%s\npixel size: %s' % (80*'_', str(pixel_size))
 
 ##-----------------------------
 
-#img_arr = data_sub_peds
-img_arr = nda_cdata if nda_cdata is not None else nda_raw
+img_arr = data_sub_peds
+#img_arr = nda_cdata if nda_cdata is not None else nda_raw
 img = None
 
 # Image producer is different for 3-d and 2-d arrays 

@@ -8,6 +8,7 @@ from Detector.PyDetector import PyDetector
 import pyimgalgos.GlobalGraphics as gg
 
 dsname, src = 'exp=sxri0414:run=88', psana.Source('DetInfo(SxrEndstation.0:Acqiris.2)')
+#dsname, src = 'exp=sxri0414:run=88', psana.Source('DetInfo(acq02)')
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
 # Use non-standard calib directory
@@ -20,10 +21,11 @@ ds  = psana.DataSource(dsname)
 evt1= ds.events().next()
 evt = ds.events().next()
 env = ds.env()
+nrun = evt.run()
 
 for key in evt.keys() : print key
 
-det = PyDetector(src, env, pbits=0)
+det = PyDetector(src, env, pbits=1023, iface='P')
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins
 

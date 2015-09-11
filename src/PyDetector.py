@@ -21,7 +21,7 @@ Usage::
     import psana
     from Detector.PyDetector import PyDetector    
 
-    # retreive parameters from psana
+    # retreive parameters from psana etc.
     dsname = 'exp=cxif5315:run=169'
     src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 
@@ -32,6 +32,7 @@ Usage::
 
     # parameret "par" can be either runnum or evt    
     par = runnum # or = evt
+    cmpars=(1,25,10,91) # custom tuple of common mode parameters
 
     det = PyDetector(src, env, pbits=0, iface='P') # iface='P' or 'C' - preferable low level interface (for test perp.)
 
@@ -66,10 +67,15 @@ Usage::
 
     # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
     nda_cdata = det.calib(evt)
+    # or with custom common mode parameter sequence
+    nda_cdata = det.calib(evt, cmpars=(1,25,10,91))
 
     # common mode correction for pedestal-subtracted numpy array nda:
     det.common_mode_apply(par, nda)
-    cm_corr_nda = det.common_mode_correction(self, par, nda)
+    cm_corr_nda = det.common_mode_correction(par, nda)
+    # or with custom common mode parameter sequence
+    det.common_mode_apply(par, nda, cmpars)
+    cm_corr_nda = det.common_mode_correction(par, nda, cmpars)
 
     # access geometry information
     coords_x   = det.coords_x(par)
@@ -112,7 +118,8 @@ import psana
 import Detector
 import numpy as np
 import PSCalib.GlobalUtils as gu
-from Detector.PyDetectorAccess import PyDetectorAccess
+from   PSCalib.GeometryObject import data2x2ToTwo2x1, two2x1ToData2x2
+from   Detector.PyDetectorAccess import PyDetectorAccess
 
 ##-----------------------------
 
@@ -219,6 +226,16 @@ class PyDetector :
 
 ##-----------------------------
 
+    def is_cspad2x2(self) :
+        if self.dettype == gu.CSPAD2X2 :
+            #print 'Ma, look, it is cspad2x2!'
+            return True
+        else :
+            return False
+        #if arr is not None and arr.size == 143560 : return True
+
+##-----------------------------
+
     def ndim(self, par) : # par = evt or runnum(int)
         """ Returns ndarray number of dimensions. If ndim>3 then returns 3.
         """
@@ -239,6 +256,13 @@ class PyDetector :
 ##-----------------------------
 
     def shape(self, par) :
+        """ Returns ndarray with NATURAL shape.
+        """        
+        return np.array((2,185,388)) if self.is_cspad2x2() else self._shape_daq_(par)
+
+##-----------------------------
+
+    def _shape_daq_(self, par) :
         """ Returns ndarray shape. If ndim>3 shape is reduced to 3-d.
             Example: the shepe like [4,8,185,388] is reduced to [32,185,388]
         """
@@ -250,38 +274,24 @@ class PyDetector :
 
 ##-----------------------------
 
-#    def _shaped_array_(self, evt, arr, calibtype) :
-#        """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
-#        """
-#        if self.da.status(evt, self.env, calibtype) != gu.LOADED : return None
-#        if self.size(evt) > 0 : arr.shape = self.shape(evt)
-#        return arr
-
+    def loading_status(self, rnum, calibtype=None) :
+        """ Returns loading status of calibration constant gu.LOADED, DEFAULT, etc.
+        """
+        if self.iscpp : return self.da.status_v0(rnum, calibtype)
+        else          : return self.pyda.status(rnum, calibtype)
+        
 ##-----------------------------
 
-    def _shaped_array_cpp_(self, rnum, arr, calibtype=None) :
-        """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
+    def _shaped_array_(self, rnum, arr, calibtype=None) :
+        """ Returns shaped numpy.array if shape is defined and constants are loaded from file, None othervise.
         """
         if arr is None   : return None
         if arr.size == 0 : return None
         if calibtype is not None :
-            status = self.da.status_v0(rnum, calibtype)
+            status = self.loading_status(rnum, calibtype)
             if status != gu.LOADED and status != gu.DEFAULT : return None
-        if self.size(rnum) : arr.shape = self.shape(rnum)
-        return arr
-
-##-----------------------------
-
-    def _shaped_array_pyt_(self, rnum, arr, calibtype=None) :
-        """ Returns shaped np.array if shape is defined and constants are loaded from file, None othervise.
-        """
-        if arr is None   : return None
-        if arr.size == 0 : return None
-        if calibtype is not None :
-            status = self.pyda.status(rnum, calibtype)
-            if status != gu.LOADED and status != gu.DEFAULT : return None
-        if self.size(rnum) : arr.shape = self.shape(rnum)
-        return arr
+        if self.size(rnum) : arr.shape = self._shape_daq_(rnum)
+        return arr if not self.is_cspad2x2() else data2x2ToTwo2x1(arr)
 
 ##-----------------------------
 
@@ -294,43 +304,43 @@ class PyDetector :
 
     def pedestals(self, par) :
         rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.pedestals(rnum),  gu.PEDESTALS)
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
+        else          : return self._shaped_array_(rnum, self.pyda.pedestals(rnum),  gu.PEDESTALS)
 
 ##-----------------------------
 
     def rms(self, par) :
         rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_rms(rnum),  gu.PIXEL_RMS)
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_rms(rnum),  gu.PIXEL_RMS)
 
 ##-----------------------------
 
     def gain(self, par) :
         rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_gain(rnum),  gu.PIXEL_GAIN)
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(rnum),  gu.PIXEL_GAIN)
 
 ##-----------------------------
 
     def mask_calib(self, par) :
         rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_mask(rnum),  gu.PIXEL_MASK)
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_mask(rnum),  gu.PIXEL_MASK)
 
 ##-----------------------------
 
     def bkgd(self, par) :
         rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_bkgd(rnum),  gu.PIXEL_BKGD)
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_bkgd(rnum),  gu.PIXEL_BKGD)
 
 ##-----------------------------
 
     def status(self, par) :
         rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.pixel_status(rnum),  gu.PIXEL_STATUS)
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_status(rnum),  gu.PIXEL_STATUS)
 
 ##-----------------------------
 
@@ -341,8 +351,7 @@ class PyDetector :
         stat = self.status(rnum)
         if stat is None : return None
         smask = np.select([stat==0, stat>0], [1, 0])
-        if self.iscpp : return self._shaped_array_cpp_(rnum, smask, gu.PIXEL_STATUS)
-        else          : return self._shaped_array_pyt_(rnum, smask, gu.PIXEL_STATUS)
+        self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
 
 ##-----------------------------
 
@@ -378,7 +387,10 @@ class PyDetector :
         # get data using python methods
         rnum = self.runnum(evt)
         rdata = self.pyda.raw_data(evt, self.env)
-        if rdata is not None : return self._shaped_array_pyt_(rnum, rdata)
+
+        if self.dettype == gu.ACQIRIS : return rdata # returns two arrays: wf, wt
+        
+        if rdata is not None : return self._shaped_array_(rnum, rdata)
 
         if self.pbits :
             print '!!! PyDetector: Data for source %s is not found in python interface, trying C++' % self.source
@@ -390,28 +402,31 @@ class PyDetector :
         else :                             rdata = self.da.data_uint16_2(evt, self.env)
         if self.pbits and rdata is None :
             print '!!! PyDetector: Data for source %s is not found in C++ interface' % self.source
-        return self._shaped_array_cpp_(rnum, rdata)
+        return self._shaped_array_(rnum, rdata)
 
 ##-----------------------------
 
-    def common_mode_apply(self, par, nda) :
+    def common_mode_apply(self, par, nda, cmpars=None) :
         """Apply common mode correction to nda (assuming that nda is data ndarray with subtracted pedestals)
            nda.dtype = np.float32 (or 64) is considered only, because common mode does not make sense for int data.
+           If cmpars is not None then this sequence is used to override default common mode parameters coming from
+           calib/.../common_mode/...
         """
         rnum = self.runnum(par)
         shape0 = nda.shape
         nda.shape = (nda.size,)
+        if cmpars is not None: self.da.set_cmod_pars(rnum, np.array(cmpars, dtype=np.float64))
         if nda.dtype == np.float64 : self.da.common_mode_double_v0(rnum, nda)
         if nda.dtype == np.float32 : self.da.common_mode_float_v0 (rnum, nda)
         nda.shape = shape0
 
 ##-----------------------------
 
-    def common_mode_correction(self, par, nda) :
+    def common_mode_correction(self, par, nda, cmpars=None) :
         """ Returns ndarray with common mode correction offsets. Assumes that nda is data ndarray with subtracted pedestals. 
         """
         nda_cm_corr = np.array(nda, dtype=np.float32, copy=True)
-        self.common_mode_apply(self.runnum(par), nda)
+        self.common_mode_apply(self.runnum(par), nda, cmpars)
         return nda_cm_corr - nda
 
 ##-----------------------------
@@ -428,7 +443,7 @@ class PyDetector :
 
 ##-----------------------------
 
-    def calib(self, evt) :
+    def calib(self, evt, cmpars=None) :
         """ Gets raw data ndarray, Applys baic corrections and return thus calibrated data.
             Applied corrections:
             - pedestal subtraction
@@ -466,12 +481,9 @@ class PyDetector :
             smask.shape = cdata.shape
             cdata *= smask      
 
-        self.common_mode_apply(rnum, cdata)
-        return cdata
-
-        #nda_cmcorr = self.common_mode_correction(evt, cdata)
-        #print 'nda_cmcorr[1:5] = ', nda_cmcorr.flatten()[1:5]
-        #return nda_cmcorr
+        if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2
+        self.common_mode_apply(rnum, cdata, cmpars)
+        return cdata if not self.is_cspad2x2() else data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2
 
 ##-----------------------------
 
@@ -498,57 +510,49 @@ class PyDetector :
 
     def coords_x(self, par) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_coords_x_v0(rnum))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_coords_x_v0(rnum))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.coords_x(rnum)) 
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_x_v0(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.coords_x(rnum)) 
     
     def coords_y(self, par) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_coords_y_v0(rnum))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_coords_y_v0(rnum))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.coords_y(rnum)) 
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_y_v0(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.coords_y(rnum)) 
 
     def coords_z(self, par) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_coords_z_v0(rnum))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_coords_z_v0(rnum))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.coords_z(rnum)) 
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_z_v0(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.coords_z(rnum)) 
 
     def areas(self, par) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_areas_v0(rnum))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_areas_v0(rnum))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.areas(rnum)) 
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_areas_v0(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.areas(rnum)) 
 
     def mask_geo(self, par, mbits=255) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.mask_geo(rnum, mbits))
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
+        else          : return self._shaped_array_(rnum, self.pyda.mask_geo(rnum, mbits))
 
     def indexes_x(self, par) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_x_v0(rnum))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_x_v0(rnum))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.indexes_x(rnum))
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_x_v0(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.indexes_x(rnum))
 
     def indexes_y(self, par) :
         rnum = self.runnum(par)
-        #return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_y_v0(rnum))
-        if self.iscpp : return self._shaped_array_cpp_(rnum, self.da.pixel_indexes_y_v0(rnum))
-        else          : return self._shaped_array_pyt_(rnum, self.pyda.indexes_y(rnum))
+        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_y_v0(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.indexes_y(rnum))
 
     def pixel_size(self, par) :
         rnum = self.runnum(par)
-        #psize = self.da.pixel_scale_size_v0(rnum)
         psize = self.da.pixel_scale_size_v0(rnum) if self.iscpp else self.pyda.pixel_size(rnum) # Ex: 109.92 [um]
         return psize if psize != 1 else None
 
     def image(self, evt, nda_in=None) :
         rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
+        if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         nda_img = np.array(nda, dtype=np.double).flatten()
-        #return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
         else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img))
         

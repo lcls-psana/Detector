@@ -178,6 +178,8 @@ class DetectorAccess {
   inline void setPrintBits (const unsigned& pbits) {m_pbits = pbits;}
   inline void setDefaultValue (const float& vdef) {m_vdef = vdef;}
 
+  void setCModPars(const int& runnum, ndarray<const common_mode_t, 1> nda_pars);
+
 //-------------------
 
   void print();
@@ -205,6 +207,7 @@ class DetectorAccess {
   float                    m_vdef; 
   std::string              m_calibdir;
 
+  ndarray<common_mode_t, 1> m_nda_cmod_pars;
 
   //NDArrProducerCSPAD*     m_nda_prod;  // direct access
   NDArrProducerBase*       m_nda_prod;   // factory store access
@@ -229,7 +232,7 @@ class DetectorAccess {
 //-------------------
  
  public:
- 
+
    template <typename T>
    void common_mode_apply(const int& runnum, T* arr)
        {

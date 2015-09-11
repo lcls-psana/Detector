@@ -108,7 +108,9 @@ void (DetectorAccess::*cmod_2) (boost::shared_ptr<PSEvt::Event>, boost::shared_p
 void (DetectorAccess::*set_1) (const unsigned&) = &DetectorAccess::setMode;
 void (DetectorAccess::*set_2) (const unsigned&) = &DetectorAccess::setPrintBits;
 void (DetectorAccess::*set_3) (const float&)    = &DetectorAccess::setDefaultValue;
+void (DetectorAccess::*set_4) (const int&, ndarray<const common_mode_t, 1>) = &DetectorAccess::setCModPars;
 
+//-------------------
 
 void (DetectorAccess::*print_1) () = &DetectorAccess::print;
 void (DetectorAccess::*print_2) (boost::shared_ptr<PSEvt::Event>, boost::shared_ptr<PSEnv::Env>) = &DetectorAccess::print_config;
@@ -186,6 +188,7 @@ BOOST_PYTHON_MODULE(detector_ext)
     .def("set_mode",           set_1)
     .def("set_print_bits",     set_2)
     .def("set_def_value",      set_3)
+    .def("set_cmod_pars",      set_4)
     .def("print_members",      print_1)
     .def("print_config",       print_2)
     .def("instrument",         &DetectorAccess::str_inst)

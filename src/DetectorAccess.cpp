@@ -24,6 +24,7 @@ namespace Detector {
 
   typedef DetectorAccess::data_t data_t;
   typedef DetectorAccess::image_t image_t;
+  typedef DetectorAccess::common_mode_t common_mode_t;
 
 //----------------
 // Constructors --
@@ -238,6 +239,25 @@ DetectorAccess::initCommonMode(const int& runnum)
   }
 
   m_cmode = new ImgAlgos::CommonModeCorrection(m_source, cmod_pars, size, status, m_pbits);
+}
+
+//-------------------
+
+void 
+DetectorAccess::setCModPars(const int& runnum, ndarray<const common_mode_t, 1> nda)
+{
+  initCommonMode(runnum);
+
+  //std::cout << "XXX: DetectorAccess::setCModPars test: " << nda << '\n'; 
+  //m_nda_cmod_pars = nda.copy();
+  //const DetectorAccess::common_mode_t* p_pars = nda_pars.data();
+  //m_cmode -> setCModPars(m_nda_cmod_pars.data());
+  m_cmode -> setCModPars(nda.data());
+
+  if(m_pbits) { 
+    std::stringstream ss; ss << "setCModPars(...): " << nda;
+    MsgLog(_name_(), info, ss.str());
+  }
 }
 
 //-------------------
