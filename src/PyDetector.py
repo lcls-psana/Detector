@@ -144,11 +144,11 @@ class PyDetector :
         #print 'In c-tor DetPyAccess'
 
         self.env     = env
-        self.set_source(src, set_sub=False)
-        self.dettype = gu.det_type_from_source(self.source)
         self.pbits   = pbits
         self.iscpp   = True if iface=='C' else False
         self.ispyt   = True if iface=='P' else False
+        self.set_source(src, set_sub=False)
+        self.dettype = gu.det_type_from_source(self.source)
 
         self.da   = Detector.DetectorAccess(self.source, self.env, pbits) # , 0xffff) C++ access methods
         self.pyda = PyDetectorAccess(self.source, self.env, pbits) # Python data access methods
@@ -157,7 +157,7 @@ class PyDetector :
         self._size  = None
         self._ndim  = None
 
-        if pbits & 1 : self.print_members()
+        if self.pbits & 1 : self.print_members()
 
 ##-----------------------------
 
@@ -170,6 +170,13 @@ class PyDetector :
         amap = self.env.aliasMap()
         psasrc = amap.src(str_src)
         self.source  = src if amap.alias(psasrc) == '' else amap.src(str_src)
+
+        if not isinstance(self.source, psana.Source) : self.source = psana.Source(self.source)
+
+        if self.pbits & 16 :
+            print '%s: input source: %s' % (self.__class__.__name__, src),\
+                  '\n  string source: %s' % (str_src),\
+                  '\n  source object: %s of type: %s' % (self.source, type(self.source))
 
         if set_sub :
             self.pyda.set_source(self.source)

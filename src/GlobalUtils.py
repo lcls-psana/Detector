@@ -115,7 +115,8 @@ def string_from_source_v2(source) :
 def string_from_source(source) :
   """Returns string like "CxiDs2.0:Cspad.0" from "Source('DetInfo(CxiDs2.0:Cspad.0)')"
   """
-  return str(source).split('(')[2].split(')')[0]
+  #return str(source).split('(')[2].split(')')[0]
+  return string_from_source_v2(source)
 
 ##-----------------------------
 
