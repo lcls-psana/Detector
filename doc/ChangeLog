@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-05
+2015-09-18 Mikhail S. Dubrovin
+- in PyDetector.py - accept source as a string (PSAS-139) 
+	
 Tag: V00-01-04
 2015-09-18 Mikhail S. Dubrovin
 - Add support for Imp (PSAS-139)

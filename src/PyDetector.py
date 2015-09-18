@@ -170,9 +170,12 @@ class PyDetector :
 
 ##-----------------------------
 
-    def set_source(self, src, set_sub=True) :
+    def set_source(self, srcpar, set_sub=True) :
         """Accepts regular source or alias
         """
+        #print 'type of srcpar: ', type(srcpar)
+        
+        src = srcpar if isinstance(srcpar, psana.Source) else psana.Source(srcpar)
         str_src = gu.string_from_source(src)
 
         # in case of alias convert it to psana.Src
