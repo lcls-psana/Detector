@@ -198,3 +198,28 @@ def get_acqiris_config_object(env, src) :
     
 ##-----------------------------
 ##-----------------------------
+
+def get_imp_data_object(evt, src) :
+    """get imp data object
+    """
+    o = evt.get(psana.Imp.ElementV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+##-----------------------------
+
+def get_imp_config_object(env, src) :
+    """get imp config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(psana.Imp.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------

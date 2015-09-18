@@ -11,6 +11,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-04
+2015-09-18 Mikhail S. Dubrovin
+- Add support for Imp (PSAS-139)
+- in PyDetector.py add set_correct_acqiris_time(...), set_calib_imp(...), __call__(...), update doc
+- in PyDetectorAccess.py add raw_data_imp(...), set_calib_imp(...)
+- in PyDataAccess.py add get_imp_data_object(...) and get_imp_config_object(...)
+- examples/ex_imp.py
+
 Tag: V00-01-03
 2015-09-15 Mikhail S. Dubrovin
 - PyDetector.set_source fix type to psana.Source, add ex_cspad_alias.py, ex_pnccd_ts.py (PSAS-139)

@@ -94,12 +94,21 @@ Usage::
     # reconstruct image
     img = det.image(evt) # uses calib(...) by default
     img = det.image(evt, img_nda)
+    img = det(evt, img_nda) # alias for det.image(evt, img_nda)
 
+    #--------------------------- 
+    # Detector-specific methods
+    #---------------------------
+    
     # access Acqiris data
     det.set_correct_acqiris_time(correct_time=True) # (by default)
     wf, wt = det.raw(evt)
-    returns two np.array-s with shape = (nbrChannels, nbrSamples) for waveform and associated timestamps.
+    # returns two np.array-s with shape = (nbrChannels, nbrSamples) for waveform and associated timestamps or None.
     
+    # access Imp data
+    det.set_calib_imp(do_calib_imp=True) # Imp calibration will subtract base level with changing dtype to np.int32
+    wf = det.raw(evt)
+    # returns numpy array with shape=(4, 1023) - samples for 4 channels or None if unavailable.
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
@@ -381,6 +390,20 @@ class PyDetector :
 
 ##-----------------------------
 
+    def set_correct_acqiris_time(self, correct_time=True) :
+        """On/off correction of time for acqiris
+        """
+        self.pyda.set_correct_acqiris_time(correct_time)
+
+##-----------------------------
+
+    def set_calib_imp(self, do_calib_imp=False) :
+        """On/off imp calibration
+        """
+        self.pyda.set_calib_imp(do_calib_imp)
+
+##-----------------------------
+
     def raw_data(self, evt) :
         """Alias for depricated method renamed to raw(evt) 
         """
@@ -396,6 +419,7 @@ class PyDetector :
         rdata = self.pyda.raw_data(evt, self.env)
 
         if self.dettype == gu.ACQIRIS : return rdata # returns two arrays: wf, wt
+        if self.dettype == gu.IMP :     return rdata # returns nparray with shape=(4,1023)
         
         if rdata is not None : return self._shaped_array_(rnum, rdata)
 
@@ -562,7 +586,11 @@ class PyDetector :
         nda_img = np.array(nda, dtype=np.double).flatten()
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
         else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img))
-        
+
+    def __call__(self, evt, nda_in=None) :
+        """Alias for image in order to call it as det(evt,...)"""
+        return self.image(evt, nda_in)
+
 ##-----------------------------
 
 from time import time

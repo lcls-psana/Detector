@@ -136,13 +136,14 @@ img = None
 
 # Image producer is different for 3-d and 2-d arrays 
 if len(nda_raw.shape) > 2 :
-    img = det.image(evt)
+    #img = det.image(evt)
+    img = det(evt) # alias for det.image(evt) implemented in __call__
     #img = det.image(evt, img_arr)
 else :
     img = img_arr
     img.shape = nda_raw.shape
 
-print_ndarr(img, 'image (calibrated data or raw')
+print_ndarr(img, 'image (calibrated data or raw)')
 
 print 80*'_'
 

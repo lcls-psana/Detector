@@ -62,6 +62,7 @@ class PyDetectorAccess :
         self.dettype = gu.det_type_from_source(self.str_src)
         self.do_offset = False # works for camera
         self.correct_time = True # works for acqiris
+        self.do_calib_imp = False # works for imp 
         if self.pbits & 1 : self.print_attributes()
 
         self.cpst = None 
@@ -114,8 +115,8 @@ class PyDetectorAccess :
     def print_attributes(self) :
         print 'PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d' % \
               (self.source, self.dettype, self.pbits), \
-              '\n  do_offset (Camera): %s\n  correct_time (Acqiris): %s' % \
-              (self.do_offset, self.correct_time)
+              '\n  do_offset (Camera): %s\n  correct_time (Acqiris): %s\n  do_calib_imp (Imp): %s' % \
+              (self.do_offset, self.correct_time, self.do_calib_imp)
 
 ##-----------------------------
 
@@ -277,6 +278,13 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def set_calib_imp(self, do_calib_imp=False) :
+        """On/off imp calibration
+        """
+        self.do_calib_imp = do_calib_imp
+
+##-----------------------------
+
     def raw_data(self, evt, env) :
 
         #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
@@ -298,6 +306,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.OPAL8000  : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.ORCAFL40  : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.TM6740    : return self.raw_data_camera(evt, env)    # 0.24 ms
+        elif self.dettype == gu.IMP       : return self.raw_data_imp(evt, env)
         else                              : return None
 
 ##-----------------------------
@@ -480,8 +489,9 @@ class PyDetectorAccess :
         if d is None : return None
 
         # configuration object
-        c = pda.get_epix_config_object(env, self.source)
-        if c is None : return None
+        #c = pda.get_epix_config_object(env, self.source)
+        #if c is None : return None
+
         #print 'config: rows: %d, cols: %d, asics: %d' % (c.numberOfRows(), c.numberOfColumns(), c.numberOfAsics())
         #print 'config: digitalCardId0: %d, 1: %d' % (c.digitalCardId0(), c.digitalCardId1())
         #print 'config: analogCardId0 : %d, 1: %d' % (c.analogCardId0(),  c.analogCardId1())
@@ -551,6 +561,61 @@ class PyDetectorAccess :
                 wt[chan, i0_seg:i0_seg+size] = np.arange(size)*sampInterval + pos
 
         return wf, wt
+
+##-----------------------------
+
+    def raw_data_imp(self, evt, env) :
+        """returns ndarray with shape=(4, 1023) or None
+        """
+        # data object
+        d = pda.get_imp_data_object(evt, self.source)
+        if d is None : return None
+
+        if self.pbits & 4 :
+            # configuration object
+            c = pda.get_imp_config_object(env, self.source)
+            if c is None : return None
+
+            print "Configuration object for %s" % self.source
+            print "  range =",           c.range()
+            print "  calRange =",        c.calRange()
+            print "  reset =",           c.reset()
+            print "  biasData =",        c.biasData()
+            print "  calData =",         c.calData()
+            print "  biasDacData =",     c.biasDacData()
+            print "  calStrobe =",       c.calStrobe()
+            print "  numberOfSamples =", c.numberOfSamples()
+            print "  trigDelay =",       c.trigDelay()
+            print "  adcDelay =",        c.adcDelay()
+            
+            print "Data object for %s" % self.source
+            print "  vc =",          d.vc()
+            print "  lane =",        d.lane()
+            print "  frameNumber =", d.frameNumber()
+            print "  range =",       d.range()
+            
+            laneStatus = d.laneStatus()
+            print "  laneStatus.linkErrCount =",  laneStatus.linkErrCount()
+            print "  laneStatus.linkDownCount =", laneStatus.linkDownCount()
+            print "  laneStatus.cellErrCount =",  laneStatus.cellErrCount()
+            print "  laneStatus.rxCount =",       laneStatus.rxCount()
+            print "  laneStatus.locLinked =",     laneStatus.locLinked()
+            print "  laneStatus.remLinked =",     laneStatus.remLinked()
+            print "  laneStatus.zeros =",         laneStatus.zeros()
+            print "  laneStatus.powersOkay =",    laneStatus.powersOkay()
+
+        lst_of_samps = d.samples()
+        a = np.array([sample.channels() for sample in lst_of_samps])
+        # Transpose converts (1023, 4) to (4, 1023)
+        a = np.transpose(a)
+
+        if self.do_calib_imp :
+            c = pda.get_imp_config_object(env, self.source)
+            if c is None : return None
+            bias = c.biasData()
+            return np.array(a, dtype=np.int32) - bias
+
+        return a
 
 ##-----------------------------
 
