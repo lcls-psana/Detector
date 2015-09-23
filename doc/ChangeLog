@@ -11,6 +11,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-06
+2015-09-23 Mikhail S. Dubrovin
+- in PyDetector.py (python interface only) and PyDetectorAccess.py (PSAS-139) 
+  - add move_geo, tilt_geo, indexes_xy
+  - indexes_x, indexes_y, indexes_xy, and image add parameters pix_scale_size_um=None, xy0_off_pix=None
+
 Tag: V00-01-05
 2015-09-18 Mikhail S. Dubrovin
 - in PyDetector.py - accept source as a string (PSAS-139) 

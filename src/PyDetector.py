@@ -83,9 +83,14 @@ Usage::
     coords_z   = det.coords_z(par)
     areas      = det.areas(par)
     mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
-    ind_x      = det.indexes_x(par)
-    ind_y      = det.indexes_y(par)
+    ix         = det.indexes_x(par)
+    iy         = det.indexes_y(par)
+    ix, iy     = det.indexes_xy(par)
     pixel_size = det.pixel_size(par)
+
+    # change geometry object parameters
+    det.move_geo(par, dx, dy, dz)    # move detector it 3-d space
+    det.tilt_geo(par, dtx, dty, dtz) # tilt detector around 3 axes
 
     # access to combined mask
     NOTE: by default none of mask keywords is set to True, returns None.
@@ -96,6 +101,12 @@ Usage::
     img = det.image(evt, img_nda)
     img = det(evt, img_nda) # alias for det.image(evt, img_nda)
 
+    # special case of indexing using non-default pixel scale size and x, y coordinate offset
+    ix         = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
+    iy         = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
+    ix, iy     = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
+    img        = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
+    
     #--------------------------- 
     # Detector-specific methods
     #---------------------------
@@ -567,28 +578,41 @@ class PyDetector :
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
         else          : return self._shaped_array_(rnum, self.pyda.mask_geo(rnum, mbits))
 
-    def indexes_x(self, par) :
+    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_x_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.indexes_x(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.indexes_x(rnum, pix_scale_size_um, xy0_off_pix))
 
-    def indexes_y(self, par) :
+    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_y_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.indexes_y(rnum))
+        else          : return self._shaped_array_(rnum, self.pyda.indexes_y(rnum, pix_scale_size_um, xy0_off_pix))
+
+    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+        rnum = self.runnum(par)
+        iX, iY = self.pyda.indexes_xy(rnum, pix_scale_size_um, xy0_off_pix)
+        return self._shaped_array_(rnum, iX), self._shaped_array_(rnum, iY)
 
     def pixel_size(self, par) :
         rnum = self.runnum(par)
         psize = self.da.pixel_scale_size_v0(rnum) if self.iscpp else self.pyda.pixel_size(rnum) # Ex: 109.92 [um]
         return psize if psize != 1 else None
 
-    def image(self, evt, nda_in=None) :
+    def move_geo(self, par, dx, dy, dz) :
+        rnum = self.runnum(par)
+        self.pyda.move_geo(par, dx, dy, dz)
+
+    def tilt_geo(self, par, dtx, dty, dtz) :
+        rnum = self.runnum(par)
+        self.pyda.tilt_geo(par, dtx, dty, dtz)
+
+    def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None) :
         rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
         if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         nda_img = np.array(nda, dtype=np.double).flatten()
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
-        else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img))
+        else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix))
 
     def __call__(self, evt, nda_in=None) :
         """Alias for image in order to call it as det(evt,...)"""

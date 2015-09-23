@@ -220,15 +220,28 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def indexes_x(self, par) :
+    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coord_indexes()[0]
+        else : return self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+                                                       pix_scale_size_um=pix_scale_size_um,\
+                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)[0]
 
 ##-----------------------------
 
-    def indexes_y(self, par) :
+    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coord_indexes()[1]
+        else : return self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+                                                       pix_scale_size_um=pix_scale_size_um,\
+                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)[1]
+
+##-----------------------------
+
+    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+        """Returns two index arrays iX and iY"""
+        if self.geoaccess(par) is None : return None
+        else : return self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+                                                       pix_scale_size_um=pix_scale_size_um,\
+                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
 
 ##-----------------------------
 
@@ -238,10 +251,24 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def image(self, par, img_nda) :
+    def move_geo(self, par, dx, dy, dz) :
+        if self.geoaccess(par) is None : pass
+        else : return self.geo.move_geo(None, 0, dx, dy, dz)
+
+##-----------------------------
+
+    def tilt_geo(self, par, dtx, dty, dtz) :
+        if self.geoaccess(par) is None : pass
+        else : return self.geo.tilt_geo(None, 0, dtx, dty, dtz)
+
+##-----------------------------
+
+    def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None) :
         if self.geoaccess(par) is None : return None
         else :
-            iX, iY = self.geo.get_pixel_coord_indexes()
+            iX, iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+                                                      pix_scale_size_um=pix_scale_size_um,\
+                                                      xy0_off_pix=xy0_off_pix, do_tilt=True)
             return img_from_pixel_arrays(iX,iY,img_nda)
 
 ##-----------------------------
