@@ -18,14 +18,14 @@ Usage::
 
 
     # import
-    import psana
+    import _psana
     from Detector.PyDetector import PyDetector    
 
     # retreive parameters from psana etc.
     dsname = 'exp=cxif5315:run=169'
-    src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    src = _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 
-    ds  = psana.DataSource(dsname)
+    ds  = _psana.DataSource(dsname)
     env = ds.env()
     evt = ds.events().next()
     runnum = evt.run()
@@ -134,7 +134,7 @@ __version__ = "$Revision$"
 ##-----------------------------
 
 import sys
-import psana
+import _psana
 import Detector
 import numpy as np
 import PSCalib.GlobalUtils as gu
@@ -156,8 +156,8 @@ class PyDetector :
 
     def __init__(self, src, env, pbits=0, iface='P') :
         """Constructor.
-        @param src    - data source, ex: psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-        @param env    - environment, ex: env=ds.env(), where ds=psana.DataSource('exp=cxif5315:run=169')
+        @param src    - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+        @param env    - environment, ex: env=ds.env(), where ds=_psana.DataSource('exp=cxif5315:run=169')
         @param pbits  - print control bit-word
         @param iface  - preferable interface: 'C' - C++ (everything) or 'P' - Python based (everything except common mode) 
         """
@@ -186,15 +186,15 @@ class PyDetector :
         """
         #print 'type of srcpar: ', type(srcpar)
         
-        src = srcpar if isinstance(srcpar, psana.Source) else psana.Source(srcpar)
+        src = srcpar if isinstance(srcpar, _psana.Source) else _psana.Source(srcpar)
         str_src = gu.string_from_source(src)
 
-        # in case of alias convert it to psana.Src
+        # in case of alias convert it to _psana.Src
         amap = self.env.aliasMap()
         psasrc = amap.src(str_src)
         self.source  = src if amap.alias(psasrc) == '' else amap.src(str_src)
 
-        if not isinstance(self.source, psana.Source) : self.source = psana.Source(self.source)
+        if not isinstance(self.source, _psana.Source) : self.source = _psana.Source(self.source)
 
         if self.pbits & 16 :
             print '%s: input source: %s' % (self.__class__.__name__, src),\
@@ -624,8 +624,8 @@ from time import time
 
 if __name__ == "__main__" :
 
-    ds, src = psana.DataSource('exp=cxif5315:run=169'), psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-    #ds, src = psana.DataSource('exp=xcsi0112:run=15'),  psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
+    ds, src = _psana.DataSource('exp=cxif5315:run=169'), _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    #ds, src = _psana.DataSource('exp=xcsi0112:run=15'),  _psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 
     env = ds.env()
     cls = env.calibStore()

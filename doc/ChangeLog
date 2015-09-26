@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-07
+2015-09-25 TJ Lane
+- Changed import psana to import _psana to break circular dependency in psana
+- Tested change in ex_all_dets.py
+
 Tag: V00-01-06
 2015-09-23 Mikhail S. Dubrovin
 - in PyDetector.py (python interface only) and PyDetectorAccess.py (PSAS-139) 

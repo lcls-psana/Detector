@@ -1,3 +1,3 @@
 #from psana import *
-import psana
+import _psana
 from detector_ext import *

@@ -3,7 +3,6 @@
 import sys
 import psana
 from time import time
-from Detector.PyDetector import PyDetector
 from Detector.GlobalUtils import print_ndarr
 
 ##-----------------------------
@@ -46,7 +45,7 @@ for key in evt.keys() : print key
 ##-----------------------------
 
 par = nrun # evt or nrun
-det = PyDetector(src, env, pbits=0, iface='P') # iface='P' or 'C'
+det = psana.Detector(src, env, pbits=0, iface='P') # iface='P' or 'C'
 
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins

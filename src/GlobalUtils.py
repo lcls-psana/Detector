@@ -175,11 +175,11 @@ def print_ndarr(nda, name='', first=0, last=5) :
 
 ##-----------------------------
 
-#import psana
+#import _psana
 
 if __name__ == "__main__" :
 
-  #psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+  #_psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 
   #print 'dettype_from_source: %s' % source
   print '\nlist_of_detnames:', list_of_detnames

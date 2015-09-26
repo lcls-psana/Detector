@@ -25,7 +25,7 @@ __version__ = "$Revision$"
 
 import sys
 import numpy as np
-import psana
+import _psana
 import Detector.PyDataAccess as pda
 
 #import Detector.GlobalUtils as gu
@@ -49,7 +49,7 @@ class PyDetectorAccess :
 
     def __init__(self, source, env, pbits=0) :
         """Constructor.
-        @param source - data source, ex: psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+        @param source - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
         @param env    - environment
         @param pbits  - print control bit-word
         """
@@ -474,10 +474,10 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def raw_data_andor(self, evt, env) :
-        d = evt.get(psana.Andor.FrameV1, self.source)
+        d = evt.get(_psana.Andor.FrameV1, self.source)
         if d is None : return None
 
-        #c = env.configStore().get(psana.Andor.ConfigV1, self.source)
+        #c = env.configStore().get(_psana.Andor.ConfigV1, self.source)
         #if c is None : return None
         #print 'config: width: %d, height: %d' % (c.width(), c.height())
 
@@ -488,8 +488,8 @@ class PyDetectorAccess :
 
     def raw_data_pnccd(self, evt, env) :
         #print '=== in raw_data_pnccd'
-        #d = evt.get(psana.PNCCD.FullFrameV1, self.source)
-        d = evt.get(psana.PNCCD.FramesV1, self.source)
+        #d = evt.get(_psana.PNCCD.FullFrameV1, self.source)
+        d = evt.get(_psana.PNCCD.FramesV1, self.source)
         if d is None : return None
 
         #c = pda.get_pnccd_config_object(env, self.source)
@@ -650,8 +650,8 @@ from time import time
 
 if __name__ == "__main__" :
 
-    ds, src = psana.DataSource('exp=cxif5315:run=169'), psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-    #ds, src = psana.DataSource('exp=xcsi0112:run=15'),  psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
+    ds, src = _psana.DataSource('exp=cxif5315:run=169'), _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    #ds, src = _psana.DataSource('exp=xcsi0112:run=15'),  _psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 
     env  = ds.env()
     cls  = env.calibStore()
