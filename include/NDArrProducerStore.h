@@ -144,7 +144,7 @@ public:
 	  return new NDArrProducerEpix(source, mode, pbits, vdef);
 
         MsgLog("NDArrProducerStore", error, "Access to data for source " << source << " is not implemented yet...");  
-        abort();
+        throw std::runtime_error("Access to data for source");
 
         return NULL;
   }

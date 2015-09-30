@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-08
+2015-09-30 David Schneider
+- change an abort() call to throw exception to keep user ipython session running
+
 Tag: V00-01-07
 2015-09-25 TJ Lane
 - Changed import psana to import _psana to break circular dependency in psana
