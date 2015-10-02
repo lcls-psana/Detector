@@ -18,14 +18,14 @@ Usage::
 
 
     # import
-    import _psana
+    import psana
     from Detector.PyDetector import PyDetector    
 
     # retreive parameters from psana etc.
     dsname = 'exp=cxif5315:run=169'
-    src = _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 
-    ds  = _psana.DataSource(dsname)
+    ds  = psana.DataSource(dsname)
     env = ds.env()
     evt = ds.events().next()
     runnum = evt.run()
