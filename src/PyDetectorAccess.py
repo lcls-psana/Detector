@@ -317,24 +317,25 @@ class PyDetectorAccess :
         #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
         #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
 
-        if   self.dettype == gu.CSPAD     : return self.raw_data_cspad(evt, env)     # 3   ms
-        elif self.dettype == gu.CSPAD2X2  : return self.raw_data_cspad2x2(evt, env)  # 0.6 ms
-        elif self.dettype == gu.PRINCETON : return self.raw_data_princeton(evt, env) # 0.7 ms
-        elif self.dettype == gu.PNCCD     : return self.raw_data_pnccd(evt, env)     # 0.8 ms
-        elif self.dettype == gu.ANDOR     : return self.raw_data_andor(evt, env)     # 0.1 ms
-        elif self.dettype == gu.FCCD960   : return self.raw_data_fccd960(evt, env)   # 11  ms
-        elif self.dettype == gu.EPIX100A  : return self.raw_data_epix(evt, env)      # 0.3 ms
-        elif self.dettype == gu.EPIX10K   : return self.raw_data_epix(evt, env)
-        elif self.dettype == gu.EPIX      : return self.raw_data_epix(evt, env)
-        elif self.dettype == gu.ACQIRIS   : return self.raw_data_acqiris(evt, env)
-        elif self.dettype == gu.OPAL1000  : return self.raw_data_camera(evt, env)    # 1 ms
-        elif self.dettype == gu.OPAL2000  : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.OPAL4000  : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.OPAL8000  : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.ORCAFL40  : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.TM6740    : return self.raw_data_camera(evt, env)    # 0.24 ms
-        elif self.dettype == gu.IMP       : return self.raw_data_imp(evt, env)
-        else                              : return None
+        if   self.dettype == gu.CSPAD      : return self.raw_data_cspad(evt, env)     # 3   ms
+        elif self.dettype == gu.CSPAD2X2   : return self.raw_data_cspad2x2(evt, env)  # 0.6 ms
+        elif self.dettype == gu.PRINCETON  : return self.raw_data_princeton(evt, env) # 0.7 ms
+        elif self.dettype == gu.PNCCD      : return self.raw_data_pnccd(evt, env)     # 0.8 ms
+        elif self.dettype == gu.ANDOR      : return self.raw_data_andor(evt, env)     # 0.1 ms
+        elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
+        elif self.dettype == gu.EPIX100A   : return self.raw_data_epix(evt, env)      # 0.3 ms
+        elif self.dettype == gu.EPIX10K    : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.EPIX       : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
+        elif self.dettype == gu.OPAL1000   : return self.raw_data_camera(evt, env)    # 1 ms
+        elif self.dettype == gu.OPAL2000   : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.OPAL4000   : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.OPAL8000   : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.ORCAFL40   : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.TM6740     : return self.raw_data_camera(evt, env)    # 0.24 ms
+        elif self.dettype == gu.QUARTZ4A150: return self.raw_data_camera(evt, env)    # 0.24 ms
+        elif self.dettype == gu.IMP        : return self.raw_data_imp(evt, env)
+        else                               : return None
 
 ##-----------------------------
 
@@ -423,12 +424,12 @@ class PyDetectorAccess :
         offset = d.offset()
         
         d16 = d.data16()
-        if d16 is not None :
+        if d16 is not None and d16 != [] :
             if self.do_offset : return np.array(d16, dtype=np.int32) - d.offset()        
             else              : return d16
         
         d8 = d.data8()
-        if d8 is not None : 
+        if d8 is not None and d8 != [] : 
             if self.do_offset : return np.array(d8, dtype=np.int32) - d.offset() 
             else              : return d8
 
