@@ -11,12 +11,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-11
+2015-10-14 Mikhail S. Dubrovin
+- Add support for Rayonix (PSAS-139)
+
 Tag: V00-01-10
 2015-10-06 Mikhail S. Dubrovin
 - Add support for Quartz4A150 (PSAS-139)
-- in PyDataAccess.py add get_quartz_data_object(..), get_quartz_config_object(..)
-- in PyDetectorAccess.py add QUARTZ4A150 in raw_data(...)
-- add ex_quartz.py, update ex_all_dets.py
+  in PyDataAccess.py add get_quartz_data_object(..), get_quartz_config_object(..)
+  in PyDetectorAccess.py add QUARTZ4A150 in raw_data(...)
+  add ex_quartz.py, update ex_all_dets.py
 
 Tag: V00-01-09
 2015-10-01 Christopher O'Grady

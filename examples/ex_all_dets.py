@@ -29,6 +29,7 @@ elif ntest==13 : dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0' # stri
 elif ntest==14 : dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad' # string of alias
 
 elif ntest==15 : dsname, src = 'exp=cxii8715:run=14', psana.Source('DetInfo(CxiEndstation.0:Quartz4A150.0)') # alias='Sc1Questar'
+elif ntest==16 : dsname, src = 'exp=xppc0115:run=305', psana.Source('DetInfo(XppEndstation.0:Rayonix.0)') # alias='rayonix'
 #elif ntest==10 : dsname, src = '',  psana.Source('DetInfo()')
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)

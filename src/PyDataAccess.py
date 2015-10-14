@@ -199,6 +199,31 @@ def get_quartz_config_object(env, src) :
 ##-----------------------------
 ##-----------------------------
 
+def get_rayonix_data_object(evt, src) :
+    """get rayonix data object
+    """
+    return get_camera_data_object(evt, src)
+
+##-----------------------------
+##-----------------------------
+
+def get_rayonix_config_object(env, src) :
+    """get rayonix config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Rayonix.ConfigV2, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Rayonix.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------
+
 def get_acqiris_data_object(evt, src) :
     """get acqiris data object
     """

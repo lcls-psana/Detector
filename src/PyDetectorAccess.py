@@ -333,7 +333,8 @@ class PyDetectorAccess :
         elif self.dettype == gu.OPAL8000   : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.ORCAFL40   : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.TM6740     : return self.raw_data_camera(evt, env)    # 0.24 ms
-        elif self.dettype == gu.QUARTZ4A150: return self.raw_data_camera(evt, env)    # 0.24 ms
+        elif self.dettype == gu.QUARTZ4A150: return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.RAYONIX    : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.IMP        : return self.raw_data_imp(evt, env)
         else                               : return None
 
