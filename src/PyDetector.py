@@ -328,6 +328,7 @@ class PyDetector :
     def _nda_or_none_(self, nda) :
         """Returns  ndarray or None
         """
+        if nda is None : return None
         return nda if nda.size else None
 
 ##-----------------------------

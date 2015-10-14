@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-01-12
+2015-10-14 Mikhail S. Dubrovin
+- Fix crash if detector source is missing in data (PSAS-139)
+  - PyDetector.py in _nda_or_none_ - return None if nda is None
+	
 Tag: V00-01-11
 2015-10-14 Mikhail S. Dubrovin
 - Add support for Rayonix (PSAS-139)
