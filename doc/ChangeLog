@@ -11,6 +11,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-02-01
+2015-10-16 Mikhail S. Dubrovin
+- split PyDetector.py in to AreaDetector.py and WFDetector.py, convert PyDetector.py to factory-class (PSAS-139)
+- add ex_evt_keys.py, ex_time_fiducials.py
+	
+Tag: V00-01-13
+2015-10-15 Mikhail S. Dubrovin
+- add examples ex_time_fiducials.py, ex_evt_keys.py
+	
 Tag: V00-01-12
 2015-10-14 Mikhail S. Dubrovin
 - Fix crash if detector source is missing in data (PSAS-139)

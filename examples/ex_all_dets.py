@@ -22,15 +22,13 @@ elif ntest==7  : dsname, src = 'exp=xcsi0112:run=15',  psana.Source('DetInfo(Xcs
 elif ntest==8  : dsname, src = 'exp=amo42112:run=120', psana.Source('DetInfo(AmoBPS.0:Opal1000.0)')
 elif ntest==9  : dsname, src = 'exp=cxib2313:run=46',  psana.Source('DetInfo(CxiDg2.0:Tm6740.0)')
 elif ntest==10 : dsname, src = 'exp=amo86615:run=4',   psana.Source('DetInfo(Camp.0:pnCCD.0)')
-
 elif ntest==11 : dsname, src = 'exp=cxif5315:run=169', psana.Source('CxiDs2.0:Cspad.0') # NO Detinfo
 elif ntest==12 : dsname, src = 'exp=cxif5315:run=169', psana.Source('DsaCsPad')  # alias
 elif ntest==13 : dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0' # string
 elif ntest==14 : dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad' # string of alias
-
-elif ntest==15 : dsname, src = 'exp=cxii8715:run=14', psana.Source('DetInfo(CxiEndstation.0:Quartz4A150.0)') # alias='Sc1Questar'
+elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  psana.Source('DetInfo(CxiEndstation.0:Quartz4A150.0)') # alias='Sc1Questar'
 elif ntest==16 : dsname, src = 'exp=xppc0115:run=305', psana.Source('DetInfo(XppEndstation.0:Rayonix.0)') # alias='rayonix'
-#elif ntest==10 : dsname, src = '',  psana.Source('DetInfo()')
+elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  psana.Source('pnccdFront')
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
