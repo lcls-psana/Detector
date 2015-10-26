@@ -11,24 +11,29 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-02-03
+2015-10-26 Mikhail S. Dubrovin
+- PyDetectorAccess.py - apply cashing of index arrays in indexes_x/y(...) and image(...)
+	previously it was done in PSCalib.GeometryAccess after searching of the top object, that takes time (PSAS-139)
+
 Tag: V00-02-02
 2015-10-26 Mikhail S. Dubrovin
 - AreaDetector.py add protection in image(); return None if det.calib() is None (PSAS-139)
-	
+
 Tag: V00-02-01
 2015-10-16 Mikhail S. Dubrovin
 - split PyDetector.py in to AreaDetector.py and WFDetector.py, convert PyDetector.py to factory-class (PSAS-139)
 - add ex_evt_keys.py, ex_time_fiducials.py
-	
+
 Tag: V00-01-13
 2015-10-15 Mikhail S. Dubrovin
 - add examples ex_time_fiducials.py, ex_evt_keys.py
-	
+
 Tag: V00-01-12
 2015-10-14 Mikhail S. Dubrovin
 - Fix crash if detector source is missing in data (PSAS-139)
   - PyDetector.py in _nda_or_none_ - return None if nda is None
-	
+
 Tag: V00-01-11
 2015-10-14 Mikhail S. Dubrovin
 - Add support for Rayonix (PSAS-139)

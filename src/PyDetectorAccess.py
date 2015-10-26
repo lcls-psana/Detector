@@ -71,6 +71,9 @@ class PyDetectorAccess :
         self.geo = None 
         self.runnum_geo = -1
 
+        self.iX = None 
+        self.iY = None 
+
 ##-----------------------------
 
     def cpstore(self, par) : # par = evt or runnum
@@ -222,26 +225,35 @@ class PyDetectorAccess :
 
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+        else :
+            if self.iX is None :
+                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
-                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)[0]
+                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
+            return self.iX
 
 ##-----------------------------
 
     def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+        else : 
+            if self.iY is None :
+                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
-                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)[1]
+                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
+            return self.iY
 
 ##-----------------------------
 
     def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
         """Returns two index arrays iX and iY"""
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+        else : 
+            if self.iX is None :
+                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
                                                        xy0_off_pix=xy0_off_pix, do_tilt=True)
+            return self.iX, self.iY 
 
 ##-----------------------------
 
@@ -266,10 +278,11 @@ class PyDetectorAccess :
     def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None) :
         if self.geoaccess(par) is None : return None
         else :
-            iX, iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
+            if self.iX is None :
+                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                       pix_scale_size_um=pix_scale_size_um,\
                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
-            return img_from_pixel_arrays(iX,iY,img_nda)
+            return img_from_pixel_arrays(self.iX, self.iY, img_nda)
 
 ##-----------------------------
 ##-----------------------------

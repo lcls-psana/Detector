@@ -15,7 +15,6 @@ Usage::
 
     # import
     import psana
-    from Detector.AreaDetector import AreaDetector    
 
     # retreive parameters from psana etc.
     dsname = 'exp=cxif5315:run=169'
@@ -26,11 +25,15 @@ Usage::
     evt = ds.events().next()
     runnum = evt.run()
 
-    # parameret par can be either runnum or evt    
+    # parameter par can be either runnum or evt    
     par = runnum # or = evt
     cmpars=(1,25,10,91) # custom tuple of common mode parameters
 
-    det = AreaDetector(src, env, pbits=0, iface='P') # iface='P' or 'C' - preferable low level interface (for test perp.)
+    det = psana.Detector(src, env, pbits=0, iface='P') # iface='P' or 'C' - preferable low level interface (for test perp.)
+
+    # or directly
+    from Detector.AreaDetector import AreaDetector    
+    det = AreaDetector(src, env, pbits=0, iface='P')
 
     # set parameters, if changed
     det.set_env(env)
@@ -64,7 +67,7 @@ Usage::
     # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
     nda_cdata = det.calib(evt)
     # or with custom common mode parameter sequence
-    nda_cdata = det.calib(evt, cmpars=(1,25,10,91))
+    nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence
 
     # common mode correction for pedestal-subtracted numpy array nda:
     det.common_mode_apply(par, nda)
@@ -98,12 +101,10 @@ Usage::
     img = det(evt, img_nda) # alias for det.image(evt, img_nda)
 
     # special case of indexing using non-default pixel scale size and x, y coordinate offset
-    ix         = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
-    iy         = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
-    ix, iy     = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
-    img        = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
-    #
-
+    ix     = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
+    iy     = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
+    ix, iy = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
+    img    = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
 
 @see classes
 \n :py:class:`Detector.PyDetector` - factory for different detectors
