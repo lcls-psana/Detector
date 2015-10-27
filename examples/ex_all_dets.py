@@ -89,6 +89,7 @@ print_ndarr(cmod, 'common_mod')
 t0_sec = time()
 nda_raw = det.raw(evt)
 print_ndarr(nda_raw, 'nda_raw')
+print 'Consumed time for det.raw(evt) = %7.3f sec' % (time()-t0_sec)
 
 i=0
 if nda_raw is None :
@@ -114,8 +115,10 @@ print_ndarr(data_sub_peds, 'data - peds')
 nda_cdata = det.calib(evt)
 print_ndarr(nda_cdata, 'calibrated data')
 
-nda_cdata_ub = det.calib(evt, cmpars=(5,50))
+t0_sec = time()
+nda_cdata_ub = det.calib(evt) # , cmpars=(5,50))
 print_ndarr(nda_cdata_ub, 'calibrated data for cspad unbond pixels')
+print 'Consumed time for det.calib(evt) = %7.3f sec' % (time()-t0_sec)
 
 coords_x = det.coords_x(par)
 print_ndarr(coords_x, 'coords_x')
@@ -142,8 +145,11 @@ img = None
 # Image producer is different for 3-d and 2-d arrays 
 if len(nda_raw.shape) > 2 :
     #img = det.image(evt)
+    
+    t0_sec = time()
     img = det(evt) # alias for det.image(evt) implemented in __call__
     #img = det.image(evt, img_arr)
+    print 'Consumed time for det.image(evt) = %7.3f sec (for 1st event!)' % (time()-t0_sec)
 else :
     img = img_arr
     img.shape = nda_raw.shape

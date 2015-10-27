@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-02-04
+2015-10-27 Mikhail S. Dubrovin
+- PyDetectorAccess.py - improve pixel index arrays caching, update for new run (PSAS-139)
+
 Tag: V00-02-03
 2015-10-26 Mikhail S. Dubrovin
 - PyDetectorAccess.py - apply cashing of index arrays in indexes_x/y(...) and image(...)

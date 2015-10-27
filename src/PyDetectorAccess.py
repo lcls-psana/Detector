@@ -71,9 +71,6 @@ class PyDetectorAccess :
         self.geo = None 
         self.runnum_geo = -1
 
-        self.iX = None 
-        self.iY = None 
-
 ##-----------------------------
 
     def cpstore(self, par) : # par = evt or runnum
@@ -110,6 +107,10 @@ class PyDetectorAccess :
             else     :
                 self.geo = None
                 if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
+
+            # arrays for caching
+            self.iX = None 
+            self.iY = None 
 
         return self.geo
 
@@ -223,37 +224,39 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
-        if self.geoaccess(par) is None : return None
+    def update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+        """ Returns True if pixel index arrays are available, othervise False.
+        """
+        if self.geoaccess(par) is None : return False
         else :
             if self.iX is None :
                 self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
                                                        xy0_off_pix=xy0_off_pix, do_tilt=True)
-            return self.iX
+            if self.iX is None : return False
+        return True
+
+##-----------------------------
+
+    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+        """Returns pixel index array iX."""
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        return self.iX
 
 ##-----------------------------
 
     def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
-        if self.geoaccess(par) is None : return None
-        else : 
-            if self.iY is None :
-                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
-                                                       pix_scale_size_um=pix_scale_size_um,\
-                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
-            return self.iY
+        """Returns pixel index array iY."""
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        return self.iY
 
 ##-----------------------------
 
     def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
-        """Returns two index arrays iX and iY"""
-        if self.geoaccess(par) is None : return None
-        else : 
-            if self.iX is None :
-                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
-                                                       pix_scale_size_um=pix_scale_size_um,\
-                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
-            return self.iX, self.iY 
+        """Returns two pixel index arrays iX and iY."""
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        if self.iX is None : return None, None # single None is not the same as (None, None) !
+        return self.iX, self.iY 
 
 ##-----------------------------
 
@@ -276,13 +279,8 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None) :
-        if self.geoaccess(par) is None : return None
-        else :
-            if self.iX is None :
-                self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
-                                                      pix_scale_size_um=pix_scale_size_um,\
-                                                      xy0_off_pix=xy0_off_pix, do_tilt=True)
-            return img_from_pixel_arrays(self.iX, self.iY, img_nda)
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        return img_from_pixel_arrays(self.iX, self.iY, img_nda)
 
 ##-----------------------------
 ##-----------------------------
