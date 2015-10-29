@@ -224,12 +224,12 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """ Returns True if pixel index arrays are available, othervise False.
         """
         if self.geoaccess(par) is None : return False
         else :
-            if self.iX is None :
+            if do_update or self.iX is None :
                 self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
                                                        xy0_off_pix=xy0_off_pix, do_tilt=True)
@@ -238,23 +238,23 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iX."""
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return self.iX
 
 ##-----------------------------
 
-    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iY."""
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return self.iY
 
 ##-----------------------------
 
-    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns two pixel index arrays iX and iY."""
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         if self.iX is None : return None, None # single None is not the same as (None, None) !
         return self.iX, self.iY 
 
@@ -278,8 +278,8 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None) :
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix) : return None
+    def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return img_from_pixel_arrays(self.iX, self.iY, img_nda)
 
 ##-----------------------------

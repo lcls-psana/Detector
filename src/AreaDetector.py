@@ -559,19 +559,19 @@ class AreaDetector :
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
         else          : return self._shaped_array_(rnum, self.pyda.mask_geo(rnum, mbits))
 
-    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_x_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.indexes_x(rnum, pix_scale_size_um, xy0_off_pix))
+        else          : return self._shaped_array_(rnum, self.pyda.indexes_x(rnum, pix_scale_size_um, xy0_off_pix, do_update))
 
-    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_y_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.indexes_y(rnum, pix_scale_size_um, xy0_off_pix))
+        else          : return self._shaped_array_(rnum, self.pyda.indexes_y(rnum, pix_scale_size_um, xy0_off_pix, do_update))
 
-    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None) :
+    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         rnum = self.runnum(par)
-        iX, iY = self.pyda.indexes_xy(rnum, pix_scale_size_um, xy0_off_pix)
+        iX, iY = self.pyda.indexes_xy(rnum, pix_scale_size_um, xy0_off_pix, do_update)
         return self._shaped_array_(rnum, iX), self._shaped_array_(rnum, iY)
 
     def pixel_size(self, par) :
@@ -587,14 +587,14 @@ class AreaDetector :
         rnum = self.runnum(par)
         self.pyda.tilt_geo(par, dtx, dty, dtz)
 
-    def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None) :
+    def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
         if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         if nda is None : return None
         nda_img = np.array(nda, dtype=np.double).flatten()        
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
-        else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix))
+        else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))
 
     def __call__(self, evt, nda_in=None) :
         """Alias for image in order to call it as det(evt,...)"""

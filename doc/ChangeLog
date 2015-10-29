@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-02-05
+2015-10-29 Mikhail S. Dubrovin
+- AreaDetector.py and PyDetectorAccess.py - in methods indexes_x/y(...) and image(...) add parameter do_update=False (PSAS-139)
+	
 Tag: V00-02-04
 2015-10-27 Mikhail S. Dubrovin
 - PyDetectorAccess.py - improve pixel index arrays caching, update for new run (PSAS-139)
