@@ -13,6 +13,11 @@ reverse time order.
 
 Tag: V00-03-01
 2015-11-09 Christopher O'Grady
+Update detector_factory documentation.  Clean up GlobalUtils
+(alot of this code was moved to PSCalib).
+
+Tag: V00-03-01
+2015-11-09 Christopher O'Grady
 Make remaining python in examples/ directory work.
 
 Tag: V00-03-00

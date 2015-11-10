@@ -8,61 +8,6 @@
 """ 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
-
-----------------------------------------
-
-Notes on progress 11/9 TJL & CPO
--- BLD returns DDL detector, some discussion if this should be
-   easier to access.
-
-Notes on progress 11/2 TJL & CPO
--- We settled on a source-matching pattern by eliminating support for
-   psana.Source in the Detector interface and adopting Mikhail's
-   matching system
--- For next time: start with BLD
--- We are going to implement Detector classes for
-   > BLD
-   > EPICS
--- Should EPICS be one detector, or should there be one detector
-   per EPICS PV?
-     > Pros of 1 per PV: seamless for user (no knowledge of EPCIS)
-     > Pros of 1 detector: better performance for tab completes
-
-
-Notes on progress 10/20 TJL & CPO
--- Major outstanding problem is figuring out how to map Source names to their 
-   corresponding Detector class implementations
--- We are going to implement Detector classes for
-   > BLD
-   > EPICS
-   > EVR (in progress)
--- All ToDo's below still outstanding
-
-
-Notes on progress 10/14
-
-To Do:
--- rename Detector.Pydetector to AreaDetector
-
-(factory)
--- Fix matching of source objects so it works nicely
-   (leaning towards strings, alt option is to reveal
-    detector/device ID numbers in C++, one route
-    is to cp the Event.keys() transfer of the DetInfo
-    object from C++ to Python)
--- write smart DetInfo/BldInfo/EPICS matching code that
-   takes a string and finds out which one to use, we
-   can distinguish between DetInfo and BldInfo by the
-   number of fields the user pases in their string
-
-To Think About:
--- How should tab completion work (heirarchies, and how does this 
-   dictate restraints on the Detector interface implementation?
--- Should EPICS be one detector, or should there be one detector
-   per EPICS PV?
-     > Pros of 1 per PV: seamless for user (no knowledge of EPCIS)
-     > Pros of 1 detector: better performance for tab completes
-
 """
 #------------------------------
 __version__ = "$Revision$"
@@ -87,24 +32,23 @@ def detector_factory(source_string, env):
     Parameters
     ----------
     source_string : str
-        A string identifing a peice of data to access, examples include:
-          > 'cspad'              # a DAQ alias for a CSPAD camera
-          > 'XppGon.0:Cspad.0'   # a DAQ source string
-          > 'evr0'               # the EVR event code read out
-          > 'EBeam'              # a BldInfo identifier
+        A string identifying a piece of data to access, examples include:
+          > 'cspad'                  # a DAQ detector alias
+          > 'XppGon.0:Cspad.0'       # a DAQ detector full-name
+          > 'DIAG:FEE1:202:241:Data' # an EPICS variable name (or alias)
+          > 'EBeam'                  # a BldInfo identifier
         The idea is that you should be able to pass something that makes
         sense to you as a human here, and you automatically get the right
         detector object in return.
 
     env : psana.Env
         The psana environment object associated with the psana.DataSource
-        you are interested in.
+        you are interested in (from method DataSource.env()).
 
     Returns
     -------
-    detector : Detector.PyDetector
-        A psana-python detector object. Try detector(psana.Event) to
-        access your data.
+    A psana-python detector object. Try detector(psana.Event) to
+    access your data.
     """
 
     # check to see if the source_string is in the Bld, which is a
