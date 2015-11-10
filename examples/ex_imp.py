@@ -4,7 +4,7 @@
 
 import psana
 import numpy as np
-from Detector.PyDetector import PyDetector
+from Detector.WFDetector import WFDetector
 from Detector.GlobalUtils import print_ndarr
 
 import pyimgalgos.GlobalGraphics as gg
@@ -21,7 +21,7 @@ for key in evt.keys() : print key
 
 ##-----------------------------
 
-det = PyDetector(src, env, pbits=4, iface='P')
+det = WFDetector(src, env, pbits=4, iface='P')
 
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins

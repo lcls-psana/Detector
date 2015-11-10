@@ -3,7 +3,7 @@
 #------------------------------
 import sys
 import psana
-from Detector.PyDetector import PyDetector
+from Detector.AreaDetector import AreaDetector
 
 ds  = psana.DataSource('exp=cxi86715:run=99')
 evt = ds.events().next()
@@ -16,7 +16,7 @@ print '%s: src: %s' % (sys.argv[0], src)
 
 #print evt.get(psana.CsPad.DataV2,src)
 
-det = PyDetector(src, env, pbits=0, iface='P')
+det = AreaDetector(src, env, pbits=0, iface='P')
 img = det.image(evt)
 print img[510:515,510:515]
 

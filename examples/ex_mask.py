@@ -3,7 +3,7 @@
 import sys
 import psana
 from time import time
-from Detector.PyDetector import PyDetector
+from Detector.AreaDetector import AreaDetector
 from Detector.GlobalUtils import print_ndarr
 
 ##-----------------------------
@@ -30,7 +30,7 @@ env = ds.env()
 
 ##-----------------------------
 
-det = PyDetector(src, env, pbits=0)
+det = AreaDetector(src, env, pbits=0)
 det.print_attributes()
 mask = det.mask(evt, calib=True, status=True, edges=True, central=True, unbond=True, unbondnbrs=True)
 print_ndarr(mask, 'mask')

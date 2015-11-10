@@ -3,7 +3,7 @@
 import sys
 import psana
 from time import time
-from Detector.PyDetector import PyDetector
+from Detector.AreaDetector import AreaDetector
 from Detector.GlobalUtils import print_ndarr
 import numpy as np
 
@@ -15,7 +15,7 @@ print 'Test # %d' % ntest
 ##-----------------------------
 
 #dsname, src = 'exp=amob5114:run=403:idx', psana.Source('DetInfo(Camp.0:pnCCD.0)')
-dsname, src = 'exp=amo86615:run=159:idx', psana.Source('DetInfo(Camp.0:pnCCD.1)')
+dsname, src = 'exp=amo86615:run=159:idx', 'Camp.0:pnCCD.1'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
@@ -40,7 +40,7 @@ for key in evt.keys() : print key
 
 ##-----------------------------
 
-det = PyDetector(src, env, pbits=0, iface='C')
+det = AreaDetector(src, env, pbits=0, iface='C')
 
 ins = det.instrument()
 

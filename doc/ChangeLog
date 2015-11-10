@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-01
+2015-11-09 Christopher O'Grady
+Make remaining python in examples/ directory work.
+
 Tag: V00-03-00
 2015-11-09 TJ Lane
 - PyDetector.py: detector_factory() functional, chooses correct PyDetector

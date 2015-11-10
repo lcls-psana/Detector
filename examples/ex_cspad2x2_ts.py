@@ -3,7 +3,7 @@
 import sys
 import psana
 from time import time
-from Detector.PyDetector import PyDetector
+from Detector.AreaDetector import AreaDetector
 from Detector.GlobalUtils import print_ndarr
 
 ##-----------------------------
@@ -35,7 +35,7 @@ for key in evt.keys() : print key
 
 ##-----------------------------
 
-det = PyDetector(src, env, pbits=0, iface='C')
+det = AreaDetector(src, env, pbits=0, iface='C')
 
 ins = det.instrument()
 

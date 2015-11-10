@@ -12,7 +12,7 @@ print 'Test # %d' % ntest
 
 ##-----------------------------
 
-dsname, src = 'exp=cxii8715:run=15', psana.Source('DetInfo(CxiEndstation.0:Quartz4A150.0)') # alias='Sc1Questar'
+dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
@@ -25,12 +25,14 @@ evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
 
+from Detector.AreaDetector import AreaDetector
+
 for key in evt.keys() : print key
 
 ##-----------------------------
 
 par = nrun # evt or nrun
-det = psana.Detector(src, env, pbits=0, iface='P') # iface='P' or 'C'
+det = AreaDetector(src, env, pbits=0, iface='P') # iface='P' or 'C'
 
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins

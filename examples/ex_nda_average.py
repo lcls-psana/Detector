@@ -5,7 +5,7 @@ import sys
 import psana
 import numpy as np
 from time import time
-from Detector.PyDetector import PyDetector
+from Detector.AreaDetector import AreaDetector
 from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
 import pyimgalgos.GlobalGraphics as gg
 ##-----------------------------
@@ -27,7 +27,7 @@ def example_01():
     env = ds.env()
     rnum = evt.run()
     
-    det = PyDetector(src, env, pbits=0, iface='P')
+    det = AreaDetector(src, env, pbits=0, iface='P')
     shape = det.shape(rnum) 
 
     print '  det.shape() = ', shape 
