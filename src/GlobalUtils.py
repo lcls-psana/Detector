@@ -80,6 +80,75 @@ EPIX100A  = map_det_name_to_type["Epix100a"]
 EPIX10K   = map_det_name_to_type["Epix10k"]
 EPIX      = map_det_name_to_type["Epix"]
 OTHER     = map_det_name_to_type["OTHER"]
+##-----------------------------
+# BLD data types
+# copied 11/9/15 from pdsdata/xtc/BldInfo.hh
+#
+
+bld_names = \
+['EBeam',
+'PhaseCavity',
+'FEEGasDetEnergy',
+'Nh2Sb1Ipm01',
+'HxxUm6Imb01',
+'HxxUm6Imb02',
+'HfxDg2Imb01',
+'HfxDg2Imb02',
+'XcsDg3Imb03',
+'XcsDg3Imb04',
+'HfxDg3Imb01',
+'HfxDg3Imb02',
+'HxxDg1Cam',
+'HfxDg2Cam',
+'HfxDg3Cam',
+'XcsDg3Cam',
+'HfxMonCam',
+'HfxMonImb01',
+'HfxMonImb02',
+'HfxMonImb03',
+'MecLasEm01',
+'MecTctrPip01',
+'MecTcTrDio01',
+'MecXt2Ipm02',
+'MecXt2Ipm03',
+'MecHxmIpm01',
+'GMD',
+'CxiDg1Imb01',
+'CxiDg2Imb01',
+'CxiDg2Imb02',
+'CxiDg4Imb01',
+'CxiDg1Pim',
+'CxiDg2Pim',
+'CxiDg4Pim',
+'XppMonPim0',
+'XppMonPim1',
+'XppSb2Ipm',
+'XppSb3Ipm',
+'XppSb3Pim',
+'XppSb4Pim',
+'XppEndstation0',
+'XppEndstation1',
+'MecXt2Pim02',
+'MecXt2Pim03',
+'CxiDg3Spec',
+'Nh2Sb1Ipm02',
+'FeeSpec0',
+'SxrSpec0',
+'XppSpec0',
+'XcsUsrIpm01',
+'XcsUsrIpm02',
+'XcsUsrIpm03',
+'XcsUsrIpm04',
+'XcsSb1Ipm01',
+'XcsSb1Ipm02',
+'XcsSb2Ipm01',
+'XcsSb2Ipm02',
+'XcsGonIpm01',
+'XcsLamIpm01',
+'XppAin01',
+'XcsAin01',
+'AmoAin01']
+
 
 ##-----------------------------
 # Enumerated calibration types. Should be in the same order like in PSCalib::CalibPars

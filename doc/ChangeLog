@@ -11,6 +11,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-00
+2015-11-09 TJ Lane
+- PyDetector.py: detector_factory() functional, chooses correct PyDetector
+from string
+- New detectors: DdlDetector.py, EvrDetector.py, EpicsDetector.py and the Bld
+(uses DdlDetector)
+- No longer accept psana.Source in calls to psana.Detector (v00-03)
+
 Tag: V00-02-05
 2015-10-29 Mikhail S. Dubrovin
 - AreaDetector.py and PyDetectorAccess.py - in methods indexes_x/y(...) and image(...) add parameter do_update=False (PSAS-139)
