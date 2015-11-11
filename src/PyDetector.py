@@ -49,6 +49,18 @@ def detector_factory(source_string, env):
     -------
     A psana-python detector object. Try detector(psana.Event) to
     access your data.
+
+    How To Get More Help
+    --------------------
+    The Detector method returns an object that has methods that
+    change depending on the detector type.  To see help for a particular
+    detector type execute commands similar to the following:
+
+    env = DataSource('exp=xpptut15:run=54').env()
+    det = Detector('cspad',env)
+
+    and then use the standard ipython "det?" command (and tab completion) to
+    see the documentation for that particular detector type.
     """
 
     # check to see if the source_string is in the Bld, which is a

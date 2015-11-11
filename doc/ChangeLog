@@ -11,10 +11,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-04
+2015-11-11 Christopher O'Grady
+Update detector_factory documentation with Mikhail suggestions.
+
 Tag: V00-03-03
 2015-11-11 Mikhail S. Dubrovin
 - Update examples/ex_nda_average.py - evaluate maximal along with average
-	
+
 Tag: V00-03-02
 2015-11-09 Christopher O'Grady
 Update detector_factory documentation.  Clean up GlobalUtils
