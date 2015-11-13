@@ -84,24 +84,52 @@ def detector_factory(source_string, env):
     if amap.alias(alias_src) != '':         # alias found
         source_string = str(alias_src)
 
-
-    # map detector names to their respective detector class implementations
-    dettype = gu.det_type_from_source(source_string)
-
-    if dettype == gu.ACQIRIS or dettype == gu.IMP:
+    if isWFDetector(source_string):
         return WFDetector(source_string, env)
-    elif dettype == gu.EVR:
+    elif isEvrDetector(source_string):
         return EvrDetector(source_string, env)
-    elif dettype in [gu.CSPAD, gu.CSPAD2X2, gu.PRINCETON, gu.PNCCD,
-                     gu.TM6740, gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
-                     gu.ORCAFL40, gu.EPIX, gu.EPIX10K, gu.EPIX100A, gu.FCCD960,
-                     gu.ANDOR, gu.QUARTZ4A150, gu.RAYONIX]:
+    elif isAreaDetector(source_string):
         return AreaDetector(source_string, env)
-
     else:
         raise ValueError('Could not interpret "%s" as any known detector' % source_string)
     
     return
+
+##-----------------------------
+
+def isWFDetector(source_string):
+    """
+    Returns True if the source is a waveform detector
+    """
+    # map detector names to their respective detector class implementations
+    dettype = gu.det_type_from_source(source_string)
+    if dettype == gu.ACQIRIS or dettype == gu.IMP: return True
+    return False
+
+##-----------------------------
+
+def isEvrDetector(source_string):
+    """
+    Returns True if the source is an Evr detector
+    """
+    # map detector names to their respective detector class implementations
+    dettype = gu.det_type_from_source(source_string)
+    if dettype == gu.EVR: return True
+    return False
+
+##-----------------------------
+
+def isAreaDetector(source_string):
+    """
+    Returns True if the source is an area detector
+    """
+    # map detector names to their respective detector class implementations
+    dettype = gu.det_type_from_source(source_string)
+    if dettype in [gu.CSPAD, gu.CSPAD2X2, gu.PRINCETON, gu.PNCCD,
+                     gu.TM6740, gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
+                     gu.ORCAFL40, gu.EPIX, gu.EPIX10K, gu.EPIX100A, gu.FCCD960,
+                     gu.ANDOR, gu.QUARTZ4A150, gu.RAYONIX]: return True
+    return False
 
 ##-----------------------------
 
