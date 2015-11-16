@@ -6,8 +6,9 @@
 #  class AreaDetector
 #--------------------------------------------------------------------------
 """ Class contains a collection of access methods to detector data and meta-data.
-    Access method to calibration and geometry parameters, raw data, etc.
-    Low level implementation is done on C++ or python.
+
+Access method to calibration and geometry parameters, raw data, etc.
+Low level implementation is done on C++ or python.
 
 Usage::
 
@@ -92,11 +93,11 @@ Usage::
     det.tilt_geo(par, dtx, dty, dtz) # tilt detector around 3 axes
 
     # access to combined mask
-    NOTE: by default none of mask keywords is set to True, returns None.
+    # NOTE: by default none of mask keywords is set to True, returns None.
     mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
 
     # reconstruct image
-    img = det.image(evt) # uses calib(...) by default
+    img = det.image(evt) # uses calib() by default
     img = det.image(evt, img_nda)
     img = det(evt, img_nda) # alias for det.image(evt, img_nda)
 
@@ -107,10 +108,10 @@ Usage::
     img    = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
 
 @see classes
-\n :py:class:`Detector.PyDetector` - factory for different detectors
-\n :py:class:`Detector.DetectorAccess` - c++ access interface to data
-\n :py:class:`Detector.PyDetectorAccess` - Python access interface to data
-\n :py:class:`Detector.WFDetector` - access waveform detector data ACQIRIS and IMP
+\n  :py:class:`Detector.PyDetector` - factory for different detectors
+\n  :py:class:`Detector.DetectorAccess` - c++ access interface to data
+\n  :py:class:`Detector.PyDetectorAccess` - Python access interface to data
+\n  :py:class:`Detector.WFDetector` - access waveform detector data ACQIRIS and IMP
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.

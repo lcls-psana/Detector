@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-05
+2015-11-16 Mikhail S. Dubrovin
+- PyDetector - restore and update documentation for sphinx, restore optional test, which were deleted/broken in rev.10938
+
 Tag: V00-03-04
 2015-11-11 Christopher O'Grady
 Update detector_factory documentation with Mikhail suggestions.
@@ -39,7 +43,7 @@ from string
 Tag: V00-02-05
 2015-10-29 Mikhail S. Dubrovin
 - AreaDetector.py and PyDetectorAccess.py - in methods indexes_x/y(...) and image(...) add parameter do_update=False (PSAS-139)
-	
+
 Tag: V00-02-04
 2015-10-27 Mikhail S. Dubrovin
 - PyDetectorAccess.py - improve pixel index arrays caching, update for new run (PSAS-139)
@@ -94,14 +98,14 @@ Tag: V00-01-07
 
 Tag: V00-01-06
 2015-09-23 Mikhail S. Dubrovin
-- in PyDetector.py (python interface only) and PyDetectorAccess.py (PSAS-139) 
+- in PyDetector.py (python interface only) and PyDetectorAccess.py (PSAS-139)
   - add move_geo, tilt_geo, indexes_xy
   - indexes_x, indexes_y, indexes_xy, and image add parameters pix_scale_size_um=None, xy0_off_pix=None
 
 Tag: V00-01-05
 2015-09-18 Mikhail S. Dubrovin
-- in PyDetector.py - accept source as a string (PSAS-139) 
-	
+- in PyDetector.py - accept source as a string (PSAS-139)
+
 Tag: V00-01-04
 2015-09-18 Mikhail S. Dubrovin
 - Add support for Imp (PSAS-139)
@@ -123,7 +127,7 @@ Tag: V00-01-02
 - examples/ex_all_dets.py
 - examples/ex_acqiris.py
 - update examples
-	
+
 Tag: V00-01-01
 2015-09-09 Mikhail S. Dubrovin
 - multiple changes (PSAS-139)
@@ -136,7 +140,7 @@ Tag: V00-01-01
 - Add in GlobalUtils add string_from_source_v2 and change PyDetector.py to accept aliases (PSAS-139)
 
 ==============
-	
+
 Tag: V00-00-12
 2015-08-11 Mikhail S. Dubrovin
 - add app/det_ndarr_average and examples/ex_nda_average.py (PSAS-139)
@@ -169,7 +173,7 @@ Tag: V00-00-08
   - Add examples/ex_mask.py
   - Adjust other examples for renamed methods.
 
-	
+
 Tag: V00-00-07
 2015-06-22 Mikhail S. Dubrovin
 - Add implementation and access to Acqiris through PyDetector.raw_data() (PSAS-139)
@@ -181,11 +185,11 @@ Tag: V00-00-07
 Tag: V00-00-06
 2015-06-12 Mikhail S. Dubrovin
 - fix sphinx documentation, cosmetic changes.
-- set SConscript to generate documentation 
-	
+- set SConscript to generate documentation
+
 Tag: V00-00-05
 2015-06-11 Mikhail S. Dubrovin
-- extensive development (PSAS-139) 
+- extensive development (PSAS-139)
 	- add C++/python code for common mode correction
 	- add calib_data(...) method to apply 3 corrections (pedestals, pixel status mask, common mode)
 	- add protection in many places: return None if returning object is non-available
@@ -197,10 +201,10 @@ Tag: V00-00-05
 Tag: V00-00-04
 2015-06-02 Mikhail S. Dubrovin
 - update ChangeLog
-	
+
 Tag: V00-00-03
 2015-06-02 Mikhail S. Dubrovin
-- update examples, PyDetector returns None if ndarray size is zero (PSAS-139) 
+- update examples, PyDetector returns None if ndarray size is zero (PSAS-139)
 
 Tag: V00-00-02
 2015-05-22 Mikhail S. Dubrovin
@@ -209,13 +213,13 @@ Tag: V00-00-02
 	- add methods ndim(.), size(.), shape(.), status(.), shaped_array(.), return shaped ndarray.
 - pyext/pyDetector.cpp - support wrapper for new methods.
 - GlobalUtils.py - add enumerated parameters to support CALIB_TYPE and STATUS
-- examples/ex_cspad.py -> ex_all_dets.py - switch between derectors by input integer parameter. 
-	
+- examples/ex_cspad.py -> ex_all_dets.py - switch between derectors by input integer parameter.
+
 2015-05-21 Mikhail S. Dubrovin
 - GlobalUtils.py - add enumerated detector types.
 - src/DetectorAccess.cpp - make sure that calib parameters loaded before ndarray size is reqested.
 - re-name ex_cspad.py -> ex_all_dets.py and update.
-	
+
 2015-05-20 Mikhail S. Dubrovin
 - rename examples
 - change names and propagation of parameters in PyDetector.py
@@ -223,7 +227,7 @@ Tag: V00-00-02
 
 2015-05-19 Mikhail S. Dubrovin
 - Fixed problems with imports.
-	
+
 Tag: V00-00-01
 2015-05-18 Mikhail S. Dubrovin
 - Package pytopsana was re-named to Detector (PSAS-139)
@@ -231,5 +235,5 @@ Tag: V00-00-01
 #------------------------------
 Chris & Ankush stuff:
 addpkg psana_python HEAD    (boost converters)
-addpkg -u pyAreaDet	
+addpkg -u pyAreaDet
 #------------------------------
