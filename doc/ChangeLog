@@ -11,9 +11,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag: V00-03-05
+Tag: V00-03-06
 2015-11-16 Mikhail S. Dubrovin
 - PyDetector - restore and update documentation for sphinx, restore optional test, which were deleted/broken in rev.10938
+
+Tag: V00-03-05
+2015-11-13 yoon82 - did something in rev.10977 but did not leave any comments here (M.D.)
+	- actually in PyDetector.py portion of code is moved in methods isAreaDetector, isEvrDetector, isWFDetector
 
 Tag: V00-03-04
 2015-11-11 Christopher O'Grady
