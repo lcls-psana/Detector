@@ -5,7 +5,7 @@
 # Description:
 #  module PyDetector
 #--------------------------------------------------------------------------
-"""Method detector_factory(src,env) returns instance the detector data accessor. 
+"""Method detector_factory(src,env) returns instance of the detector data accessor. 
 
    Method detector_factory(src,env) switches between detector data access objects depending on source parameter.
    Currently implemented detector data access classes:
@@ -22,10 +22,8 @@ Usage::
 
     # Input parameters
     # str object for data source can be defined using DAQ detector name
-    src = 'CxiDs2.0:Cspad.0' 
-    # or its alias 
-    src = 'DsaCsPad'
-    # The list of available detector names for data set can be printed by the command like
+    src = 'XppGon.0:Cspad.0' # or its alias 'cspad'
+    # The list of available detector names and alieses for data set can be printed by the command like
     # psana -m EventKeys -n 5 exp=xpptut15:run=54
 
     # env object can be defined from data set
@@ -164,9 +162,9 @@ def isAreaDetector(source_string):
     # map detector names to their respective detector class implementations
     dettype = gu.det_type_from_source(source_string)
     if dettype in [gu.CSPAD, gu.CSPAD2X2, gu.PRINCETON, gu.PNCCD,
-                     gu.TM6740, gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
-                     gu.ORCAFL40, gu.EPIX, gu.EPIX10K, gu.EPIX100A, gu.FCCD960,
-                     gu.ANDOR, gu.QUARTZ4A150, gu.RAYONIX]: return True
+                   gu.TM6740, gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
+                   gu.ORCAFL40, gu.EPIX, gu.EPIX10K, gu.EPIX100A, gu.FCCD960,
+                   gu.ANDOR, gu.QUARTZ4A150, gu.RAYONIX]: return True
     return False
 
 ##-----------------------------

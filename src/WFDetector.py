@@ -17,7 +17,7 @@ Usage::
 
     # retreive parameters from psana etc.
     dsname = 'exp=sxri0414:run=88'
-    src = psana.Source('DetInfo(acq02)') # or 'DetInfo(SxrEndstation.0:Acqiris.2)'
+    src = 'SxrEndstation.0:Acqiris.2' # or its alias 'acq02'
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
@@ -55,7 +55,7 @@ Usage::
     # access to Acqiris data
     det.set_correct_acqiris_time(correct_time=True) # (by default)
     wf, wt = det.raw(evt)
-    # returns two np.array-s with shape = (nbrChannels, nbrSamples) for waveform and associated timestamps or None.
+    # returns two np.array-s with shape = (nbrChannels, nbrSamples) for waveform and associated timestamps or (single) None.
     
     # access to Imp data
     det.set_calib_imp(do_calib_imp=True) # Imp calibration will subtract base level with changing dtype to np.int32
@@ -77,7 +77,6 @@ __version__ = "$Revision$"
 
 import sys
 import _psana
-#import Detector
 import numpy as np
 import PSCalib.GlobalUtils as gu
 from   Detector.PyDetectorAccess import PyDetectorAccess
@@ -90,11 +89,11 @@ class WFDetector :
 ##-----------------------------
 
     def __init__(self, src, env, pbits=0, iface='P') :
-        """Constructor.
-        @param src    - data source, ex: _psana.Source('DetInfo(SxrEndstation.0:Acqiris.2)')
-        @param env    - environment, ex: env=ds.env(), where ds=_psana.DataSource('exp=sxri0414:run=88')
-        @param pbits  - print control bit-word
-        @param iface  - preferable interface: 'C' - C++ (everything) or 'P' - Python based (not used in this class) 
+        """Parameters:
+           src  [str]       - data source, ex: 'CxiDs2.0:Cspad.0'
+           env  [psana.Env] - environment, ex: env=ds.env(), where ds=_psana.DataSource('exp=sxri0414:run=88')
+           pbits[int]       - print control bit-word
+           iface[char]      - preferable interface: 'C' - C++ (everything) or 'P' - Python based (not used in this class) 
         """
         #print 'In c-tor WFDetector'
 

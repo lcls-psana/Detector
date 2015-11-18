@@ -18,8 +18,8 @@ Usage::
     import psana
 
     # retreive parameters from psana etc.
-    dsname = 'exp=cxif5315:run=169'
-    src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+    dsname = 'exp=xpptut15:run=54'
+    src = 'XppGon.0:Cspad.0' # or its alias 'cspad'
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
@@ -136,25 +136,18 @@ from   Detector.PyDetectorAccess import PyDetectorAccess
 ##-----------------------------
 
 class AreaDetector :
-    """Python access to area-detector data.
-
-    Low level access is implemented on C++ through boost::python wrapper or direct python
-
-    @see classes
-    \n :py:class:`Detector.PyDetector` - factory for different detectors
-    \n :py:class:`Detector.DetectorAccess` - c++ access interface to data
-    \n :py:class:`Detector.PyDetectorAccess` - Python access interface to data
-    \n :py:class:`Detector.WFDetector` - access waveform detector data ACQIRIS and IMP
+    """Python access to area detector data.
+       Low level access is implemented on python or C++ through the boost::python wrapper
     """
 
 ##-----------------------------
 
     def __init__(self, src, env, pbits=0, iface='P') :
-        """Constructor.
-        @param src    - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-        @param env    - environment, ex: env=ds.env(), where ds=_psana.DataSource('exp=cxif5315:run=169')
-        @param pbits  - print control bit-word
-        @param iface  - preferable interface: 'C' - C++ (everything) or 'P' - Python based (everything except common mode) 
+        """Parameters:
+           src   [str]       - data source, ex: 'CxiDs2.0:Cspad.0'
+           env   [psana.Env] - environment, ex: env=ds.env(), where ds=_psana.DataSource('exp=cxif5315:run=169')
+           pbits [int]       - print control bit-word
+           iface [char]      - preferable interface: 'C' - C++ (everything) or 'P' - Python based (everything except common mode) 
         """
         #print 'In c-tor AreaDetector'
 

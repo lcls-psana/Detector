@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-07
+2015-11-17 Mikhail S. Dubrovin
+- update documentation for AreaDetector, WFDetector, PyDetector
+	
 Tag: V00-03-06
 2015-11-16 Mikhail S. Dubrovin
 - PyDetector - restore and update documentation for sphinx, restore optional test, which were deleted/broken in rev.10938
