@@ -44,23 +44,65 @@ If you use all or part of it, please give an appropriate acknowledgment.
 @version $Id$
 
 @author Lane, Thomas Joseph - "Sacramentum hoc revelatum est"
+
+TJL To Do
+---------
+- IPIMB
+- gas det (maybe)
+- hook in psgeom to AreaDetector
 """
 #------------------------------
 __version__ = "$Revision$"
 ##-----------------------------
 
 import _psana
-import PSCalib.GlobalUtils as gu
+import re
+import Detector.DetectorTypes as dt
 
-from Detector.DdlDetector   import DdlDetector
-from Detector.EpicsDetector import EpicsDetector
-from Detector.AreaDetector  import AreaDetector
-from Detector.WFDetector    import WFDetector
-from Detector.EvrDetector   import EvrDetector
+
+def map_source_string_to_dettype(source_string):
+    """
+    Take a string like 'DetInfo(CxiDs2.0:Cspad.0)' and return
+    the corresponding Detector interface class, e.g. AreaDetector
+    """
+
+    _, _, device_type, _ = det_and_dev_from_string(source_string)
+
+    if device_type in dt.detectors.keys():
+        return dt.detectors[device_type]
+    else:
+        raise KeyError('Unknown device type: %s (source: %s)'
+                       '' % (device_type, source_string))
+
+    return
+
+
+def det_and_dev_from_string(source_string):
+    """
+    Interpret a string like 'DetInfo(CxiDs2.0:Cspad.0)' in terms of:
+    
+        detector_type --> 'CxiDs2'
+        detector_id   --> 0
+        device_type   --> 'Cspad'
+        device_id     --> 0
+
+    Returns
+    -------
+    detector_type: str
+    detector_id:   int
+    device_type:   str
+    device_id:     int
+    """
+    m = re.search('(\w+).(\d)\:(\w+).(\d)', source_string)
+    if not m:
+        raise ValueError('Could not interpret source string: "%s", '
+                         'check your formatting and alias list' % source_string)
+    mg = m.groups()
+    return mg[0], int(mg[1]), mg[2], int(mg[3])
+
 
 # the following function is renamed psana.Detector in the
 # psana __init__.py file
-
 def detector_factory(source_string, env):
     """
     Create a python Detector from a string identifier.
@@ -101,7 +143,7 @@ def detector_factory(source_string, env):
 
     # check to see if the source_string is in the Bld, which is a
     # reserved set of names
-    if source_string in gu.bld_names:
+    if source_string in dt.bld_names:
         # make a DDL detector and return it
         return DdlDetector( 'BldInfo(' + source_string + ')' )
 
@@ -120,52 +162,12 @@ def detector_factory(source_string, env):
     if amap.alias(alias_src) != '':         # alias found
         source_string = str(alias_src)
 
-    if isWFDetector(source_string):
-        return WFDetector(source_string, env)
-    elif isEvrDetector(source_string):
-        return EvrDetector(source_string, env)
-    elif isAreaDetector(source_string):
-        return AreaDetector(source_string, env)
-    else:
-        raise ValueError('Could not interpret "%s" as any known detector' % source_string)
-    
-    return
+    # look up what Detector class we should use and create and instance of it
+    dettype = map_source_string_to_dettype(source_string) # returns the class
+    det_instance = dettype(source_string, env)            # returns the instance
 
-##-----------------------------
+    return det_instance
 
-def isWFDetector(source_string):
-    """
-    Returns True if the source is a waveform detector
-    """
-    # map detector names to their respective detector class implementations
-    dettype = gu.det_type_from_source(source_string)
-    if dettype == gu.ACQIRIS or dettype == gu.IMP: return True
-    return False
-
-##-----------------------------
-
-def isEvrDetector(source_string):
-    """
-    Returns True if the source is an Evr detector
-    """
-    # map detector names to their respective detector class implementations
-    dettype = gu.det_type_from_source(source_string)
-    if dettype == gu.EVR: return True
-    return False
-
-##-----------------------------
-
-def isAreaDetector(source_string):
-    """
-    Returns True if the source is an area detector
-    """
-    # map detector names to their respective detector class implementations
-    dettype = gu.det_type_from_source(source_string)
-    if dettype in [gu.CSPAD, gu.CSPAD2X2, gu.PRINCETON, gu.PNCCD,
-                   gu.TM6740, gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
-                   gu.ORCAFL40, gu.EPIX, gu.EPIX10K, gu.EPIX100A, gu.FCCD960,
-                   gu.ANDOR, gu.QUARTZ4A150, gu.RAYONIX]: return True
-    return False
 
 ##-----------------------------
 
@@ -227,6 +229,8 @@ def test2():
              'NoDetector.0:Evr.0',
              'FEEGasDetEnergy',
              'EBeam',
+             'dev.0:det.0',
+             'notadet',
              #'DIAG:FEE1:202:241:Data',
              #'XTCAV_yag_status',
              #'badname',
