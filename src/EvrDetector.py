@@ -43,11 +43,9 @@ if __name__ == '__main__':
     ds = psana.DataSource('exp=xpptut15:run=54')
     
     evrdet = EvrDetector('NoDetector.0:Evr.0')
-    baddet = EvrDetector('waa')
 
     for evt in ds.events():
         print evrdet(evt)
-        print baddet(evt)
         break
 
 
