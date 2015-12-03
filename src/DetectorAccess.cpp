@@ -66,8 +66,9 @@ namespace Detector {
 //--------------
 DetectorAccess::~DetectorAccess ()
 {
-  // Does nothing for now
-  if(m_geometry) delete m_geometry;
+  if(m_geometry)  delete m_geometry;
+  if(m_cmode)     delete m_cmode;
+  if(m_calibpars) delete m_calibpars;
 }
 
 //-------------------
