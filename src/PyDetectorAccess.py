@@ -347,6 +347,10 @@ class PyDetectorAccess :
         elif self.dettype == gu.QUARTZ4A150: return self.raw_data_camera(evt, env)
         elif self.dettype == gu.RAYONIX    : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.IMP        : return self.raw_data_imp(evt, env)
+        elif self.dettype == gu.FCCD       : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.TIMEPIX    : return self.raw_data_timepix(evt, env)
+        elif self.dettype == gu.FLI        : return self.raw_data_fli(evt, env)
+        elif self.dettype == gu.PIMAX      : return self.raw_data_pimax(evt, env)
         else                               : return None
 
 ##-----------------------------
@@ -540,6 +544,54 @@ class PyDetectorAccess :
         nda = d.frame()
         return nda if nda is not None else None
 
+##-----------------------------
+
+    def raw_data_timepix(self, evt, env) :
+        # data object
+        d = pda.get_timepix_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_timepix_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_fli(self, evt, env) :
+        # data object
+        d = pda.get_fli_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_fli_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_pimax(self, evt, env) :
+        # data object
+        d = pda.get_pimax_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_pimax_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+##-----------------------------
+##-----------------------------
 ##-----------------------------
 
     def raw_data_acqiris(self, evt, env) :

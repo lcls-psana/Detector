@@ -12,7 +12,25 @@ print 'Test # %d' % ntest
 
 ##-----------------------------
 
-dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
+dsname = '/reg/g/psdm/data_test/types/FCCD_FccdConfigV2.xtc' # sxr61612-r0332
+src = 'SxrEndstation.0:Fccd.0' # Camera.FrameV1. Fccd.ConfigV2
+
+if ntest==2 :
+    #dsname = '/reg/g/psdm/data_test/types/Timepix_ConfigV3.xtc' # xcsi0113-r0030
+    dsname = '/reg/g/psdm/data_test/types/Timepix_DataV2.xtc'    # xcsi0113-r0030
+    src = 'XcsEndstation.0:Timepix.0' # Timepix.DataV2 Timepix.ConfigV3
+
+elif ntest==3 :
+    dsname = '/reg/g/psdm/data_test/types/Fli_ConfigV1.xtc' # meca6013-r0009
+    dsname = '/reg/g/psdm/data_test/types/Fli_FrameV1.xtc'  # meca6013-r0009
+    src = 'MecTargetChamber.0:Fli.0' # Fli.FrameV1, Fli.ConfigV1
+
+elif ntest==4 :
+    #dsname = '/reg/g/psdm/data_test/types/Pimax_ConfigV1.xtc' # amob5114-r0549
+    dsname = '/reg/g/psdm/data_test/types/Pimax_FrameV1.xtc'   # amob5114-r0480
+    src = 'AmoEndstation.0:Pimax.0' # Pimax.ConfigV1, Pimax.FrameV1
+
+#dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
@@ -27,6 +45,9 @@ nrun = evt.run()
 for key in evt.keys() : print key
 
 ##-----------------------------
+#sys.exit('Test exit')
+##-----------------------------
+
 from Detector.AreaDetector import AreaDetector
 
 par = nrun # evt or nrun
@@ -113,7 +134,6 @@ if nda_raw is None :
 
 #mask_geo.shape = (32,185,388)
 #print mask_geo
-
 
 #pixel_size = det.pixel_size(par)
 #print '%s\npixel size: %s' % (80*'_', str(pixel_size))

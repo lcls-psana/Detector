@@ -11,7 +11,6 @@ import pyimgalgos.GlobalGraphics as gg
 dsname, src = 'exp=sxri0414:run=88', psana.Source('DetInfo(acq02)')
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
-# Use non-standard calib directory
 #opts = {'psana.calib-dir':'./calib',}
 #psana.setOptions(opts)
 #psana.setOption('psana.calib-dir', './calib')
@@ -49,9 +48,6 @@ ch=0
 fig, ax = gg.plotGraph(wt[ch,:-1], wf[ch,:-1], figsize=(15,5))
 gg.show()
 
-
-##-----------------------------
-##-----------------------------
 ##-----------------------------
 
 sys.exit(0)

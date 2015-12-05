@@ -141,6 +141,30 @@ def get_pnccd_config_object(env, src) :
 
     return None
     
+
+##-----------------------------
+##-----------------------------
+
+def get_fccd960_data_object(env, src) :
+    """get fccd960 data object
+    """
+    return get_camera_data_object(evt, src)
+
+##-----------------------------
+##-----------------------------
+
+def get_fccd960_config_object(env, src) :
+    """get fccd960 config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Fccd960.ConfigV2, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Fccd960.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
 ##-----------------------------
 ##-----------------------------
 
@@ -219,6 +243,109 @@ def get_rayonix_config_object(env, src) :
 
     return None
     
+##-----------------------------
+##-----------------------------
+
+def get_fccd_data_object(env, src) :
+    """get fccd data object
+    """
+    return get_camera_data_object(evt, src)
+
+##-----------------------------
+##-----------------------------
+
+def get_fccd_config_object(env, src) :
+    """get fccd config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Fccd.ConfigV2, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Fccd.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+##-----------------------------
+
+def get_timepix_data_object(evt, src) :
+    """get timepix data object
+    """
+    o = evt.get(_psana.Timepix.DataV2, src)
+    if o is not None : return o
+
+    o = evt.get(_psana.Timepix.DataV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+##-----------------------------
+
+def get_timepix_config_object(env, src) :
+    """get timepix config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Timepix.ConfigV3, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Timepix.ConfigV2, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Timepix.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+##-----------------------------
+
+def get_fli_data_object(evt, src) :
+    """get fli data object
+    """
+    o = evt.get(_psana.Fli.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+##-----------------------------
+
+def get_fli_config_object(env, src) :
+    """get fli config object
+    """
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Fli.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+##-----------------------------
+
+def get_pimax_data_object(evt, src) :
+    """get pimax data object
+    """
+    o = evt.get(_psana.Pimax.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+##-----------------------------
+
+def get_pimax_config_object(env, src) :
+    """get pimax config object
+    """
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Pimax.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
 ##-----------------------------
 ##-----------------------------
 ##-----------------------------

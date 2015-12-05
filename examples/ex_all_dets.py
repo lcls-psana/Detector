@@ -32,7 +32,6 @@ elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
-# Non-standard calib directory
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')
 

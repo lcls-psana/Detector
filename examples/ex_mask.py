@@ -18,7 +18,6 @@ if ntest==2 : dsname, src = 'exp=meca1113:run=376', psana.Source('DetInfo(MecTar
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
-# Non-standard calib directory
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')
 

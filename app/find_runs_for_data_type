@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+#------------------------------
+# Loop over all instruments, experiments, runs in the DB and
+# searches for requested data type, prints status, creates file *.xtcf
+#
+# Usage:   find_runs_for_data_type <case-sensitive-text-to-search>
+# Example: find_runs_for_data_type Cspad
+#
+# Author: Igor Gaponenko
+#------------------------------
+
+import sys
+import MySQLdb as db
+import RegDB.experiment_info as expinfo
+
+if len(sys.argv) != 2:
+    print "usage: <text-to-search>"
+    sys.exit(1)
+
+text2search = sys.argv[1]
+
+conn   = db.Connect(host='psdb',db='regdb',user='regdb_reader')
+cursor = conn.cursor()
+cursor.execute('SELECT i.name AS `instr`, e.name as `exper` FROM instrument `i`, experiment `e` WHERE i.id=e.instr_id')
+
+for (instr,exper) in cursor.fetchall():
+    runs = expinfo.experiment_runs(instr,exper)
+    if len(runs):
+        print "%s:%s (%d runs)" % (instr,exper,len(runs))
+        first = runs[0] ['num']
+        last  = runs[-1]['num']
+        for runnum in range(first,last+1):
+            try:
+                for det in expinfo.detectors(instr,exper,runnum):
+                    idx = det.find(text2search)
+                    if idx != -1:
+                        print "%s:%s:%d %s" % (instr,exper,runnum,det)
+            except ValueError:
+                pass
+
+#------------------------------

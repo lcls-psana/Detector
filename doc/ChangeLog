@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-09
+2015-12-04 Mikhail S. Dubrovin
+- PyDataAccess, PyDetectorAccess.py, ex_new_dets - add support for Fccd, Timepix, Fli, Pimax (PSAS-139)
+
 Tag: V00-03-08
 2015-12-03 Mikhail S. Dubrovin
 - add Igor's script app/find_runs_for_data_type
