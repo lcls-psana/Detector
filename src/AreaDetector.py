@@ -62,6 +62,9 @@ Usage::
     mask   = det.mask_calib(par)
     cmod   = det.common_mode(par)
 
+    # per-pixel gain map from configuration data. 
+    gmap = det.gain_map(gain=6.87526)
+
     # get raw data
     nda_raw = det.raw(evt)
 
@@ -371,6 +374,13 @@ class AreaDetector :
         if stat is None : return None
         smask = np.select([stat==0, stat>0], [1, 0])
         self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
+
+##-----------------------------
+
+    def gain_map(self, gain=None) :
+        """Returns pixel gain map evaluated from detector configuration.
+        """
+        return self.pyda.gain_map(gain)
 
 ##-----------------------------
 

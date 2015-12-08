@@ -323,6 +323,16 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def gain_map(self, gain=None) :
+        """Returns a gain map extracted from detector configuration data.
+           Currently implemented for CSPAD only.
+           Returns None for other detectors or missing configuration for CSPAD.
+        """
+        if self.dettype == gu.CSPAD : return self.cspad_gain_map(gain) 
+        else                        : return None
+
+##-----------------------------
+
     def raw_data(self, evt, env) :
 
         #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
@@ -708,6 +718,40 @@ class PyDetectorAccess :
             return np.array(a, dtype=np.int32) - bias
 
         return a
+
+##-----------------------------
+
+    def cspad_gain_map(self, gain=None) :
+        """ Returns the gain map of low/high gain pixels (numpy array of shape=(32,185,388), dtype=float).
+            If gain is None, method returns a map of (uint16) 0/1 for low/high gain pixels, respectively.
+            None is returned if configuration data is missing.
+        """
+        # configuration from data
+        c = pda.get_cspad_config_object(self.env, self.source)
+        if c is None :
+            msg = '%s.cspad_gain_map - config object is not available' % self.__class__.__name__
+            #raise IOError(msg)
+            print msg
+            return None
+
+        self.gm = np.empty((32,185,388), dtype=np.uint16)
+        asic1   = np.ones((185,194), dtype=np.uint16)
+
+        for iquad in range(c.quads_shape()[0]):
+            # need in copy to right shift bits
+            gm = np.array(c.quads(iquad).gm().gainMap())
+            
+            for i2x1 in range(8):
+                gmasic0 = gm & 1 # take the lowest bit only
+                gm = np.right_shift(gm, asic1)
+                gm2x1 = np.hstack((gmasic0, gm & 1))
+                self.gm[i2x1+iquad*8][:][:] = gm2x1
+                if i2x1 < 7 : gm = np.right_shift(gm, asic1) # do not shift for last asic
+
+        if gain is None :
+            return self.gm
+        else :
+            return np.ones((32,185,388), dtype=np.float) + self.gm * (gain-1)
 
 ##-----------------------------
 

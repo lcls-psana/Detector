@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-10
+2015-12-08 Mikhail S. Dubrovin
+- PyDetectorAccess.py, AreaDetector.py - add gain_map evaluation method using configuration (PSAS-139)
+- add examples ex_cspad_gain_map.py, expyda_cspad_gain_map.py
+	
 Tag: V00-03-09
 2015-12-04 Mikhail S. Dubrovin
 - PyDataAccess, PyDetectorAccess.py, ex_new_dets - add support for Fccd, Timepix, Fli, Pimax (PSAS-139)
