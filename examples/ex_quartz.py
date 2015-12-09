@@ -13,7 +13,6 @@ print 'Test # %d' % ntest
 ##-----------------------------
 
 dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # or alias='Sc1Questar'
-
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
 #psana.setOption('psana.calib-dir', './calib')

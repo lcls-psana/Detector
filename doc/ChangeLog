@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-11
+2015-12-09 Mikhail S. Dubrovin
+- in PyDetectorAccess.py, AreaDetector.py rename methods gain_map to gain_mask, inverse results for low/high gain pixels (PSAS-139)
+
 Tag: V00-03-10
 2015-12-08 Mikhail S. Dubrovin
 - PyDetectorAccess.py, AreaDetector.py - add gain_map evaluation method using configuration (PSAS-139)

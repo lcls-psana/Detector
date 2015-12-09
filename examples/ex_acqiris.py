@@ -9,6 +9,7 @@ import pyimgalgos.GlobalGraphics as gg
 
 #dsname, src = 'exp=sxri0414:run=88', 'SxrEndstation.0:Acqiris.2'
 dsname, src = 'exp=sxri0414:run=88', 'acq02'
+
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
 #opts = {'psana.calib-dir':'./calib',}

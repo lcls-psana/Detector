@@ -323,12 +323,12 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def gain_map(self, gain=None) :
+    def gain_mask(self, gain=None) :
         """Returns a gain map extracted from detector configuration data.
            Currently implemented for CSPAD only.
            Returns None for other detectors or missing configuration for CSPAD.
         """
-        if self.dettype == gu.CSPAD : return self.cspad_gain_map(gain) 
+        if self.dettype == gu.CSPAD : return self.cspad_gain_mask(gain) 
         else                        : return None
 
 ##-----------------------------
@@ -383,7 +383,7 @@ class PyDetectorAccess :
         nquads_c = c.numQuads()
 
         #print 'd.TypeId: ', d.TypeId
-        #print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
+        if self.pbits & 8 : print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
 
         arr = []
         for iq in range(nquads) :
@@ -392,7 +392,7 @@ class PyDetectorAccess :
             qdata = q.data()
             #n2x1stored = qdata.shape[0]
             roim = c.roiMask(qnum)
-            #print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
+            if self.pbits & 8 : print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
             #     '  n2x1stored: %d' % (n2x1stored)
     
             #roim = 0375 # for test only
@@ -409,7 +409,7 @@ class PyDetectorAccess :
                 arr.append(qdata_full)
     
         nda = np.array(arr)
-        #print 'nda.shape: ', nda.shape
+        if self.pbits & 8 : print 'nda.shape: ', nda.shape
         nda.shape = (32,185,388)
         return nda
     
@@ -721,15 +721,15 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def cspad_gain_map(self, gain=None) :
-        """ Returns the gain map of low/high gain pixels (numpy array of shape=(32,185,388), dtype=float).
-            If gain is None, method returns a map of (uint16) 0/1 for low/high gain pixels, respectively.
+    def cspad_gain_mask(self, gain=None) :
+        """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(32,185,388), dtype=uint16.
+            If gain is set, method returns a map of (float) gain/1 values for low/high gain pixels, respectively.
             None is returned if configuration data is missing.
         """
         # configuration from data
         c = pda.get_cspad_config_object(self.env, self.source)
         if c is None :
-            msg = '%s.cspad_gain_map - config object is not available' % self.__class__.__name__
+            msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
             #raise IOError(msg)
             print msg
             return None
@@ -745,13 +745,14 @@ class PyDetectorAccess :
                 gmasic0 = gm & 1 # take the lowest bit only
                 gm = np.right_shift(gm, asic1)
                 gm2x1 = np.hstack((gmasic0, gm & 1))
-                self.gm[i2x1+iquad*8][:][:] = gm2x1
+                self.gm[i2x1+iquad*8][:][:] = np.logical_not(gm2x1)
                 if i2x1 < 7 : gm = np.right_shift(gm, asic1) # do not shift for last asic
 
         if gain is None :
             return self.gm
         else :
-            return np.ones((32,185,388), dtype=np.float) + self.gm * (gain-1)
+            f=float(gain-1.)
+            return np.array(self.gm,dtype=np.float) * f + 1
 
 ##-----------------------------
 

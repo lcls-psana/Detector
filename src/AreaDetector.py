@@ -62,8 +62,8 @@ Usage::
     mask   = det.mask_calib(par)
     cmod   = det.common_mode(par)
 
-    # per-pixel gain map from configuration data. 
-    gmap = det.gain_map(gain=6.87526)
+    # per-pixel gain mask from configuration data; 1/0 for low/high gain pixels
+    gmap = det.gain_mask() # gain=6.789 - optional parameter 
 
     # get raw data
     nda_raw = det.raw(evt)
@@ -377,10 +377,10 @@ class AreaDetector :
 
 ##-----------------------------
 
-    def gain_map(self, gain=None) :
-        """Returns pixel gain map evaluated from detector configuration.
+    def gain_mask(self, gain=None) :
+        """Returns pixel gain mask evaluated from detector configuration.
         """
-        return self.pyda.gain_map(gain)
+        return self.pyda.gain_mask(gain)
 
 ##-----------------------------
 

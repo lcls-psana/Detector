@@ -6,7 +6,7 @@ import sys
 import psana
 import numpy as np
 from time import time
-from Detector.PyDetector import PyDetector
+#from Detector.PyDetector import PyDetector
 from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
 import pyimgalgos.GlobalGraphics as gg
 
@@ -18,8 +18,9 @@ def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
     SKIP   = evskip
     EVENTS = events + SKIP
 
-    dsname = 'exp=cxif5315:run=169'
-    src    = psana.Source('DetInfo(%s)' % source)
+    #dsname = 'exp=cxif5315:run=169'
+    #src    = psana.Source('DetInfo(%s)' % source)
+    src    = source
     if verbos : print 'Calibrated detector data average for\n  dataset: %s\n  source : %s' % (dsname, src)
 
     # Non-standard calib directory
@@ -29,7 +30,7 @@ def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
     evt = ds.events().next()
     env = ds.env()
     
-    det = PyDetector(src, env, pbits=0)
+    det = psana.Detector(src, env)
     shape = det.shape(evt) 
 
     print '  det.shape() = ', shape 

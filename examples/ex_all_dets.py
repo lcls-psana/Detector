@@ -30,6 +30,8 @@ elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A
 elif ntest==16 : dsname, src = 'exp=xppc0115:run=305', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
 elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
 
+elif ntest==18 : dsname, src = 'exp=mecj5515:run=3',   'MecTargetChamber.0:Cspad.0'
+
 print 'Example for\n dataset: %s\n source : %s' % (dsname, src)
 
 #psana.setOption('psana.calib-dir', './calib')
