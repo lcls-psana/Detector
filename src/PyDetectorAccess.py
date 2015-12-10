@@ -385,19 +385,19 @@ class PyDetectorAccess :
         #print 'd.TypeId: ', d.TypeId
         if self.pbits & 8 : print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
 
-        arr = []
+        arr = np.zeros((4,8,185,388), dtype=np.int16) if nquads<4 else np.empty((4,8,185,388), dtype=np.int16)
+
         for iq in range(nquads) :
             q = d.quads(iq)
             qnum = q.quad()
             qdata = q.data()
-            #n2x1stored = qdata.shape[0]
             roim = c.roiMask(qnum)
             if self.pbits & 8 : print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
-            #     '  n2x1stored: %d' % (n2x1stored)
     
-            #roim = 0375 # for test only
-        
-            if roim == 0377 : arr.append(qdata)
+            #roim = 0375 # for test only        
+            if roim == 0377 :
+                arr[qnum,:] = qdata
+
             else :
                 if self.pbits : print 'PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
@@ -406,12 +406,11 @@ class PyDetectorAccess :
                     if roim & (1<<s) :
                         qdata_full[s,:] = qdata[i,:]
                         i += 1
-                arr.append(qdata_full)
+                arr[qnum,:,:] = qdata_full
     
-        nda = np.array(arr)
-        if self.pbits & 8 : print 'nda.shape: ', nda.shape
-        nda.shape = (32,185,388)
-        return nda
+        if self.pbits & 8 : print 'arr.shape: ', arr.shape
+        arr.shape = (32,185,388)
+        return arr
     
 ##-----------------------------
 
@@ -754,6 +753,56 @@ class PyDetectorAccess :
             f=float(gain-1.)
             return np.array(self.gm,dtype=np.float) * f + 1
 
+##-----------------------------
+
+    def raw_data_cspad_v0(self, evt, env) :
+
+        # data object
+        d = pda.get_cspad_data_object(evt, self.source)        
+        if d is None :
+            print 'cspad data object is not found'
+            return None
+    
+        # configuration from data
+        c = pda.get_cspad_config_object(env, self.source)
+        if c is None :
+            print 'cspad config object is not found'
+            return None
+    
+        nquads   = d.quads_shape()[0]
+        nquads_c = c.numQuads()
+
+        #print 'd.TypeId: ', d.TypeId
+        if self.pbits & 8 : print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
+
+        arr = []
+        for iq in range(nquads) :
+            q = d.quads(iq)
+            qnum = q.quad()
+            qdata = q.data()
+            #n2x1stored = qdata.shape[0]
+            roim = c.roiMask(qnum)
+            if self.pbits & 8 : print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
+            #     '  n2x1stored: %d' % (n2x1stored)
+    
+            #roim = 0375 # for test only
+        
+            if roim == 0377 : arr.append(qdata)
+            else :
+                if self.pbits : print 'PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim
+                qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
+                i = 0
+                for s in range(8) :
+                    if roim & (1<<s) :
+                        qdata_full[s,:] = qdata[i,:]
+                        i += 1
+                arr.append(qdata_full)
+    
+        nda = np.array(arr)
+        if self.pbits & 8 : print 'nda.shape: ', nda.shape
+        nda.shape = (32,185,388)
+        return nda
+    
 ##-----------------------------
 
 from time import time

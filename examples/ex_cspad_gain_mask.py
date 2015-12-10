@@ -9,11 +9,10 @@ from time import time
 
 ##-----------------------------
 
-
 psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
-ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/cspad-gain-map.xtc')
-
+ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0001-CxiDs2.0-Cspad.0-config-gain-mask.xtc')
 #ds  = psana.DataSource('exp=cxid9114:run=96')
+
 evt = ds.events().next()
 env = ds.env()
 rnum = evt.run()
