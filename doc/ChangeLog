@@ -11,6 +11,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-13
+2015-12-14 Mikhail S. Dubrovin
+- app/det_ndarr_average - evaluate and save ndarray for max value, 
+- ex_all_dets.py - add examples for non-complete data of MecTragetChamber
+- PyDataAccess.py - add support for Epix.ElementV3 and Epix.Config100aV2 (PSAS-147)
+	
 Tag: V00-03-12
 2015-12-09 Mikhail S. Dubrovin
 - PyDetectorAccess.raw_data_cspad - fix cspad ndarray reconstruction in case of missing quads, like in MecTargetChamber.0:Cspad.0 (PSAS-139)

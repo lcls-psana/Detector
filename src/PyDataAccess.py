@@ -171,6 +171,9 @@ def get_fccd960_config_object(env, src) :
 def get_epix_data_object(evt, src) :
     """get epix data object
     """
+    o = evt.get(_psana.Epix.ElementV3, src)
+    if o is not None : return o
+
     o = evt.get(_psana.Epix.ElementV2, src)
     if o is not None : return o
 
@@ -186,6 +189,9 @@ def get_epix_config_object(env, src) :
     """get epix config object
     """
     cfg = env.configStore()
+    o = cfg.get(_psana.Epix.Config100aV2, src)
+    if o is not None : return o
+
     o = cfg.get(_psana.Epix.Config100aV1, src)
     if o is not None : return o
 
