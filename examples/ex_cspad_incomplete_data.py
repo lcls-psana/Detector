@@ -18,7 +18,8 @@ from time import time
 #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
 
 #dsname, src = 'exp=mecj5515:run=16', 'MecTargetChamber.0:Cspad.0'
-dsname, src = '/reg/g/psdm/detector/data_test/types/0002-MecTargetChamber.0-Cspad.0-two-quads.xtc', 'MecTargetChamber.0:Cspad.0'
+#dsname, src = '/reg/g/psdm/detector/data_test/types/0002-MecTargetChamber.0-Cspad.0-two-quads.xtc', 'MecTargetChamber.0:Cspad.0'
+dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspad.0-three-quads.xtc', 'MecTargetChamber.0:Cspad.0'
 psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-mec-2015-06-08/calib')
 
 ds  = psana.DataSource(dsname)
@@ -55,7 +56,7 @@ if nda is None :
 img = det.image(rnum, nda)
 
 import pyimgalgos.GlobalGraphics as gg
-ave, rms = img.mean(), img.std()
+ave, rms = nda.mean(), nda.std()
 gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+6*rms))
 gg.show()
 

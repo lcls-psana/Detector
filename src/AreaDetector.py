@@ -81,6 +81,7 @@ Usage::
     cm_corr_nda = det.common_mode_correction(par, nda, cmpars)
 
     # access geometry information
+    geo        = det.geometry(par)
     coords_x   = det.coords_x(par)
     coords_y   = det.coords_y(par)
     coords_z   = det.coords_z(par)
@@ -537,6 +538,10 @@ class AreaDetector :
 
 ##-----------------------------
 # Geometry info
+
+    def geometry(self, par) :
+        rnum = self.runnum(par)
+        return self.pyda.geoaccess(rnum) 
 
     def coords_x(self, par) :
         rnum = self.runnum(par)

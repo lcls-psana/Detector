@@ -30,15 +30,15 @@ elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A
 elif ntest==16 : dsname, src = 'exp=xppc0115:run=305', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
 elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
 
-elif ntest==20 :
+elif ntest==18 :
     dsname, src = '/reg/g/psdm/detector/data_test/types/0002-MecTargetChamber.0-Cspad.0-two-quads.xtc',  'MecTargetChamber.0:Cspad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-mec-2015-06-08/calib')
 
-elif ntest==21 :
+elif ntest==19 :
     dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspad.0-three-quads.xtc',  'MecTargetChamber.0:Cspad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-mec-2015-06-08/calib')
 
-elif ntest==22 :   #The same as 'exp=cxif5315:run=169' but geometry is different
+elif ntest==20 :   #The same as 'exp=cxif5315:run=169' but geometry is different
     dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'CxiDs2.0:Cspad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib/')
 
