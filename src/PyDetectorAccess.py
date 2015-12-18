@@ -109,9 +109,16 @@ class PyDetectorAccess :
                 if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
 
             # arrays for caching
-            self.iX = None 
-            self.iY = None 
-
+            self.iX             = None 
+            self.iY             = None 
+            self.coords_x_arr   = None 
+            self.coords_y_arr   = None 
+            self.coords_z_arr   = None
+            self.areas_arr      = None
+            self.mask_geo_arr   = None
+            self.mbits          = None
+            self.pixel_size_arr = None
+            
         return self.geo
 
 ##-----------------------------
@@ -193,68 +200,90 @@ class PyDetectorAccess :
 ##-----------------------------
 ##-----------------------------
 
+    def _update_coord_arrays(self, par, do_update=False) :
+        """ Returns True if pixel index arrays are available, othervise False.
+        """
+        if self.geoaccess(par) is None : return False
+        else :
+            if  self.coords_x_arr is None or do_update :
+                self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords()
+            if  self.coords_x_arr is None : return False
+        return True
+
+##-----------------------------
+
     def coords_x(self, par) :
-        if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coords()[0] #oname=None, oindex=0, do_tilt=True)
+        if not self._update_coord_arrays(par) : return None
+        return self.coords_x_arr
 
 ##-----------------------------
 
     def coords_y(self, par) :
-        if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coords()[1] #oname=None, oindex=0, do_tilt=True)
+        if not self._update_coord_arrays(par) : return None
+        return self.coords_y_arr
 
 ##-----------------------------
 
     def coords_z(self, par) :
-        if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_coords()[2] #oname=None, oindex=0, do_tilt=True)
+        if not self._update_coord_arrays(par) : return None
+        return self.coords_z_arr
 
 ##-----------------------------
 
     def areas(self, par) :
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_areas()
+        else :
+            if  self.areas_arr is None : 
+                self.areas_arr = self.geo.get_pixel_areas()
+        return  self.areas_arr
 
 ##-----------------------------
 
     # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
     def mask_geo(self, par, mbits=15) :
+        if mbits != self.mbits : # check if update is required
+            self.mbits = mbits
+            self.mask_geo_arr = None
+            
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_mask(mbits=mbits)
+        else :
+            if  self.mask_geo_arr is None : 
+                self.mask_geo_arr = self.geo.get_pixel_mask(mbits=mbits)
+        return  self.mask_geo_arr
 
 ##-----------------------------
 
-    def update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+    def _update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """ Returns True if pixel index arrays are available, othervise False.
         """
         if self.geoaccess(par) is None : return False
         else :
-            if do_update or self.iX is None :
+            if  self.iX is None or do_update :
                 self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
                                                        xy0_off_pix=xy0_off_pix, do_tilt=True)
-            if self.iX is None : return False
+            if  self.iX is None : return False
         return True
 
 ##-----------------------------
 
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iX."""
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return self.iX
 
 ##-----------------------------
 
     def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iY."""
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return self.iY
 
 ##-----------------------------
 
     def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns two pixel index arrays iX and iY."""
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         if self.iX is None : return None, None # single None is not the same as (None, None) !
         return self.iX, self.iY 
 
@@ -262,7 +291,10 @@ class PyDetectorAccess :
 
     def pixel_size(self, par) :
         if self.geoaccess(par) is None : return None
-        else : return self.geo.get_pixel_scale_size()
+        else :
+            if  self.pixel_size_arr is None : 
+                self.pixel_size_arr = self.geo.get_pixel_scale_size()
+        return  self.pixel_size_arr
 
 ##-----------------------------
 
@@ -279,7 +311,7 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
-        if not self.update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return img_from_pixel_arrays(self.iX, self.iY, img_nda)
 
 ##-----------------------------

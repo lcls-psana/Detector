@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-15
+2015-12-18 Mikhail S. Dubrovin
+- PyDetectorAccess.py - add local caching for coords_x,y,z, areas, self.mask_geo, self.pixel_size (PSAS-139)
+- add examples/test_geo_time.py
+	
 Tag: V00-03-14
 2015-12-15 Mikhail S. Dubrovin
 - AreaDetector.py add returning geometry object method, add ex_cspad_quads_data.py (PSAS-139)
