@@ -48,6 +48,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 TJL To Do
 ---------
 - IPIMB
+- explicitly check types?
 - gas det (maybe)
 - hook in psgeom to AreaDetector
 """
@@ -58,23 +59,6 @@ __version__ = "$Revision$"
 import _psana
 import re
 import Detector.DetectorTypes as dt
-
-
-def map_source_string_to_dettype(source_string):
-    """
-    Take a string like 'DetInfo(CxiDs2.0:Cspad.0)' and return
-    the corresponding Detector interface class, e.g. AreaDetector
-    """
-
-    _, _, device_type, _ = det_and_dev_from_string(source_string)
-
-    if device_type in dt.detectors.keys():
-        return dt.detectors[device_type]
-    else:
-        raise KeyError('Unknown device type: %s (source: %s)'
-                       '' % (device_type, source_string))
-
-    return
 
 
 def det_and_dev_from_string(source_string):
@@ -141,20 +125,13 @@ def detector_factory(source_string, env):
     see the documentation for that particular detector type.
     """
 
-    # check to see if the source_string is in the Bld, which is a
-    # reserved set of names
-    if source_string in dt.bld_names:
-        # make a DDL detector and return it
-        return DdlDetector( 'BldInfo(' + source_string + ')' )
-
-
-    # see if the source_string is an epics PV name
+    # > see if the source_string is an epics PV name
     epics = env.epicsStore()
     if source_string in epics.names(): # both names & aliases
         return EpicsDetector(source_string, env)
 
 
-    # check to see if it is an alias
+    # > see if the source_string is an alias
     amap = env.aliasMap()
     alias_src = amap.src(source_string) # string --> DAQ-style psana.Src
                 
@@ -162,9 +139,22 @@ def detector_factory(source_string, env):
     if amap.alias(alias_src) != '':         # alias found
         source_string = str(alias_src)
 
-    # look up what Detector class we should use and create and instance of it
-    dettype = map_source_string_to_dettype(source_string) # returns the class
-    det_instance = dettype(source_string, env)            # returns the instance
+
+    # > look up what Detector class we should use
+    if source_string in dt.bld_info.keys(): # if source is a BldInfo...
+        dettype = dt.bld_info[source_string]
+
+    else:                                   # assume source is a DetInfo...
+        _, _, device_type, _ = det_and_dev_from_string(source_string)
+        if device_type in dt.detectors.keys():
+            dettype = dt.detectors[device_type]
+        else:
+            raise KeyError('Unknown DetInfo device type: %s (source: %s)'
+                           '' % (device_type, source_string))
+
+
+    # > create an instance of the determined detector type & return it
+    det_instance = dettype(source_string, env)
 
     return det_instance
 
@@ -237,11 +227,11 @@ def test2():
              ]
 
     for name in names:
-        evrdet = detector_factory(name, env)
-        print name, '-->', type(evrdet)
+        det = detector_factory(name, env)
+        print name, '-->', type(det)
 
         for evt in ds.events():
-            print evrdet(evt)
+            print det(evt)
             break
 
     return 

@@ -9,6 +9,7 @@ from Detector.EpicsDetector import EpicsDetector
 from Detector.AreaDetector  import AreaDetector
 from Detector.WFDetector    import WFDetector
 from Detector.EvrDetector   import EvrDetector
+from Detector.IpimbDetector import IpimbDetector
 
 
 def no_device_exception(*args):
@@ -16,7 +17,8 @@ def no_device_exception(*args):
                     'data are not interpretable.')
 
 
-# list of all known detectors and their types
+
+# list of all known DetInfo sources and their types
 #  > names (keys) should be in all caps
 #  > detector types (values) should be implemented class objects
 #    originally from pdsdata/xtc/src/DetInfo.cc 
@@ -69,69 +71,69 @@ detectors = {
 #    originally from pdsdata/xtc/src/BldInfo.cc
 #    copied 11/30/15
 
-bld_names = [
-    "EBeam",
-    "PhaseCavity",
-    "FEEGasDetEnergy",
-    "NH2-SB1-IPM-01",
-    "XCS-IPM-01",
-    "XCS-DIO-01",
-    "XCS-IPM-02",
-    "XCS-DIO-02",
-    "XCS-IPM-03",
-    "XCS-DIO-03",
-    "XCS-IPM-03m",
-    "XCS-DIO-03m",
-    "XCS-YAG-1",
-    "XCS-YAG-2",
-    "XCS-YAG-3m",
-    "XCS-YAG-3",
-    "XCS-YAG-mono",
-    "XCS-IPM-mono",
-    "XCS-DIO-mono",
-    "XCS-DEC-mono",
-    "MEC-LAS-EM-01",
-    "MEC-TCTR-PIP-01",
-    "MEC-TCTR-DI-01",
-    "MEC-XT2-IPM-02",
-    "MEC-XT2-IPM-03",
-    "MEC-HXM-IPM-01",
-    "GMD",
-    "CxiDg1_Imb01",
-    "CxiDg2_Imb01",
-    "CxiDg2_Imb02",
-    "CxiDg3_Imb01",
-    "CxiDg1_Pim",
-    "CxiDg2_Pim",
-    "CxiDg3_Pim",
-    "XppMon_Pim0",
-    "XppMon_Pim1",
-    "XppSb2_Ipm",
-    "XppSb3_Ipm",
-    "XppSb3_Pim",
-    "XppSb4_Pim",
-    "XppEnds_Ipm0",
-    "XppEnds_Ipm1",
-    "MEC-XT2-PIM-02",
-    "MEC-XT2-PIM-03",
-    "CxiDg3_Spec",
-    "NH2-SB1-IPM-02",
-    "FEE-SPEC0",
-    "SXR-SPEC0",
-    "XPP-SPEC0",
-    "XCS-USR-IPM-01",
-    "XCS-USR-IPM-02",
-    "XCS-USR-IPM-03",
-    "XCS-USR-IPM-04",
-    "XCS-IPM-04",
-    "XCS-DIO-04",
-    "XCS-IPM-05",
-    "XCS-DIO-05",
-    "XCS-IPM-gon",
-    "XCS-IPM-ladm",
-    "XPP-AIN-01",
-    "XCS-AIN-01",
-    "AMO-AIN-01"
-]
+bld_info = {
+    "EBeam"            : DdlDetector,
+    "PhaseCavity"      : DdlDetector,
+    "FEEGasDetEnergy"  : DdlDetector,
+    "NH2-SB1-IPM-01"   : IpimbDetector,
+    "XCS-IPM-01"       : IpimbDetector,
+    "XCS-DIO-01"       : DdlDetector,
+    "XCS-IPM-02"       : IpimbDetector,
+    "XCS-DIO-02"       : DdlDetector,
+    "XCS-IPM-03"       : IpimbDetector,
+    "XCS-DIO-03"       : DdlDetector,
+    "XCS-IPM-03m"      : IpimbDetector,
+    "XCS-DIO-03m"      : DdlDetector,
+    "XCS-YAG-1"        : DdlDetector,
+    "XCS-YAG-2"        : DdlDetector,
+    "XCS-YAG-3m"       : DdlDetector,
+    "XCS-YAG-3"        : DdlDetector,
+    "XCS-YAG-mono"     : DdlDetector,
+    "XCS-IPM-mono"     : IpimbDetector,
+    "XCS-DIO-mono"     : DdlDetector,
+    "XCS-DEC-mono"     : DdlDetector,
+    "MEC-LAS-EM-01"    : DdlDetector,
+    "MEC-TCTR-PIP-01"  : DdlDetector,
+    "MEC-TCTR-DI-01"   : DdlDetector,
+    "MEC-XT2-IPM-02"   : IpimbDetector,
+    "MEC-XT2-IPM-03"   : IpimbDetector,
+    "MEC-HXM-IPM-01"   : IpimbDetector,
+    "GMD"              : DdlDetector,
+    "CxiDg1_Imb01"     : IpimbDetector,
+    "CxiDg2_Imb01"     : IpimbDetector,
+    "CxiDg2_Imb02"     : IpimbDetector,
+    "CxiDg3_Imb01"     : IpimbDetector,
+    "CxiDg1_Pim"       : DdlDetector,
+    "CxiDg2_Pim"       : DdlDetector,
+    "CxiDg3_Pim"       : DdlDetector,
+    "XppMon_Pim0"      : DdlDetector,
+    "XppMon_Pim1"      : DdlDetector,
+    "XppSb2_Ipm"       : IpimbDetector,
+    "XppSb3_Ipm"       : IpimbDetector,
+    "XppSb3_Pim"       : DdlDetector,
+    "XppSb4_Pim"       : DdlDetector,
+    "XppEnds_Ipm0"     : IpimbDetector,
+    "XppEnds_Ipm1"     : IpimbDetector,
+    "MEC-XT2-PIM-02"   : DdlDetector,
+    "MEC-XT2-PIM-03"   : DdlDetector,
+    "CxiDg3_Spec"      : DdlDetector,
+    "NH2-SB1-IPM-02"   : DdlDetector,
+    "FEE-SPEC0"        : DdlDetector,
+    "SXR-SPEC0"        : DdlDetector,
+    "XPP-SPEC0"        : DdlDetector,
+    "XCS-USR-IPM-01"   : IpimbDetector,
+    "XCS-USR-IPM-02"   : IpimbDetector,
+    "XCS-USR-IPM-03"   : IpimbDetector,
+    "XCS-USR-IPM-04"   : IpimbDetector,
+    "XCS-IPM-04"       : IpimbDetector,
+    "XCS-DIO-04"       : DdlDetector,
+    "XCS-IPM-05"       : IpimbDetector,
+    "XCS-DIO-05"       : DdlDetector,
+    "XCS-IPM-gon"      : IpimbDetector,
+    "XCS-IPM-ladm"     : IpimbDetector,
+    "XPP-AIN-01"       : DdlDetector,
+    "XCS-AIN-01"       : DdlDetector,
+    "AMO-AIN-01"       : DdlDetector
+}
 
 

@@ -53,16 +53,18 @@ class DdlDetector(object):
         return ddls
 
 
-    def __call__(self, evt):
+    def get(self, evt):
         """
         Default behavior for detectors who's special Detector class has not
         yet been implemented. Return DDL base class for the Detector.
-
-        Should be overridden by subclasses. Override required when Detector
-        may have multiple types in the same event.
         """
         ddls = self._fetch_ddls(evt)
         if len(ddls) == 1:
             return ddls[0]
-        else:
+        elif len(ddls) == 0:
             return None
+        else:
+            raise RuntimeError('Multiple types (%d) found in event for this'
+                               ' Detector: %s' % (len(ddls), str(ddls)))
+
+
