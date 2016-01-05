@@ -59,7 +59,7 @@ __version__ = "$Revision$"
 import _psana
 import re
 import Detector.DetectorTypes as dt
-
+from Detector.EpicsDetector import EpicsDetector
 
 def det_and_dev_from_string(source_string):
     """

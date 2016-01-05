@@ -5,7 +5,6 @@ types.
 """
 
 from Detector.DdlDetector   import DdlDetector
-from Detector.EpicsDetector import EpicsDetector
 from Detector.AreaDetector  import AreaDetector
 from Detector.WFDetector    import WFDetector
 from Detector.EvrDetector   import EvrDetector

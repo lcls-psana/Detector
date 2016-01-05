@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-17
+2016-01-05 Christopher O'Grady
+- Fix EpicsDetector import
+
 Tag: V00-03-16
 2015-12-18 TJ Lane
 - Added IpimbDetector
