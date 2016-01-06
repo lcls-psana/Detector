@@ -32,7 +32,7 @@ detectors = {
     "pnCCD"       : AreaDetector,
     "Princeton"   : AreaDetector,
     "Fccd"        : AreaDetector,
-    "Ipimb"       : DdlDetector, # to be updated
+    "Ipimb"       : IpimbDetector,
     "Encoder"     : DdlDetector,
     "Cspad"       : AreaDetector,
     "AcqTDC"      : DdlDetector,

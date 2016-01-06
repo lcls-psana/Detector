@@ -125,10 +125,43 @@ def detector_factory(source_string, env):
     see the documentation for that particular detector type.
     """
 
+    # > create an instance of the determined detector type & return it
+    dt = dettype(source_string, env)
+    det_instance = dt(source_string, env)
+
+    return det_instance
+
+# the following function is renamed psana.Detector in the
+# psana __init__.py file
+def dettype(source_string, env):
+    """
+    Create a python Detector-class "type" from a string identifier.
+
+    PARAMETERS
+
+    source_string : str
+        A string identifying a piece of data to access, examples include:
+          - 'cspad'                  # a DAQ detector alias
+          - 'XppGon.0:Cspad.0'       # a DAQ detector full-name
+          - 'DIAG:FEE1:202:241:Data' # an EPICS variable name (or alias)
+          - 'EBeam'                  # a BldInfo identifier\n
+        The idea is that you should be able to pass something that makes
+        sense to you as a human here, and you automatically get the right
+        detector object in return.
+
+    env : psana.Env
+        The psana environment object associated with the psana.DataSource
+        you are interested in (from method DataSource.env()).
+
+    RETURNS
+
+    A psana-python Detector type
+    """
+
     # > see if the source_string is an epics PV name
     epics = env.epicsStore()
     if source_string in epics.names(): # both names & aliases
-        return EpicsDetector(source_string, env)
+        return EpicsDetector
 
 
     # > see if the source_string is an alias
@@ -142,21 +175,15 @@ def detector_factory(source_string, env):
 
     # > look up what Detector class we should use
     if source_string in dt.bld_info.keys(): # if source is a BldInfo...
-        dettype = dt.bld_info[source_string]
+        return dt.bld_info[source_string]
 
     else:                                   # assume source is a DetInfo...
         _, _, device_type, _ = det_and_dev_from_string(source_string)
         if device_type in dt.detectors.keys():
-            dettype = dt.detectors[device_type]
+            return dt.detectors[device_type]
         else:
             raise KeyError('Unknown DetInfo device type: %s (source: %s)'
                            '' % (device_type, source_string))
-
-
-    # > create an instance of the determined detector type & return it
-    det_instance = dettype(source_string, env)
-
-    return det_instance
 
 
 ##-----------------------------
