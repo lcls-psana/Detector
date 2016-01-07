@@ -70,6 +70,7 @@ class PyDetectorAccess :
 
         self.geo = None 
         self.runnum_geo = -1
+        self.mbits      = None
 
 ##-----------------------------
 
@@ -241,10 +242,11 @@ class PyDetectorAccess :
 
     # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
     def mask_geo(self, par, mbits=15) :
+
         if mbits != self.mbits : # check if update is required
             self.mbits = mbits
             self.mask_geo_arr = None
-            
+
         if self.geoaccess(par) is None : return None
         else :
             if  self.mask_geo_arr is None : 
