@@ -277,7 +277,8 @@ def test3():
     import psana
 
     ds = psana.DataSource('exp=xppk3815:run=100:idx')
-    det = psana.Detector('ControlData', ds.env())
+    #det = psana.Detector('ControlData', ds.env())
+    det = psana.Detector('ControlData')
 
     run = ds.runs().next()
     nsteps = run.nsteps()
@@ -293,11 +294,12 @@ def test3():
 
 if __name__ == '__main__':
 
+    test3()
+
     import sys
 
     try    : ntest = int(sys.argv[1]) if len(sys.argv)>1 else 0
-    except : raise ValueError('First input parameter "%s" is expected
-to be empty or integer test number' % sys.argv[1])
+    except : raise ValueError('First input parameter "%s" is expected to be empty or integer test number' % sys.argv[1])
     print 'Test# %d' % ntest
 
     if len(sys.argv)<2 : test2()
