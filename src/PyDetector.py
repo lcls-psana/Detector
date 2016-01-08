@@ -47,10 +47,13 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 TJL To Do
 ---------
-- IPIMB
-- explicitly check types?
-- gas det (maybe)
+- gas det
+- ebeam
+- gmd
+- phase cavity
 - hook in psgeom to AreaDetector
+- remove ds.env() ?
+- tab completion
 """
 #------------------------------
 __version__ = "$Revision$"
@@ -60,6 +63,7 @@ import _psana
 import re
 import Detector.DetectorTypes as dt
 from Detector.EpicsDetector import EpicsDetector
+from Detector.ControlDataDetector import ControlDataDetector
 
 def det_and_dev_from_string(source_string):
     """
@@ -131,6 +135,7 @@ def detector_factory(source_string, env):
 
     return det_instance
 
+
 # the following function is renamed psana.Detector in the
 # psana __init__.py file
 def dettype(source_string, env):
@@ -159,9 +164,12 @@ def dettype(source_string, env):
     """
 
     # > see if the source_string is an epics PV name
+    #   OR a ControlData name (ControlData', 'ScanData')
     epics = env.epicsStore()
     if source_string in epics.names(): # both names & aliases
         return EpicsDetector
+    elif source_string in ['ControlData', 'ScanData']:
+        return ControlDataDetector
 
 
     # > see if the source_string is an alias
@@ -263,13 +271,33 @@ def test2():
 
     return 
 
+
+def test3():
+
+    import psana
+
+    ds = psana.DataSource('exp=xppk3815:run=100:idx')
+    det = psana.Detector('ControlData', ds.env())
+
+    run = ds.runs().next()
+    nsteps = run.nsteps()
+    for step in range(nsteps):
+        times = run.times(step)
+        for t in times[:2]:
+            evt = run.event(t)
+            print t, det().pvControls()[0].value()
+    
+    return
+
 ##-----------------------------
 
 if __name__ == '__main__':
+
     import sys
 
     try    : ntest = int(sys.argv[1]) if len(sys.argv)>1 else 0
-    except : raise ValueError('First input parameter "%s" is expected to be empty or integer test number' % sys.argv[1])
+    except : raise ValueError('First input parameter "%s" is expected
+to be empty or integer test number' % sys.argv[1])
     print 'Test# %d' % ntest
 
     if len(sys.argv)<2 : test2()

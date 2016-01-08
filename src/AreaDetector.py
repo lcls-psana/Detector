@@ -139,7 +139,7 @@ from   Detector.PyDetectorAccess import PyDetectorAccess
 
 ##-----------------------------
 
-class AreaDetector :
+class AreaDetector(object):
     """Python access to area detector data.
        Low level access is implemented on python or C++ through the boost::python wrapper
     """

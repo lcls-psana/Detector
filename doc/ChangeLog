@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-20
+2016-01-07 TJ Lane
+- Added ConfigDataDetector type
+
 Tag: V00-03-19
 2016-01-07 Mikhail S. Dubrovin
 - PyDetectorAccess.py - fix issue with initialization of self.mbits in constructor (PSAS-139)
