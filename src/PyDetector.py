@@ -47,6 +47,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 TJL To Do
 ---------
+- FIX BUG: evr0 alias not working?
 - gas det
 - ebeam
 - gmd
@@ -130,10 +131,29 @@ def detector_factory(source_string, env):
     """
 
     # > create an instance of the determined detector type & return it
+    source_string = map_alias_to_source(source_string, env)
     dt = dettype(source_string, env)
     det_instance = dt(source_string, env)
 
     return det_instance
+
+
+def map_alias_to_source(source_string, env):
+    """
+    Check to see if `source_string` is in the `env` alias map, and if so
+    use the alias map to look it up and return the psana Source string
+    corresponding to that alias.
+    """
+
+    # see if the source_string is an alias
+    amap = env.aliasMap()
+    alias_src = amap.src(source_string) # string --> DAQ-style psana.Src
+
+    # if it is an alias, look up the full name
+    if amap.alias(alias_src) != '':         # alias found
+        source_string = str(alias_src)
+
+    return source_string
 
 
 # the following function is renamed psana.Detector in the
@@ -163,36 +183,25 @@ def dettype(source_string, env):
     A psana-python Detector type
     """
 
-    # > see if the source_string is an epics PV name
-    #   OR a ControlData name (ControlData', 'ScanData')
     epics = env.epicsStore()
     if source_string in epics.names(): # both names & aliases
-        return EpicsDetector
+        detector_class = EpicsDetector
+
     elif source_string in ['ControlData', 'ScanData']:
-        return ControlDataDetector
+        detector_class = ControlDataDetector
 
+    elif source_string in dt.bld_info.keys(): # if source is a BldInfo...
+        detector_class = dt.bld_info[source_string]
 
-    # > see if the source_string is an alias
-    amap = env.aliasMap()
-    alias_src = amap.src(source_string) # string --> DAQ-style psana.Src
-                
-    # if it is an alias, look up the full name
-    if amap.alias(alias_src) != '':         # alias found
-        source_string = str(alias_src)
-
-
-    # > look up what Detector class we should use
-    if source_string in dt.bld_info.keys(): # if source is a BldInfo...
-        return dt.bld_info[source_string]
-
-    else:                                   # assume source is a DetInfo...
+    else:                                     # assume source is a DetInfo...
         _, _, device_type, _ = det_and_dev_from_string(source_string)
         if device_type in dt.detectors.keys():
-            return dt.detectors[device_type]
+            detector_class = dt.detectors[device_type]
         else:
             raise KeyError('Unknown DetInfo device type: %s (source: %s)'
                            '' % (device_type, source_string))
 
+    return detector_class
 
 ##-----------------------------
 
@@ -290,13 +299,27 @@ def test3():
     
     return
 
+
+def test4():
+    import psana
+    ds = psana.DataSource('exp=xpptut15:run=54')
+    env = ds.env()
+    d = psana.Detector('evr0')
+    d2 = psana.Detector('yag2')
+    print d.source, d2.source
+    print d( ds.events().next() )
+    print d2.raw( ds.events().next() )
+
 ##-----------------------------
 
 if __name__ == '__main__':
 
+    #for i in range(5): test1(i)
+    #test2()
     test3()
+    test4()
 
-    import sys
+    import sys; sys.exit()
 
     try    : ntest = int(sys.argv[1]) if len(sys.argv)>1 else 0
     except : raise ValueError('First input parameter "%s" is expected to be empty or integer test number' % sys.argv[1])

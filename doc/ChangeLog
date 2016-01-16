@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-22
+2016-01-15 TJ Lane
+- Fix issue where aliases were not correctly mapped for non-AreaDetectors
+
 Tag: V00-03-21
 2016-01-07 TJ Lane
 - Fix typo
