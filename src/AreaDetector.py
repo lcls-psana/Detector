@@ -504,17 +504,18 @@ class AreaDetector(object):
         cdata = np.array(raw, dtype=np.float32, copy=True)
         cdata -= peds
 
-        smask = self.status_as_mask(rnum)
+        if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2
+        self.common_mode_apply(rnum, cdata, cmpars)
+        if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2
 
+        smask = self.status_as_mask(rnum)
         if smask is None :
             if self.pbits & 32 : self._print_warning('calib(...) - mask is missing.')
         else :
             smask.shape = cdata.shape
             cdata *= smask      
 
-        if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2
-        self.common_mode_apply(rnum, cdata, cmpars)
-        return cdata if not self.is_cspad2x2() else data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2
+        return cdata 
 
 ##-----------------------------
 

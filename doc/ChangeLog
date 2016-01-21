@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-24
+2016-01-20 Mikhail S. Dubrovin
+- AreaDetector.py - in calib change order of corrections; 1) common mode, 2) mask from status (PSAS-139) 
+	
 Tag: V00-03-23
 2016-01-20 Mikhail S. Dubrovin
 - AreaDetector.py - fix return from status_as_mask, ex_all_dets.py - update example for det.mask
