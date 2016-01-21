@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-23
+2016-01-20 Mikhail S. Dubrovin
+- AreaDetector.py - fix return from status_as_mask, ex_all_dets.py - update example for det.mask
+	
 Tag: V00-03-22
 2016-01-15 TJ Lane
 - Fix issue where aliases were not correctly mapped for non-AreaDetectors

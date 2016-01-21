@@ -374,7 +374,7 @@ class AreaDetector(object):
         stat = self.status(rnum)
         if stat is None : return None
         smask = np.select([stat==0, stat>0], [1, 0])
-        self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
+        return self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
 
 ##-----------------------------
 

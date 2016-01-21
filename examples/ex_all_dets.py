@@ -80,7 +80,7 @@ print_ndarr(peds, 'pedestals')
 rms = det.rms(par)
 print_ndarr(rms, 'rms')
 
-mask = det.mask(par)
+mask = det.mask(par, calib=False, status=True, edges=False, central=False, unbond=False, unbondnbrs=False)
 print_ndarr(mask, 'mask')
 
 gain = det.gain(par)
