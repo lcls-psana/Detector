@@ -374,6 +374,7 @@ class AreaDetector(object):
         stat = self.status(rnum)
         if stat is None : return None
         smask = np.select([stat==0, stat>0], [1, 0])
+        if self.is_cspad2x2() : return smask # stat already has a shape (2,185,388)
         return self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
 
 ##-----------------------------
@@ -502,13 +503,13 @@ class AreaDetector(object):
             except : return None
 
         cdata = np.array(raw, dtype=np.float32, copy=True)
-        cdata -= peds
+        cdata -= peds  # for cspad2x2 (2, 185, 388)
 
-        if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2
+        if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2 ->(185, 388, 2)
         self.common_mode_apply(rnum, cdata, cmpars)
-        if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2
+        if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2 ->(2, 185, 388)
 
-        smask = self.status_as_mask(rnum)
+        smask = self.status_as_mask(rnum) # (2, 185, 388)
         if smask is None :
             if self.pbits & 32 : self._print_warning('calib(...) - mask is missing.')
         else :

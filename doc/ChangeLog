@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-25
+2016-01-21 Mikhail S. Dubrovin
+- AreaDetector.py - in status_as_mask do not re-shape cspad2x2 arr, it is already (2,185,388) from status()
+
 Tag: V00-03-24
 2016-01-20 Mikhail S. Dubrovin
 - AreaDetector.py - in calib change order of corrections; 1) common mode, 2) mask from status (PSAS-139) 
