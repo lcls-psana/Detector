@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>  // for stringstream
 //#include <map>
 //#include <fstream>  // open, close etc.
 
@@ -128,6 +129,9 @@ public:
 	    || m_dettype == ImgAlgos::FCCD960
 	    || m_dettype == ImgAlgos::TM6740
 	    || m_dettype == ImgAlgos::ORCAFL40
+	    || m_dettype == ImgAlgos::QUARTZ4A150
+	    || m_dettype == ImgAlgos::RAYONIX
+	    || m_dettype == ImgAlgos::FCCD
            ) 
 	  return new NDArrProducerCamera(source, mode, pbits, vdef);
 
@@ -143,8 +147,12 @@ public:
 	if (m_dettype == ImgAlgos::EPIX100A) 
 	  return new NDArrProducerEpix(source, mode, pbits, vdef);
 
-        MsgLog("NDArrProducerStore", error, "Access to data for source " << source << " is not implemented yet...");  
-        throw std::runtime_error("Access to data for source");
+	static unsigned counter = 0; counter++;
+	if(counter < 5) {
+          std::stringstream ss; ss << "Access to data for source " << source << " is not implemented yet.";
+          MsgLog("NDArrProducerStore", error, ss.str());  
+	}
+        //throw std::runtime_error(ss.str());
 
         return NULL;
   }

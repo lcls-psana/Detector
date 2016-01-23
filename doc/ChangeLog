@@ -11,6 +11,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-26
+2016-01-22 Mikhail S. Dubrovin
+- NDArrProducerStore::Create 
+	- add suppor for QUARTZ4A150, RAYONIX, FCCD as Camera
+	- do not throw exception if dettype is unknown, return NULL pointer
+- DetectorAccess.cpp - in methods like data_uint16_2 return empty ndarray if m_nda_prod == NULL
+	
 Tag: V00-03-25
 2016-01-21 Mikhail S. Dubrovin
 - AreaDetector.py - in status_as_mask do not re-shape cspad2x2 arr, it is already (2,185,388) from status()

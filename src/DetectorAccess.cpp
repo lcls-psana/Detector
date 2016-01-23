@@ -629,6 +629,7 @@ DetectorAccess::status(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_pt
 ndarray<const int16_t, 1> DetectorAccess::data_int16_1(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const int16_t, 1>();
   return m_nda_prod->data_nda_int16_1(*shp_evt, *shp_env);
 }
 
@@ -637,6 +638,7 @@ ndarray<const int16_t, 1> DetectorAccess::data_int16_1(boost::shared_ptr<PSEvt::
 ndarray<const int16_t, 2> DetectorAccess::data_int16_2(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const int16_t, 2>();
   return m_nda_prod->data_nda_int16_2(*shp_evt, *shp_env);
 }
 
@@ -645,6 +647,7 @@ ndarray<const int16_t, 2> DetectorAccess::data_int16_2(boost::shared_ptr<PSEvt::
 ndarray<const int16_t, 3> DetectorAccess::data_int16_3(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const int16_t, 3>();
   return m_nda_prod->data_nda_int16_3(*shp_evt, *shp_env);
 }
 
@@ -653,6 +656,7 @@ ndarray<const int16_t, 3> DetectorAccess::data_int16_3(boost::shared_ptr<PSEvt::
 ndarray<const int16_t, 4> DetectorAccess::data_int16_4(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const int16_t, 4>();
   return m_nda_prod->data_nda_int16_4(*shp_evt, *shp_env);
 }
 
@@ -661,6 +665,7 @@ ndarray<const int16_t, 4> DetectorAccess::data_int16_4(boost::shared_ptr<PSEvt::
 ndarray<const uint16_t, 2> DetectorAccess::data_uint16_2(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const uint16_t, 2>();
   return m_nda_prod->data_nda_uint16_2(*shp_evt, *shp_env);
 }
 
@@ -669,6 +674,7 @@ ndarray<const uint16_t, 2> DetectorAccess::data_uint16_2(boost::shared_ptr<PSEvt
 ndarray<const uint16_t, 3> DetectorAccess::data_uint16_3(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const uint16_t, 3>();
   return m_nda_prod->data_nda_uint16_3(*shp_evt, *shp_env);
 }
 
@@ -677,6 +683,7 @@ ndarray<const uint16_t, 3> DetectorAccess::data_uint16_3(boost::shared_ptr<PSEvt
 ndarray<const uint8_t, 2> DetectorAccess::data_uint8_2(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env)
 {
   initNDArrProducer();
+  if(m_nda_prod == NULL) return ndarray<const uint8_t, 2>();
   return m_nda_prod->data_nda_uint8_2(*shp_evt, *shp_env);
 }
 
