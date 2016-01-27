@@ -11,8 +11,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-28
+2016-01-27 Mikhail S. Dubrovin
+- AreaDetector.py - use mask_comb in stead of status_as_mask, swap mbits bits 1 and 2 for status and calib (PSAS-139) 
+
 Tag: V00-03-27
-2016-01-22 Mikhail S. Dubrovin
+2016-01-26 Mikhail S. Dubrovin
 - AreaDetector.py - improve raw, add mask_comb, use mask_comb in calib, add ex_cspad2x2_mask_mec.py (PSAS-139)
 
 Tag: V00-03-26

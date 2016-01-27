@@ -73,7 +73,7 @@ Usage::
     # and with custom common mode parameter sequence
     nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence,
     # and with combined mask.
-    nda_cdata = det.calib(evt, mbits=0) # see description of det.mask_comb method.
+    nda_cdata = det.calib(evt, mbits=1) # see description of det.mask_comb method.
 
     # common mode correction for pedestal-subtracted numpy array nda:
     det.common_mode_apply(par, nda)
@@ -102,8 +102,9 @@ Usage::
     # NOTE: by default none of mask keywords is set to True, returns None.
     mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
 
-    # or cashed mask with mbits-bitword control
-    mask = det.mask_comb(par, mbits) # mbits has bits for calib, status, edges, central, unbond, unbondnbrs, respectively
+    # or cashed mask with mbits - bitword control
+    mask = det.mask_comb(par, mbits)
+    # where mbits has bits for pixel_status, pixel_mask, edges, central, unbond, unbondnbrs, respectively
 
     # reconstruct image
     img = det.image(evt) # uses calib() by default
@@ -482,7 +483,7 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def calib(self, evt, cmpars=None, mbits=0) :
+    def calib(self, evt, cmpars=None, mbits=1) :
         """ Gets raw data ndarray, Applys baic corrections and return thus calibrated data.
             Applied corrections:
             - pedestal subtraction,
@@ -517,14 +518,8 @@ class AreaDetector(object):
         self.common_mode_apply(rnum, cdata, cmpars)
         if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2 ->(2, 185, 388)
 
-        smask = self.status_as_mask(rnum) # (2, 185, 388)
-        if smask is None :
-            if self.pbits & 32 : self._print_warning('calib(...) - mask from pixel_status is missing.')
-        else :
-            smask.shape = cdata.shape
-            cdata *= smask      
-
         if mbits > 0 : 
+            #smask = self.status_as_mask(rnum) # (2, 185, 388)
             mask = self.mask_comb(rnum, mbits)
             if mask is None :
                 if self.pbits & 32 : self._print_warning('combined mask is missing.')
@@ -560,8 +555,8 @@ class AreaDetector(object):
         """Returns cached for static parameters combined mask controlled by mbits bitword.
            par        - run number or evt, 
            mbits = 0  - returns None
-                 + 1  - calib
-                 + 2  - status    
+                 + 1  - pixel_status as a mask
+                 + 2  - pixel_mask    
                  + 4  - edges     
                  + 8  - central   
                  + 16 - unbond    
@@ -578,8 +573,8 @@ class AreaDetector(object):
         self._rnum_mask  = rnum
         self._mbits_mask = mbits
         self._mask_nda = self.mask(rnum,\
-                                   calib      = mbits&1,\
-                                   status     = mbits&2,\
+                                   status     = mbits&1,\
+                                   calib      = mbits&2,\
                                    edges      = mbits&4,\
                                    central    = mbits&8,\
                                    unbond     = mbits&16,\
