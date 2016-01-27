@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-27
+2016-01-22 Mikhail S. Dubrovin
+- AreaDetector.py - improve raw, add mask_comb, use mask_comb in calib, add ex_cspad2x2_mask_mec.py (PSAS-139)
+
 Tag: V00-03-26
 2016-01-22 Mikhail S. Dubrovin
 - NDArrProducerStore::Create 

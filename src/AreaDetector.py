@@ -70,8 +70,10 @@ Usage::
 
     # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
     nda_cdata = det.calib(evt)
-    # or with custom common mode parameter sequence
-    nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence
+    # and with custom common mode parameter sequence
+    nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence,
+    # and with combined mask.
+    nda_cdata = det.calib(evt, mbits=0) # see description of det.mask_comb method.
 
     # common mode correction for pedestal-subtracted numpy array nda:
     det.common_mode_apply(par, nda)
@@ -99,6 +101,9 @@ Usage::
     # access to combined mask
     # NOTE: by default none of mask keywords is set to True, returns None.
     mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
+
+    # or cashed mask with mbits-bitword control
+    mask = det.mask_comb(par, mbits) # mbits has bits for calib, status, edges, central, unbond, unbondnbrs, respectively
 
     # reconstruct image
     img = det.image(evt) # uses calib() by default
@@ -168,6 +173,10 @@ class AreaDetector(object):
         self._shape = None
         self._size  = None
         self._ndim  = None
+        
+        self._rnum_mask  = None
+        self._mbits_mask = None
+        self._mask_nda   = None
 
         if self.pbits & 1 : self.print_members()
 
@@ -415,26 +424,24 @@ class AreaDetector(object):
     def raw(self, evt) :
         """Returns np.array with raw data
         """
-        # get data using python methods
-        rnum = self.runnum(evt)
-        rdata = self.pyda.raw_data(evt, self.env)
+        rdata = None
 
-        #if self.dettype == gu.ACQIRIS : return rdata # returns two arrays: wf, wt
-        #if self.dettype == gu.IMP :     return rdata # returns nparray with shape=(4,1023)
-        
-        if rdata is not None : return self._shaped_array_(rnum, rdata)
+        if self.iscpp :
+            if   self.dettype == gu.CSPAD    : rdata = self.da.data_int16_3 (evt, self.env)
+            elif self.dettype == gu.CSPAD2X2 : rdata = self.da.data_int16_3 (evt, self.env)
+            elif self.dettype == gu.PNCCD    : rdata = self.da.data_uint16_3(evt, self.env)
+            else :                             rdata = self.da.data_uint16_2(evt, self.env)
+
+        else:
+            rdata = self.pyda.raw_data(evt, self.env)
+
+        if rdata is not None : return self._shaped_array_(self.runnum(evt), rdata)
 
         if self.pbits :
-            print '!!! AreaDetector: Data for source %s is not found in python interface, trying C++' % self.source
+            print 'WARNING: AreaDetector.raw - data for source %s is not found in %s interface.'%\
+                  (self.source, 'C++' if self.iscpp else 'Python')
 
-        # get data using C++ methods
-        if   self.dettype == gu.CSPAD    : rdata = self.da.data_int16_3 (evt, self.env)
-        elif self.dettype == gu.CSPAD2X2 : rdata = self.da.data_int16_3 (evt, self.env)
-        elif self.dettype == gu.PNCCD    : rdata = self.da.data_uint16_3(evt, self.env)
-        else :                             rdata = self.da.data_uint16_2(evt, self.env)
-        if self.pbits and rdata is None :
-            print '!!! AreaDetector: Data for source %s is not found in C++ interface' % self.source
-        return self._shaped_array_(rnum, rdata)
+        return rdata
 
 ##-----------------------------
 
@@ -475,12 +482,13 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def calib(self, evt, cmpars=None) :
+    def calib(self, evt, cmpars=None, mbits=0) :
         """ Gets raw data ndarray, Applys baic corrections and return thus calibrated data.
             Applied corrections:
-            - pedestal subtraction
-            - apply mask generated from pixel status
-            - apply common mode correction
+            - pedestal subtraction,
+            - apply mask generated from pixel status,
+            - apply common mode correction,
+            - apply combined mask from method det.mask_comb(...) - not applied by default.
         """
         rnum = self.runnum(evt)
 
@@ -511,17 +519,25 @@ class AreaDetector(object):
 
         smask = self.status_as_mask(rnum) # (2, 185, 388)
         if smask is None :
-            if self.pbits & 32 : self._print_warning('calib(...) - mask is missing.')
+            if self.pbits & 32 : self._print_warning('calib(...) - mask from pixel_status is missing.')
         else :
             smask.shape = cdata.shape
             cdata *= smask      
+
+        if mbits > 0 : 
+            mask = self.mask_comb(rnum, mbits)
+            if mask is None :
+                if self.pbits & 32 : self._print_warning('combined mask is missing.')
+            else :
+                mask.shape = cdata.shape
+                cdata *= mask      
 
         return cdata 
 
 ##-----------------------------
 
     def mask(self, par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False) :
-        """Returns combined mask
+        """Returns combined mask.
         """
         rnum = self.runnum(par)
 
@@ -537,6 +553,38 @@ class AreaDetector(object):
 
         if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits)) 
         return mask_nda
+
+##-----------------------------
+
+    def mask_comb(self, par, mbits=0) :
+        """Returns cached for static parameters combined mask controlled by mbits bitword.
+           par        - run number or evt, 
+           mbits = 0  - returns None
+                 + 1  - calib
+                 + 2  - status    
+                 + 4  - edges     
+                 + 8  - central   
+                 + 16 - unbond    
+                 + 32 - unbondnbrs
+        """
+        rnum = self.runnum(par)
+        
+        #Check/return cached mask
+        if rnum == self._rnum_mask\
+           and mbits == self._mbits_mask\
+           and self._mask_nda is not None : return self._mask_nda
+
+        #Evaluate new mask
+        self._rnum_mask  = rnum
+        self._mbits_mask = mbits
+        self._mask_nda = self.mask(rnum,\
+                                   calib      = mbits&1,\
+                                   status     = mbits&2,\
+                                   edges      = mbits&4,\
+                                   central    = mbits&8,\
+                                   unbond     = mbits&16,\
+                                   unbondnbrs = mbits&32)
+        return self._mask_nda
 
 ##-----------------------------
 # Geometry info
