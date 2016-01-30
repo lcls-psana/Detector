@@ -9,6 +9,9 @@ from DdlDetector import DdlDetector
 class EvrDetector(DdlDetector):
 
     def __call__(self, evt):
+        return self.eventCodes(evt)
+
+    def eventCodes(self, evt):
 
         ddl_evrs = self._fetch_ddls(evt)
 
@@ -46,8 +49,5 @@ if __name__ == '__main__':
 
     for evt in ds.events():
         print evrdet(evt)
+        print evrdet.eventCodes(evt)
         break
-
-
-
-

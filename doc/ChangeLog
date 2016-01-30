@@ -11,10 +11,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-30
+2016-01-29 Christopher O'Grady
+- Add eventCodes method to evr
+
 Tag: V00-03-29
 2016-01-28 Mikhail S. Dubrovin
 - add examples/ex_save_mec_cspad*_imges_in_tiff.py (PSAS-211)
-	
+
 Tag: V00-03-28
 2016-01-27 Mikhail S. Dubrovin
 - AreaDetector.py - use mask_comb in stead of status_as_mask, swap mbits bits 1 and 2 for status and calib (PSAS-139) 
