@@ -644,8 +644,8 @@ class AreaDetector(object):
     def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
-        if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         if nda is None : return None
+        if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         nda_img = np.array(nda, dtype=np.double).flatten()        
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
         else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))

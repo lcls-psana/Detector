@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-31
+2016-02-08 Mikhail S. Dubrovin
+- AreaDetector.py - in image() check if nda is None before nda = two2x1ToData2x2(nda) (PSAS-139) 
+	
 Tag: V00-03-30
 2016-01-29 Christopher O'Grady
 - Add eventCodes method to evr
