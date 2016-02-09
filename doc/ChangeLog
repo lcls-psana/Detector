@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-33
+2016-02-09 Mikhail S. Dubrovin
+- add ex_andor3d.py
+	
 Tag: V00-03-32
 2016-02-08 Mikhail S. Dubrovin
 - add support for Andor3d (PSAS-139)
