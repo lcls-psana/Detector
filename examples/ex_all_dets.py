@@ -4,6 +4,7 @@ import sys
 import psana
 from time import time
 from Detector.GlobalUtils import print_ndarr
+import PSCalib.GlobalUtils as gu
 
 ##-----------------------------
 
@@ -41,6 +42,8 @@ elif ntest==19 :
 elif ntest==20 :   #The same as 'exp=cxif5315:run=169' but geometry is different
     dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'CxiDs2.0:Cspad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib/')
+
+elif ntest==21  : dsname, src = 'exp=sxrk4816:run=1',  'SxrEndstation.0:DualAndor.0' # or alias='andorDual'
 
 print 'Example for\n dataset: %s\n source : %s' % (dsname, src)
 
@@ -127,10 +130,12 @@ print_ndarr(data_sub_peds, 'data - peds')
 nda_cdata = det.calib(evt)
 print_ndarr(nda_cdata, 'calibrated data')
 
-t0_sec = time()
-nda_cdata_ub = det.calib(evt) # , cmpars=(5,50))
-print_ndarr(nda_cdata_ub, 'calibrated data for cspad unbond pixels')
-print 'Consumed time for det.calib(evt) = %7.3f sec' % (time()-t0_sec)
+if det.dettype == gu.CSPAD \
+or det.dettype == gu.CSPAD2X2 :
+    t0_sec = time()
+    nda_cdata_ub = det.calib(evt, cmpars=(5,50))
+    print_ndarr(nda_cdata_ub, 'calibrated cspad(2x2) data with unbond pixel common mode correction')
+    print 'Consumed time for det.calib(evt) = %7.3f sec' % (time()-t0_sec)
 
 coords_x = det.coords_x(par)
 print_ndarr(coords_x, 'coords_x')

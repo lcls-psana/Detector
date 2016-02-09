@@ -11,6 +11,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-32
+2016-02-08 Mikhail S. Dubrovin
+- add support for Andor3d (PSAS-139)
+    - PyDataAccess.py - add get_andor_config_object, get_andor_data_object
+    - PyDetectorAccess.py - update raw_data_andor, raw_data_pnccd, ex_all_dets.py, GlobalUtils.py
+    - DetectorTypes.py - add DualAndor
+	
 Tag: V00-03-31
 2016-02-08 Mikhail S. Dubrovin
 - AreaDetector.py - in image() check if nda is None before nda = two2x1ToData2x2(nda) (PSAS-139) 
@@ -34,7 +41,7 @@ Tag: V00-03-27
 Tag: V00-03-26
 2016-01-22 Mikhail S. Dubrovin
 - NDArrProducerStore::Create 
-	- add suppor for QUARTZ4A150, RAYONIX, FCCD as Camera
+	- add support for QUARTZ4A150, RAYONIX, FCCD as Camera
 	- do not throw exception if dettype is unknown, return NULL pointer
 - DetectorAccess.cpp - in methods like data_uint16_2 return empty ndarray if m_nda_prod == NULL
 	

@@ -37,7 +37,6 @@ def get_cspad_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_cspad2x2_data_object(evt, src) :
     """get cspad2x2 data object
@@ -62,7 +61,6 @@ def get_cspad2x2_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_camera_data_object(evt, src) :
     """get camera data object
@@ -83,7 +81,6 @@ def get_camera_config_object(env, src) :
 
     return None
     
-##-----------------------------
 ##-----------------------------
 
 def get_princeton_data_object(evt, src) :
@@ -127,6 +124,15 @@ def get_princeton_config_object(env, src) :
     return None
     
 ##-----------------------------
+
+def get_pnccd_data_object(evt, src) :
+    """get pnccd data object
+    """
+    o = evt.get(_psana.PNCCD.FramesV1, src)
+    if o is not None : return o
+
+    return None
+
 ##-----------------------------
 
 def get_pnccd_config_object(env, src) :
@@ -140,9 +146,35 @@ def get_pnccd_config_object(env, src) :
     if o is not None : return o
 
     return None
-    
 
 ##-----------------------------
+
+def get_andor_data_object(evt, src) :
+    """get andor data object
+    """
+    o = evt.get(_psana.Andor3d.FrameV1, src)
+    if o is not None : return o
+
+    o = evt.get(_psana.Andor.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_andor_config_object(env, src) :
+    """get andor config object
+    """
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Andor3d.ConfigV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Andor.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
 ##-----------------------------
 
 def get_fccd960_data_object(env, src) :
@@ -150,7 +182,6 @@ def get_fccd960_data_object(env, src) :
     """
     return get_camera_data_object(evt, src)
 
-##-----------------------------
 ##-----------------------------
 
 def get_fccd960_config_object(env, src) :
@@ -165,7 +196,6 @@ def get_fccd960_config_object(env, src) :
 
     return None
     
-##-----------------------------
 ##-----------------------------
 
 def get_epix_data_object(evt, src) :
@@ -182,7 +212,6 @@ def get_epix_data_object(evt, src) :
 
     return None
 
-##-----------------------------
 ##-----------------------------
 
 def get_epix_config_object(env, src) :
@@ -204,14 +233,12 @@ def get_epix_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_quartz_data_object(evt, src) :
     """get quartz data object
     """
     return get_camera_data_object(evt, src)
 
-##-----------------------------
 ##-----------------------------
 
 def get_quartz_config_object(env, src) :
@@ -227,14 +254,12 @@ def get_quartz_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_rayonix_data_object(evt, src) :
     """get rayonix data object
     """
     return get_camera_data_object(evt, src)
 
-##-----------------------------
 ##-----------------------------
 
 def get_rayonix_config_object(env, src) :
@@ -250,14 +275,12 @@ def get_rayonix_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_fccd_data_object(env, src) :
     """get fccd data object
     """
     return get_camera_data_object(evt, src)
 
-##-----------------------------
 ##-----------------------------
 
 def get_fccd_config_object(env, src) :
@@ -273,7 +296,6 @@ def get_fccd_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_timepix_data_object(evt, src) :
     """get timepix data object
@@ -286,7 +308,6 @@ def get_timepix_data_object(evt, src) :
 
     return None
 
-##-----------------------------
 ##-----------------------------
 
 def get_timepix_config_object(env, src) :
@@ -305,7 +326,6 @@ def get_timepix_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_fli_data_object(evt, src) :
     """get fli data object
@@ -315,7 +335,6 @@ def get_fli_data_object(evt, src) :
 
     return None
 
-##-----------------------------
 ##-----------------------------
 
 def get_fli_config_object(env, src) :
@@ -329,7 +348,6 @@ def get_fli_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_pimax_data_object(evt, src) :
     """get pimax data object
@@ -339,7 +357,6 @@ def get_pimax_data_object(evt, src) :
 
     return None
 
-##-----------------------------
 ##-----------------------------
 
 def get_pimax_config_object(env, src) :
@@ -354,6 +371,7 @@ def get_pimax_config_object(env, src) :
 
 ##-----------------------------
 ##-----------------------------
+##---- For WFDetector.py ------
 ##-----------------------------
 ##-----------------------------
 
@@ -366,7 +384,6 @@ def get_acqiris_data_object(evt, src) :
     return None
 
 ##-----------------------------
-##-----------------------------
 
 def get_acqiris_config_object(env, src) :
     """get acqiris config object
@@ -378,7 +395,6 @@ def get_acqiris_config_object(env, src) :
     return None
     
 ##-----------------------------
-##-----------------------------
 
 def get_imp_data_object(evt, src) :
     """get imp data object
@@ -388,7 +404,6 @@ def get_imp_data_object(evt, src) :
 
     return None
 
-##-----------------------------
 ##-----------------------------
 
 def get_imp_config_object(env, src) :

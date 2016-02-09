@@ -49,6 +49,7 @@ detectors = {
     "Opal8000"    : AreaDetector,
     "Fli"         : AreaDetector,
     "Quartz4A150" : AreaDetector,
+    "DualAndor"   : AreaDetector,
     "Andor"       : AreaDetector,
     "USDUSB"      : DdlDetector,
     "OrcaFl40"    : AreaDetector,

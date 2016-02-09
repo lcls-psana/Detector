@@ -377,6 +377,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.PRINCETON  : return self.raw_data_princeton(evt, env) # 0.7 ms
         elif self.dettype == gu.PNCCD      : return self.raw_data_pnccd(evt, env)     # 0.8 ms
         elif self.dettype == gu.ANDOR      : return self.raw_data_andor(evt, env)     # 0.1 ms
+        elif self.dettype == gu.ANDOR3D    : return self.raw_data_andor(evt, env)
         elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
         elif self.dettype == gu.EPIX100A   : return self.raw_data_epix(evt, env)      # 0.3 ms
         elif self.dettype == gu.EPIX10K    : return self.raw_data_epix(evt, env)
@@ -533,23 +534,12 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def raw_data_andor(self, evt, env) :
-        d = evt.get(_psana.Andor.FrameV1, self.source)
-        if d is None : return None
-
-        #c = env.configStore().get(_psana.Andor.ConfigV1, self.source)
-        #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
-
-        nda = d.data()
-        return nda if nda is not None else None
-
-##-----------------------------
-
     def raw_data_pnccd(self, evt, env) :
+        # data object
         #print '=== in raw_data_pnccd'
         #d = evt.get(_psana.PNCCD.FullFrameV1, self.source)
-        d = evt.get(_psana.PNCCD.FramesV1, self.source)
+        #d = evt.get(_psana.PNCCD.FramesV1, self.source)
+        d = pda.get_pnccd_data_object(evt, self.source)
         if d is None : return None
 
         #c = pda.get_pnccd_config_object(env, self.source)
@@ -567,6 +557,21 @@ class PyDetectorAccess :
         nda = np.array(arr)
         #print 'nda.shape: ', nda.shape
         return nda
+
+##-----------------------------
+
+    def raw_data_andor(self, evt, env) :
+        # data object
+        #d = evt.get(_psana.Andor.FrameV1, self.source)
+        d = pda.get_andor_data_object(evt, self.source)
+        if d is None : return None
+
+        #c = env.configStore().get(_psana.Andor.ConfigV1, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
 
 ##-----------------------------
 
