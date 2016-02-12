@@ -18,7 +18,6 @@ class ControlDataDetector(object):
             if 'ControlData.Config' in str(k.type()):
                 self._type = k.type()
                 self._source = k.src() #psana.Source('ProcInfo()')
-                print self._type, self._source
 
         return
 
