@@ -458,18 +458,18 @@ class PyDetectorAccess :
 
         # configuration object
         c = pda.get_cspad2x2_config_object(env, self.source)
-        if c is None : return None
-
-        #print 'd.TypeId: ', d.TypeId
-        #print 'common mode 0: %f   1: %f', (d.common_mode(0), d.common_mode(1))
-        #print 'roiMask: ', c.roiMask(), '  numAsicsStored: ', c.numAsicsStored()
+        if c is None :
+            if self.pbits and self.counter_cspad2x2_msg <3 :
+                print 'WARNING PyDetectorAccess: missing configuration object for source %s' % (self.str_src)
+                if self.counter_cspad2x2_msg == 2 : print 'Stop WARNING messages for %s configuration' % self.str_src
+                self.counter_cspad2x2_msg += 1
+            #return None
 
         if c.roiMask() != 3 :
-            self.counter_cspad2x2_msg += 1
-            if self.counter_cspad2x2_msg < 11 :
+            if self.pbits and self.counter_cspad2x2_msg <3 :
                 print 'WARNING PyDetectorAccess: configuration of %s has non-complete mask=%d of included 2x1' % (self.str_src, c.roiMask())
-                if self.counter_cspad2x2_msg == 10 : print 'Stop WARNING messages for %s configuration' % self.str_src
-            #return None
+                if self.counter_cspad2x2_msg == 2 : print 'Stop WARNING messages for %s configuration' % self.str_src
+                self.counter_cspad2x2_msg += 1
 
         return d.data()
 
