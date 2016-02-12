@@ -319,6 +319,9 @@ class AreaDetector(object):
         """
         if arr is None   : return None
         if arr.size == 0 : return None
+
+        if self.dettype == gu.ANDOR3D : return arr
+
         if calibtype is not None :
             status = self.loading_status(rnum, calibtype)
             if status != gu.LOADED and status != gu.DEFAULT : return None

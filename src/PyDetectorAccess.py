@@ -72,6 +72,8 @@ class PyDetectorAccess :
         self.runnum_geo = -1
         self.mbits      = None
 
+        self.counter_cspad2x2_msg = 0
+
 ##-----------------------------
 
     def cpstore(self, par) : # par = evt or runnum
@@ -450,11 +452,10 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def raw_data_cspad2x2(self, evt, env) :
-
         # data object
         d = pda.get_cspad2x2_data_object(evt, self.source)
         if d is None : return None
-    
+
         # configuration object
         c = pda.get_cspad2x2_config_object(env, self.source)
         if c is None : return None
@@ -464,8 +465,11 @@ class PyDetectorAccess :
         #print 'roiMask: ', c.roiMask(), '  numAsicsStored: ', c.numAsicsStored()
 
         if c.roiMask() != 3 :
-            if self.pbits : print 'PyDetectorAccess: CSPAD2x2 configuration has non-complete mask = %d of included 2x1' % c.roiMask()
-            return None
+            self.counter_cspad2x2_msg += 1
+            if self.counter_cspad2x2_msg < 11 :
+                print 'WARNING PyDetectorAccess: configuration of %s has non-complete mask=%d of included 2x1' % (self.str_src, c.roiMask())
+                if self.counter_cspad2x2_msg == 10 : print 'Stop WARNING messages for %s configuration' % self.str_src
+            #return None
 
         return d.data()
 
@@ -561,14 +565,42 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def raw_data_andor(self, evt, env) :
-        # data object
-        #d = evt.get(_psana.Andor.FrameV1, self.source)
+
         d = pda.get_andor_data_object(evt, self.source)
         if d is None : return None
 
-        #c = env.configStore().get(_psana.Andor.ConfigV1, self.source)
-        #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        if self.pbits & 4 :
+            print 'Data object:', d
+            print 'shotIdStart = ', d.shotIdStart() 
+            print 'readoutTime = ', d.readoutTime()
+            print 'temperature = ', d.temperature()
+
+        c = pda.get_andor_config_object(env, self.source)                
+
+        if c is not None and self.pbits & 4 :
+            print 'Configuration object:', c
+            print 'width              = ', c.width()            
+            print 'height             = ', c.height()            
+            print 'numSensors         = ', c.numSensors()        
+            print 'orgX               = ', c.orgX()              
+            print 'orgY               = ', c.orgY()              
+            print 'binX               = ', c.binX()              
+            print 'binY               = ', c.binY()              
+            print 'exposureTime       = ', c.exposureTime()      
+            print 'coolingTemp        = ', c.coolingTemp ()      
+            print 'fanMode            = ', c.fanMode ()          
+            print 'baselineClamp      = ', c.baselineClamp()     
+            print 'highCapacity       = ', c.highCapacity()      
+            print 'gainIndex          = ', c.gainIndex()         
+            print 'readoutSpeedIndex  = ', c.readoutSpeedIndex() 
+            print 'exposureEventCode  = ', c.exposureEventCode() 
+            print 'exposureStartDelay = ', c.exposureStartDelay()
+            print 'numDelayShots      = ', c.numDelayShots()     
+            print 'frameSize          = ', c.frameSize()         
+            print 'numPixelsX         = ', c.numPixelsX()        
+            print 'numPixelsY         = ', c.numPixelsY()        
+            print 'numPixelsPerSensor = ', c.numPixelsPerSensor()
+            print 'numPixels          = ', c.numPixels()         
 
         nda = d.data()
         return nda if nda is not None else None

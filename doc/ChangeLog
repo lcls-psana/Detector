@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-34
+2016-02-11 Mikhail S. Dubrovin
+- PyDetectorAccess - update raw_data_andor, raw_data_cspad2x2 - return data even for roiMask=1 (PSAS-139)
+- AreaDetector - do not reshape andor3d ndarray from data
+
 Tag: V00-03-33
 2016-02-09 Mikhail S. Dubrovin
 - add ex_andor3d.py
