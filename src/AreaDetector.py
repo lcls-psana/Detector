@@ -93,6 +93,7 @@ Usage::
     iy         = det.indexes_y(par)
     ix, iy     = det.indexes_xy(par)
     pixel_size = det.pixel_size(par)
+    ipx, ipy   = det.point_indexes(par, pxy_um=(0,0)) # by default returns detector origin indexes
 
     # change geometry object parameters
     det.move_geo(par, dx, dy, dz)    # move detector it 3-d space
@@ -112,10 +113,11 @@ Usage::
     img = det(evt, img_nda) # alias for det.image(evt, img_nda)
 
     # special case of indexing using non-default pixel scale size and x, y coordinate offset
-    ix     = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
-    iy     = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
-    ix, iy = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
-    img    = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
+    ix       = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
+    iy       = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
+    ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
+    ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
+    img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
 
 @see classes
 \n  :py:class:`Detector.PyDetector` - factory for different detectors
@@ -630,6 +632,11 @@ class AreaDetector(object):
         rnum = self.runnum(par)
         iX, iY = self.pyda.indexes_xy(rnum, pix_scale_size_um, xy0_off_pix, do_update)
         return self._shaped_array_(rnum, iX), self._shaped_array_(rnum, iY)
+
+    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :
+        rnum = self.runnum(par)
+        ix, iy = self.pyda.point_indexes(rnum, pxy_um, pix_scale_size_um, xy0_off_pix)
+        return ix, iy
 
     def pixel_size(self, par) :
         rnum = self.runnum(par)

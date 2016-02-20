@@ -293,6 +293,16 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :
+        """Returns ix, iy indexes of the point p_um x,y coordinates in [um]"""
+        if self.geoaccess(par) is None : return None, None
+        ix, iy = self.geo.point_coord_indexes(p_um=pxy_um, oname=None, oindex=0,\
+                                              pix_scale_size_um=pix_scale_size_um,\
+                                              xy0_off_pix=xy0_off_pix, do_tilt=True)
+        return ix, iy
+
+##-----------------------------
+
     def pixel_size(self, par) :
         if self.geoaccess(par) is None : return None
         else :
