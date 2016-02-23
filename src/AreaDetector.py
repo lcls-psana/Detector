@@ -119,6 +119,10 @@ Usage::
     ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
 
+    # save, load n-d numpy array in the text file with metadata (global methods under hood of the class object)
+    det.save_txtnda(fname='nda.txt', ndarr=myndarr, cmts=('comment1', 'comment2'), fmt='%.1f', verbos=False)
+    nda = det.load_txtnda(fname)
+
 @see classes
 \n  :py:class:`Detector.PyDetector` - factory for different detectors
 \n  :py:class:`Detector.DetectorAccess` - c++ access interface to data
@@ -663,6 +667,18 @@ class AreaDetector(object):
     def __call__(self, evt, nda_in=None) :
         """Alias for image in order to call it as det(evt,...)"""
         return self.image(evt, nda_in)
+
+##-----------------------------
+
+    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False) :
+        list_cmts = list(cmts)
+        list_cmts.append('SOURCE  %s' % gu.string_from_source(self.source))
+        self.pyda.save_txtnda(fname, ndarr, list_cmts, fmt, verbos)
+
+##-----------------------------
+
+    def load_txtnda(self, fname) :
+        return self.pyda.load_txtnda(fname)
 
 ##-----------------------------
 

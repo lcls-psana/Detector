@@ -41,9 +41,17 @@ elif ntest==19 :
 
 elif ntest==20 :   #The same as 'exp=cxif5315:run=169' but geometry is different
     dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'CxiDs2.0:Cspad.0'
-    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib/')
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
 
-elif ntest==21  : dsname, src = 'exp=sxrk4816:run=1',  'SxrEndstation.0:DualAndor.0' # or alias='andorDual'
+elif ntest==21  : # dsname, src = 'exp=sxrk4816:run=3',  'SxrEndstation.0:DualAndor.0'
+    dsname = '/reg/g/psdm/detector/data_test/types/0005-SxrEndstation.0-DualAndor.0.xtc' # exp=sxrk4816:run=3
+    src = 'SxrEndstation.0:DualAndor.0'# or alias='andorDual'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/andor3d/calib-andor3d-2016-02-09/calib')
+
+elif ntest==22  : # dsname, src = 'exp=sxrk4816:run=7',  'SxrEndstation.0:DualAndor.0'
+    dsname = '/reg/g/psdm/detector/data_test/types/0006-SxrEndstation.0-DualAndor.0.xtc' # exp=sxrk4816:run=7
+    src = 'SxrEndstation.0:DualAndor.0'# or alias='andorDual'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/andor3d/calib-andor3d-2016-02-09/calib')
 
 print 'Example for\n dataset: %s\n source : %s' % (dsname, src)
 
@@ -54,6 +62,7 @@ ds  = psana.DataSource(dsname)
 evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
+print 'Run number %d' % nrun
 
 for key in evt.keys() : print key
 
@@ -101,18 +110,17 @@ print_ndarr(status_mask, 'status_mask')
 cmod = det.common_mode(par)
 print_ndarr(cmod, 'common_mod')
 
-t0_sec = time()
-nda_raw = det.raw(evt)
-print_ndarr(nda_raw, 'nda_raw')
-print 'Consumed time for det.raw(evt) = %7.3f sec' % (time()-t0_sec)
-
 i=0
-if nda_raw is None :
-    for i, evt in enumerate(ds.events()) :
-        nda_raw = det.raw(evt)
-        if nda_raw is not None :
-            print 'Detector data found in event %d' % i
-            break
+nda_raw = None
+evt = None
+for i, evt in enumerate(ds.events()) :
+    t0_sec = time()
+    nda_raw = det.raw(evt)
+    if nda_raw is not None :
+        dt_sec = time()-t0_sec
+        print 'Detector data found in event %d'\
+              ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec)
+        break
 
 print_ndarr(nda_raw, 'raw data')
 
@@ -140,6 +148,10 @@ or det.dettype == gu.CSPAD2X2 :
 coords_x = det.coords_x(par)
 print_ndarr(coords_x, 'coords_x')
 
+##-----------------------------
+#sys.exit('TEST EXIT')
+##-----------------------------
+
 areas = det.areas(par)
 print_ndarr(areas, 'area')
 
@@ -148,7 +160,6 @@ print_ndarr(mask_geo, 'mask_geo')
 
 #mask_geo.shape = (32,185,388)
 #print mask_geo
-
 
 pixel_size = det.pixel_size(par)
 print '%s\npixel size: %s' % (80*'_', str(pixel_size))
@@ -166,8 +177,8 @@ if len(nda_raw.shape) > 2 :
     #img = det.image(evt)
     
     t0_sec = time()
-    img = det(evt) # alias for det.image(evt) implemented in __call__
-    #img = det.image(evt, img_arr)
+    #img = det.image(evt)
+    img = det.image(evt, img_arr)
     print 'Consumed time for det.image(evt) = %7.3f sec (for 1st event!)' % (time()-t0_sec)
 else :
     img = img_arr
@@ -180,8 +191,7 @@ print 80*'_'
 ##-----------------------------
 
 if img is None :
-    print 'Image is not available'
-    sys.exit('FURTHER TEST IS TERMINATED')
+    sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
 
 import pyimgalgos.GlobalGraphics as gg
 

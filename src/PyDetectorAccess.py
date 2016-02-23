@@ -34,6 +34,7 @@ import PSCalib.GlobalUtils as gu
 from PSCalib.CalibParsStore import cps
 from PSCalib.CalibFileFinder import CalibFileFinder
 from PSCalib.GeometryAccess import GeometryAccess, img_from_pixel_arrays
+from PSCalib.NDArrIO import save_txt, load_txt
 
 #from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
 
@@ -884,6 +885,18 @@ class PyDetectorAccess :
         nda.shape = (32,185,388)
         return nda
     
+##-----------------------------
+# Static methods
+##-----------------------------
+
+    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False) :
+        save_txt(fname, ndarr, cmts, fmt, verbos)
+
+##-----------------------------
+
+    def load_txtnda(self, fname) :
+        return load_txt(fname)
+
 ##-----------------------------
 
 from time import time

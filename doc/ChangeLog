@@ -12,6 +12,16 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-38
+2016-02-22 Mikhail S. Dubrovin
+- AreaDetector.py, PyDetectorAccess.py - add methods save_txtnda, load_txtnda (PSAS-139)
+- add ex_save_load_nda.py, update ex_all_dets.py
+
+Tag: V00-03-37
+2016-02-19 Mikhail S. Dubrovin
+- in PyDetectorAccess.py and AreaDetector.py add method point_indexes.
+- add ex_andor3d_config.py, update ex_all_dets.py
+	
 Tag: V00-03-36
 2016-02-12 Mikhail S. Dubrovin
 - PyDetectorAccess.raw_data_cspad2x2 - hide configuration wornings under pbits (PSAS-139)
