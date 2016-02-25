@@ -4,45 +4,49 @@ import sys
 import psana
 from time import time
 from Detector.GlobalUtils import print_ndarr
-from PSCalib.GlobalUtils import reshape_nda_to_2d
 
-##-----------------------------
+#------------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
 print 'Test # %d' % ntest
 
-##-----------------------------
-#dsname = 'exp=sxrk4816:run=1'
-dsname = '/reg/g/psdm/detector/data_test/types/0005-SxrEndstation.0-DualAndor.0.xtc' # exp=sxrk4816:run=1
+#------------------------------
+
 src = 'SxrEndstation.0:DualAndor.0' # or alias='andorDual'
 
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+# (2,512,512)
+#dsname = 'exp=sxrk4816:run=7'
+dsname = '/reg/g/psdm/detector/data_test/types/0006-SxrEndstation.0-DualAndor.0.xtc'
+
+if ntest == 2 :
+    # (2,2048,2048)
+    #dsname = 'exp=sxrk4816:run=3'
+    dsname = '/reg/g/psdm/detector/data_test/types/0005-SxrEndstation.0-DualAndor.0.xtc'
 
 psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/andor3d/calib-andor3d-2016-02-09/calib')
 
 ds  = psana.DataSource(dsname)
 env = ds.env()
-nrun = ds.runs().next()
+nrun = ds.runs().next().run()
 
-#evt = ds.events().next()
-#nrun = evt.run()
+print 'Example for\n  dataset: %s\n  source : %s\n  run number : %d\n  calib dir : %s'%\
+      (dsname, src, nrun, env.calibDir())
 
-##-----------------------------
-from Detector.AreaDetector import AreaDetector
+#------------------------------
 
-det = AreaDetector(src, env, pbits=0, iface='P') # iface='P' or 'C'
+det = psana.Detector(src, env)
 
-ins = det.instrument()
-print 80*'_', '\nInstrument: ', ins
+print_ndarr(det.pedestals(nrun), '%s\npedestals' % (80*'_'))
+print 80*'_'
 
-nda=None
-i=0
+i, evt, nda = 0, None, None
+
 for i, evt in enumerate(ds.events()) :
-    #for key in evt.keys() : print key
-    nda = det.image(evt)
     #nda = det.raw(evt)
+    nda = det.calib(evt)
     if nda is not None :
-        print 'Detector data found in event %d' % i
+        for key in evt.keys() : print key
+        print 'Detector data found in the event # %d' % i
         break
 
 print_ndarr(nda, 'nda')
@@ -51,20 +55,25 @@ if nda is None :
     print 'Detector data IS NOT FOUND in %d events' % i
     sys.exit('FURTHER TEST IS TERMINATED')
 
-##-----------------------------
+#------------------------------
+#print 'env.experiment(): ', env.experiment()
+#print 'env.instrument(): ', env.instrument()
 
-img = nda if len(nda.shape)==2 else reshape_nda_to_2d(nda)
-print_ndarr(img, '%s  image (calibrated data or raw)' % (80*'_') )
+fname = 'nda-andor3d-%s-r%04d-%s.txt' % (env.experiment(), nrun, src.replace(":","-").replace(".","-"))
+det.save_txtnda(fname, nda, verbos=True)
 
-##-----------------------------
+img = det.image(evt, nda)
+print_ndarr(img, '%s\nimage (calibrated data or raw)' % (80*'_') )
+
+#------------------------------
 import pyimgalgos.GlobalGraphics as gg
 
 ave, rms = img.mean(), img.std()
-gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+2*rms))
+gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+2*rms), figsize=(16,7), window=(0.05,  0.05, 0.94, 0.92))
 gg.show()
 
-##-----------------------------
+#------------------------------
 
-sys.exit(0)
+sys.exit('End of test.')
 
-##-----------------------------
+#------------------------------

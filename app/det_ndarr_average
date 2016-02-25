@@ -113,7 +113,7 @@ def input_options_parser() :
     parser.add_option('-f', '--ofname',  dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
     parser.add_option('-n', '--events',  dest='events', default=events_def, action='store', type='int',    help='number of events to collect, default = %s' % events_def)
     parser.add_option('-m', '--evskip',  dest='evskip', default=evskip_def, action='store', type='int',    help='number of events to skip, default = %s' % evskip_def)
-    parser.add_option('-p', '--plotim',  dest='plotim', default=verbos_def, action='store_false',          help='plot averaged image, default = %s' % str(plotim_def))
+    parser.add_option('-p', '--plotim',  dest='plotim', default=plotim_def, action='store_false',          help='plot averaged image, default = %s' % str(plotim_def))
     parser.add_option('-v', '--verbos',  dest='verbos', default=verbos_def, action='store_false',          help='verbosity, default = %s' % str(verbos_def))
  
     (opts, args) = parser.parse_args()

@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-39
+2016-02-24 Mikhail S. Dubrovin
+- add AreaDetector.save_asdaq, update examples, app/det_ndarr_raw_proc (PSAS-139)
+
 Tag: V00-03-38
 2016-02-22 Mikhail S. Dubrovin
 - AreaDetector.py, PyDetectorAccess.py - add methods save_txtnda, load_txtnda (PSAS-139)

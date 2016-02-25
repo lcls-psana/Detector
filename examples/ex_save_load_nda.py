@@ -31,7 +31,7 @@ fname = tmp_file.name
 #fname = 'test_save_txtnda_pedestals.txt'
 
 t0_sec=time()
-peds = det.save_txtnda(fname, ndarr=peds, cmts=('comment1', 'comment2'), fmt='%.2f', verbos=True)
+det.save_txtnda(fname, ndarr=peds, cmts=('comment1', 'comment2'), fmt='%.2f', verbos=True)
 print 'Time to save %s n-d array  in  file = %9.6f sec' % (src, time()-t0_sec)
 
 

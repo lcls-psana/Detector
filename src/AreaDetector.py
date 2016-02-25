@@ -119,9 +119,14 @@ Usage::
     ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
 
-    # save, load n-d numpy array in the text file with metadata (global methods under hood of the class object)
+    # save n-d numpy array in the text file with metadata (global methods under hood of the class object)
     det.save_txtnda(fname='nda.txt', ndarr=myndarr, cmts=('comment1', 'comment2'), fmt='%.1f', verbos=False)
+    # or convenience method for cspad2x2
+    det.save_asdaq(fname='nda.txt', ndarr=myndarr, cmts=('comment1', 'comment2'), fmt='%.1f', verbos=False)
+
+    # load n-d numpy array from the text file with metadata
     nda = det.load_txtnda(fname)
+
 
 @see classes
 \n  :py:class:`Detector.PyDetector` - factory for different detectors
@@ -674,6 +679,17 @@ class AreaDetector(object):
         list_cmts = list(cmts)
         list_cmts.append('SOURCE  %s' % gu.string_from_source(self.source))
         self.pyda.save_txtnda(fname, ndarr, list_cmts, fmt, verbos)
+
+##-----------------------------
+
+    def save_asdaq(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False) :
+        """Saves n-d array shaped as in DAQ.
+           Currently re-shuffle pixels for cspad2x2 only from natural shape=(2,185,388) to daq shape (185,388,2).
+           For all other detectors n-d array is saved unchanged. 
+        """
+        is_cspad2x2_natural = ndarr.size == 2*185*388 and len(ndarr.shape)>1 and ndarr.shape[-1] == 388
+        nda = two2x1ToData2x2(ndarr) if is_cspad2x2_natural else ndarr
+        self.save_txtnda(fname, nda, cmts, fmt, verbos)
 
 ##-----------------------------
 

@@ -1,0 +1,239 @@
+#!/usr/bin/env python
+
+#------------------------------
+import os
+import sys
+import psana
+import numpy as np
+from time import time
+from Detector.GlobalUtils import print_ndarr
+#from Detector.PyDetector import PyDetector
+#from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
+
+#------------------------------
+
+def plot_det_image(det, evt, nda, tit='') :
+    """Plots averaged image
+    """
+    import pyimgalgos.GlobalGraphics as gg
+
+    img = det.image(evt, nda)
+    if img is None : sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
+    
+    ave, rms = nda.mean(), nda.std()
+    gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+3*rms), title=tit)
+    gg.show()
+
+#------------------------------
+
+def evaluate_rms_limits(arr_rms, verbos=False) :
+    """Returns evaluated low and high limit of the RMS, which are used to find rms-cold and rms-hot pixels.
+    """
+    #t0_sec = time()
+    ave, std = arr_rms.mean(), arr_rms.std()
+    rms_lo, rms_hi = ave-5*std, ave+6*std
+    if rms_lo <= 0 : rms_lo = 0.01*ave
+    if verbos & 1 :
+        print '  %s: RMS ave, std = %.3f, %.3f     low, high limits = %.3f, %.3f'%\
+              (sys._getframe().f_code.co_name, ave, std, rms_lo, rms_hi)
+
+        arr1 = np.ones_like(arr_rms)
+        print '  number of pixels below, above rms limits = %d, %d'%\
+              (np.select((arr_rms<rms_lo,), (arr1,), 0).sum(),\
+               np.select((arr_rms>rms_hi,), (arr1,), 0).sum())
+        #print '  Consumed time for evaluation of limits = %f sec' % (time()-t0_sec)
+
+    return rms_lo, rms_hi
+
+#------------------------------
+
+def det_ndarr_raw_proc(dsname, source, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, plotim, verbos, savebw):
+
+    SKIP   = evskip
+    EVENTS = events + SKIP
+
+    int_lo = intlow if intlow is not None else 1
+    int_hi = inthig if inthig is not None else 32000
+    rms_lo = rmslow # if None - will be evaluated later
+    rms_hi = rmshig # if None - will be evaluated later
+
+    #dsname = 'exp=cxif5315:run=169'
+    #src    = psana.Source('DetInfo(%s)' % source)
+    src    = source
+    if verbos & 1 : print 'Raw data processing for\n  dataset: %s\n  source : %s' % (dsname, src)
+
+    # Non-standard calib directory
+    #psana.setOption('psana.calib-dir', './calib')
+
+    ds  = psana.DataSource(dsname)
+    evt = ds.events().next()
+    env = ds.env()
+    
+    det = psana.Detector(src, env)
+    shape = det.shape(evt) 
+
+    if verbos & 256 : print '  det.shape() =', shape 
+    
+    #mask = det.mask(evt)
+    
+    t0_sec = time()
+    counter=0
+    arr0       = np.zeros(shape, dtype=np.uint32)
+    arr1       = np.ones (shape, dtype=np.uint32)
+
+    arr_sum1   = np.zeros(shape, dtype=np.double)
+    arr_sum2   = np.zeros(shape, dtype=np.double)
+
+    arr_max    = np.zeros(shape, dtype=np.uint32)
+    arr_min    = np.ones(shape, dtype=np.uint32) * 0xffff
+
+    sta_int_lo = np.zeros(shape, dtype=np.uint32)
+    sta_int_hi = np.zeros(shape, dtype=np.uint32)
+
+    for i, evt in enumerate(ds.events()) :
+
+        if i<SKIP    : continue
+        if not i<EVENTS : break
+
+        #data = det.calib(evt)
+        data = det.raw(evt)
+
+        if data is None : continue
+        if verbos & 2 and not i%10 : print '  Event: %d' % i
+
+        counter += 1
+        raw = np.array(data, dtype=np.double)
+
+        #print_ndarr(raw, 'raw')
+        
+        arr_sum1 += raw 
+        arr_sum2 += np.square(raw) # raw*raw
+
+        arr_max = np.maximum(arr_max, data)
+        arr_min = np.minimum(arr_min, data)
+
+        sta_int_lo += np.select((data<int_lo,), (arr1,), 0)
+        sta_int_hi += np.select((data>int_hi,), (arr1,), 0)
+
+    if verbos & 1 :
+        print '  Detector data found in %d events' % counter
+        print '  Total consumed time = %f sec' % (time()-t0_sec)
+
+    arr_av1 = arr_sum1/counter if counter>1 else arr_sum1
+    arr_av2 = arr_sum2/counter if counter>1 else arr_sum2
+
+    frac_int_lo = np.array(sta_int_lo, dtype=np.float32)/counter if counter>1 else sta_int_lo
+    frac_int_hi = np.array(sta_int_hi, dtype=np.float32)/counter if counter>1 else sta_int_hi
+
+    arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+
+    if rmslow is None or rmshig is None :
+        rms_lo, rms_hi = evaluate_rms_limits(arr_rms, verbos)
+
+    #0/1/2/4/8 for good/hot-rms/saturated/cold/cold-rms, 
+    arr_sta  = np.zeros(shape, dtype=np.uint32)
+    arr_sta += np.select((arr_rms>rms_hi,),     (arr1,),   0) # hot rms
+    arr_sta += np.select((arr_rms<rms_lo,),     (arr1*8,), 0) # cold rms
+    arr_sta += np.select((frac_int_hi>fraclm,), (arr1*2,), 0) # satturated
+    arr_sta += np.select((frac_int_lo>fraclm,), (arr1*4,), 0) # cold
+
+    arr_msk  = np.select((arr_sta>0,), (arr0,), 1)
+
+    if plotim &  1 : plot_det_image(det, evt, arr_av1,    tit='average')
+    if plotim &  2 : plot_det_image(det, evt, arr_rms,    tit='RMS')
+    if plotim &  4 : plot_det_image(det, evt, arr_max,    tit='maximum')
+    if plotim &  8 : plot_det_image(det, evt, arr_min,    tit='minimum')
+    if plotim & 16 : plot_det_image(det, evt, arr_sta,    tit='status')
+    if plotim & 32 : plot_det_image(det, evt, arr_msk,    tit='mask')
+    if plotim & 64 : plot_det_image(det, evt, sta_int_lo, tit='statistics below threshold')
+    if plotim &128 : plot_det_image(det, evt, sta_int_hi, tit='statistics above threshold')
+
+    #------------------------------
+    # Save n-d array in text file
+
+    prefix = ofname
+    if '.expand' in ofname :
+       prefix = ofname.rsplit('.',1)[0]
+       suffix = source.replace(':','-').replace('.','-') #.lower()
+       prefix = '%s-%s-r%04d-e%06d-%s' % (prefix, env.experiment(), evt.run(), counter, suffix)    
+
+    cmts = ['DATASET  %s' % dsname, 'STATISTICS  %d' % counter]
+    
+    if savebw &  1 : det.save_txtnda('%s-ave.txt'%prefix, arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos)
+    if savebw &  2 : det.save_txtnda('%s-rms.txt'%prefix, arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos)
+    if savebw &  4 : det.save_txtnda('%s-max.txt'%prefix, arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos)
+    if savebw &  8 : det.save_txtnda('%s-min.txt'%prefix, arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos)
+    if savebw & 16 : det.save_txtnda('%s-sta.txt'%prefix, arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos)
+    if savebw & 32 : det.save_txtnda('%s-msk.txt'%prefix, arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos)
+
+#------------------------------
+
+def usage() :
+    return '\n\nExample of command to average n-d array from detector source and save it in file:\n'+\
+           '\n         %prog -d <dataset> [-s <source>] [-f <file-prefix>]'+\
+           ' [-n <events-collect>] [-m <events-skip>] [-v 7] [-p 1] [-v 7] ...'+\
+           '\n  -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/max/min/status/mask/sta_int_lo/sta_int_hi'+\
+           '\n  ex1:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -f nda-cspad.expand -n 100 -m 0 -v 7 -p 1'
+
+#------------------------------
+
+def command_line_parser() :
+    from optparse import OptionParser
+
+    dsname_def = 'exp=cxif5315:run=169'
+    source_def = 'CxiDs2.0:Cspad.0'
+    ofname_def = 'nda'
+    events_def = 10000000
+    evskip_def = 0
+    intlow_def = None
+    inthig_def = None
+    rmslow_def = None
+    rmshig_def = None
+    fraclm_def = 0.1
+    plotim_def = 0      
+    verbos_def = 7
+    savebw_def = 0377
+    
+    parser = OptionParser(description='Optional input parameters.', usage ='usage: %prog [options]' + usage())
+    parser.add_option('-d', '--dsname', dest='dsname', default=dsname_def, action='store', type='string', help='dataset name, default = %s' % dsname_def)
+    parser.add_option('-s', '--source', dest='source', default=source_def, action='store', type='string', help='input ndarray file name, default = %s' % source_def)
+    parser.add_option('-f', '--ofname', dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
+    parser.add_option('-n', '--events', dest='events', default=events_def, action='store', type='int',    help='number of events to collect, default = %s' % events_def)
+    parser.add_option('-m', '--evskip', dest='evskip', default=evskip_def, action='store', type='int',    help='number of events to skip, default = %s' % evskip_def)
+    parser.add_option('-b', '--intlow', dest='intlow', default=intlow_def, action='store', type='int',    help='intensity low limit, default = %s' % intlow_def)
+    parser.add_option('-t', '--inthig', dest='inthig', default=inthig_def, action='store', type='int',    help='intensity high limit, default = %s' % inthig_def)
+    parser.add_option('-B', '--rmslow', dest='rmslow', default=rmslow_def, action='store', type='float',  help='rms low limit, default = %s' % rmslow_def)
+    parser.add_option('-T', '--rmshig', dest='rmshig', default=rmshig_def, action='store', type='float',  help='rms high limit, default = %s' % rmshig_def)
+    parser.add_option('-F', '--fraclm', dest='fraclm', default=fraclm_def, action='store', type='float',  help='allowed fraction limit, default = %s' % fraclm_def)
+    parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store', type='int',    help='control bit-word to plot images, default = %s' % plotim_def)
+    parser.add_option('-v', '--verbos', dest='verbos', default=verbos_def, action='store', type='int',    help='control bit-word for verbosity, default = %s' % verbos_def)
+    parser.add_option('-S', '--savebw', dest='savebw', default=savebw_def, action='store', type='int',    help='control bit-word to save arrays, default = %s' % savebw_def)
+    #parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_true',           help='plot averaged image, default = %s' % str(plotim_def))
+ 
+    opts, args = parser.parse_args()
+    return opts, args
+
+#------------------------------
+
+if __name__ == "__main__" :
+
+    proc_name = os.path.basename(sys.argv[0])
+    if len(sys.argv)==1 :
+        print 'See help: %s -h' % proc_name
+        sys.exit ('End of %s' % proc_name)
+        
+    opts, args = command_line_parser()
+
+    if opts.verbos & 4 :
+        print 'Command arguments:', ' '.join(sys.argv)
+        print 'Options:'
+        for k,v in opts.__dict__.items() : print '  %s : %s' % (k, str(v))
+        print 'Arguments: ', args
+
+    det_ndarr_raw_proc(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, 
+                       opts.intlow, opts.inthig, opts.rmslow, opts.rmshig, opts.fraclm,
+                       opts.plotim, opts.verbos, opts.savebw)
+
+    sys.exit(0)
+
+#------------------------------
