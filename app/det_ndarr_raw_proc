@@ -34,137 +34,188 @@ def evaluate_rms_limits(arr_rms, verbos=False) :
     rms_lo, rms_hi = ave-5*std, ave+6*std
     if rms_lo <= 0 : rms_lo = 0.01*ave
     if verbos & 1 :
-        print '  %s: RMS ave, std = %.3f, %.3f     low, high limits = %.3f, %.3f'%\
+        print '  %s: RMS ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
               (sys._getframe().f_code.co_name, ave, std, rms_lo, rms_hi)
-
-        arr1 = np.ones_like(arr_rms)
-        print '  number of pixels below, above rms limits = %d, %d'%\
-              (np.select((arr_rms<rms_lo,), (arr1,), 0).sum(),\
-               np.select((arr_rms>rms_hi,), (arr1,), 0).sum())
-        #print '  Consumed time for evaluation of limits = %f sec' % (time()-t0_sec)
 
     return rms_lo, rms_hi
 
 #------------------------------
 
-def det_ndarr_raw_proc(dsname, source, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, plotim, verbos, savebw):
+class DetNDArrRawProc :
 
-    SKIP   = evskip
-    EVENTS = events + SKIP
+    def __init__(self, dsname, source, ofname, intlow, inthig, rmslow, rmshig, fraclm, plotim, verbos, savebw):
 
-    int_lo = intlow if intlow is not None else 1
-    int_hi = inthig if inthig is not None else 32000
-    rms_lo = rmslow # if None - will be evaluated later
-    rms_hi = rmshig # if None - will be evaluated later
+        self.dsname = dsname
+        self.src    = source
+        self.ofname = ofname
+        
+        self.int_lo = intlow if intlow is not None else 1
+        self.int_hi = inthig if inthig is not None else 32000
+        self.rms_lo = rmslow # if None - will be evaluated later
+        self.rms_hi = rmshig # if None - will be evaluated later
+        self.fraclm = fraclm
 
-    #dsname = 'exp=cxif5315:run=169'
-    #src    = psana.Source('DetInfo(%s)' % source)
-    src    = source
-    if verbos & 1 : print 'Raw data processing for\n  dataset: %s\n  source : %s' % (dsname, src)
+        self.plotim = plotim
+        self.verbos = verbos
+        self.savebw = savebw
+        
+        self.det    = None
+        self.counter=0
 
-    # Non-standard calib directory
-    #psana.setOption('psana.calib-dir', './calib')
+        if verbos & 1 : print '  Begin processing for source: %s' % (source)
 
-    ds  = psana.DataSource(dsname)
-    evt = ds.events().next()
-    env = ds.env()
+
+    def _init_in_first_event(self, evt, env) :
+
+        self.det = psana.Detector(self.src, env)
+        self.shape = self.det.shape(evt) 
+
+        if self.verbos & 256 : print '  det.shape() =', self.shape 
     
-    det = psana.Detector(src, env)
-    shape = det.shape(evt) 
+        self.arr0       = np.zeros(self.shape, dtype=np.uint32)
+        self.arr1       = np.ones (self.shape, dtype=np.uint32)
 
-    if verbos & 256 : print '  det.shape() =', shape 
-    
-    #mask = det.mask(evt)
-    
-    t0_sec = time()
-    counter=0
-    arr0       = np.zeros(shape, dtype=np.uint32)
-    arr1       = np.ones (shape, dtype=np.uint32)
+        self.arr_sum1   = np.zeros(self.shape, dtype=np.double)
+        self.arr_sum2   = np.zeros(self.shape, dtype=np.double)
 
-    arr_sum1   = np.zeros(shape, dtype=np.double)
-    arr_sum2   = np.zeros(shape, dtype=np.double)
+        self.arr_max    = np.zeros(self.shape, dtype=np.uint32)
+        self.arr_min    = np.ones (self.shape, dtype=np.uint32) * 0xffff
 
-    arr_max    = np.zeros(shape, dtype=np.uint32)
-    arr_min    = np.ones(shape, dtype=np.uint32) * 0xffff
+        self.sta_int_lo = np.zeros(self.shape, dtype=np.uint32)
+        self.sta_int_hi = np.zeros(self.shape, dtype=np.uint32)
 
-    sta_int_lo = np.zeros(shape, dtype=np.uint32)
-    sta_int_hi = np.zeros(shape, dtype=np.uint32)
 
-    for i, evt in enumerate(ds.events()) :
+    def event(self, evt, env, evnum) :
 
-        if i<SKIP    : continue
-        if not i<EVENTS : break
+        if self.det is None : self._init_in_first_event(evt, env)
 
         #data = det.calib(evt)
-        data = det.raw(evt)
+        data = self.det.raw(evt)
 
-        if data is None : continue
-        if verbos & 2 and not i%10 : print '  Event: %d' % i
+        if data is None : return
+        if self.verbos & 2 and not evnum%10 : print '  Event: %d' % evnum
 
-        counter += 1
+        self.counter += 1
         raw = np.array(data, dtype=np.double)
 
         #print_ndarr(raw, 'raw')
         
-        arr_sum1 += raw 
-        arr_sum2 += np.square(raw) # raw*raw
+        self.arr_sum1 += raw 
+        self.arr_sum2 += np.square(raw) # raw*raw
 
-        arr_max = np.maximum(arr_max, data)
-        arr_min = np.minimum(arr_min, data)
+        self.arr_max = np.maximum(self.arr_max, data)
+        self.arr_min = np.minimum(self.arr_min, data)
 
-        sta_int_lo += np.select((data<int_lo,), (arr1,), 0)
-        sta_int_hi += np.select((data>int_hi,), (arr1,), 0)
+        self.sta_int_lo += np.select((data<self.int_lo,), (self.arr1,), 0)
+        self.sta_int_hi += np.select((data>self.int_hi,), (self.arr1,), 0)
 
-    if verbos & 1 :
-        print '  Detector data found in %d events' % counter
-        print '  Total consumed time = %f sec' % (time()-t0_sec)
 
-    arr_av1 = arr_sum1/counter if counter>1 else arr_sum1
-    arr_av2 = arr_sum2/counter if counter>1 else arr_sum2
+    def summary(self, evt, env) :
 
-    frac_int_lo = np.array(sta_int_lo, dtype=np.float32)/counter if counter>1 else sta_int_lo
-    frac_int_hi = np.array(sta_int_hi, dtype=np.float32)/counter if counter>1 else sta_int_hi
+        if self.verbos & 1 :
+            print '%s\n%s raw data found in %d events' % (80*'_',self.src, self.counter)
 
-    arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+        det     = self.det
+        ofname  = self.ofname
+        plotim  = self.plotim
+        savebw  = self.savebw
+        verbos  = self.verbos
+        int_hi  = self.int_hi
+        int_lo  = self.int_lo
+        fraclm  = self.fraclm
+        counter = self.counter
+        
+        arr_av1 = self.arr_sum1/counter if counter>1 else self.arr_sum1
+        arr_av2 = self.arr_sum2/counter if counter>1 else self.arr_sum2
+        
+        frac_int_lo = np.array(self.sta_int_lo, dtype=np.float32)/counter if counter>1 else self.sta_int_lo
+        frac_int_hi = np.array(self.sta_int_hi, dtype=np.float32)/counter if counter>1 else self.sta_int_hi
+        
+        arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+        
+        if self.rms_lo is None or self.rms_hi is None :
+            self.rms_lo, self.rms_hi = evaluate_rms_limits(arr_rms, self.verbos)
 
-    if rmslow is None or rmshig is None :
-        rms_lo, rms_hi = evaluate_rms_limits(arr_rms, verbos)
+        rms_hi  = self.rms_hi
+        rms_lo  = self.rms_lo
+        
+        arr_sta_rms_hi = np.select((arr_rms>rms_hi,),     (self.arr1,), 0)
+        arr_sta_rms_lo = np.select((arr_rms<rms_lo,),     (self.arr1,), 0)
+        arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (self.arr1,), 0)
+        arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (self.arr1,), 0)
 
-    #0/1/2/4/8 for good/hot-rms/saturated/cold/cold-rms, 
-    arr_sta  = np.zeros(shape, dtype=np.uint32)
-    arr_sta += np.select((arr_rms>rms_hi,),     (arr1,),   0) # hot rms
-    arr_sta += np.select((arr_rms<rms_lo,),     (arr1*8,), 0) # cold rms
-    arr_sta += np.select((frac_int_hi>fraclm,), (arr1*2,), 0) # satturated
-    arr_sta += np.select((frac_int_lo>fraclm,), (arr1*4,), 0) # cold
+        print '  Bad pixel status:'  
+        print '  %8d pixel have rms > %.3f' % (arr_sta_rms_hi.sum(), rms_hi) 
+        print '  %8d pixel have rms < %.3f' % (arr_sta_rms_lo.sum(), rms_lo) 
+        print '  %8d pixel have int > %d'   % (arr_sta_int_hi.sum(), int_hi) 
+        print '  %8d pixel have int < %d'   % (arr_sta_int_lo.sum(), int_lo) 
 
-    arr_msk  = np.select((arr_sta>0,), (arr0,), 1)
+        #0/1/2/4/8 for good/hot-rms/saturated/cold/cold-rms, 
+        arr_sta  = arr_sta_rms_hi   # hot rms
+        arr_sta += arr_sta_rms_lo*8 # cold rms
+        arr_sta += arr_sta_int_hi*2 # satturated
+        arr_sta += arr_sta_int_lo*4 # cold
+        
+        arr_msk  = np.select((arr_sta>0,), (self.arr0,), 1)
+        
+        if plotim &  1 : plot_det_image(det, evt, arr_av1,         tit='average')
+        if plotim &  2 : plot_det_image(det, evt, arr_rms,         tit='RMS')
+        if plotim &  4 : plot_det_image(det, evt, arr_sta,         tit='status')
+        if plotim &  8 : plot_det_image(det, evt, arr_msk,         tit='mask')
+        if plotim & 16 : plot_det_image(det, evt, self.arr_max,    tit='maximum')
+        if plotim & 32 : plot_det_image(det, evt, self.arr_min,    tit='minimum')
+        if plotim & 64 : plot_det_image(det, evt, self.sta_int_lo, tit='statistics below threshold')
+        if plotim &128 : plot_det_image(det, evt, self.sta_int_hi, tit='statistics above threshold')
+        
+        #------------------------------
+        # Save n-d array in text file
+        
+        prefix = ofname
+        if '.expand' in ofname :
+           prefix = ofname.rsplit('.',1)[0]
+           suffix = self.src
+           #suffix = self.src.replace(':','-').replace('.','-') #.lower()
+           #prefix = '%s-%s-r%04d-e%06d-%s' % (prefix, env.experiment(), evt.run(), counter, suffix)    
+           prefix = '%s-%s-r%04d-%s' % (prefix, env.experiment(), evt.run(), suffix)    
+        
+        cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]
+        
+        if savebw &  1 : det.save_txtnda('%s-ave.txt'%prefix, arr_av1,      cmts + ['ARR_TYPE  average'], '%8.2f', verbos)
+        if savebw &  2 : det.save_txtnda('%s-rms.txt'%prefix, arr_rms,      cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos)
+        if savebw &  4 : det.save_txtnda('%s-sta.txt'%prefix, arr_sta,      cmts + ['ARR_TYPE  status'],  '%d',    verbos)
+        if savebw &  8 : det.save_txtnda('%s-msk.txt'%prefix, arr_msk,      cmts + ['ARR_TYPE  mask'],    '%1d',   verbos)
+        if savebw & 16 : det.save_txtnda('%s-max.txt'%prefix, self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos)
+        if savebw & 32 : det.save_txtnda('%s-min.txt'%prefix, self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos)
 
-    if plotim &  1 : plot_det_image(det, evt, arr_av1,    tit='average')
-    if plotim &  2 : plot_det_image(det, evt, arr_rms,    tit='RMS')
-    if plotim &  4 : plot_det_image(det, evt, arr_max,    tit='maximum')
-    if plotim &  8 : plot_det_image(det, evt, arr_min,    tit='minimum')
-    if plotim & 16 : plot_det_image(det, evt, arr_sta,    tit='status')
-    if plotim & 32 : plot_det_image(det, evt, arr_msk,    tit='mask')
-    if plotim & 64 : plot_det_image(det, evt, sta_int_lo, tit='statistics below threshold')
-    if plotim &128 : plot_det_image(det, evt, sta_int_hi, tit='statistics above threshold')
+#------------------------------
 
-    #------------------------------
-    # Save n-d array in text file
+def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, plotim, verbos, savebw):
 
-    prefix = ofname
-    if '.expand' in ofname :
-       prefix = ofname.rsplit('.',1)[0]
-       suffix = source.replace(':','-').replace('.','-') #.lower()
-       prefix = '%s-%s-r%04d-e%06d-%s' % (prefix, env.experiment(), evt.run(), counter, suffix)    
+    t0_sec = time()
 
-    cmts = ['DATASET  %s' % dsname, 'STATISTICS  %d' % counter]
+    # Non-standard calib directory
+    #psana.setOption('psana.calib-dir', './calib')
+
+    SKIP   = evskip
+    EVENTS = events + SKIP
     
-    if savebw &  1 : det.save_txtnda('%s-ave.txt'%prefix, arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos)
-    if savebw &  2 : det.save_txtnda('%s-rms.txt'%prefix, arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos)
-    if savebw &  4 : det.save_txtnda('%s-max.txt'%prefix, arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos)
-    if savebw &  8 : det.save_txtnda('%s-min.txt'%prefix, arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos)
-    if savebw & 16 : det.save_txtnda('%s-sta.txt'%prefix, arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos)
-    if savebw & 32 : det.save_txtnda('%s-msk.txt'%prefix, arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos)
+    if verbos & 1 : print 'Raw data processing of dataset: %s' % (dsname)
+
+    lst_dpo = [DetNDArrRawProc(dsname, src, ofname, intlow, inthig, rmslow, rmshig, fraclm, plotim, verbos, savebw)\
+               for src in sources.split(',')]
+
+    ds  = psana.DataSource(dsname)
+    env = ds.env()
+    
+    for i, evt in enumerate(ds.events()) :
+        if i<SKIP    : continue
+        if not i<EVENTS : break
+        for dpo in lst_dpo : dpo.event(evt,env,i)
+
+    for dpo in lst_dpo : dpo.summary(evt,env)
+
+    if verbos & 1 : print '%s\nTotal consumed time = %f sec' % (80*'_', time()-t0_sec)
+
 
 #------------------------------
 
@@ -172,8 +223,9 @@ def usage() :
     return '\n\nExample of command to average n-d array from detector source and save it in file:\n'+\
            '\n         %prog -d <dataset> [-s <source>] [-f <file-prefix>]'+\
            ' [-n <events-collect>] [-m <events-skip>] [-v 7] [-p 1] [-v 7] ...'+\
-           '\n  -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/max/min/status/mask/sta_int_lo/sta_int_hi'+\
-           '\n  ex1:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -f nda-cspad.expand -n 100 -m 0 -v 7 -p 1'
+           '\n  -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi'+\
+           '\n  ex1:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -f nda.expand -n 100 -m 0 -v 7 -p 1'+\
+           '\n  ex2:   %prog -d exp=mecj5515:run=102 -s MecTargetChamber.0:Cspad2x2.1,MecTargetChamber.0:Cspad2x2.2 -f nda.expand -n 50'
 
 #------------------------------
 
