@@ -687,7 +687,7 @@ class AreaDetector(object):
            Currently re-shuffle pixels for cspad2x2 only from natural shape=(2,185,388) to daq shape (185,388,2).
            For all other detectors n-d array is saved unchanged. 
         """
-        is_cspad2x2_natural = ndarr.size == 2*185*388 and len(ndarr.shape)>1 and ndarr.shape[-1] == 388
+        is_cspad2x2_natural = (ndarr.size == 2*185*388 and len(ndarr.shape)>1 and ndarr.shape[-1] == 388)
         nda = two2x1ToData2x2(ndarr) if is_cspad2x2_natural else ndarr
         self.save_txtnda(fname, nda, cmts, fmt, verbos)
 

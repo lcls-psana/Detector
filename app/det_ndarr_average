@@ -73,19 +73,17 @@ def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
         gg.show()
 
     ##-----------------------------
-    # Save n-d array in text file
+    # Save n-d array in text files
 
     suffix = source.replace(":","-").replace(".","-") #.lower()
-    
-    arr_ave = reshape_nda_to_2d(arr_ave)
-    fname = '%s-%s-r%04d-e%06d-%s-ave.txt' % (ofname, env.experiment(), evt.run(), counter, suffix)    
-    print 'Save averaged array in file %s' % fname
-    np.savetxt(fname, arr_ave, fmt='%8.1f', delimiter=' ', newline='\n')
+    prefix = '%s-%s-r%04d-e%06d-%s' % (ofname, env.experiment(), evt.run(), counter, suffix)
 
-    arr_max = reshape_nda_to_2d(arr_max)
-    ofname_max = '%s-%s-r%04d-e%06d-%s-max.txt' % (ofname, env.experiment(), evt.run(), counter, suffix)    
-    print 'Save maximum  array in file %s' % ofname_max
-    np.savetxt(ofname_max, arr_ave, fmt='%8.1f', delimiter=' ', newline='\n')
+    det.save_txtnda('%s-ave.txt' % prefix, arr_ave, fmt='%.2f', verbos=True)
+    det.save_txtnda('%s-max.txt' % prefix, arr_max, fmt='%.2f', verbos=True)
+    det.save_asdaq ('%s-daq.txt' % prefix, arr_max, fmt='%.2f', verbos=True)
+
+    #from Detector.GlobalUtils import print_ndarr
+    #print_ndarr(arr_max, 'arr_max')
 
 #------------------------------
 

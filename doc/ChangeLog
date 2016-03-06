@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-41
+2016-03-05 Mikhail S. Dubrovin
+- det_ndarr_average - use det.save_txtnda and det.save_asdaq
+	
 Tag: V00-03-40
 2016-02-25 Mikhail S. Dubrovin
 - exteld det_ndarr_raw_proc for case of many sources
