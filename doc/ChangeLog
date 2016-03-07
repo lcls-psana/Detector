@@ -12,6 +12,12 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-42
+2016-03-07 Mikhail S. Dubrovin
+- app/det_ndarr_average - save max file w/o header for cspad2x2
+- app/det_ndarr_raw_proc - make configurable output file names for calibman compatability
+- add app/event_keys - for calibman
+
 Tag: V00-03-41
 2016-03-05 Mikhail S. Dubrovin
 - det_ndarr_average - use det.save_txtnda and det.save_asdaq

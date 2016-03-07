@@ -7,6 +7,7 @@ import psana
 import numpy as np
 from time import time
 #from Detector.PyDetector import PyDetector
+from Detector.GlobalUtils import print_ndarr
 from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
 import pyimgalgos.GlobalGraphics as gg
 
@@ -59,7 +60,6 @@ def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
 
     arr_ave = arr_sum/counter if counter>0 else arr_sum
   
-    ##-----------------------------
     # Plot averaged image
 
     if plotim :
@@ -72,18 +72,25 @@ def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
         gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+3*rms))
         gg.show()
 
-    ##-----------------------------
     # Save n-d array in text files
 
     suffix = source.replace(":","-").replace(".","-") #.lower()
     prefix = '%s-%s-r%04d-e%06d-%s' % (ofname, env.experiment(), evt.run(), counter, suffix)
 
-    det.save_txtnda('%s-ave.txt' % prefix, arr_ave, fmt='%.2f', verbos=True)
-    det.save_txtnda('%s-max.txt' % prefix, arr_max, fmt='%.2f', verbos=True)
-    det.save_asdaq ('%s-daq.txt' % prefix, arr_max, fmt='%.2f', verbos=True)
+    #det.save_txtnda('%s-ave.txt' % prefix, arr_ave, fmt='%.2f', verbos=True)
+    #det.save_txtnda('%s-max.txt' % prefix, arr_max, fmt='%.2f', verbos=True)
 
-    #from Detector.GlobalUtils import print_ndarr
-    #print_ndarr(arr_max, 'arr_max')
+    det.save_asdaq('%s-ave.txt' % prefix, arr_ave, fmt='%.2f', verbos=True)
+    det.save_asdaq('%s-max.txt' % prefix, arr_max, fmt='%.2f', verbos=True)
+
+    if det.is_cspad2x2() :
+        from PSCalib.GeometryObject import two2x1ToData2x2 #, data2x2ToTwo2x1
+        arr_daq = two2x1ToData2x2(arr_max)
+        arr_daq.shape = (185*388, 2)
+        print_ndarr(arr_daq, 'arr_daq')
+        fname = '%s-max-noheader.txt' % prefix
+        np.savetxt(fname, arr_daq, fmt='%.2f', delimiter=' ', newline='\n')
+        print 'Saved file %s' % fname
 
 #------------------------------
 
@@ -102,17 +109,25 @@ def input_options_parser() :
     ofname_def = 'nda'
     events_def = 100
     evskip_def = 0
-    verbos_def = True       
     plotim_def = True       
+    verbos_def = True       
+
+    h_dsname = 'dataset name, default = %s' % dsname_def
+    h_source = 'input ndarray file name, default = %s' % source_def
+    h_ofname = 'output file prefix, default = %s' % ofname_def
+    h_events = 'number of events to collect, default = %s' % events_def
+    h_evskip = 'number of events to skip, default = %s' % evskip_def
+    h_plotim = 'plot averaged image, default = %s' % str(plotim_def)
+    h_verbos = 'verbosity, default = %s' % str(verbos_def)
     
     parser = OptionParser(description='Optional input parameters.', usage ='usage: %prog [options]' + usage())
-    parser.add_option('-d', '--dsname',  dest='dsname', default=dsname_def, action='store', type='string', help='dataset name, default = %s' % dsname_def)
-    parser.add_option('-s', '--source',  dest='source', default=source_def, action='store', type='string', help='input ndarray file name, default = %s' % source_def)
-    parser.add_option('-f', '--ofname',  dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
-    parser.add_option('-n', '--events',  dest='events', default=events_def, action='store', type='int',    help='number of events to collect, default = %s' % events_def)
-    parser.add_option('-m', '--evskip',  dest='evskip', default=evskip_def, action='store', type='int',    help='number of events to skip, default = %s' % evskip_def)
-    parser.add_option('-p', '--plotim',  dest='plotim', default=plotim_def, action='store_false',          help='plot averaged image, default = %s' % str(plotim_def))
-    parser.add_option('-v', '--verbos',  dest='verbos', default=verbos_def, action='store_false',          help='verbosity, default = %s' % str(verbos_def))
+    parser.add_option('-d', '--dsname', dest='dsname', default=dsname_def, action='store', type='string', help=h_dsname)
+    parser.add_option('-s', '--source', dest='source', default=source_def, action='store', type='string', help=h_source)
+    parser.add_option('-f', '--ofname', dest='ofname', default=ofname_def, action='store', type='string', help=h_ofname)
+    parser.add_option('-n', '--events', dest='events', default=events_def, action='store', type='int',    help=h_events)
+    parser.add_option('-m', '--evskip', dest='evskip', default=evskip_def, action='store', type='int',    help=h_evskip)
+    parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_false',          help=h_plotim)
+    parser.add_option('-v', '--verbos', dest='verbos', default=verbos_def, action='store_false',          help=h_verbos)
  
     (opts, args) = parser.parse_args()
     return (opts, args)

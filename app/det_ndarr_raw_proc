@@ -5,7 +5,7 @@ import os
 import sys
 import psana
 import numpy as np
-from time import time
+from time import time, localtime, strftime
 from Detector.GlobalUtils import print_ndarr
 #from Detector.PyDetector import PyDetector
 #from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
@@ -26,18 +26,57 @@ def plot_det_image(det, evt, nda, tit='') :
 
 #------------------------------
 
-def evaluate_rms_limits(arr_rms, verbos=False) :
+def evaluate_rms_limits(arr_rms, verbos=1, nneg=5, npos=6, frave=0.01) :
     """Returns evaluated low and high limit of the RMS, which are used to find rms-cold and rms-hot pixels.
     """
     #t0_sec = time()
     ave, std = arr_rms.mean(), arr_rms.std()
-    rms_lo, rms_hi = ave-5*std, ave+6*std
-    if rms_lo <= 0 : rms_lo = 0.01*ave
+    rms_lo, rms_hi = ave-nneg*std, ave+npos*std
+    if rms_lo <= 0 : rms_lo = frave*ave
     if verbos & 1 :
         print '  %s: RMS ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
               (sys._getframe().f_code.co_name, ave, std, rms_lo, rms_hi)
 
     return rms_lo, rms_hi
+
+#------------------------------
+
+def str_tstamp(fmt='%Y-%m-%dT%H:%M:%S', time_sec=None) :
+    return strftime(fmt, localtime(time_sec))
+
+#------------------------------
+
+def replace(in_tmp, pattern, subst) :
+    """If pattern in the in_tmp replace it with subst.
+       Returns str object in_tmp with replaced patterns. 
+    """
+    fields = in_tmp.split(pattern, 1) 
+    if len(fields) > 1 :
+        return '%s%s%s' % (fields[0], subst, fields[1])
+    else :
+        return in_tmp
+
+#------------------------------
+
+def fname_template(evt, env, src, ofname, nevts):
+    """Replaces parts of the file name specified as
+       #src, #exp, #run, #evts, #type, #date, #time, #fid, #sec, #nsec
+       with actual values
+    """
+    template = replace(ofname,   '#src', src)
+    template = replace(template, '#exp', env.experiment())
+    template = replace(template, '#run', 'r%04d'%evt.run())
+    template = replace(template, '#type', '%s')
+    evtid = evt.get(psana.EventId)
+    tsec, tnsec = evtid.time()
+    fid = evtid.fiducials()
+    template = replace(template, '#date', str_tstamp('%Y-%m-%d', tsec))
+    template = replace(template, '#time', str_tstamp('%H:%M:%S', tsec))
+    template = replace(template, '#fid',  str(fid))
+    template = replace(template, '#sec',  '%d' % tsec)
+    template = replace(template, '#nsec', '%09d' % tnsec)
+    template = replace(template, '#evts', 'e%06d' % nevts)
+    return template
 
 #------------------------------
 
@@ -60,17 +99,22 @@ class DetNDArrRawProc :
         self.savebw = savebw
         
         self.det    = None
+        self.shape  = None
         self.counter=0
 
         if verbos & 1 : print '  Begin processing for source: %s' % (source)
 
 
-    def _init_in_first_event(self, evt, env) :
+    def _init_arrays(self, evt, env, nda) :
 
-        self.det = psana.Detector(self.src, env)
-        self.shape = self.det.shape(evt) 
+        if self.shape is not None : return True
+        
+        if nda.size == 0 : return False
+        if nda.shape[0] == 0 : return False
 
-        if self.verbos & 256 : print '  det.shape() =', self.shape 
+        self.shape=nda.shape
+
+        if self.verbos & 256 : print '  raw.shape =', self.shape 
     
         self.arr0       = np.zeros(self.shape, dtype=np.uint32)
         self.arr1       = np.ones (self.shape, dtype=np.uint32)
@@ -84,30 +128,31 @@ class DetNDArrRawProc :
         self.sta_int_lo = np.zeros(self.shape, dtype=np.uint32)
         self.sta_int_hi = np.zeros(self.shape, dtype=np.uint32)
 
+        return True
+
 
     def event(self, evt, env, evnum) :
 
-        if self.det is None : self._init_in_first_event(evt, env)
+        if self.det is None : self.det = psana.Detector(self.src, env)
+        if self.det is None :
+            raise ValueError('Can not create the Detector object for source %s' % self.src)
 
-        #data = det.calib(evt)
-        data = self.det.raw(evt)
+        nda = self.det.raw(evt)
+        if nda is None : return
 
-        if data is None : return
-        if self.verbos & 2 and not evnum%10 : print '  Event: %d' % evnum
+        if not self._init_arrays(evt, env, nda) : return
 
         self.counter += 1
-        raw = np.array(data, dtype=np.double)
+        raw = np.array(nda, dtype=np.double)
 
-        #print_ndarr(raw, 'raw')
-        
         self.arr_sum1 += raw 
         self.arr_sum2 += np.square(raw) # raw*raw
 
-        self.arr_max = np.maximum(self.arr_max, data)
-        self.arr_min = np.minimum(self.arr_min, data)
+        self.arr_max = np.maximum(self.arr_max, nda)
+        self.arr_min = np.minimum(self.arr_min, nda)
 
-        self.sta_int_lo += np.select((data<self.int_lo,), (self.arr1,), 0)
-        self.sta_int_hi += np.select((data>self.int_hi,), (self.arr1,), 0)
+        self.sta_int_lo += np.select((nda<self.int_lo,), (self.arr1,), 0)
+        self.sta_int_hi += np.select((nda>self.int_hi,), (self.arr1,), 0)
 
 
     def summary(self, evt, env) :
@@ -133,12 +178,13 @@ class DetNDArrRawProc :
         
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
         
-        if self.rms_lo is None or self.rms_hi is None :
-            self.rms_lo, self.rms_hi = evaluate_rms_limits(arr_rms, self.verbos)
+        rms_lo, rms_hi = evaluate_rms_limits(arr_rms, self.verbos) \
+                            if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0. \
+                            else (self.rms_lo, self.rms_hi)
 
-        rms_hi  = self.rms_hi
-        rms_lo  = self.rms_lo
-        
+        #rms_hi  = rms_hi if self.rms_hi is None or self.rms_hi is 0 else self.rms_hi
+        #rms_lo  = rms_lo if self.rms_lo is None else self.rms_lo
+
         arr_sta_rms_hi = np.select((arr_rms>rms_hi,),     (self.arr1,), 0)
         arr_sta_rms_lo = np.select((arr_rms<rms_lo,),     (self.arr1,), 0)
         arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (self.arr1,), 0)
@@ -167,25 +213,17 @@ class DetNDArrRawProc :
         if plotim & 64 : plot_det_image(det, evt, self.sta_int_lo, tit='statistics below threshold')
         if plotim &128 : plot_det_image(det, evt, self.sta_int_hi, tit='statistics above threshold')
         
-        #------------------------------
-        # Save n-d array in text file
-        
-        prefix = ofname
-        if '.expand' in ofname :
-           prefix = ofname.rsplit('.',1)[0]
-           suffix = self.src
-           #suffix = self.src.replace(':','-').replace('.','-') #.lower()
-           #prefix = '%s-%s-r%04d-e%06d-%s' % (prefix, env.experiment(), evt.run(), counter, suffix)    
-           prefix = '%s-%s-r%04d-%s' % (prefix, env.experiment(), evt.run(), suffix)    
-        
         cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]
         
-        if savebw &  1 : det.save_txtnda('%s-ave.txt'%prefix, arr_av1,      cmts + ['ARR_TYPE  average'], '%8.2f', verbos)
-        if savebw &  2 : det.save_txtnda('%s-rms.txt'%prefix, arr_rms,      cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos)
-        if savebw &  4 : det.save_txtnda('%s-sta.txt'%prefix, arr_sta,      cmts + ['ARR_TYPE  status'],  '%d',    verbos)
-        if savebw &  8 : det.save_txtnda('%s-msk.txt'%prefix, arr_msk,      cmts + ['ARR_TYPE  mask'],    '%1d',   verbos)
-        if savebw & 16 : det.save_txtnda('%s-max.txt'%prefix, self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos)
-        if savebw & 32 : det.save_txtnda('%s-min.txt'%prefix, self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos)
+        # Save n-d array in text file % 
+        template = fname_template(evt, env, self.src, ofname, counter)
+
+        if savebw &  1 : det.save_txtnda(template % 'ave', arr_av1,      cmts + ['ARR_TYPE  average'], '%8.2f', verbos)
+        if savebw &  2 : det.save_txtnda(template % 'rms', arr_rms,      cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos)
+        if savebw &  4 : det.save_txtnda(template % 'sta', arr_sta,      cmts + ['ARR_TYPE  status'],  '%d',    verbos)
+        if savebw &  8 : det.save_txtnda(template % 'msk', arr_msk,      cmts + ['ARR_TYPE  mask'],    '%1d',   verbos)
+        if savebw & 16 : det.save_txtnda(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos)
+        if savebw & 32 : det.save_txtnda(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos)
 
 #------------------------------
 
@@ -210,31 +248,34 @@ def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, 
     for i, evt in enumerate(ds.events()) :
         if i<SKIP    : continue
         if not i<EVENTS : break
+
+        if verbos & 2 and not i%10 : print '  Event: %d' % i
+
         for dpo in lst_dpo : dpo.event(evt,env,i)
 
     for dpo in lst_dpo : dpo.summary(evt,env)
 
-    if verbos & 1 : print '%s\nTotal consumed time = %f sec' % (80*'_', time()-t0_sec)
-
+    if verbos & 1 : print '%s\nConsumed time = %f sec.' % (80*'_', time()-t0_sec)
 
 #------------------------------
 
-def usage() :
-    return '\n\nExample of command to average n-d array from detector source and save it in file:\n'+\
-           '\n         %prog -d <dataset> [-s <source>] [-f <file-prefix>]'+\
+def usage(mode=0) :
+    if mode == 1 : return 'Proceses detector raw n-d array for specified source and saves files.'
+    else : return\
+           '       %prog -d <dataset> [-s <source>] [-f <file-name-template>]'+\
            ' [-n <events-collect>] [-m <events-skip>] [-v 7] [-p 1] [-v 7] ...'+\
            '\n  -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi'+\
-           '\n  ex1:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -f nda.expand -n 100 -m 0 -v 7 -p 1'+\
-           '\n  ex2:   %prog -d exp=mecj5515:run=102 -s MecTargetChamber.0:Cspad2x2.1,MecTargetChamber.0:Cspad2x2.2 -f nda.expand -n 50'
-
+           '\nEx.1:  %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -f nda.expand -n 20 -m 0 -v 7 -p 1'+\
+           '\nEx.2:  %prog -d exp=mecj5515:run=102 -s MecTargetChamber.0:Cspad2x2.1,MecTargetChamber.0:Cspad2x2.2 -f nda-#exp-#run-#src-#type.txt -n 10'+\
+           '\nEx.3:  %prog -d exp=amo42112:run=120:stream=0-79:xtc -s AmoBPS.0:Opal1000.0 -n 5 -f nda-#exp-#run-peds-#type-#src.txt'
 #------------------------------
 
 def command_line_parser() :
     from optparse import OptionParser
 
-    dsname_def = 'exp=cxif5315:run=169'
-    source_def = 'CxiDs2.0:Cspad.0'
-    ofname_def = 'nda'
+    dsname_def = None # 'exp=cxif5315:run=169'
+    source_def = None # 'CxiDs2.0:Cspad.0'
+    ofname_def = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
     events_def = 10000000
     evskip_def = 0
     intlow_def = None
@@ -245,22 +286,36 @@ def command_line_parser() :
     plotim_def = 0      
     verbos_def = 7
     savebw_def = 0377
-    
-    parser = OptionParser(description='Optional input parameters.', usage ='usage: %prog [options]' + usage())
-    parser.add_option('-d', '--dsname', dest='dsname', default=dsname_def, action='store', type='string', help='dataset name, default = %s' % dsname_def)
-    parser.add_option('-s', '--source', dest='source', default=source_def, action='store', type='string', help='input ndarray file name, default = %s' % source_def)
-    parser.add_option('-f', '--ofname', dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
-    parser.add_option('-n', '--events', dest='events', default=events_def, action='store', type='int',    help='number of events to collect, default = %s' % events_def)
-    parser.add_option('-m', '--evskip', dest='evskip', default=evskip_def, action='store', type='int',    help='number of events to skip, default = %s' % evskip_def)
-    parser.add_option('-b', '--intlow', dest='intlow', default=intlow_def, action='store', type='int',    help='intensity low limit, default = %s' % intlow_def)
-    parser.add_option('-t', '--inthig', dest='inthig', default=inthig_def, action='store', type='int',    help='intensity high limit, default = %s' % inthig_def)
-    parser.add_option('-B', '--rmslow', dest='rmslow', default=rmslow_def, action='store', type='float',  help='rms low limit, default = %s' % rmslow_def)
-    parser.add_option('-T', '--rmshig', dest='rmshig', default=rmshig_def, action='store', type='float',  help='rms high limit, default = %s' % rmshig_def)
-    parser.add_option('-F', '--fraclm', dest='fraclm', default=fraclm_def, action='store', type='float',  help='allowed fraction limit, default = %s' % fraclm_def)
-    parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store', type='int',    help='control bit-word to plot images, default = %s' % plotim_def)
-    parser.add_option('-v', '--verbos', dest='verbos', default=verbos_def, action='store', type='int',    help='control bit-word for verbosity, default = %s' % verbos_def)
-    parser.add_option('-S', '--savebw', dest='savebw', default=savebw_def, action='store', type='int',    help='control bit-word to save arrays, default = %s' % savebw_def)
-    #parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_true',           help='plot averaged image, default = %s' % str(plotim_def))
+
+    h_dsname='dataset name, default = %s' % dsname_def
+    h_source='input ndarray file name, default = %s' % source_def
+    h_ofname='output file name template, default = %s' % ofname_def
+    h_events='number of events to collect, default = %s' % events_def
+    h_evskip='number of events to skip, default = %s' % evskip_def
+    h_intlow='intensity low limit, default = %s' % intlow_def
+    h_inthig='intensity high limit, default = %s' % inthig_def
+    h_rmslow='rms low limit, default = %s' % rmslow_def
+    h_rmshig='rms high limit, default = %s' % rmshig_def
+    h_fraclm='allowed fraction limit, default = %s' % fraclm_def
+    h_plotim='control bit-word to plot images, default = %s' % plotim_def
+    h_verbos='control bit-word for verbosity, default = %s' % verbos_def
+    h_savebw='control bit-word to save arrays, default = %s' % savebw_def
+
+    parser = OptionParser(description=usage(1), usage ='usage: %prog [options]\n' + usage())
+    parser.add_option('-d', '--dsname', dest='dsname', default=dsname_def, action='store', type='string', help=h_dsname)
+    parser.add_option('-s', '--source', dest='source', default=source_def, action='store', type='string', help=h_source)
+    parser.add_option('-f', '--ofname', dest='ofname', default=ofname_def, action='store', type='string', help=h_ofname)
+    parser.add_option('-n', '--events', dest='events', default=events_def, action='store', type='int',    help=h_events)
+    parser.add_option('-m', '--evskip', dest='evskip', default=evskip_def, action='store', type='int',    help=h_evskip)
+    parser.add_option('-b', '--intlow', dest='intlow', default=intlow_def, action='store', type='int',    help=h_intlow)
+    parser.add_option('-t', '--inthig', dest='inthig', default=inthig_def, action='store', type='int',    help=h_inthig)
+    parser.add_option('-B', '--rmslow', dest='rmslow', default=rmslow_def, action='store', type='float',  help=h_rmslow)
+    parser.add_option('-T', '--rmshig', dest='rmshig', default=rmshig_def, action='store', type='float',  help=h_rmshig)
+    parser.add_option('-F', '--fraclm', dest='fraclm', default=fraclm_def, action='store', type='float',  help=h_fraclm)
+    parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store', type='int',    help=h_plotim)
+    parser.add_option('-v', '--verbos', dest='verbos', default=verbos_def, action='store', type='int',    help=h_verbos)
+    parser.add_option('-S', '--savebw', dest='savebw', default=savebw_def, action='store', type='int',    help=h_savebw)
+    #parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_true',          help=h_plotim)
  
     opts, args = parser.parse_args()
     return opts, args
@@ -271,16 +326,19 @@ if __name__ == "__main__" :
 
     proc_name = os.path.basename(sys.argv[0])
     if len(sys.argv)==1 :
-        print 'See help: %s -h' % proc_name
-        sys.exit ('End of %s' % proc_name)
+        print '%s\nHelp: %s -h' % (usage(1), proc_name)
+        sys.exit(0)
         
     opts, args = command_line_parser()
 
     if opts.verbos & 4 :
-        print 'Command arguments:', ' '.join(sys.argv)
+        print 'Command:', ' '.join(sys.argv)
         print 'Options:'
         for k,v in opts.__dict__.items() : print '  %s : %s' % (k, str(v))
         print 'Arguments: ', args
+
+    if opts.dsname is None : sys.exit('WARNING: dataset (-d <dataset>) must be specified.')
+    if opts.source is None : sys.exit('WARNING: Data source (-s <source>) must be specified.')
 
     det_ndarr_raw_proc(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, 
                        opts.intlow, opts.inthig, opts.rmslow, opts.rmshig, opts.fraclm,
