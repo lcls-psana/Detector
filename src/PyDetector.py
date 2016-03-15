@@ -66,29 +66,33 @@ import Detector.DetectorTypes as dt
 from Detector.EpicsDetector import EpicsDetector
 from Detector.ControlDataDetector import ControlDataDetector
 
-def det_and_dev_from_string(source_string):
-    """
-    Interpret a string like 'DetInfo(CxiDs2.0:Cspad.0)' in terms of:
-    
+class DetInfo:
+    def __init__(self,source_string):
+        """
+        Interpret a string like 'DetInfo(CxiDs2.0:Cspad.0)' in terms of:
+        
         detector_type --> 'CxiDs2'
         detector_id   --> 0
         device_type   --> 'Cspad'
         device_id     --> 0
-
-    Returns
-    -------
-    detector_type: str
-    detector_id:   int
-    device_type:   str
-    device_id:     int
-    """
-    m = re.search('(\w+).(\d)\:(\w+).(\d)', source_string)
-    if not m:
-        raise ValueError('Could not interpret source string: "%s", '
-                         'check your formatting and alias list' % source_string)
-    mg = m.groups()
-    return mg[0], int(mg[1]), mg[2], int(mg[3])
-
+        """
+        if ':' not in source_string:
+            self.dev = source_string
+        else:
+            m = re.search('(\w+).(\d)\:(\w+).(\d)', source_string)
+            if not m:
+                raise ValueError('Could not interpret source string: "%s", '
+                                 'check your formatting and alias list' % source_string)
+            mg = m.groups()
+            self.det = mg[0]
+            self.detid = int(mg[1])
+            self.dev = mg[2]
+            self.devid  = int(mg[3])
+    def __repr__(self):
+        if not hasattr(self,'det'):
+            return self.dev
+        else:
+            return self.det+'.'+str(self.detid)+':'+self.dev+'.'+str(self.devid)
 
 # the following function is renamed psana.Detector in the
 # psana __init__.py file
@@ -134,6 +138,7 @@ def detector_factory(source_string, env):
     source_string = map_alias_to_source(source_string, env)
     dt = dettype(source_string, env)
     det_instance = dt(source_string, env)
+    det_instance.name = DetInfo(source_string)
 
     return det_instance
 
@@ -180,9 +185,10 @@ def dettype(source_string, env):
 
     RETURNS
 
-    A psana-python Detector type
+    The type of the appropriate detector class
     """
 
+    di = DetInfo(source_string)
     epics = env.epicsStore()
     if source_string in epics.names(): # both names & aliases
         detector_class = EpicsDetector
@@ -194,9 +200,8 @@ def dettype(source_string, env):
         detector_class = dt.bld_info[source_string]
 
     else:                                     # assume source is a DetInfo...
-        _, _, device_type, _ = det_and_dev_from_string(source_string)
-        if device_type in dt.detectors.keys():
-            detector_class = dt.detectors[device_type]
+        if di.dev in dt.detectors.keys():
+            detector_class = dt.detectors[di.dev]
         else:
             raise KeyError('Unknown DetInfo device type: %s (source: %s)'
                            '' % (device_type, source_string))
