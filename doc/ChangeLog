@@ -12,6 +12,11 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+
+Tag: V00-03-44
+2016-03-15 Mikhail S. Dubrovin
+- AreaDetector._shaped_array_ - exclude a bunch of detectors from re-shaping based on calib parameters (PSAS-139)
+
 Tag: V00-03-43
 2016-03-15 Christopher O'Grady
 - add "name" attribute to detector so users can query the full-name of a detector

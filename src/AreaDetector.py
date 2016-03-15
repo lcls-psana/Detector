@@ -331,7 +331,22 @@ class AreaDetector(object):
         if arr is None   : return None
         if arr.size == 0 : return None
 
-        if self.dettype == gu.ANDOR3D : return arr
+        if self.dettype in (gu.PRINCETON,\
+                            gu.ANDOR,\
+                            gu.ANDOR3D,\
+                            gu.OPAL1000,\
+                            gu.OPAL2000,\
+                            gu.OPAL4000,\
+                            gu.OPAL8000,\
+                            gu.TM6740,\
+                            gu.ORCAFL40,\
+                            gu.FCCD960,\
+                            gu.QUARTZ4A150,\
+                            gu.RAYONIX,\
+                            gu.FCCD,\
+                            gu.TIMEPIX,\
+                            gu.FLI,\
+                            gu.PIMAX) : return arr
 
         if calibtype is not None :
             status = self.loading_status(rnum, calibtype)
