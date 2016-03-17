@@ -889,8 +889,8 @@ class PyDetectorAccess :
 # Static methods
 ##-----------------------------
 
-    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False) :
-        save_txt(fname, ndarr, cmts, fmt, verbos)
+    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True) :
+        save_txt(fname, ndarr, cmts, fmt, verbos, addmetad)
 
 ##-----------------------------
 

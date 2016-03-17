@@ -13,6 +13,12 @@ reverse time order.
 
 =======
 
+Tag: V00-03-45
+2016-03-17 Mikhail S. Dubrovin
+- det_ndarr_raw_proc - fix output file name substitution
+- add parameter "addmetad" to save_txt, save_txtnda, save_txtdaq methods. Do not save metadata for CSPAD and CSPAD2x2.
+- det_ndarr_average - change default parameters for plotim=False, verbose=False, events=10000000
+
 Tag: V00-03-44
 2016-03-15 Mikhail S. Dubrovin
 - AreaDetector._shaped_array_ - exclude a bunch of detectors from re-shaping based on calib parameters (PSAS-139)
