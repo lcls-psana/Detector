@@ -13,6 +13,10 @@ reverse time order.
 
 =======
 
+Tag: V00-03-46
+2016-03-21 Christopher O'Grady and TJ Lane
+update doc strings
+
 Tag: V00-03-45
 2016-03-17 Mikhail S. Dubrovin
 - det_ndarr_raw_proc - fix output file name substitution
