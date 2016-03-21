@@ -18,7 +18,16 @@ def source_is_same(source1, source2):
 
 
 class DdlDetector(object):
+    """
+    This class is a generic wrapper for the DAQ system data
+    types.  It looks through the event keys for the object that
+    have the user-specified psana source string.  If there is more
+    than one, an exception is thrown.
 
+    DDL stands for "Data Definition Language" which is a language
+    that was written for LCLS to express the DAQ data objects in
+    a language-independent way (i.e. for both python/C++).
+    """
     def __init__(self, source, env=None):
         """
         Parameters
@@ -56,7 +65,15 @@ class DdlDetector(object):
     def get(self, evt):
         """
         Default behavior for detectors who's special Detector class has not
-        yet been implemented. Return DDL base class for the Detector.
+        been implemented. 
+
+        Parameters
+        ----------
+        evt: a psana event object
+
+        Returns
+        -------
+        DAQ object associated with this event
         """
         ddls = self._fetch_ddls(evt)
         if len(ddls) == 1:

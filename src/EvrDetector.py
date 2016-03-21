@@ -7,12 +7,36 @@ from DdlDetector import DdlDetector
 
 
 class EvrDetector(DdlDetector):
+    """
+    The EVR device is used by the DAQ system to control what
+    happens from shot-to-shot (e.g. which devices are triggered
+    (e.g. a camera, or a shutter)).  For each event this object provides
+    a list of "event codes" which can be used to understand which devices
+    were activated in a particular LCLS event.
+    """
 
     def __call__(self, evt):
+        """
+        Parameters
+        ----------
+        evt: a psana event object
+
+        Returns
+        -------
+        A list of integer event-codes associated with the input event
+        """
         return self.eventCodes(evt)
 
     def eventCodes(self, evt):
+        """
+        Parameters
+        ----------
+        evt: a psana event object
 
+        Returns
+        -------
+        A list of integer event-codes associated with the input event
+        """
         ddl_evrs = self._fetch_ddls(evt)
 
         if len(ddl_evrs) == 1:
@@ -37,7 +61,6 @@ class EvrDetector(DdlDetector):
     
 
 
-# quick test
 if __name__ == '__main__':
 
     # test EVR names

@@ -3,13 +3,20 @@ import _psana
 
 
 class ControlDataDetector(object):
+    """
+    An object that can be used to query the names/states of
+    motors used in a DAQ scan.  See PSDM confluence building-block
+    examples documentation.  Create this object with Detector('ControlData').
+    """
 
     def __init__(self, source_string, env):
         """
         Parameters
         ----------
+        source_string:
+            User must pass string 'ControlData' to the Detector constructor
         env : psana.Env
-            The event, for example from psana.DataSource.env()
+            The environment, for example from psana.DataSource.env()
         """
 
         self._config_store = env.configStore()
@@ -24,6 +31,17 @@ class ControlDataDetector(object):
 
     def __call__(self, evt=None):
         """
+        Parameters
+        ----------
+        evt: an (optional) psana Event object.  It is unused in
+             this routine, but provided to make the interface
+             similar to other
+
+        Returns
+        -------
+        An object that can be used to query the names/states of
+        motors used in a DAQ scan.  See PSDM confluence building-block
+        examples documentation.
         """
         return self._config_store.get(self._type, self._source)
 
