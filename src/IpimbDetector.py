@@ -11,6 +11,15 @@ import _psana
 from DdlDetector import DdlDetector
 
 class IpimbDetector(DdlDetector):
+    """
+    Detector interface for the IPIMB, the which monitors the
+    beam intensity and position. Methods of note:
+
+    -- sum
+    -- channel
+    -- xpos
+    -- ypos
+    """
 
 
     def _fetch_ddls(self, evt):
@@ -44,19 +53,73 @@ class IpimbDetector(DdlDetector):
             return getattr(ddl_det, fxn_name)()
 
     def channel(self, evt):
+        """
+        Return the intensities in all channels of the IPIMB.
+
+        Parameters
+        ----------
+        evt : psana.Event
+            The event to retrieve data from.
+
+        Returns
+        -------
+        channel : np.ndarray
+            The intensity of the beam measured in each of four
+            individual channels. Units arbitrary.
+        """
         return self._ddldata_or_none(evt, 'channel')
 
     def sum(self, evt):
+        """
+        Return the beam intensity measured by the IPIMB.
+
+        Parameters
+        ----------
+        evt : psana.Event
+            The event to retrieve data from.
+
+        Returns
+        -------
+        sum : float
+            The sum of the beam intensities in all channels.
+        """
         return self._ddldata_or_none(evt, 'sum')
 
     def xpos(self, evt):
+        """
+        Compute the beam position along the x-axis as measured
+        by the IPIMB.
+
+        Parameters
+        ----------
+        evt : psana.Event
+            The event to retrieve data from.
+
+        Returns
+        -------
+        xpos : float
+            The estimated x-position.
+        """
+
         return self._ddldata_or_none(evt, 'xpos')
 
     def ypos(self, evt):
+        """
+        Compute the beam position along the y-axis as measured
+        by the IPIMB.
+
+        Parameters 
+        ----------
+        evt : psana.Event
+            The event to retrieve data from.
+
+        Returns
+        -------
+        ypos : float
+            The estimated y-position.
+        """
         return self._ddldata_or_none(evt, 'ypos')
 
-    def __call__(self, evt):
-        return self.channel(evt)
 
 # quick test
 if __name__ == '__main__':
@@ -70,8 +133,8 @@ if __name__ == '__main__':
     ipimbdet_not_in_data = IpimbDetector('XppEnds_Ipm1')
 
     for i,evt in enumerate(ds.events()):
-        print ipimbdet(evt), ipimbdet.sum(evt), ipimbdet.xpos(evt), ipimbdet.ypos(evt)
-        print ipimbdet_not_in_data(evt), ipimbdet_not_in_data.sum(evt)
+        print ipimbdet.channel(evt), ipimbdet.sum(evt), ipimbdet.xpos(evt), ipimbdet.ypos(evt)
+        print ipimbdet_not_in_data.channel(evt), ipimbdet_not_in_data.sum(evt)
         if i == 5: break
 
 

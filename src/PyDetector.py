@@ -5,56 +5,14 @@
 # Description:
 #  module PyDetector
 #--------------------------------------------------------------------------
-"""Method detector_factory(src,env) returns instance of the detector data accessor. 
-
-   Method detector_factory(src,env) switches between detector data access objects depending on source parameter.
-   Currently implemented detector data access classes:
-   \n :py:class:`Detector.AreaDetector`  - access to area detector data
-   \n :py:class:`Detector.WFDetector`    - access to waveform detector data
-   \n :py:class:`Detector.EvrDetector`   - access to EVR data
-   \n :py:class:`Detector.DdlDetector`   - access to DDL data
-   \n :py:class:`Detector.EpicsDetector` - access to EPICS data
-
-Usage::
-
-    # Import
-    import psana
-
-    # Input parameters
-    # str object for data source can be defined using DAQ detector name
-    src = 'XppGon.0:Cspad.0' # or its alias 'cspad'
-    # The list of available detector names and alieses for data set can be printed by the command like
-    # psana -m EventKeys -n 5 exp=xpptut15:run=54
-
-    # env object can be defined from data set
-    ds = psana.DataSource('exp=xpptut15:run=54')
-    env = ds.env()
-
-    # Create detector object
-    det = psana.Detector(src, env)
-
-    # in ipython the list of det methods can be seen using "tab completion" operation - type "det." and click on Tab button.
-
-A set of det object methods depends on type of the returned object, see for example
-:py:class:`Detector.AreaDetector`, :py:class:`Detector.WFDetector`, :py:class:`Detector.EvrDetector`, etc.
- 
-This software was developed for the LCLS project.
-If you use all or part of it, please give an appropriate acknowledgment.
+"""
+Base methods for detector interface. Of special note is the detector_factory
+method that automatically identifies the correct detector from a
+source string.
 
 @version $Id$
 
 @author Lane, Thomas Joseph - "Sacramentum hoc revelatum est"
-
-TJL To Do
----------
-- FIX BUG: evr0 alias not working?
-- gas det
-- ebeam
-- gmd
-- phase cavity
-- hook in psgeom to AreaDetector
-- remove ds.env() ?
-- tab completion
 """
 #------------------------------
 __version__ = "$Revision$"
@@ -66,7 +24,16 @@ import Detector.DetectorTypes as dt
 from Detector.EpicsDetector import EpicsDetector
 from Detector.ControlDataDetector import ControlDataDetector
 
-class DetInfo:
+class DetInfo(object):
+    """
+    A class that provides a consistent string repr for all
+    detectors, e.g. BldInfo() types that have only a single
+    name and DetInfo() types that adhere to ".:." syntax.
+
+    If that didn't mean anything to you, then you don't
+    need this class.
+    """
+
     def __init__(self,source_string):
         """
         Interpret a string like 'DetInfo(CxiDs2.0:Cspad.0)' in terms of:
@@ -88,11 +55,13 @@ class DetInfo:
             self.detid = int(mg[1])
             self.dev = mg[2]
             self.devid  = int(mg[3])
+
     def __repr__(self):
         if not hasattr(self,'det'):
             return self.dev
         else:
             return self.det+'.'+str(self.detid)+':'+self.dev+'.'+str(self.devid)
+
 
 # the following function is renamed psana.Detector in the
 # psana __init__.py file
@@ -100,8 +69,8 @@ def detector_factory(source_string, env):
     """
     Create a python Detector from a string identifier.
 
-    PARAMETERS
-
+    Parameters
+    ----------
     source_string : str
         A string identifying a piece of data to access, examples include:
           - 'cspad'                  # a DAQ detector alias
@@ -116,13 +85,13 @@ def detector_factory(source_string, env):
         The psana environment object associated with the psana.DataSource
         you are interested in (from method DataSource.env()).
 
-    RETURNS
-
+    Returns
+    -------
     A psana-python detector object. Try detector(psana.Event) to
     access your data.
 
     HOW TO GET MORE HELP
-
+    --------------------
     The Detector method returns an object that has methods that
     change depending on the detector type. To see help for a particular
     detector type execute commands similar to the following
@@ -148,6 +117,20 @@ def map_alias_to_source(source_string, env):
     Check to see if `source_string` is in the `env` alias map, and if so
     use the alias map to look it up and return the psana Source string
     corresponding to that alias.
+
+    Parameters
+    ----------
+    source_string : str
+        A string identifying a piece of data to access, examples include:
+
+    env : psana.Env
+        The psana environment object associated with the psana.DataSource
+        you are interested in (from method DataSource.env()).
+
+    Returns
+    -------
+    source_string : str
+        De-aliased source string -- a unique identifier.
     """
 
     # see if the source_string is an alias
@@ -167,8 +150,8 @@ def dettype(source_string, env):
     """
     Create a python Detector-class "type" from a string identifier.
 
-    PARAMETERS
-
+    Parameters
+    ----------
     source_string : str
         A string identifying a piece of data to access, examples include:
           - 'cspad'                  # a DAQ detector alias
@@ -183,8 +166,8 @@ def dettype(source_string, env):
         The psana environment object associated with the psana.DataSource
         you are interested in (from method DataSource.env()).
 
-    RETURNS
-
+    Returns
+    -------
     The type of the appropriate detector class
     """
 
@@ -210,7 +193,7 @@ def dettype(source_string, env):
 
 ##-----------------------------
 
-def test1(ntest):
+def _test1(ntest):
     """Test of the detector_factory(src, env) for AreaDetector and WFDetector classes.
     """
     from time import time
@@ -252,7 +235,7 @@ def test1(ntest):
 
 ##-----------------------------
 
-def test2():
+def _test2():
     """Test of the detector_factory(src, env) for EvrDetector, DdlDetectorand and EpicsDetector classes.
     """
     # test EVR names
@@ -286,7 +269,7 @@ def test2():
     return 
 
 
-def test3():
+def _test3():
 
     import psana
 
@@ -319,9 +302,9 @@ def test4():
 
 if __name__ == '__main__':
 
-    #for i in range(5): test1(i)
-    #test2()
-    test3()
+    #for i in range(5): _test1(i)
+    #_test2()
+    _test3()
     test4()
 
     import sys; sys.exit()
@@ -330,8 +313,8 @@ if __name__ == '__main__':
     except : raise ValueError('First input parameter "%s" is expected to be empty or integer test number' % sys.argv[1])
     print 'Test# %d' % ntest
 
-    if len(sys.argv)<2 : test2()
-    else               : test1(ntest)
+    if len(sys.argv)<2 : _test2()
+    else               : _test1(ntest)
 
     sys.exit ('Self test is done')
 
