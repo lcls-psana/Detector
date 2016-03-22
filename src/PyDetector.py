@@ -187,7 +187,7 @@ def dettype(source_string, env):
             detector_class = dt.detectors[di.dev]
         else:
             raise KeyError('Unknown DetInfo device type: %s (source: %s)'
-                           '' % (device_type, source_string))
+                           '' % (di.dev, source_string))
 
     return detector_class
 

@@ -13,9 +13,13 @@ reverse time order.
 
 =======
 
+Tag: V00-03-47
+2016-03-22 Christopher O'Grady
+- fix bug in exception
+
 Tag: V00-03-46
 2016-03-21 Christopher O'Grady and TJ Lane
-update doc strings
+- update doc strings
 
 Tag: V00-03-45
 2016-03-17 Mikhail S. Dubrovin
