@@ -12,6 +12,9 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-48
+2016-03-24 Mikhail S. Dubrovin
+- AreaDetector - update comments for doc string.
 
 Tag: V00-03-47
 2016-03-22 Christopher O'Grady
