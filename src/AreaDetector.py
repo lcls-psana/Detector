@@ -118,6 +118,7 @@ Usage::
     ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
     ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
+    nda      = det.ndarray_from_image(par, image, pix_scale_size_um=None, xy0_off_pix=None)
 
     # save n-d numpy array in the text file with metadata (global methods under hood of the class object)
     det.save_txtnda(fname='nda.txt', ndarr=myndarr, cmts=('comment1', 'comment2'), fmt='%.1f', verbos=False, addmetad=True)
@@ -1091,7 +1092,7 @@ class AreaDetector(object):
 
            Parameters
            ----------
-           par               : int or psana.Event() - integer run number or psana event object.
+           evt               : psana.Event() - psana event object.
            nda_in            : input n-d array which needs to be converted in image; default - use calib methood.
            pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
@@ -1108,6 +1109,25 @@ class AreaDetector(object):
         nda_img = np.array(nda, dtype=np.double).flatten()        
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
         else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))
+
+
+    def ndarray_from_image(self, par, image, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+        """Returns n-d array of intensities extracted from image using image bin indexes.
+
+           Parameters
+           ----------
+           par               : int or psana.Event() - integer run number or psana event object.
+           image             : np.array - input 2-d array which will be converted to n-d array.
+           pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
+           xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
+           do_update         : bool - force to update cached array.
+
+           Returns
+           -------
+           np.array - n-d array of intensities made from image.
+        """
+        rnum = self.runnum(par)
+        return self._shaped_array_(rnum, self.pyda.ndarray_from_image(rnum, image, pix_scale_size_um, xy0_off_pix, do_update))
 
 
     #def __call__(self, evt, nda_in=None) :

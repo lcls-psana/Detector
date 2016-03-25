@@ -94,6 +94,20 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def default_geometry(self) :
+        """Returns default geometry object for some of detectors"""
+        import CalibManager.AppDataPath as apputils
+
+        if self.dettype == gu.EPIX100A :
+            fname = apputils.AppDataPath('Detector/geometry-def-epix100a.data').path()
+            #if self.pbits & 1 :
+            print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
+            return GeometryAccess(fname, 0377 if self.pbits else 0)
+
+        return None
+
+##-----------------------------
+
     def geoaccess(self, par) : # par = evt or runnum
 
         runnum = par if isinstance(par, int) else par.run()
@@ -112,6 +126,10 @@ class PyDetectorAccess :
                 self.geo = None
                 if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
 
+            if self.geo is None :
+                # if geo object is still missing try to load default geometry
+                self.geo = self.default_geometry()
+
             # arrays for caching
             self.iX             = None 
             self.iY             = None 
@@ -122,7 +140,7 @@ class PyDetectorAccess :
             self.mask_geo_arr   = None
             self.mbits          = None
             self.pixel_size_arr = None
-            
+
         return self.geo
 
 ##-----------------------------
@@ -328,6 +346,17 @@ class PyDetectorAccess :
     def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return img_from_pixel_arrays(self.iX, self.iY, img_nda)
+
+##-----------------------------
+
+    def ndarray_from_image(self, par, image, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+        if image is None : return None
+        #if not isinstance(image, np.array) : return None
+        if len(image.shape) != 2 : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+
+        return np.array([image[r,c] for r,c in zip(self.iX, self.iY)])
 
 ##-----------------------------
 ##-----------------------------

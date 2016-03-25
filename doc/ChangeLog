@@ -12,6 +12,13 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+
+Tag: V00-03-49
+2016-03-25 Mikhail S. Dubrovin
+- PyDetectorAccess - add methods ndarray_from_image and default_geometry, update ex_all_dets.py
+- AreaDetector - add method ndarray_from_image and its test ex_ndarray_from_image
+- add examples/ex_ndarray_from_image.py data/geometry-def-epix100a.data
+	
 Tag: V00-03-48
 2016-03-24 Mikhail S. Dubrovin
 - AreaDetector - update comments for doc string.

@@ -38,3 +38,18 @@ def print_ndarr(nda, name='', first=0, last=5) :
                      print '%s: %s' % (name, type(nda))
     else           : print '%s:  shape:%s  size:%d  dtype:%s %s...' % \
          (name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last])
+
+#------------------------------
+
+def table_from_cspad_ndarr(nda_cspad) :
+    """returns table of 2x1s shaped as (8*185, 4*388) in style of Cheetah
+       generated from cspad array with size=(32*185*388) ordered as in data, shape does not matter. 
+    """
+    quads, nsegq, rows, cols = 4, 8, 185, 388
+    nda = np.array(nda_cspad)
+    nda.shape = (quads, nsegq, rows, cols)
+    return np.hstack([np.vstack([nda[q,s,:] for s in range(nsegq)]) for q in range(quads)])
+
+#------------------------------
+#------------------------------
+#------------------------------
