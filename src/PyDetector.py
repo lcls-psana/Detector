@@ -43,18 +43,17 @@ class DetInfo(object):
         device_type   --> 'Cspad'
         device_id     --> 0
         """
-        if ':' not in source_string:
-            self.dev = source_string
-        else:
-            m = re.search('(\w+).(\d)\:(\w+).(\d)', source_string)
-            if not m:
-                raise ValueError('Could not interpret source string: "%s", '
-                                 'check your formatting and alias list' % source_string)
+
+        m = re.search('(\w+).(\d)\:(\w+).(\d)', source_string)
+
+        if m:
             mg = m.groups()
             self.det = mg[0]
             self.detid = int(mg[1])
             self.dev = mg[2]
             self.devid  = int(mg[3])
+        else:
+            self.dev = source_string
 
     def __repr__(self):
         if not hasattr(self,'det'):
@@ -171,7 +170,6 @@ def dettype(source_string, env):
     The type of the appropriate detector class
     """
 
-    di = DetInfo(source_string)
     epics = env.epicsStore()
     if source_string in epics.names(): # both names & aliases
         detector_class = EpicsDetector
@@ -183,6 +181,7 @@ def dettype(source_string, env):
         detector_class = dt.bld_info[source_string]
 
     else:                                     # assume source is a DetInfo...
+        di = DetInfo(source_string)
         if di.dev in dt.detectors.keys():
             detector_class = dt.detectors[di.dev]
         else:

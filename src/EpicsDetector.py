@@ -1,5 +1,4 @@
 
-import _psana
 
 
 
@@ -44,4 +43,12 @@ class EpicsDetector(object):
         elif pv.numElements() == 1:
             return pv.value(0) # returns int/float
         
+
+
+if __name__ == '__main__':
+    import psana
+    ds = psana.DataSource('exp=xpptut15:run=59')
+    det = psana.Detector('XPP:LAS:MMN:01.RBV')
+    print det(ds.events().next())
+ 
 
