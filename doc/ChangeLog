@@ -13,6 +13,11 @@ reverse time order.
 
 =======
 
+Tag: V00-03-50
+2016-03-26 TJ Lane
+- PyDetector - fix DetInfo from raising when passed Epics name w/colon
+- EpicsDetector - added simple __main__
+
 Tag: V00-03-49
 2016-03-25 Mikhail S. Dubrovin
 - PyDetectorAccess - add methods ndarray_from_image and default_geometry, update ex_all_dets.py
