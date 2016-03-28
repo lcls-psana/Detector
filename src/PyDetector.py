@@ -6,13 +6,38 @@
 #  module PyDetector
 #--------------------------------------------------------------------------
 """
-Base methods for detector interface. Of special note is the detector_factory
-method that automatically identifies the correct detector from a
-source string.
+Method detector_factory(src,env) returns instance of the detector data accessor. 
 
-@version $Id$
+   Method detector_factory(src,env) switches between detector data access objects depending on source parameter.
+   Currently implemented detector data access classes:
+   \n :py:class:`Detector.AreaDetector`  - access to area detector data
+   \n :py:class:`Detector.WFDetector`    - access to waveform detector data
+   \n :py:class:`Detector.EvrDetector`   - access to EVR data
+   \n :py:class:`Detector.DdlDetector`   - access to DDL data
+   \n :py:class:`Detector.EpicsDetector` - access to EPICS data
 
-@author Lane, Thomas Joseph - "Sacramentum hoc revelatum est"
+Usage::
+
+    # Import
+    import psana
+
+    # Input parameters
+    # str object for data source can be defined using DAQ detector name
+    src = 'XppGon.0:Cspad.0' # or its alias 'cspad'
+    # The list of available detector names and alieses for data set can be printed by the command like
+    # detnames exp=xpptut15:run=54
+
+    # env object can be defined from data set
+    ds = psana.DataSource('exp=xpptut15:run=54')
+    env = ds.env()
+
+    # Create detector object
+    det = psana.Detector(src, env)
+
+    # in ipython the list of det methods can be seen using "tab completion" operation - type "det." and hit the Tab key.
+
+This software was developed for the LCLS project.
+If you use all or part of it, please give an appropriate acknowledgment.
 """
 #------------------------------
 __version__ = "$Revision$"

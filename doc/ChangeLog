@@ -13,6 +13,10 @@ reverse time order.
 
 =======
 
+Tag: V00-03-51
+2016-03-28 Christopher O'Grady
+- Restore Mikhail's sphinx documentation
+
 Tag: V00-03-50
 2016-03-26 TJ Lane
 - PyDetector - fix DetInfo from raising when passed Epics name w/colon
