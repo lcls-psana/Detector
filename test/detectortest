@@ -1,0 +1,96 @@
+#!@PYTHON@
+ 
+import sys
+import unittest
+import psana
+import Detector
+import numpy as np
+
+ 
+class TestPyDetector(unittest.TestCase) :
+ 
+    def setUp(self):
+
+        psana.setOption('psana.calib-dir', '/reg/g/psdm/data_test/calib')
+        self.ds = psana.DataSource("/reg/g/psdm/data_test/Translator/test_081_xpp_xppi0214_e439-r0054-s00-c00.xtc")
+        self.detectors = [t[0] for t in psana.DetNames()]
+        self.detectors += [t[1] for t in psana.DetNames() if t[1] != '']
+        self.detectors += [t[0] for t in psana.DetNames('epics')]
+        self.detectors += [t[1] for t in psana.DetNames('epics') if t[1] != '']
+
+        return
+ 
+
+    def test_lookup(self):
+
+        evt = self.ds.events().next()
+
+        print "testing %d detector names" % len(self.detectors)
+        for name in self.detectors:
+
+            det = psana.Detector(name)
+            if isinstance(det, Detector.AreaDetector.AreaDetector):
+                assert type(det.raw(evt)) == np.ndarray, name
+            elif isinstance(det, Detector.EvrDetector.EvrDetector):
+                assert type(det(evt)) in [list, type(None)], name
+            elif isinstance(det, Detector.EpicsDetector.EpicsDetector):
+                assert type(det(evt)) in [int, float, np.array, str], name
+            elif isinstance(det, Detector.WFDetector.WFDetector):
+                assert type(det.sum(evt)) == float, name
+            elif isinstance(det, Detector.IpimbDetector.IpimbDetector):
+                assert type(det.sum(evt)) == float, name
+            elif isinstance(det, Detector.ControlDataDetector.ControlDataDetector):
+                assert det().pvControls() is not None, name
+
+            # this must be last, because all detectors are DdlDetectors
+            elif isinstance(det, Detector.DdlDetector.DdlDetector):
+                assert det.get(evt) is not None
+
+            else:
+                raise Exception('new detector? write a test for it!')
+
+        return 
+
+
+    def test_cspad(self):
+        cspad = psana.Detector('cspad')
+        evt = self.ds.events().next()
+        print cspad.image(evt).shape
+        assert cspad.raw(evt).shape == (32, 185, 388)
+        assert cspad.calib(evt).shape == (32, 185, 388)
+
+        assert np.abs(cspad.image(evt).sum() - 8.52574e+08) < 1e5
+        assert np.abs(cspad.calib(evt).sum() - cspad.image(evt).sum()) < 1e5
+
+        return
+
+
+    def test_string_pv(self):
+        pv = psana.Detector('grid_var01_name')
+        evt = self.ds.events().next()
+        assert type(pv(evt)) is str
+
+
+    def test_detector_name(self):
+
+        cspad = psana.Detector('cspad')
+        assert cspad.name.dev == 'Cspad'
+
+        cspad2 = psana.Detector('XppGon.0:Cspad.0')
+        assert cspad.name.dev == 'Cspad'
+
+
+    def test_dettype(self):
+
+        source_string = 'cspad'
+        source_string = Detector.PyDetector.map_alias_to_source(source_string, self.ds.env())
+        assert source_string == 'DetInfo(XppGon.0:Cspad.0)'
+
+        dt = Detector.PyDetector.dettype(source_string, self.ds.env())
+        assert dt == Detector.AreaDetector.AreaDetector
+        
+ 
+if __name__ == '__main__':
+     unittest.main(argv=[sys.argv[0], '-v'])
+
+

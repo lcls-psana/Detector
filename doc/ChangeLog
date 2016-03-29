@@ -13,6 +13,10 @@ reverse time order.
 
 =======
 
+Tag: V00-03-52
+2016-03-28 TJ Lane and Christopher O'Grady
+- Added unit tests for Detector module
+
 Tag: V00-03-51
 2016-03-28 Christopher O'Grady
 - Restore Mikhail's sphinx documentation
