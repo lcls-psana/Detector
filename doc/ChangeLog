@@ -13,6 +13,10 @@ reverse time order.
 
 =======
 
+Tag: V00-03-53
+2016-04-13 Christopher O'Grady
+- Change two MEC BLD detectors to return Ipimb types, not DDL
+
 Tag: V00-03-52
 2016-03-28 TJ Lane and Christopher O'Grady
 - Added unit tests for Detector module
