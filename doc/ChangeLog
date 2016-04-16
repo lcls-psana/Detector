@@ -13,6 +13,10 @@ reverse time order.
 
 =======
 
+Tag: V00-03-54
+2016-04-16 Mikhail S. Dubrovin
+- modify geometry-def-epix100a.data to get default det.image() orientation like in raw data.
+	
 Tag: V00-03-53
 2016-04-13 Christopher O'Grady
 - Change two MEC BLD detectors to return Ipimb types, not DDL
