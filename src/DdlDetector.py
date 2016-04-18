@@ -38,6 +38,7 @@ class DdlDetector(object):
             or an alias e.g. 'cspad'.
         """
         self.source = source
+        self.env = env
         return
 
 
@@ -46,7 +47,8 @@ class DdlDetector(object):
         psana_types = []
         for k in evt.keys():
             if source_is_same(self.source, k.src()):
-                psana_types.append( k.type() )
+                if k.type() is not None:
+                    psana_types.append( k.type() )
 
         return psana_types
 
@@ -60,6 +62,22 @@ class DdlDetector(object):
             ddls.append(ddl)
 
         return ddls
+
+
+    def _fetch_configs(self):
+        """
+        Get the config store object pertaining to this Source.
+        """
+
+        cs = self.env.configStore()
+        types = self._find_types(cs)
+
+        configs = []
+        for tp in types:
+            config = cs.get(tp, _psana.Source(self.source))
+            configs.append(config)
+
+        return configs
 
 
     def get(self, evt):
