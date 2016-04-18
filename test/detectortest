@@ -41,6 +41,8 @@ class TestPyDetector(unittest.TestCase) :
                 assert type(det.sum(evt)) == float, name
             elif isinstance(det, Detector.ControlDataDetector.ControlDataDetector):
                 assert det().pvControls() is not None, name
+            elif isinstance(det, Detector.Generic1DDetector.Generic1DDetector):
+                assert type(det(evt)) == list, name
 
             # this must be last, because all detectors are DdlDetectors
             elif isinstance(det, Detector.DdlDetector.DdlDetector):
