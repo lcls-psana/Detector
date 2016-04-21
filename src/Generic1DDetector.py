@@ -40,7 +40,7 @@ class Generic1DDetector(DdlDetector):
 
         Returns
         -------
-        A list of integer event-codes associated with the input event
+        A list of of 1D arrays associated with the input event
         """
 
         ddls = self._fetch_ddls(evt)

@@ -4,12 +4,12 @@ This file contains static declartions of the known & interpretable detector
 types.
 """
 
-from Detector.DdlDetector   import DdlDetector
-from Detector.AreaDetector  import AreaDetector
-from Detector.WFDetector    import WFDetector
-from Detector.EvrDetector   import EvrDetector
-from Detector.IpimbDetector import IpimbDetector
-
+from Detector.DdlDetector       import DdlDetector
+from Detector.AreaDetector      import AreaDetector
+from Detector.WFDetector        import WFDetector
+from Detector.EvrDetector       import EvrDetector
+from Detector.IpimbDetector     import IpimbDetector
+from Detector.GenericWFDetector import GenericWFDetector
 
 def no_device_exception(*args):
     raise TypeError('Detector device is `NoDevice`, which means the'
@@ -62,7 +62,9 @@ detectors = {
     "Epix10k"     : AreaDetector,
     "Epix100a"    : AreaDetector,
     "EpixS"       : AreaDetector,
-    "Gotthard"    : AreaDetector 
+    "Gotthard"    : AreaDetector,
+    "Wave8"       : GenericWFDetector,
+    "LeCroy"      : GenericWFDetector
 }
 
 
