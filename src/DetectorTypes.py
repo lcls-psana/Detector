@@ -10,6 +10,7 @@ from Detector.WFDetector        import WFDetector
 from Detector.EvrDetector       import EvrDetector
 from Detector.IpimbDetector     import IpimbDetector
 from Detector.GenericWFDetector import GenericWFDetector
+from Detector.OceanDetector     import OceanDetector
 
 def no_device_exception(*args):
     raise TypeError('Detector device is `NoDevice`, which means the'
@@ -44,7 +45,7 @@ detectors = {
     "Timepix"     : AreaDetector,
     "Opal2000"    : AreaDetector,
     "Opal4000"    : AreaDetector,
-    "OceanOptics" : AreaDetector,
+    "OceanOptics" : OceanDetector,
     "Opal1600"    : AreaDetector,
     "Opal8000"    : AreaDetector,
     "Fli"         : AreaDetector,

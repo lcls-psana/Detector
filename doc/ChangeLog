@@ -13,6 +13,10 @@ reverse time order.
 
 =======
 
+Tag: V00-03-56
+2016-04-22 Christopher O'Grady
+- add OceanDetector to support oceanoptics spectrometer
+
 Tag: V00-03-55
 2016-04-20 TJ Lane and Christopher O'Grady
 - add Generic1DDetector and subclassed GenericWFDetector to provide
