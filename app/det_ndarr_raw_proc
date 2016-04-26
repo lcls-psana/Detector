@@ -220,12 +220,12 @@ class DetNDArrRawProc :
         template = fname_template(evt, env, self.src, ofname, counter)
         addmetad=True
 
-        if savebw &  1 : det.save_txtnda(template % 'ave', arr_av1,      cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
-        if savebw &  2 : det.save_txtnda(template % 'rms', arr_rms,      cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
-        if savebw &  4 : det.save_txtnda(template % 'sta', arr_sta,      cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
-        if savebw &  8 : det.save_txtnda(template % 'msk', arr_msk,      cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
-        if savebw & 16 : det.save_txtnda(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
-        if savebw & 32 : det.save_txtnda(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
+        if savebw &  1 : det.save_asdaq(template % 'ave', arr_av1,      cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
+        if savebw &  2 : det.save_asdaq(template % 'rms', arr_rms,      cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
+        if savebw &  4 : det.save_asdaq(template % 'sta', arr_sta,      cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
+        if savebw &  8 : det.save_asdaq(template % 'msk', arr_msk,      cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
+        if savebw & 16 : det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
+        if savebw & 32 : det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
 
 #------------------------------
 

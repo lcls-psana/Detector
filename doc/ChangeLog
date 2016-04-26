@@ -12,7 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
-
+Tag: V00-03-57
+2016-04-25 Mikhail S. Dubrovin
+- det_ndarr_raw_proc - use det.save_asdaq in stead of save_txtnda
+	
 Tag: V00-03-56
 2016-04-22 Christopher O'Grady
 - add OceanDetector to support oceanoptics spectrometer
