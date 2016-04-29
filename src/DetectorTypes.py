@@ -9,6 +9,7 @@ from Detector.AreaDetector      import AreaDetector
 from Detector.WFDetector        import WFDetector
 from Detector.EvrDetector       import EvrDetector
 from Detector.IpimbDetector     import IpimbDetector
+from Detector.UsdUsbDetector    import UsdUsbDetector
 from Detector.GenericWFDetector import GenericWFDetector
 from Detector.OceanDetector     import OceanDetector
 
@@ -52,7 +53,7 @@ detectors = {
     "Quartz4A150" : AreaDetector,
     "DualAndor"   : AreaDetector,
     "Andor"       : AreaDetector,
-    "USDUSB"      : DdlDetector,
+    "USDUSB"      : UsdUsbDetector,
     "OrcaFl40"    : AreaDetector,
     "Imp"         : WFDetector,
     "Epix"        : AreaDetector,

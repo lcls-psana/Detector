@@ -39,6 +39,8 @@ class TestPyDetector(unittest.TestCase) :
                 assert type(det.sum(evt)) == float, name
             elif isinstance(det, Detector.IpimbDetector.IpimbDetector):
                 assert type(det.sum(evt)) == float, name
+            elif isinstance(det, Detector.UsdUsbDetector.UsdUsbDetector):
+                assert type(det.values(evt)) == np.ndarray, name
             elif isinstance(det, Detector.ControlDataDetector.ControlDataDetector):
                 assert det().pvControls() is not None, name
             elif isinstance(det, Detector.Generic1DDetector.Generic1DDetector):
