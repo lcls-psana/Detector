@@ -90,26 +90,6 @@ class UsdUsbDetector(DdlDetector):
                 chan_vals.append(getattr(cfg_det[0], fxn_name)(chan))
             return chan_vals
 
-    def _ddlcfg_or_none(self, fxn_name, is_fex):
-        cfg_det = self._fetch_cfg_ddls(True)
-        if len(cfg_det) == 0:
-            return None
-        else:
-            return getattr(cfg_det[0], fxn_name)()
-
-    def set_env(self, env):
-        """
-        Update the psana environment object. This needs to be done when
-        changing runs.
-
-        Parameters
-        ----------
-        env : psana.Env
-        The psana environment object associated with the psana.DataSource
-        you are interested in (from method DataSource.env()). 
-        """
-        self._cfg = env.configStore()
-
     def descriptions(self):
       """
       Return the description field for all channels of the USDUSB.
@@ -117,7 +97,7 @@ class UsdUsbDetector(DdlDetector):
       Returns
       -------
       descriptions : list
-          Description for each of the four individual channels.
+          Description string for each of the four individual channels.
       """
       return self._ddlcfglist_or_none('name', True)
 
@@ -154,7 +134,7 @@ if __name__ == '__main__':
 
     ds = psana.DataSource('exp=xpp00316:run=384')
     
-    usdusbdet = UsdUsbDetector('usbencoder',ds.env())
+    usdusbdet = UsdUsbDetector('XppEndstation.0:USDUSB.0',ds.env())
     usdusbdet_not_in_data = UsdUsbDetector('usbencoder1',ds.env())
 
     for i,evt in enumerate(ds.events()):
