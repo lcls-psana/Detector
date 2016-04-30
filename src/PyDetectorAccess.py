@@ -405,6 +405,7 @@ class PyDetectorAccess :
            Returns None for other detectors or missing configuration for CSPAD.
         """
         if self.dettype == gu.CSPAD : return self.cspad_gain_mask(gain) 
+        elif self.dettype == gu.CSPAD2X2 : return self.cspad2x2_gain_mask(gain) 
         else                        : return None
 
 ##-----------------------------
@@ -857,6 +858,48 @@ class PyDetectorAccess :
                 gm2x1 = np.hstack((gmasic0, gm & 1))
                 self.gm[i2x1+iquad*8][:][:] = np.logical_not(gm2x1)
                 if i2x1 < 7 : gm = np.right_shift(gm, asic1) # do not shift for last asic
+
+        if gain is None :
+            return self.gm
+        else :
+            f=float(gain-1.)
+            return np.array(self.gm,dtype=np.float) * f + 1
+
+##-----------------------------
+
+    def cspad2x2_gain_mask(self, gain=None) :
+        """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(2,185,388), dtype=uint16.
+            If gain is set, method returns a map of (float) gain/1 values for low/high gain pixels, respectively.
+            None is returned if configuration data is missing.
+        """
+        # configuration from data
+        c = pda.get_cspad2x2_config_object(self.env, self.source)
+        if c is None :
+            msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
+            #raise IOError(msg)
+            print msg
+            return None
+
+        self.gm = np.empty((2,185,388), dtype=np.uint16)
+        asic1   = np.ones((185,194), dtype=np.uint16)
+
+        gm = np.array(c.quad().gm().gainMap())
+
+        # see the DAQ pdsapp/config/Cspad2x2GainMap.cc:export_() to see that
+        # the 4 bits in each element of the gainmap array correspond to the
+        # 4 ASICs in the 2x2.  playing around with the DAQ configdb_gui
+        # (export/import the text file) shows that the ASICS are numbered
+        # like this:
+        #   1 3
+        #   0 2
+        # I am assuming the above corresponds to the 2x2 "natural shape"
+        # of [2,185,388] in a natural way.
+        for i2x1 in range(2):
+            gmasic0 = gm & 1 # take the lowest bit only
+            gm = np.right_shift(gm, asic1)
+            gm2x1 = np.hstack((gmasic0, gm & 1))
+            self.gm[i2x1][:][:] = np.logical_not(gm2x1)
+            if i2x1 < 1 : gm = np.right_shift(gm, asic1) # do not shift for last asic
 
         if gain is None :
             return self.gm

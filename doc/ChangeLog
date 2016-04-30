@@ -12,10 +12,15 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-58
+2016-04-29 Christopher O'Grady and Dan Damiani
+- Added Dan's code for new USDUSB detector and code for retrieving
+  cspad2x2 gain maps.
+
 Tag: V00-03-57
 2016-04-25 Mikhail S. Dubrovin
 - det_ndarr_raw_proc - use det.save_asdaq in stead of save_txtnda
-	
+
 Tag: V00-03-56
 2016-04-22 Christopher O'Grady
 - add OceanDetector to support oceanoptics spectrometer

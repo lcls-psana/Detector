@@ -110,28 +110,6 @@ class UsdUsbDetector(DdlDetector):
         """
         self._cfg = env.configStore()
 
-    def get_fex(self, evt):
-        """
-        Returns the Fex object associated with the USDUSB device. If
-        present in this event.
-
-        Parameters
-        ----------
-        evt: a psana event object
-
-        Returns
-        -------
-        USDUSB Fex object associated with this event
-        """
-        ddls = self._fetch_ddls(evt, True)
-        if len(ddls) == 1:
-            return ddls[0]
-        elif len(ddls) == 0:
-            return None
-        else:
-            raise RuntimeError('Multiple types (%d) found in event for this'
-                               ' Detector: %s' % (len(ddls), str(ddls)))
-
     def descriptions(self):
       """
       Return the description field for all channels of the USDUSB.
@@ -171,21 +149,15 @@ class UsdUsbDetector(DdlDetector):
         return values
 
 
-# quick test
 if __name__ == '__main__':
-
-    # test USDUSB names
     import psana
 
     ds = psana.DataSource('exp=xpp00316:run=384')
     
-    usdusbdet = IpimbDetector('usbencoder')
-    usdusbdet_not_in_data = IpimbDetector('usbencoder1')
+    usdusbdet = UsdUsbDetector('usbencoder',ds.env())
+    usdusbdet_not_in_data = UsdUsbDetector('usbencoder1',ds.env())
 
     for i,evt in enumerate(ds.events()):
-        print usdusbdet.channel(evt), ipimbdet.sum(evt), ipimbdet.xpos(evt), ipimbdet.ypos(evt)
-        print usdusbdet_not_in_data.channel(evt), ipimbdet_not_in_data.sum(evt)
+        print usdusbdet.descriptions(), usdusbdet.values(evt)
+        print usdusbdet_not_in_data.values(evt), usdusbdet_not_in_data.values(evt)
         if i == 5: break
-
-
-
