@@ -11,10 +11,13 @@ from Detector.GlobalUtils import print_ndarr
 from ImgAlgos.PyAlgos import reshape_nda_to_2d, reshape_nda_to_3d, print_arr_attr, print_arr
 import pyimgalgos.GlobalGraphics as gg
 
+from pyimgalgos.GlobalUtils import subtract_bkgd
+from pyimgalgos.RadialBkgd  import RadialBkgd, polarization_factor
+
 from optparse import OptionParser
 ##-----------------------------
 
-def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
+def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
 
     SKIP   = evskip
     EVENTS = events + SKIP
@@ -35,25 +38,61 @@ def example_01(dsname, source, ofname, events, evskip, plotim, verbos):
     shape = det.shape(evt) 
 
     print '  det.shape() = ', shape 
-    
-    #mask = det.mask(evt)
-    
+
+    nda_peds = det.pedestals(evt)       if algors & 2  else None    
+    nda_bkgd = det.bkgd(evt)            if algors & 8  else None
+    nda_mask = det.mask_comb(evt, 0377) #if algors & 64 else None
+
+    rb = None
+    nda_polf = None
+    if algors & 16 :
+        Xarr = det.coords_x(evt)
+        Yarr = det.coords_y(evt)
+        Zarr = det.coords_z(evt)
+        rb = RadialBkgd(Xarr, Yarr, mask=nda_mask, nradbins=500, nphibins=1)
+        nda_polf = polarization_factor(rb.pixel_rad(), rb.pixel_phi()+90, Zarr)
+
     t0_sec = time()
     counter=0
     arr_sum = np.zeros(shape, dtype=np.double)
     arr_max = np.zeros(shape, dtype=np.double)
+
+    #       '   0 - det.calib'\
+    #       '  +1 - det.raw'\
+    #       '  +2 - pedestals'\
+    #       '  +4 - common mode'\
+    #       '  +8 - det.bkgd'\
+    #       ' +16 - radial background'\
+    #       ' +32 - common mode'\
+    #       ' +64 - det.mask'\
 
     for i, evt in enumerate(ds.events()) :
 
         if i<SKIP    : continue
         if not i<EVENTS : break
 
-        cdata = det.calib(evt)
-        if cdata is None : continue
-        if verbos and not i%10 : print '  Event: %d' % i
+        dt0_sec = time()
+        nda = det.raw(evt) if algors else calib(evt)
+        if nda is None : continue
+
+        if algors >  1: nda = np.array(nda, dtype=np.double, copy=True)
+        if algors &  2: nda -= nda_peds
+        if algors &  4: det.common_mode_apply(evt, nda)
+        if algors &  8: nda = subtract_bkgd(nda, nda_bkgd, mask=nda_mask, winds=None, pbits=0)
+        if algors & 16: 
+            nda = rb.subtract_bkgd(nda.flatten() * nda_polf)
+            nda.shape = shape
+        if algors & 32: det.common_mode_apply(evt, nda)
+        if algors & 64: nda *= nda_mask
+
+        if verbos :
+           if i<5 \
+           or (i<51   and i%10==0) \
+           or (i<1001 and i%100==0) \
+           or i%1000==0 : print '  Event: %d, time/event = %f sec' % (i, time()-dt0_sec)
         counter += 1
-        arr_sum += cdata 
-        arr_max = np.maximum(arr_max, cdata)
+        arr_sum += nda 
+        arr_max = np.maximum(arr_max, nda)
 
     print '  Detector data found in %d events' % counter
     print '  Total consumed time = %f sec' % (time()-t0_sec)
@@ -101,7 +140,8 @@ def usage() :
            ' [-n <events-collect>] [-m <events-skip>] [-p] [-v]'+\
            '\n  ex1:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -n 100 -f nda-abc -m 0 -p -v'+\
            '\n  ex2:   %prog -d exp=cxif5315:run=169 -s CxiDs2.0:Cspad.0 -n 100 -v'+\
-           '\n  ex3:   %prog -d exp=amo86615:run=159 -s Camp.0:pnCCD.1 -n 100 -v'
+           '\n  ex3:   %prog -d exp=cxif5315:run=162 -s CxiDs2.0:Cspad.0 -n 100 -a 3 -f nda-abc -m 0 -p -v'+\
+           '\n  ex4:   %prog -d exp=amo86615:run=159 -s Camp.0:pnCCD.1 -n 100 -v'
 
 ##-----------------------------
 
@@ -112,6 +152,7 @@ def input_options_parser() :
     ofname_def = 'nda'
     events_def = 10000000
     evskip_def = 0
+    algors_def = 0
     plotim_def = False       
     verbos_def = False       
 
@@ -120,6 +161,16 @@ def input_options_parser() :
     h_ofname = 'output file prefix, default = %s' % ofname_def
     h_events = 'number of events to collect, default = %s' % events_def
     h_evskip = 'number of events to skip, default = %s' % evskip_def
+    h_algors = 'bitword for algorithms:'\
+               '  0-det.calib,'\
+               ' +1-det.raw,'\
+               ' +2-pedestals,'\
+               ' +4-common mode,'\
+               ' +8-det.bkgd,'\
+               ' +16-radial background,'\
+               ' +32-common mode,'\
+               ' +64-det.mask,'\
+               ' default = %s' % algors_def
     h_plotim = 'plot averaged image, default = %s' % str(plotim_def)
     h_verbos = 'verbosity, default = %s' % str(verbos_def)
     
@@ -129,6 +180,7 @@ def input_options_parser() :
     parser.add_option('-f', '--ofname', dest='ofname', default=ofname_def, action='store', type='string', help=h_ofname)
     parser.add_option('-n', '--events', dest='events', default=events_def, action='store', type='int',    help=h_events)
     parser.add_option('-m', '--evskip', dest='evskip', default=evskip_def, action='store', type='int',    help=h_evskip)
+    parser.add_option('-a', '--algors', dest='algors', default=algors_def, action='store', type='int',    help=h_algors)
     parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_true',           help=h_plotim)
     parser.add_option('-v', '--verbos', dest='verbos', default=verbos_def, action='store_true',           help=h_verbos)
  
@@ -153,7 +205,7 @@ if __name__ == "__main__" :
         print '  opts: ', opts
         print '  args: ', args
 
-    example_01(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, opts.plotim, opts.verbos)
+    example_01(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, opts.algors, opts.plotim, opts.verbos)
 
     sys.exit(0)
 

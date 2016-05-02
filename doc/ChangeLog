@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-59
+2016-05-02 Mikhail S. Dubrovin
+- det_ndarr_average - add option -a to control image processing algorithms before averaging.
+
 Tag: V00-03-58
 2016-04-29 Christopher O'Grady and Dan Damiani
 - Added Dan's code for new USDUSB detector and code for retrieving
