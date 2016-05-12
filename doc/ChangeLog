@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V00-03-60
+2016-05-12 Mikhail S. Dubrovin
+- det_ndarr_raw_proc - average data in two stages non-gated and gated (PSAS-139)
+
 Tag: V00-03-59
 2016-05-02 Mikhail S. Dubrovin
 - det_ndarr_average - add option -a to control image processing algorithms before averaging.
