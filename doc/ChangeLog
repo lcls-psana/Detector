@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V00-03-61
+2016-05-16 Mikhail S. Dubrovin
+- det_ndarr_raw_proc - add evaluation of common mode parameters for a few detectors (PSAS-139)
+                     - fix exaluation of hot pixels for pixel_status
 =======
 Tag: V00-03-60
 2016-05-12 Mikhail S. Dubrovin
