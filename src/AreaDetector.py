@@ -542,7 +542,7 @@ class AreaDetector(object):
            -------
            np.array - per-pixel values loaded for calibration type pixel_status.
                     status bits: 0 - good pixel
-                                 1 - satturated intensity
+                                 1 - saturated intensity
                                  2 - hot rms
                                  4 - cold
                                  8 - cold rms
@@ -736,16 +736,24 @@ class AreaDetector(object):
            Gets raw data ndarray, applys baic corrections and return thus calibrated data.
            Applied corrections:
            - pedestal subtraction,
-           - apply mask generated from pixel status,
-           - apply common mode correction,
-           - apply combined mask from method det.mask_comb(...) - not applied by default.
+           - apply mask generated from pixel status ("bad pixels"
+             from calibration).  Optionally apply other masks if
+             "mbits" parameter set
+           - apply common mode correction
   
            Parameters
            ----------
            evt    : psana.Event() - psana event object.
            cmpars : list - common mode parameters, ex.: (1,50,50,100)
                     By default uses parameters from calib directory. 
-           mbits  : int - control bit-word for combined mask.
+           mbits  : int - mask control bit-word.  optional.
+                    defaults to 1.  Bit definitions:
+                 + 1  - pixel_status ("bad pixels" deployed by calibman)
+                 + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
+                 + 4  - edge pixels
+                 + 8  - big "central" pixels of a cspad2x1
+                 + 16 - unbonded pixels
+                 + 32 - unbonded pixel neighbors
 
            Returns
            -------
@@ -837,12 +845,12 @@ class AreaDetector(object):
            par   : int or psana.Event() - integer run number or psana event object.
            mbits : int - mask control bit-word.
                  = 0  - returns None
-                 + 1  - pixel_status as a mask
-                 + 2  - pixel_mask    
-                 + 4  - edges     
-                 + 8  - central   
-                 + 16 - unbond    
-                 + 32 - unbondnbrs
+                 + 1  - pixel_status ("bad pixels" deployed by calibman)
+                 + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
+                 + 4  - edge pixels
+                 + 8  - big "central" pixels of a cspad2x1
+                 + 16 - unbonded pixels
+                 + 32 - unbonded pixel neighbors
 
            Returns
            -------
