@@ -11,6 +11,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+==============
+	
+Tag: V00-03-63
+2016-05-17 Mikhail S. Dubrovin
+- det_ndarr_raw_proc - common mode parameters tuning for pnccd  
+
 Tag: V00-03-62
 2016-05-16 Christopher O'Grady
 - Try to clarify doc-strings related to masks
