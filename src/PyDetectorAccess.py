@@ -261,7 +261,7 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8/+16-four/eight non-bound neighbours
+    # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8/+16-four/eight non-bound neighbors
     def mask_geo(self, par, mbits=15) :
 
         if mbits != self.mbits : # check if update is required

@@ -30,16 +30,18 @@ Usage::
     par = runnum # or = evt
     cmpars=(1,25,10,91) # custom tuple of common mode parameters
 
-    det = psana.Detector(src, env, pbits=0, iface='P') # iface='P' or 'C' - preferable low level interface (for test perp.)
+    det = psana.Detector(src, env, pbits=0)
 
     # or directly
     from Detector.AreaDetector import AreaDetector    
-    det = AreaDetector(src, env, pbits=0, iface='P')
+    det = AreaDetector(src, env, pbits=0)
 
     # set parameters, if changed
     det.set_env(env)
     det.set_source(source)
     det.set_print_bits(pbits)
+
+    # for Camera type of detector only
     det.set_do_offset(do_offset=False) # NOTE: should be called right after det object is created, before getting data
 
     # print info
@@ -58,7 +60,7 @@ Usage::
     gain   = det.gain(par)
     bkgd   = det.bkgd(par)
     status = det.status(par)
-    stmask = det.status_as_mask(par)
+    stmask = det.status_as_mask(par, mode=0) # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
     mask   = det.mask_calib(par)
     cmod   = det.common_mode(par)
 
@@ -89,7 +91,7 @@ Usage::
     coords_z   = det.coords_z(par)
     areas      = det.areas(par)
     mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols;
-    #                                                  +4/+8/+16-non-bound / with four / with eight neighbours
+    #                                                  +4/+8/+16-non-bound / with four / with eight neighbors
     ix         = det.indexes_x(par)
     iy         = det.indexes_y(par)
     ix, iy     = det.indexes_xy(par)
@@ -102,11 +104,15 @@ Usage::
 
     # access to combined mask
     # NOTE: by default none of mask keywords is set to True, returns None.
-    mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False)
+    mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False, unbondnbrs8=False)
 
     # or cashed mask with mbits - bitword control
     mask = det.mask_comb(par, mbits)
-    # where mbits has bits for pixel_status, pixel_mask, edges, central, unbond, unbondnbrs, respectively
+    # where mbits has bits for pixel_status, pixel_mask, edges, central, unbond, unbondnbrs, unbondnbrs8, respectively
+
+    # static-mask methods for n-d mask arrays
+    mask_nbr = det.mask_neighbors(mask, allnbrs=True) # allnbrs=False/True for 4/8 neighbors
+    mask_edg = det.mask_edges(mask, mrows=1, mcols=1)
 
     # reconstruct image
     img = det.image(evt) # uses calib() by default
@@ -554,12 +560,13 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def status_as_mask(self, par) :
+    def status_as_mask(self, par, mode=0) :
         """Returns per-pixel array of mask generated from pixel_status.
 
            Parameter
            ---------
-           par : int or psana.Event() - integer run number or psana event object.
+           par  : int or psana.Event() - integer run number or psana event object.
+           mode : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel
 
            Returns
            -------
@@ -568,9 +575,44 @@ class AreaDetector(object):
         rnum = self.runnum(par)
         stat = self.status(rnum)
         if stat is None : return None
-        smask = np.select([stat==0, stat>0], [1, 0])
+        smask = np.select((stat>0,), (0,), default=1)
+        if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode==2 else False))
+        
         if self.is_cspad2x2() : return smask # stat already has a shape (2,185,388)
         return self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
+
+##-----------------------------
+
+    def mask_neighbors(self, mask, allnbrs=True) :
+        """Returns n-d array of mask with masked neighbors on each 2-d segment.
+
+           Parameter
+           ---------
+           mask    : np.array - input mask of good/bad (1/0) pixels
+           allnbrs : bool - False/True masks 4/8 of neighbors around each bad pixel
+
+           Returns
+           -------
+           np.array - mask with masked neighbors, shape = mask.shape
+        """
+        return gu.mask_neighbors(mask, allnbrs)
+
+##-----------------------------
+
+    def mask_edges(self, mask, mrows=1, mcols=1) :
+        """Returns n-d array of mask with masked mrows and mcols edges on each 2-d segment.
+
+           Parameter
+           ---------
+           mask  : np.array - input mask of good/bad (1/0) pixels
+           mrows : int - number of edge rows to mask
+           mcols : int - number of edge columns to mask
+
+           Returns
+           -------
+           np.array - mask with masked edges, shape = mask.shape
+        """
+        return gu.mask_edges(mask, mrows, mcols)
 
 ##-----------------------------
 

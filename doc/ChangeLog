@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 	
+Tag: V00-03-65
+2016-05-18 Mikhail S. Dubrovin
+- AreaDetector - add methods mask_edges, mask_neighbors (PSAS-139)
+
 Tag: V00-03-64
 2016-05-17 Mikhail S. Dubrovin
 - add mask of unbonded pixel with eight neighbors
