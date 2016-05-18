@@ -88,7 +88,8 @@ Usage::
     coords_y   = det.coords_y(par)
     coords_z   = det.coords_z(par)
     areas      = det.areas(par)
-    mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols; +4-non-bound; +8-non-bound neighbours
+    mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols;
+    #                                                  +4/+8/+16-non-bound / with four / with eight neighbours
     ix         = det.indexes_x(par)
     iy         = det.indexes_y(par)
     ix, iy     = det.indexes_xy(par)
@@ -753,7 +754,8 @@ class AreaDetector(object):
                  + 4  - edge pixels
                  + 8  - big "central" pixels of a cspad2x1
                  + 16 - unbonded pixels
-                 + 32 - unbonded pixel neighbors
+                 + 32 - unbonded pixel with four neighbors
+                 + 64 - unbonded pixel with eight neighbors
 
            Returns
            -------
@@ -799,7 +801,8 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def mask(self, par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False) :
+    def mask(self, par, calib=False, status=False, edges=False, central=False,\
+             unbond=False, unbondnbrs=False, unbondnbrs8=False) :
         """Returns per-pixel array with mask values (per-pixel product of all requested masks).
 
            Parameters
@@ -812,7 +815,8 @@ class AreaDetector(object):
            edges      : bool - True/False = on/off mask of edges. 
            central    : bool - True/False = on/off mask of two central columns. 
            unbond     : bool - True/False = on/off mask of unbonded pixels.
-           unbondnbrs : bool - True/False = on/off mask of unbonded pixel neighbors. 
+           unbondnbrs : bool - True/False = on/off mask of unbonded pixel with four neighbors. 
+           unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors. 
 
            Returns
            -------
@@ -829,6 +833,7 @@ class AreaDetector(object):
         if central    : mbits += 2
         if unbond     : mbits += 4
         if unbondnbrs : mbits += 8
+        if unbondnbrs8: mbits += 16
 
         if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits)) 
         return mask_nda
@@ -850,7 +855,8 @@ class AreaDetector(object):
                  + 4  - edge pixels
                  + 8  - big "central" pixels of a cspad2x1
                  + 16 - unbonded pixels
-                 + 32 - unbonded pixel neighbors
+                 + 32 - unbonded pixel with four neighbors
+                 + 64 - unbonded pixel with eight neighbors
 
            Returns
            -------
@@ -872,7 +878,8 @@ class AreaDetector(object):
                                    edges      = mbits&4,\
                                    central    = mbits&8,\
                                    unbond     = mbits&16,\
-                                   unbondnbrs = mbits&32)
+                                   unbondnbrs = mbits&32,\
+                                   unbondnbrs8= mbits&64)
         return self._mask_nda
 
 ##-----------------------------

@@ -13,6 +13,12 @@ reverse time order.
 
 ==============
 	
+Tag: V00-03-64
+2016-05-17 Mikhail S. Dubrovin
+- add mask of unbonded pixel with eight neighbors
+M       AreaDetector.py
+M       PyDetectorAccess.py
+
 Tag: V00-03-63
 2016-05-17 Mikhail S. Dubrovin
 - det_ndarr_raw_proc - common mode parameters tuning for pnccd  
