@@ -12,35 +12,58 @@ ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
 print 'Test # %d' % ntest
 
 ##-----------------------------
+dsname, src = None, None
 
-dsname, src                  = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0'
-if   ntest==2  : dsname, src = 'exp=meca1113:run=376', 'MecTargetChamber.0:Cspad2x2.1'
-elif ntest==3  : dsname, src = 'exp=amob5114:run=403', 'Camp.0:pnCCD.0'
-elif ntest==4  : #dsname, src = 'exp=xppi0614:run=74',  'NoDetector.0:Epix100a.0'
+if ntest==1 : # dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'CxiDs2.0:Cspad.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
+
+if ntest==2 : # dsname, src = 'exp=meca1113:run=376', 'MecTargetChamber.0:Cspad2x2.1'
+    dsname = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspad.0-three-quads.xtc'
+    src = 'MecTargetChamber.0:Cspad2x2.1'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad2x2/calib-cspad2x2-01-2013-02-13/calib')
+
+elif ntest==3 : #dsname, src = 'exp=amob5114:run=403', 'Camp.0:pnCCD.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0010-Camp.0-pnCCD.0.xtc', 'Camp.0:pnCCD.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/pnccd/amo86615-pnccd-2015-09-09/calib')
+
+elif ntest==4 : #dsname, src = 'exp=xppi0614:run=74',  'NoDetector.0:Epix100a.0'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0007-NoDetector.0-Epix100a.0.xtc', 'NoDetector.0:Epix100a.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/epix100/xpp-epix100a-2014-12-04/calib')
     #psana.setOption('psana.calib-dir', './calib')
 
-elif ntest==5  : dsname, src = 'exp=sxrg3715:run=46',  'SxrEndstation.0:Andor.2'
-elif ntest==6  : dsname, src = 'exp=sxrf9414:run=72',  'SxrEndstation.0:Fccd960.0'
-elif ntest==7  : dsname, src = 'exp=xcsi0112:run=15',  'XcsBeamline.0:Princeton.0'
-elif ntest==8  : dsname, src = 'exp=amo42112:run=120', 'AmoBPS.0:Opal1000.0'
-elif ntest==9  : dsname, src = 'exp=cxib2313:run=46',  'CxiDg2.0:Tm6740.0'
-elif ntest==10 : dsname, src = 'exp=amo86615:run=4',   'Camp.0:pnCCD.0'
-elif ntest==11 : dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0' # NO Detinfo
-elif ntest==12 : dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad'  # alias
-elif ntest==13 : dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0' # string
-elif ntest==14 : dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad' # string of alias
+elif ntest==5 : dsname, src = 'exp=sxrg3715:run=46',  'SxrEndstation.0:Andor.2'
+elif ntest==6 : dsname, src = 'exp=sxrf9414:run=72',  'SxrEndstation.0:Fccd960.0'
+elif ntest==7 : dsname, src = 'exp=xcsi0112:run=15',  'XcsBeamline.0:Princeton.0'
+elif ntest==8 : dsname, src = 'exp=amo42112:run=120', 'AmoBPS.0:Opal1000.0'
+elif ntest==9 : dsname, src = 'exp=cxib2313:run=46',  'CxiDg2.0:Tm6740.0'
+
+elif ntest==10 : # dsname, src = 'exp=amo86615:run=4',   'Camp.0:pnCCD.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0008-Camp.0-pnCCD.1.xtc', 'Camp.0:pnCCD.1'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/pnccd/amo86615-pnccd-2015-09-09/calib')
+
+elif ntest==11 : # dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0' # string
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'CxiDs2.0:Cspad.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
+
+elif ntest==12 : # dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad'  # alias
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'DsaCsPad'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
+
+
 elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 elif ntest==16 : dsname, src = 'exp=xppc0115:run=305', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
-elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
+#elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
+elif ntest==17 :
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0009-pnccdFront.xtc', 'pnccdFront'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/pnccd/amo06516-pnccd-2016-04-14/calib')
 
 elif ntest==18 :
-    dsname, src = '/reg/g/psdm/detector/data_test/types/0002-MecTargetChamber.0-Cspad.0-two-quads.xtc',  'MecTargetChamber.0:Cspad.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0002-MecTargetChamber.0-Cspad.0-two-quads.xtc', 'MecTargetChamber.0:Cspad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-mec-2015-06-08/calib')
 
 elif ntest==19 :
-    dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspad.0-three-quads.xtc',  'MecTargetChamber.0:Cspad.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspad.0-three-quads.xtc', 'MecTargetChamber.0:Cspad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-mec-2015-06-08/calib')
 
 elif ntest==20 :   #The same as 'exp=cxif5315:run=169' but geometry is different
@@ -202,6 +225,11 @@ import pyimgalgos.GlobalGraphics as gg
 ave, rms = img.mean(), img.std()
 gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+2*rms))
 gg.show()
+
+##-----------------------------
+
+print_ndarr(det.image_xaxis(par), 'image_xaxis')
+print_ndarr(det.image_yaxis(par), 'image_yaxis')
 
 ##-----------------------------
 

@@ -13,6 +13,13 @@ reverse time order.
 
 ==============
 	
+Tag: V00-03-67
+2016-05-19 Mikhail S. Dubrovin
+- add methods coords_xy, coords_xyz, image_xaxis, image_yaxis, update ex_all_dets.py (PSAS-139)
+M       AreaDetector.py
+M       PyDetectorAccess.py
+M       src/PyDetectorAccess.py
+	
 Tag: V00-03-66
 2016-05-18 Mikhail S. Dubrovin
 - correct comments for word "bond"

@@ -86,9 +86,11 @@ Usage::
 
     # access geometry information
     geo        = det.geometry(par)
-    coords_x   = det.coords_x(par)
-    coords_y   = det.coords_y(par)
-    coords_z   = det.coords_z(par)
+    cx         = det.coords_x(par)
+    cy         = det.coords_y(par)
+    cz         = det.coords_z(par)
+    cx, cy     = det.coords_xy(par)
+    cx, cy, cz = det.coords_xyz(par)
     areas      = det.areas(par)
     mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols;
     #                                                  +4/+8/+16-non-bond / with four / with eight neighbors
@@ -115,9 +117,10 @@ Usage::
     mask_edg = det.mask_edges(mask, mrows=1, mcols=1)
 
     # reconstruct image
-    img = det.image(evt) # uses calib() by default
-    img = det.image(evt, img_nda)
-    img = det(evt, img_nda) # alias for det.image(evt, img_nda)
+    img   = det.image(evt) # uses calib() by default
+    img   = det.image(evt, img_nda)
+    xaxis = det.image_xaxis(par)
+    yaxis = det.image_yaxis(par)
 
     # special case of indexing using non-default pixel scale size and x, y coordinate offset
     ix       = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
@@ -125,6 +128,8 @@ Usage::
     ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
     ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
+    xaxis    = det.image_xaxis(par, pix_scale_size_um=None, x0_off_pix=None)
+    yaxis    = det.image_yaxis(par, pix_scale_size_um=None, y0_off_pix=None)
     nda      = det.ndarray_from_image(par, image, pix_scale_size_um=None, xy0_off_pix=None)
 
     # save n-d numpy array in the text file with metadata (global methods under hood of the class object)
@@ -990,6 +995,38 @@ class AreaDetector(object):
         else          : return self._shaped_array_(rnum, self.pyda.coords_z(rnum)) 
 
 
+    def coords_xy(self, par) :
+        """Returns per-pixel arrays of x and y coordinates.
+
+           Parameter
+           ---------
+           par : int or psana.Event() - integer run number or psana event object.
+
+           Returns
+           -------
+           np.array - 2 arrays of pixel x and y coordinates, respectively.
+        """
+        rnum = self.runnum(par)
+        cx, cy = self.pyda.coords_xy(rnum)
+        return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy) 
+
+
+    def coords_xyz(self, par) :
+        """Returns per-pixel arrays of x, y, and z coordinates.
+
+           Parameter
+           ---------
+           par : int or psana.Event() - integer run number or psana event object.
+
+           Returns
+           -------
+           np.array - 3 arrays of pixel x, y, and z coordinates, respectively.
+        """
+        rnum = self.runnum(par)
+        cx, cy, cz = self.pyda.coords_xyz(rnum)
+        return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy), self._shaped_array_(rnum, cz) 
+
+
     def areas(self, par) :
         """Returns per-pixel array of pixel area.
 
@@ -1142,6 +1179,40 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         self.pyda.tilt_geo(par, dtx, dty, dtz)
+
+
+    def image_xaxis(self, par, pix_scale_size_um=None, x0_off_pix=None) :
+        """Returns array of pixel x coordinates associated with image x-y grid.
+
+           Parameters
+           ----------
+           par : int or psana.Event() - integer run number or psana event object.
+           pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
+           x0_off_pix        : float - origin x coordinate offset in number of pixels
+
+           Returns
+           -------
+           np.array - array of pixel x coordinates of image x-y grid.
+        """
+        rnum = self.runnum(par)
+        return self.pyda.image_xaxis(rnum, pix_scale_size_um, x0_off_pix)
+
+
+    def image_yaxis(self, par, pix_scale_size_um=None, y0_off_pix=None) :
+        """Returns array of pixel x coordinates associated with image x-y grid.
+
+           Parameters
+           ----------
+           par : int or psana.Event() - integer run number or psana event object.
+           pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
+           y0_off_pix        : float - origin y coordinate offset in number of pixels
+
+           Returns
+           -------
+           np.array - array of pixel y coordinates of image x-y grid.
+        """
+        rnum = self.runnum(par)
+        return self.pyda.image_yaxis(rnum, pix_scale_size_um, y0_off_pix)
 
 
     def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
