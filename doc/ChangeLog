@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 	
+Tag: V00-03-66
+2016-05-18 Mikhail S. Dubrovin
+- correct comments for word "bond"
+
 Tag: V00-03-65
 2016-05-18 Mikhail S. Dubrovin
 - AreaDetector - add methods mask_edges, mask_neighbors (PSAS-139)

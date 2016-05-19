@@ -786,7 +786,7 @@ ndarray<const double, 1> DetectorAccess::pixel_areas(const int& runnum)
 
 //-------------------
 
-// mbits=0377; // 1-edges; 2-wide central cols; 4-non-bound; 8-non-bound neighbours
+// mbits=0377; // 1-edges; 2-wide central cols; 4-non-bond; 8-non-bond neighbours
 ndarray<const int, 1> DetectorAccess::pixel_mask_geo(boost::shared_ptr<PSEvt::Event> shp_evt, boost::shared_ptr<PSEnv::Env> shp_env, const unsigned& mbits)
 {
   m_calibdir = shp_env->calibDir();
@@ -795,7 +795,7 @@ ndarray<const int, 1> DetectorAccess::pixel_mask_geo(boost::shared_ptr<PSEvt::Ev
 
 //-------------------
 
-// mbits=0377; // 1-edges; 2-wide central cols; 4-non-bound; 8-non-bound neighbours
+// mbits=0377; // 1-edges; 2-wide central cols; 4-non-bond; 8-non-bond neighbours
 ndarray<const int, 1> DetectorAccess::pixel_mask_geo(const int& runnum, const unsigned& mbits)
 {
   initGeometry(runnum);

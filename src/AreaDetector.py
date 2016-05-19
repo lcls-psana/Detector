@@ -91,7 +91,7 @@ Usage::
     coords_z   = det.coords_z(par)
     areas      = det.areas(par)
     mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols;
-    #                                                  +4/+8/+16-non-bound / with four / with eight neighbors
+    #                                                  +4/+8/+16-non-bond / with four / with eight neighbors
     ix         = det.indexes_x(par)
     iy         = det.indexes_y(par)
     ix, iy     = det.indexes_xy(par)
