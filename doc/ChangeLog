@@ -13,6 +13,12 @@ reverse time order.
 
 ==============
 	
+Tag: V00-03-68
+2016-05-20 Mikhail S. Dubrovin
+- Code refactoring: 
+	- move GlobalUtils.table_from_cspad_ndarr method to pyimgalgos
+	- update ex_ndarray_from_image.py
+	
 Tag: V00-03-67
 2016-05-19 Mikhail S. Dubrovin
 - AreaDetector - add methods coords_xy, coords_xyz, image_xaxis, image_yaxis, update ex_all_dets.py (PSAS-139)
