@@ -100,8 +100,7 @@ class PyDetectorAccess :
 
         if self.dettype == gu.EPIX100A :
             fname = apputils.AppDataPath('Detector/geometry-def-epix100a.data').path()
-            #if self.pbits & 1 :
-            print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
+            if self.pbits : print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
             return GeometryAccess(fname, 0377 if self.pbits else 0)
 
         return None
@@ -482,13 +481,13 @@ class PyDetectorAccess :
         # data object
         d = pda.get_cspad_data_object(evt, self.source)        
         if d is None :
-            print 'cspad data object is not found'
+            if self.pbits & 1 : print 'cspad data object is not found'
             return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
         if c is None :
-            print 'cspad config object is not found'
+            if self.pbits & 1 : print 'cspad config object is not found'
             return None
     
         nquads   = d.quads_shape()[0]
@@ -911,7 +910,7 @@ class PyDetectorAccess :
         if c is None :
             msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
             #raise IOError(msg)
-            print msg
+            if self.pbits : print msg
             return None
 
         self.gm = np.empty((2,185,388), dtype=np.uint16)
@@ -948,13 +947,13 @@ class PyDetectorAccess :
         # data object
         d = pda.get_cspad_data_object(evt, self.source)        
         if d is None :
-            print 'cspad data object is not found'
+            if self.pbits & 1 : print 'cspad data object is not found'
             return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
         if c is None :
-            print 'cspad config object is not found'
+            if self.pbits & 1 : print 'cspad config object is not found'
             return None
     
         nquads   = d.quads_shape()[0]

@@ -12,20 +12,24 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
-	
+
+Tag: V00-03-69
+2016-06-09 Mikhail S. Dubrovin
+- PyDetectorAccess - hide print statements under control of pbits
+
 Tag: V00-03-68
 2016-05-20 Mikhail S. Dubrovin
-- Code refactoring: 
+- Code refactoring:
 	- move GlobalUtils.table_from_cspad_ndarr method to pyimgalgos
 	- update ex_ndarray_from_image.py
-	
+
 Tag: V00-03-67
 2016-05-19 Mikhail S. Dubrovin
 - AreaDetector - add methods coords_xy, coords_xyz, image_xaxis, image_yaxis, update ex_all_dets.py (PSAS-139)
 M       AreaDetector.py
 M       PyDetectorAccess.py
 M       src/PyDetectorAccess.py
-	
+
 Tag: V00-03-66
 2016-05-18 Mikhail S. Dubrovin
 - correct comments for word "bond"
@@ -42,7 +46,7 @@ M       PyDetectorAccess.py
 
 Tag: V00-03-63
 2016-05-17 Mikhail S. Dubrovin
-- det_ndarr_raw_proc - common mode parameters tuning for pnccd  
+- det_ndarr_raw_proc - common mode parameters tuning for pnccd
 
 Tag: V00-03-62
 2016-05-16 Christopher O'Grady
@@ -105,7 +109,7 @@ Tag: V00-03-49
 - PyDetectorAccess - add methods ndarray_from_image and default_geometry, update ex_all_dets.py
 - AreaDetector - add method ndarray_from_image and its test ex_ndarray_from_image
 - add examples/ex_ndarray_from_image.py data/geometry-def-epix100a.data
-	
+
 Tag: V00-03-48
 2016-03-24 Mikhail S. Dubrovin
 - AreaDetector - update comments for doc string.
@@ -141,11 +145,11 @@ Tag: V00-03-42
 Tag: V00-03-41
 2016-03-05 Mikhail S. Dubrovin
 - det_ndarr_average - use det.save_txtnda and det.save_asdaq
-	
+
 Tag: V00-03-40
 2016-02-25 Mikhail S. Dubrovin
 - exteld det_ndarr_raw_proc for case of many sources
-	
+
 Tag: V00-03-39
 2016-02-24 Mikhail S. Dubrovin
 - add AreaDetector.save_asdaq, update examples, app/det_ndarr_raw_proc (PSAS-139)
@@ -159,7 +163,7 @@ Tag: V00-03-37
 2016-02-19 Mikhail S. Dubrovin
 - in PyDetectorAccess.py and AreaDetector.py add method point_indexes.
 - add ex_andor3d_config.py, update ex_all_dets.py
-	
+
 Tag: V00-03-36
 2016-02-12 Mikhail S. Dubrovin
 - PyDetectorAccess.raw_data_cspad2x2 - hide configuration wornings under pbits (PSAS-139)
@@ -176,18 +180,18 @@ Tag: V00-03-34
 Tag: V00-03-33
 2016-02-09 Mikhail S. Dubrovin
 - add ex_andor3d.py
-	
+
 Tag: V00-03-32
 2016-02-08 Mikhail S. Dubrovin
 - add support for Andor3d (PSAS-139)
     - PyDataAccess.py - add get_andor_config_object, get_andor_data_object
     - PyDetectorAccess.py - update raw_data_andor, raw_data_pnccd, ex_all_dets.py, GlobalUtils.py
     - DetectorTypes.py - add DualAndor
-	
+
 Tag: V00-03-31
 2016-02-08 Mikhail S. Dubrovin
-- AreaDetector.py - in image() check if nda is None before nda = two2x1ToData2x2(nda) (PSAS-139) 
-	
+- AreaDetector.py - in image() check if nda is None before nda = two2x1ToData2x2(nda) (PSAS-139)
+
 Tag: V00-03-30
 2016-01-29 Christopher O'Grady
 - Add eventCodes method to evr
@@ -198,7 +202,7 @@ Tag: V00-03-29
 
 Tag: V00-03-28
 2016-01-27 Mikhail S. Dubrovin
-- AreaDetector.py - use mask_comb in stead of status_as_mask, swap mbits bits 1 and 2 for status and calib (PSAS-139) 
+- AreaDetector.py - use mask_comb in stead of status_as_mask, swap mbits bits 1 and 2 for status and calib (PSAS-139)
 
 Tag: V00-03-27
 2016-01-26 Mikhail S. Dubrovin
@@ -206,23 +210,23 @@ Tag: V00-03-27
 
 Tag: V00-03-26
 2016-01-22 Mikhail S. Dubrovin
-- NDArrProducerStore::Create 
+- NDArrProducerStore::Create
 	- add support for QUARTZ4A150, RAYONIX, FCCD as Camera
 	- do not throw exception if dettype is unknown, return NULL pointer
 - DetectorAccess.cpp - in methods like data_uint16_2 return empty ndarray if m_nda_prod == NULL
-	
+
 Tag: V00-03-25
 2016-01-21 Mikhail S. Dubrovin
 - AreaDetector.py - in status_as_mask do not re-shape cspad2x2 arr, it is already (2,185,388) from status()
 
 Tag: V00-03-24
 2016-01-20 Mikhail S. Dubrovin
-- AreaDetector.py - in calib change order of corrections; 1) common mode, 2) mask from status (PSAS-139) 
-	
+- AreaDetector.py - in calib change order of corrections; 1) common mode, 2) mask from status (PSAS-139)
+
 Tag: V00-03-23
 2016-01-20 Mikhail S. Dubrovin
 - AreaDetector.py - fix return from status_as_mask, ex_all_dets.py - update example for det.mask
-	
+
 Tag: V00-03-22
 2016-01-15 TJ Lane
 - Fix issue where aliases were not correctly mapped for non-AreaDetectors
@@ -269,11 +273,11 @@ Tag: V00-03-13
 - app/det_ndarr_average - evaluate and save ndarray for max value, 
 - ex_all_dets.py - add examples for non-complete data of MecTragetChamber
 - PyDataAccess.py - add support for Epix.ElementV3 and Epix.Config100aV2 (PSAS-147)
-	
+
 Tag: V00-03-12
 2015-12-09 Mikhail S. Dubrovin
 - PyDetectorAccess.raw_data_cspad - fix cspad ndarray reconstruction in case of missing quads, like in MecTargetChamber.0:Cspad.0 (PSAS-139)
-	
+
 Tag: V00-03-11
 2015-12-09 Mikhail S. Dubrovin
 - in PyDetectorAccess.py, AreaDetector.py rename methods gain_map to gain_mask, inverse results for low/high gain pixels (PSAS-139)
@@ -282,7 +286,7 @@ Tag: V00-03-10
 2015-12-08 Mikhail S. Dubrovin
 - PyDetectorAccess.py, AreaDetector.py - add gain_map evaluation method using configuration (PSAS-139)
 - add examples ex_cspad_gain_map.py, expyda_cspad_gain_map.py
-	
+
 Tag: V00-03-09
 2015-12-04 Mikhail S. Dubrovin
 - PyDataAccess, PyDetectorAccess.py, ex_new_dets - add support for Fccd, Timepix, Fli, Pimax (PSAS-139)
@@ -292,11 +296,11 @@ Tag: V00-03-08
 - add Igor's script app/find_runs_for_data_type
 - add data/copy_part_of_xtc_file.cfg
 - DetectorAccess - fix memory leak issue (PSAS-139)
-	
+
 Tag: V00-03-07
 2015-11-17 Mikhail S. Dubrovin
 - update documentation for AreaDetector, WFDetector, PyDetector
-	
+
 Tag: V00-03-06
 2015-11-16 Mikhail S. Dubrovin
 - PyDetector - restore and update documentation for sphinx, restore optional test, which were deleted/broken in rev.10938
