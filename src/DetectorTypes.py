@@ -12,6 +12,7 @@ from Detector.IpimbDetector     import IpimbDetector
 from Detector.UsdUsbDetector    import UsdUsbDetector
 from Detector.GenericWFDetector import GenericWFDetector
 from Detector.OceanDetector     import OceanDetector
+from Detector.TDCDetector       import TDCDetector
 
 def no_device_exception(*args):
     raise TypeError('Detector device is `NoDevice`, which means the'
@@ -37,7 +38,7 @@ detectors = {
     "Ipimb"       : IpimbDetector,
     "Encoder"     : DdlDetector,
     "Cspad"       : AreaDetector,
-    "AcqTDC"      : DdlDetector,
+    "AcqTDC"      : TDCDetector,
     "Xamps"       : AreaDetector,
     "Cspad2x2"    : AreaDetector,
     "Fexamp"      : AreaDetector,

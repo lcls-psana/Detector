@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-70
+2016-06-10 Christopher O'Grady
+- Add new TDCDetector for acqiris TDC
+
 Tag: V00-03-69
 2016-06-09 Mikhail S. Dubrovin
 - PyDetectorAccess - hide print statements under control of pbits
