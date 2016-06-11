@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-71
+2016-06-10 Christopher O'Grady
+- Add DdlDetector types for XCS-BEAMMON-01 and EOrbits BLD.
+
 Tag: V00-03-70
 2016-06-10 Christopher O'Grady
 - Add new TDCDetector for acqiris TDC

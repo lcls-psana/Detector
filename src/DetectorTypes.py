@@ -138,7 +138,7 @@ bld_info = {
     "XCS-IPM-ladm"     : IpimbDetector,
     "XPP-AIN-01"       : DdlDetector,
     "XCS-AIN-01"       : DdlDetector,
-    "AMO-AIN-01"       : DdlDetector
+    "AMO-AIN-01"       : DdlDetector,
+    "XCS-BEAMMON-01"   : DdlDetector,
+    "EOrbits"          : DdlDetector
 }
-
-
