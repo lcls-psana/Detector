@@ -728,7 +728,7 @@ class AreaDetector(object):
            Parameters
            ----------
            par    : int or psana.Event() - integer run number or psana event object.
-           nda    : np.array - raw data with subtracted pedestals.
+           nda    : np.array - input: raw data with subtracted pedestals, output: cm corrected data.
            cmpars : list - common mode parameters, ex.: (1,50,50,100).
                     By default uses parameters from calib directory. 
 
@@ -752,7 +752,7 @@ class AreaDetector(object):
            Parameters
            ----------
            par    : int or psana.Event() - integer run number or psana event object.
-           nda    : np.array - raw data with subtracted pedestals.
+           nda    : np.array - raw data with subtracted pedestals. Input data is not modified.
            cmpars : list - common mode parameters, ex.: (1,50,50,100)
                     By default uses parameters from calib directory. 
 
@@ -761,7 +761,7 @@ class AreaDetector(object):
            np.array - per-pixel common mode correction offsets.
         """
         nda_cm_corr = np.array(nda, dtype=np.float32, copy=True)
-        self.common_mode_apply(self.runnum(par), nda, cmpars)
+        self.common_mode_apply(self.runnum(par), nda_cm_corr, cmpars)
         return nda_cm_corr - nda
 
 ##-----------------------------

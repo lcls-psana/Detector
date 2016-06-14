@@ -15,11 +15,12 @@ reverse time order.
 
 Tag: V00-03-73
 2016-06-14 Mikhail S. Dubrovin
-- fix typo in app/det_ndarr_average
+- AreaDetector.common_mode_correction - do not modify input nda.
 
 Tag: V00-03-72
 2016-06-14 Mikhail S. Dubrovin
 - AreaDetector.py and PyDetectorAccess.py - change all mask dtype to uint8 (PSAS-139)
+- fix typo in app/det_ndarr_average
 
 Tag: V00-03-71
 2016-06-10 Christopher O'Grady
