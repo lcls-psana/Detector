@@ -580,7 +580,7 @@ class AreaDetector(object):
         rnum = self.runnum(par)
         stat = self.status(rnum)
         if stat is None : return None
-        smask = np.select((stat>0,), (0,), default=1)
+        smask = np.asarray(np.select((stat>0,), (0,), default=1), dtype=np.uint8)
         if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode==2 else False))
         
         if self.is_cspad2x2() : return smask # stat already has a shape (2,185,388)

@@ -866,7 +866,7 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def cspad_gain_mask(self, gain=None) :
-        """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(32,185,388), dtype=uint16.
+        """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(32,185,388), dtype=uint8.
             If gain is set, method returns a map of (float) gain/1 values for low/high gain pixels, respectively.
             None is returned if configuration data is missing.
         """
@@ -878,8 +878,8 @@ class PyDetectorAccess :
             print msg
             return None
 
-        self.gm = np.empty((32,185,388), dtype=np.uint16)
-        asic1   = np.ones((185,194), dtype=np.uint16)
+        self.gm = np.empty((32,185,388), dtype=np.uint8)
+        asic1   = np.ones((185,194), dtype=np.uint8)
 
         for iquad in range(c.quads_shape()[0]):
             # need in copy to right shift bits
@@ -901,7 +901,7 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def cspad2x2_gain_mask(self, gain=None) :
-        """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(2,185,388), dtype=uint16.
+        """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(2,185,388), dtype=uint8.
             If gain is set, method returns a map of (float) gain/1 values for low/high gain pixels, respectively.
             None is returned if configuration data is missing.
         """
@@ -913,8 +913,8 @@ class PyDetectorAccess :
             if self.pbits : print msg
             return None
 
-        self.gm = np.empty((2,185,388), dtype=np.uint16)
-        asic1   = np.ones((185,194), dtype=np.uint16)
+        self.gm = np.empty((2,185,388), dtype=np.uint8)
+        asic1   = np.ones((185,194), dtype=np.uint8)
 
         gm = np.array(c.quad().gm().gainMap())
 

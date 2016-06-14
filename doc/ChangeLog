@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-72
+2016-06-14 Mikhail S. Dubrovin
+- AreaDetector.py and PyDetectorAccess.py - change all mask dtype to uint8 (PSAS-139)
+
 Tag: V00-03-71
 2016-06-10 Christopher O'Grady
 - Add DdlDetector types for XCS-BEAMMON-01 and EOrbits BLD.
