@@ -140,5 +140,7 @@ bld_info = {
     "XCS-AIN-01"       : DdlDetector,
     "AMO-AIN-01"       : DdlDetector,
     "XCS-BEAMMON-01"   : DdlDetector,
-    "EOrbits"          : DdlDetector
+    "EOrbits"          : DdlDetector,
+    "MfxDg1_Pim"       : DdlDetector,
+    "MfxDg2_Pim"       : DdlDetector
 }
