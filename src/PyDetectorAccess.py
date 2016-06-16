@@ -1000,7 +1000,11 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def load_txtnda(self, fname) :
-        return load_txt(fname)
+        nda = load_txt(fname)
+        if len(nda.shape)>2 : return nda
+        shape = self.shape()
+        if shape is not None : nda.shape = shape
+        return nda
 
 ##-----------------------------
 

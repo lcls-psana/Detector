@@ -13,6 +13,11 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-75
+2016-06-16 Mikhail S. Dubrovin
+- PyDetectorAccess.load_txtnda - reshape to det.shape() if possible (PSAS-139)
+- add ex_cspad_z_position.py
+
 Tag: V00-03-74
 2016-06-15 Christopher O'Grady
 - Add Detector support for two new MFX Pims that read out with the
