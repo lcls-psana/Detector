@@ -26,13 +26,13 @@ def plot_det_image(det, evt, nda, tit='') :
 
 #------------------------------
 
-def evaluate_rms_limits(arr_rms, verbos=1, nneg=5, npos=6, frave=0.01) :
+def evaluate_rms_limits(arr_rms, verbos=1, nneg=5, npos=6, lowmin=0.01) :
     """Returns evaluated low and high limit of the RMS, which are used to find rms-cold and rms-hot pixels.
     """
     #t0_sec = time()
     ave, std = arr_rms.mean(), arr_rms.std()
     rms_lo, rms_hi = ave-nneg*std, ave+npos*std
-    if rms_lo <= 0 : rms_lo = frave*ave
+    if rms_lo <= 0 : rms_lo = lowmin*ave
     if verbos & 1 :
         print '  %s: RMS ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
               (sys._getframe().f_code.co_name, ave, std, rms_lo, rms_hi)
@@ -83,7 +83,8 @@ def fname_template(evt, env, src, ofname, nevts):
 
 class DetNDArrRawProc :
 
-    def __init__(self, dsname, source, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma, plotim, verbos, savebw):
+    def __init__(self, dsname, source, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma,\
+                 plotim, verbos, savebw, nsiglo, nsighi, flomin):
 
         self.dsname = dsname
         self.src    = source
@@ -100,6 +101,10 @@ class DetNDArrRawProc :
         self.plotim = plotim
         self.verbos = verbos
         self.savebw = savebw
+
+        self.nsiglo = nsiglo
+        self.nsighi = nsighi
+        self.flomin = flomin
 
         self.evstg1 = max(self.events*0.05, 5)
         self.nsigma = nsigma
@@ -131,6 +136,10 @@ class DetNDArrRawProc :
         print 'rms low limit (ADU)             : ',      self.rms_lo
         print 'rms high limit (ADU)            : ',      self.rms_hi
         print 'allowed low/high fraction limit : %.3f' % self.fraclm
+        print '\nParameters for auto-evaluation of rms limits:'
+        print 'number of sigma from mean for rms low limit    : ',  self.nsiglo
+        print 'number of sigma from mean for rms high limit   : ',  self.nsighi
+        print 'minimal low limit on rms as a fraction of mean : ',  self.flomin
         print 50*'_', '\n'
 
 
@@ -297,9 +306,9 @@ class DetNDArrRawProc :
 
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
         
-        rms_lo, rms_hi = evaluate_rms_limits(arr_rms, self.verbos) \
-                            if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0. \
-                            else (self.rms_lo, self.rms_hi)
+        rms_lo, rms_hi = evaluate_rms_limits(arr_rms, self.verbos, self.nsiglo, self.nsighi, self.flomin)\
+                         if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0.\
+                         else (self.rms_lo, self.rms_hi)
 
         arr_sta_rms_hi = np.select((arr_rms>rms_hi,),     (self.arr1,), 0)
         arr_sta_rms_lo = np.select((arr_rms<rms_lo,),     (self.arr1,), 0)
@@ -351,7 +360,8 @@ class DetNDArrRawProc :
 
 #------------------------------
 
-def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma, plotim, verbos, savebw):
+def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma,\
+                       plotim, verbos, savebw, nsiglo, nsighi, flomin):
 
     t0_sec = time()
     tdt = t0_sec
@@ -364,7 +374,7 @@ def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, 
     
     if verbos & 1 : print 'Raw data processing of dataset: %s' % (dsname)
 
-    lst_dpo = [DetNDArrRawProc(dsname, src, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma, plotim, verbos, savebw)\
+    lst_dpo = [DetNDArrRawProc(dsname, src, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma, plotim, verbos, savebw, nsiglo, nsighi, flomin)\
                for src in sources.split(',')]
 
     ds  = psana.DataSource(dsname)
@@ -418,6 +428,9 @@ def command_line_parser() :
     plotim_def = 0      
     verbos_def = 7
     savebw_def = 0377
+    nsiglo_def = 5.0
+    nsighi_def = 6.0
+    flomin_def = 0.01
 
     h_dsname='dataset name, default = %s' % dsname_def
     h_source='input ndarray source name, default = %s' % source_def
@@ -433,6 +446,9 @@ def command_line_parser() :
     h_plotim='control bit-word to plot images, default = %s' % plotim_def
     h_verbos='control bit-word for verbosity, default = %s' % verbos_def
     h_savebw='control bit-word to save arrays, default = %s' % savebw_def
+    h_nsiglo='number of sigma from mean for low limit on rms, default = %s' % nsiglo_def
+    h_nsighi='number of sigma from mean for high limit on rms, default = %s' % nsighi_def
+    h_flomin='minimal low limit on rms as a fraction of mean, default = %s' % flomin_def
 
     parser = OptionParser(description=usage(1), usage ='usage: %prog [options]\n' + usage())
     parser.add_option('-d', '--dsname', dest='dsname', default=dsname_def, action='store', type='string', help=h_dsname)
@@ -449,7 +465,10 @@ def command_line_parser() :
     parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store', type='int',    help=h_plotim)
     parser.add_option('-v', '--verbos', dest='verbos', default=verbos_def, action='store', type='int',    help=h_verbos)
     parser.add_option('-S', '--savebw', dest='savebw', default=savebw_def, action='store', type='int',    help=h_savebw)
-    #parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_true',          help=h_plotim)
+    parser.add_option('-L', '--nsiglo', dest='nsiglo', default=nsiglo_def, action='store', type='float',  help=h_nsiglo)
+    parser.add_option('-H', '--nsighi', dest='nsighi', default=nsighi_def, action='store', type='float',  help=h_nsighi)
+    parser.add_option('-M', '--flomin', dest='flomin', default=flomin_def, action='store', type='float',  help=h_flomin)
+    #parser.add_option('-p', '--plotim', dest='plotim', default=plotim_def, action='store_true',         help=h_plotim)
  
     opts, args = parser.parse_args()
     return opts, args
@@ -476,7 +495,7 @@ if __name__ == "__main__" :
 
     det_ndarr_raw_proc(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, 
                        opts.intlow, opts.inthig, opts.rmslow, opts.rmshig, opts.fraclm, opts.nsigma, 
-                       opts.plotim, opts.verbos, opts.savebw)
+                       opts.plotim, opts.verbos, opts.savebw, opts.nsiglo, opts.nsighi, opts.flomin)
 
     sys.exit(0)
 

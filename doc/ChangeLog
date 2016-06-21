@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-76
+2016-06-21 Mikhail S. Dubrovin
+- Add three new parameters to the command line algorithm of Detector.app.det_ndarr_raw_proc (PSAS-6)
+
 Tag: V00-03-75
 2016-06-16 Mikhail S. Dubrovin
 - PyDetectorAccess.load_txtnda - reshape to det.shape() if possible (PSAS-139)
