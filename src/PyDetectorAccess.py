@@ -3,13 +3,16 @@
 #  $Id$
 #
 # Description:
-#  class PyDetectorAccess
 #------------------------------------------------------------------------
 
 """Class contains a collection of direct python access methods to detector associated information.
 
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on python.
+
+@see classes
+\n  :py:class:`Detector.PyDetector` - factory for different detectors
+\n  :py:class:`Detector.DetectorAccess` - c++ access interface to data
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
@@ -42,17 +45,14 @@ from PSCalib.NDArrIO import save_txt, load_txt
 
 class PyDetectorAccess :
     """Direct python access to detector data.
-
-    @see PyDetector
-    @see DetectorAccess
     """
 ##-----------------------------
 
     def __init__(self, source, env, pbits=0) :
         """Constructor.
-        @param source - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-        @param env    - environment
-        @param pbits  - print control bit-word
+           - source - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
+           - env    - environment
+           - pbits  - print control bit-word
         """
         #print 'In c-tor DetPyAccess'
 
@@ -72,6 +72,10 @@ class PyDetectorAccess :
         self.geo = None 
         self.runnum_geo = -1
         self.mbits      = None
+
+        self.cfg_gain_mask_is_loaded = False
+        self.runnum_cfg = -1
+        self._gain_mask = None
 
         self.counter_cspad2x2_msg = 0
 
@@ -110,7 +114,7 @@ class PyDetectorAccess :
     def geoaccess(self, par) : # par = evt or runnum
 
         runnum = par if isinstance(par, int) else par.run()
-        #print 'cpstore XXX runnum = %d' % runnum
+        #print 'geoaccess XXX runnum = %d' % runnum
 
         # for 1st entry and when runnum is changing:
         if  runnum != self.runnum_geo or self.geo is None :
@@ -432,14 +436,31 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def gain_mask(self, gain=None) :
+    def gain_mask(self, par, gain=None) :
         """Returns a gain map extracted from detector configuration data.
            Currently implemented for CSPAD only.
            Returns None for other detectors or missing configuration for CSPAD.
         """
-        if self.dettype == gu.CSPAD : return self.cspad_gain_mask(gain) 
-        elif self.dettype == gu.CSPAD2X2 : return self.cspad2x2_gain_mask(gain) 
-        else                        : return None
+        runnum = par if isinstance(par, int) else par.run()
+
+        if runnum == self.runnum_cfg :
+            if self.cfg_gain_mask_is_loaded :
+                return self._gain_mask
+        else :
+            self.runnum_cfg = runnum
+            self.cfg_gain_mask_is_loaded = False
+
+        if   self.dettype == gu.CSPAD    : self._gain_mask = self.cspad_gain_mask(gain) 
+        elif self.dettype == gu.CSPAD2X2 : self._gain_mask = self.cspad2x2_gain_mask(gain) 
+        else :
+            self.cfg_gain_mask_is_loaded = True
+            self._gain_mask = None
+
+        # DO NOT APPLY correction if ALL pixels have high gain
+        if self._gain_mask is not None :
+            if self._gain_mask.mean() == 0 : self._gain_mask = None 
+
+        return self._gain_mask
 
 ##-----------------------------
 
@@ -878,7 +899,8 @@ class PyDetectorAccess :
             print msg
             return None
 
-        self.gm = np.empty((32,185,388), dtype=np.uint8)
+        #self.gm = np.empty((32,185,388), dtype=np.uint8)
+        self.gm = np.zeros((32,185,388), dtype=np.uint8)
         asic1   = np.ones((185,194), dtype=np.uint8)
 
         for iquad in range(c.quads_shape()[0]):
@@ -891,6 +913,8 @@ class PyDetectorAccess :
                 gm2x1 = np.hstack((gmasic0, gm & 1))
                 self.gm[i2x1+iquad*8][:][:] = np.logical_not(gm2x1)
                 if i2x1 < 7 : gm = np.right_shift(gm, asic1) # do not shift for last asic
+
+        self.cfg_gain_mask_is_loaded = True
 
         if gain is None :
             return self.gm
@@ -913,7 +937,8 @@ class PyDetectorAccess :
             if self.pbits : print msg
             return None
 
-        self.gm = np.empty((2,185,388), dtype=np.uint8)
+        #self.gm = np.empty((2,185,388), dtype=np.uint8)
+        self.gm = np.zeros((2,185,388), dtype=np.uint8)
         asic1   = np.ones((185,194), dtype=np.uint8)
 
         gm = np.array(c.quad().gm().gainMap())
@@ -933,6 +958,8 @@ class PyDetectorAccess :
             gm2x1 = np.hstack((gmasic0, gm & 1))
             self.gm[i2x1][:][:] = np.logical_not(gm2x1)
             if i2x1 < 1 : gm = np.right_shift(gm, asic1) # do not shift for last asic
+
+        self.cfg_gain_mask_is_loaded = True
 
         if gain is None :
             return self.gm

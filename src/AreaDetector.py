@@ -65,7 +65,10 @@ Usage::
     cmod   = det.common_mode(par)
 
     # per-pixel gain mask from configuration data; 1/0 for low/high gain pixels
-    gmap = det.gain_mask() # gain=6.789 - optional parameter 
+    gmap = det.gain_mask(par) # gain=6.789 - optional parameter 
+
+    # set gfactor=high/low gain factor for CSPAD(2X2) in det.calib and det.image methods
+    det.set_gain_mask_factor(gfactor)
 
     # get raw data
     nda_raw = det.raw(evt)
@@ -166,6 +169,7 @@ import numpy as np
 import PSCalib.GlobalUtils as gu
 from   PSCalib.GeometryObject import data2x2ToTwo2x1, two2x1ToData2x2
 from   Detector.PyDetectorAccess import PyDetectorAccess
+#from   Detector.GlobalUtils import print_ndarr
 
 ##-----------------------------
 
@@ -206,6 +210,8 @@ class AreaDetector(object):
         self._mask_nda   = None
 
         if self.pbits & 1 : self.print_members()
+
+        self._gain_mask_factor = 6.85 # cpo default value
 
 ##-----------------------------
 
@@ -312,6 +318,20 @@ class AreaDetector(object):
            int - run number
         """
         return par if isinstance(par, int) else par.run()
+
+##-----------------------------
+
+    def is_cspad(self) :
+        """Returns True/False for CSPAD/other detector type
+
+           Returns
+           -------
+           bool - True if current detector is CSPAD, False otherwise.
+        """
+        if self.dettype == gu.CSPAD :
+            return True
+        else :
+            return False
 
 ##-----------------------------
 
@@ -621,18 +641,19 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def gain_mask(self, gain=None) :
+    def gain_mask(self, par, gain=None) :
         """Returns per-pixel array with gain mask evaluated from detector configuration data.
 
            Parameter
            ---------
+           par  : int or psana.Event() - integer run number or psana event object.
            gain : float - gain factor; mask will be multiplied by this factor if it is specified.
 
            Returns
            -------
            np.array - per-pixel gain mask; 1/0 (or gain/0) for low/high gain pixels.
         """
-        return self.pyda.gain_mask(gain)
+        return self.pyda.gain_mask(par, gain)
 
 ##-----------------------------
 
@@ -778,6 +799,11 @@ class AreaDetector(object):
 
 ##-----------------------------
 
+    def set_gain_mask_factor(self, gfactor=None) :
+        self._gain_mask_factor = gfactor
+
+##-----------------------------
+
     def calib(self, evt, cmpars=None, mbits=1) :
         """Returns per-pixel array of calibrated data intensities.
         
@@ -815,10 +841,10 @@ class AreaDetector(object):
             if self.pbits & 32 : self._print_warning('calib(...) - raw data are missing.')
             return None
 
-        peds  = self.pedestals(rnum)
+        peds = self.pedestals(rnum)
         if peds is None :
-            if self.pbits & 32 : self._print_warning('calib(...) - pedestals are missing.')
-            return None
+            if self.pbits & 32 : self._print_warning('calib(...) - pedestals are missing, return raw data.')
+            return raw
         
         if raw.shape != peds.shape :
             if self.pbits & 32 :
@@ -834,6 +860,26 @@ class AreaDetector(object):
         if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2 ->(185, 388, 2)
         self.common_mode_apply(rnum, cdata, cmpars)
         if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2 ->(2, 185, 388)
+
+
+        # ------------- 2016-06-24
+        gainmask = self.gain_mask(rnum, gain=self._gain_mask_factor)
+        #print 'XXX: use _gain_mask_factor = ', self._gain_mask_factor        
+        #print 'XXX: gainmask.mean(): ', gainmask.mean()
+        #print_ndarr(gainmask, 'XXX: det.calib(): apply gain_mask')
+
+        if gainmask is None :
+            if self.pbits & 32 : self._print_warning('calib(...) - gain_mask calibration in config store is missing.')
+        else :
+            cdata *= gainmask
+
+        gain = self.gain(rnum)
+        if gain is None :
+            if self.pbits & 32 : self._print_warning('calib(...) - pixel_gain calibration file is missing.')
+        else :
+            #print_ndarr(gain, 'XXX: det.calib(): apply gain')
+            cdata *= gain     
+        # -------------
 
         if mbits > 0 : 
             #smask = self.status_as_mask(rnum) # (2, 185, 388)
