@@ -13,10 +13,13 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-78
+2016-06-24 Mikhail S. Dubrovin
+- add examples/ex_epix100_cmod.py update ex_cspad_gain_mask.py
+
 Tag: V00-03-77
 2016-06-24 Mikhail S. Dubrovin
 - Add gain factor and gain_mask in det.calib method (PSAS-139)
-A       examples/ex_epix100_cmod.py
 M       src/AreaDetector.py
 M       src/PyDetectorAccess.py
 

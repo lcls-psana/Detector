@@ -13,10 +13,10 @@ psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-c
 ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0001-CxiDs2.0-Cspad.0-config-gain-mask.xtc')
 #ds  = psana.DataSource('exp=cxid9114:run=96')
 
-evt = ds.events().next()
 env = ds.env()
+evt = ds.events().next()
 rnum = evt.run()
-calibdir = env.calibDir()
+#calibdir = env.calibDir()
 
 det = psana.Detector('CxiDs2.0:Cspad.0', env)
 
@@ -24,11 +24,18 @@ det = psana.Detector('CxiDs2.0:Cspad.0', env)
 
 ##-----------------------------
 
-t0_sec = time()
-#gm = det.gain_mask()
-gm = det.gain_mask(gain=8)
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
-print_ndarr(gm, 'gain_map')
+gm=None
+
+for i, evt in enumerate(ds.events()) :
+
+  t0_sec = time()
+  #gm = det.gain_mask()
+  #gm = det.gain_mask(gain=8)
+  #gm = det.raw(evt)
+  gm = det.calib(evt)
+  print 'Event: %d  consumed time = %7.3f sec' % (i, time()-t0_sec)
+  print_ndarr(gm, 'gain_map')
+  if gm is not None : break
 
 img = det.image(rnum, gm)
 
