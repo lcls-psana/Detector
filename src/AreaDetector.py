@@ -1279,6 +1279,10 @@ class AreaDetector(object):
         rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
         if nda is None : return None
+
+        if len(nda.shape)==2 and self.dettype != gu.EPIX100A :
+            return nda
+
         if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         nda_img = np.array(nda, dtype=np.double).flatten()        
         if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))

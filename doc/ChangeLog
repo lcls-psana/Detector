@@ -13,6 +13,11 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-79
+2016-06-25 Mikhail S. Dubrovin
+- AreaDetector.py - det.image returns 2-d arrays w/o geometry
+- add examples/ex_opal.py
+	
 Tag: V00-03-78
 2016-06-24 Mikhail S. Dubrovin
 - add examples/ex_epix100_cmod.py update ex_cspad_gain_mask.py
