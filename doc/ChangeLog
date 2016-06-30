@@ -13,9 +13,18 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-80
+2016-06-30 Mikhail S. Dubrovin
+- update documentation for det.calib for two gain corrections and returning raw (PSAS-139)
+- add method do_reshape_2d_to_3d and apply it in _shaped_array_
+- update examples
+M       examples/ex_all_dets.py
+M       src/AreaDetector.py
+M       src/PyDetectorAccess.py
+
 Tag: V00-03-79
 2016-06-25 Mikhail S. Dubrovin
-- AreaDetector.py - det.image returns 2-d arrays w/o geometry
+- AreaDetector.py - det.image returns 2-d arrays w/o geometry (PSAS-139)
 - add examples/ex_opal.py
 	
 Tag: V00-03-78

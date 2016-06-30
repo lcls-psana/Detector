@@ -64,16 +64,20 @@ Usage::
     mask   = det.mask_calib(par)
     cmod   = det.common_mode(par)
 
-    # per-pixel gain mask from configuration data; 1/0 for low/high gain pixels
-    gmap = det.gain_mask(par) # gain=6.789 - optional parameter 
+    # per-pixel (int16) gain mask from configuration data; 1/0 for low/high gain pixels,
+    # or (float) per-pixel gain factors if gain is not None
+    gmap = det.gain_mask(par, gain=None) 
 
     # set gfactor=high/low gain factor for CSPAD(2X2) in det.calib and det.image methods
-    det.set_gain_mask_factor(gfactor)
+    det.set_gain_mask_factor(gfactor=6.85)
+
+    # set flag (for Chuck)
+    det.do_reshape_2d_to_3d(flag=False) 
 
     # get raw data
     nda_raw = det.raw(evt)
 
-    # get calibrated data (applied corrections: pedestals, pixel status mask, common mode)
+    # get calibrated data (applied corrections: pedestals, common mode, gain mask, gain, pixel status mask)
     nda_cdata = det.calib(evt)
     # and with custom common mode parameter sequence
     nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence,
@@ -211,7 +215,9 @@ class AreaDetector(object):
 
         if self.pbits & 1 : self.print_members()
 
-        self._gain_mask_factor = 6.85 # cpo default value
+        self.set_gain_mask_factor(gfactor=6.85) # cpo default value for CSPAD(2x2) gain_mask, det.calib, det.image
+
+        self.do_reshape_2d_to_3d(flag=False)    # Chuck - mandatory re-shaping 2-d to 3-d arrays        
 
 ##-----------------------------
 
@@ -439,6 +445,16 @@ class AreaDetector(object):
         
 ##-----------------------------
 
+    def do_reshape_2d_to_3d(self, flag=False) :
+        """For Chuck - if flag is True - reshape 2-d arrays to 3-d.
+           Parameters
+           ----------
+           flag : bool - False(def)/True 
+        """        
+        self.reshape_to_3d = flag
+
+##-----------------------------
+
     def _shaped_array_(self, rnum, arr, calibtype=None) :
         """ Returns shaped numpy.array if shape is defined and constants are loaded from file, None othervise.
         """
@@ -460,7 +476,12 @@ class AreaDetector(object):
                             gu.FCCD,\
                             gu.TIMEPIX,\
                             gu.FLI,\
-                            gu.PIMAX) : return arr
+                            gu.PIMAX) :
+
+            shape = arr.shape
+            if self.reshape_to_3d and len(shape)==2 :
+                arr.shape = (1,shape[0],shape[1])
+            return arr
 
         if calibtype is not None :
             status = self.loading_status(rnum, calibtype)
@@ -651,7 +672,7 @@ class AreaDetector(object):
 
            Returns
            -------
-           np.array - per-pixel gain mask; 1/0 (or gain/0) for low/high gain pixels.
+           np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
         """
         return self.pyda.gain_mask(par, gain)
 
@@ -799,7 +820,9 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def set_gain_mask_factor(self, gfactor=None) :
+    def set_gain_mask_factor(self, gfactor=6.85) :
+        """Sets the gain factor which is passed to gain_mask(...) in the det.calib and det.image methods.
+        """
         self._gain_mask_factor = gfactor
 
 ##-----------------------------
@@ -809,11 +832,13 @@ class AreaDetector(object):
         
            Gets raw data ndarray, applys baic corrections and return thus calibrated data.
            Applied corrections:
-           - pedestal subtraction,
+           - pedestal subtraction, returns det.raw(evt) if file with pedestals is missing   
+           - apply common mode correction
+           - gain_mask or "hybrid" gain from configuration object for CSPAD(2x2) only
+           - gain if pixel_gain calibration file is available
            - apply mask generated from pixel status ("bad pixels"
              from calibration).  Optionally apply other masks if
              "mbits" parameter set
-           - apply common mode correction
   
            Parameters
            ----------

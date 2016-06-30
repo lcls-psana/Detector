@@ -361,6 +361,7 @@ class PyDetectorAccess :
     def image_xaxis(self, par, pix_scale_size_um=None, x0_off_pix=None) :
         pix_size = pix_scale_size_um if pix_scale_size_um is not None else self.pixel_size(par)
         carr = self.coords_x(par)
+        if carr is None : return None
         cmin, cmax = carr.min(), carr.max() + 0.5*pix_size
         if x0_off_pix is None :
             return np.arange(cmin, cmax, pix_size)
@@ -372,6 +373,7 @@ class PyDetectorAccess :
     def image_yaxis(self, par, pix_scale_size_um=None, y0_off_pix=None) :
         pix_size = pix_scale_size_um if pix_scale_size_um is not None else self.pixel_size(par)
         carr = self.coords_y(par)
+        if carr is None : return None
         cmin, cmax = carr.min(), carr.max() + 0.5*pix_size
         if y0_off_pix is None :
             return np.arange(cmin, cmax, pix_size)

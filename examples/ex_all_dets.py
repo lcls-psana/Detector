@@ -52,7 +52,13 @@ elif ntest==12 : # dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad'  # alias
 
 
 elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
-elif ntest==16 : dsname, src = 'exp=xppc0115:run=305', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
+#elif ntest==16 : #dsname, src = 'exp=xppc0115:run=305', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
+elif ntest==16 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc', 'XppEndstation.0:Rayonix.0'
+    # JUST A SUBSTITUTE FOR calib directory
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
+
+
 #elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
 elif ntest==17 :
     dsname, src = '/reg/g/psdm/detector/data_test/types/0009-pnccdFront.xtc', 'pnccdFront'
@@ -230,6 +236,13 @@ gg.show()
 
 print_ndarr(det.image_xaxis(par), 'image_xaxis')
 print_ndarr(det.image_yaxis(par), 'image_yaxis')
+
+##-----------------------------
+print 80*'_','\nTest do_reshape_2d_to_3d'
+
+print_ndarr(det.pedestals(par), 'pedestals w/o reshape')
+det.do_reshape_2d_to_3d(flag=True)
+print_ndarr(det.pedestals(par), 'pedestals reshaped to 3d')
 
 ##-----------------------------
 
