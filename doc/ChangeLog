@@ -13,6 +13,11 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-81
+2016-07-01 Mikhail S. Dubrovin
+- force det.image to return 2-d even for do_reshape_2d_to_3d
+- app/det_ndarr_raw_proc - upgrade for intensity auto-limits, options -U,D
+
 Tag: V00-03-80
 2016-06-30 Mikhail S. Dubrovin
 - update documentation for det.calib for two gain corrections and returning raw (PSAS-139)

@@ -1303,6 +1303,10 @@ class AreaDetector(object):
         """
         rnum = self.runnum(evt)
         nda = nda_in if nda_in is not None else self.calib(evt)
+
+        shape = nda.shape
+        if self.reshape_to_3d and len(shape)==3 and shape[0]==1: nda.shape = shape[1:]
+
         if nda is None : return None
 
         if len(nda.shape)==2 and self.dettype != gu.EPIX100A :
