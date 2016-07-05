@@ -461,6 +461,7 @@ class AreaDetector(object):
         if arr is None   : return None
         if arr.size == 0 : return None
 
+        shape = arr.shape
         if self.dettype in (gu.PRINCETON,\
                             gu.ANDOR,\
                             gu.ANDOR3D,\
@@ -478,7 +479,6 @@ class AreaDetector(object):
                             gu.FLI,\
                             gu.PIMAX) :
 
-            shape = arr.shape
             if self.reshape_to_3d and len(shape)==2 :
                 arr.shape = (1,shape[0],shape[1])
             return arr
@@ -487,6 +487,11 @@ class AreaDetector(object):
             status = self.loading_status(rnum, calibtype)
             if status != gu.LOADED and status != gu.DEFAULT : return None
         if self.size(rnum) : arr.shape = self._shape_daq_(rnum)
+
+        if self.dettype == gu.EPIX100A and self.reshape_to_3d and len(shape)==2 :
+            arr.shape = (1,shape[0],shape[1])
+            return arr
+
         return arr if not self.is_cspad2x2() else data2x2ToTwo2x1(arr)
 
 ##-----------------------------

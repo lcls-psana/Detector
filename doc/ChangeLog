@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-82
+2016-07-05 Mikhail S. Dubrovin
+- reshape Epix100 from (704, 768) to (1, 704, 768) if flag is set
+	
 Tag: V00-03-81
 2016-07-01 Mikhail S. Dubrovin
 - force det.image to return 2-d even for do_reshape_2d_to_3d
