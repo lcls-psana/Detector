@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-84
+2016-07-05 Mikhail S. Dubrovin
+- det.ndarray_from_image - return 3d array for 2d detectors if geometry is missing but do_reshape_2d_to_3d is set
+
 Tag: V00-03-83
 2016-07-05 Mikhail S. Dubrovin
 - det.calib - returns modifiable array in case of returning raw (const) data

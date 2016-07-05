@@ -137,6 +137,9 @@ Usage::
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
     xaxis    = det.image_xaxis(par, pix_scale_size_um=None, x0_off_pix=None)
     yaxis    = det.image_yaxis(par, pix_scale_size_um=None, y0_off_pix=None)
+
+    # converting 2-d image to non-assembled array using pixel geometry information.
+    # if geometry info is missing - returns None, except the case when flag is set by det.do_reshape_2d_to_3d(True).  
     nda      = det.ndarray_from_image(par, image, pix_scale_size_um=None, xy0_off_pix=None)
 
     # save n-d numpy array in the text file with metadata (global methods under hood of the class object)
@@ -452,6 +455,7 @@ class AreaDetector(object):
            flag : bool - False(def)/True 
         """        
         self.reshape_to_3d = flag
+        self.pyda.do_reshape_2d_to_3d(flag)
 
 ##-----------------------------
 
@@ -462,7 +466,9 @@ class AreaDetector(object):
         if arr.size == 0 : return None
 
         shape = arr.shape
-        if self.dettype in (gu.PRINCETON,\
+        # for 2-d detectors
+        if self.dettype in (gu.EPIX100A,\
+                            gu.PRINCETON,\
                             gu.ANDOR,\
                             gu.ANDOR3D,\
                             gu.OPAL1000,\
@@ -479,18 +485,15 @@ class AreaDetector(object):
                             gu.FLI,\
                             gu.PIMAX) :
 
-            if self.reshape_to_3d and len(shape)==2 :
-                arr.shape = (1,shape[0],shape[1])
+            #if self.reshape_to_3d and len(shape)==2 :
+            if self.reshape_to_3d :
+                arr.shape = (1,shape[-2],shape[-1])
             return arr
 
         if calibtype is not None :
             status = self.loading_status(rnum, calibtype)
             if status != gu.LOADED and status != gu.DEFAULT : return None
         if self.size(rnum) : arr.shape = self._shape_daq_(rnum)
-
-        if self.dettype == gu.EPIX100A and self.reshape_to_3d and len(shape)==2 :
-            arr.shape = (1,shape[0],shape[1])
-            return arr
 
         return arr if not self.is_cspad2x2() else data2x2ToTwo2x1(arr)
 
@@ -1340,7 +1343,6 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         return self._shaped_array_(rnum, self.pyda.ndarray_from_image(rnum, image, pix_scale_size_um, xy0_off_pix, do_update))
-
 
     #def __call__(self, evt, nda_in=None) :
     #    """Alias for image in order to call it as det(evt,...)"""

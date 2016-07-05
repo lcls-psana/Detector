@@ -78,6 +78,7 @@ class PyDetectorAccess :
         self._gain_mask = None
 
         self.counter_cspad2x2_msg = 0
+        self.reshape_to_3d = False
 
 ##-----------------------------
 
@@ -388,13 +389,21 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def do_reshape_2d_to_3d(self, flag=False) :
+        self.reshape_to_3d = flag
+
+##-----------------------------
+
     def ndarray_from_image(self, par, image, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
 
         if image is None : return None
-        #if not isinstance(image, np.array) : return None
         if len(image.shape) != 2 : return None
-        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
 
+        # 2016-06-05 return image if reshaping to 3d is requested and geometry is missing
+        # !!! there is no check that original array is 2d or specific detector type. 
+        if self.reshape_to_3d and self.geoaccess(par) is None : return image
+
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return np.array([image[r,c] for r,c in zip(self.iX, self.iY)])
 
 ##-----------------------------
