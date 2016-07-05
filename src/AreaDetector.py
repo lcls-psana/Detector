@@ -874,7 +874,7 @@ class AreaDetector(object):
         peds = self.pedestals(rnum)
         if peds is None :
             if self.pbits & 32 : self._print_warning('calib(...) - pedestals are missing, return raw data.')
-            return raw
+            return np.array(raw, dtype=np.float32, copy=True)
         
         if raw.shape != peds.shape :
             if self.pbits & 32 :

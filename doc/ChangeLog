@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-83
+2016-07-05 Mikhail S. Dubrovin
+- det.calib - returns modifiable array in case of returning raw (const) data
+	
 Tag: V00-03-82
 2016-07-05 Mikhail S. Dubrovin
 - reshape Epix100 from (704, 768) to (1, 704, 768) if flag is set
