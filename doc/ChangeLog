@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-85
+2016-07-05 Mikhail S. Dubrovin
+- det.ndarray_from_image - do not modify input array, return its re-shaped copy
+
 Tag: V00-03-84
 2016-07-05 Mikhail S. Dubrovin
 - det.ndarray_from_image - return 3d array for 2d detectors if geometry is missing but do_reshape_2d_to_3d is set
@@ -20,11 +24,11 @@ Tag: V00-03-84
 Tag: V00-03-83
 2016-07-05 Mikhail S. Dubrovin
 - det.calib - returns modifiable array in case of returning raw (const) data
-	
+
 Tag: V00-03-82
 2016-07-05 Mikhail S. Dubrovin
 - reshape Epix100 from (704, 768) to (1, 704, 768) if flag is set
-	
+
 Tag: V00-03-81
 2016-07-01 Mikhail S. Dubrovin
 - force det.image to return 2-d even for do_reshape_2d_to_3d
@@ -43,7 +47,7 @@ Tag: V00-03-79
 2016-06-25 Mikhail S. Dubrovin
 - AreaDetector.py - det.image returns 2-d arrays w/o geometry (PSAS-139)
 - add examples/ex_opal.py
-	
+
 Tag: V00-03-78
 2016-06-24 Mikhail S. Dubrovin
 - add examples/ex_epix100_cmod.py update ex_cspad_gain_mask.py

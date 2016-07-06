@@ -401,7 +401,8 @@ class PyDetectorAccess :
 
         # 2016-06-05 return image if reshaping to 3d is requested and geometry is missing
         # !!! there is no check that original array is 2d or specific detector type. 
-        if self.reshape_to_3d and self.geoaccess(par) is None : return image
+        if self.reshape_to_3d and self.geoaccess(par) is None : 
+            return np.array(image, copy=True)
 
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         return np.array([image[r,c] for r,c in zip(self.iX, self.iY)])
