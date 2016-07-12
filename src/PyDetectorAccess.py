@@ -143,7 +143,7 @@ class PyDetectorAccess :
             self.areas_arr      = None
             self.mask_geo_arr   = None
             self.mbits          = None
-            self.pixel_size_arr = None
+            self.pixel_size_val = None
 
         return self.geo
 
@@ -224,6 +224,13 @@ class PyDetectorAccess :
 ##-----------------------------
 ##-----------------------------
 ##-----------------------------
+
+    def _shaped_geo_array(self, arr) :
+        if arr is None : return None
+        if self.dettype == gu.EPIX100A : arr.shape = (704, 768)
+        #if self.dettype == gu.CSPAD    : arr.shape = (32, 185, 388)
+        return arr
+
 ##-----------------------------
 
     def _update_coord_arrays(self, par, do_update=False) :
@@ -240,31 +247,33 @@ class PyDetectorAccess :
 
     def coords_x(self, par) :
         if not self._update_coord_arrays(par) : return None
-        return self.coords_x_arr
+        return self._shaped_geo_array(self.coords_x_arr)
 
 ##-----------------------------
 
     def coords_y(self, par) :
         if not self._update_coord_arrays(par) : return None
-        return self.coords_y_arr
+        return self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
     def coords_z(self, par) :
         if not self._update_coord_arrays(par) : return None
-        return self.coords_z_arr
+        return self._shaped_geo_array(self.coords_z_arr)
 
 ##-----------------------------
 
     def coords_xy(self, par) :
         if not self._update_coord_arrays(par) : return None
-        return self.coords_x_arr, self.coords_y_arr
+        return self._shaped_geo_array(self.coords_x_arr), self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
     def coords_xyz(self, par) :
         if not self._update_coord_arrays(par) : return None
-        return self.coords_x_arr, self.coords_y_arr, self.coords_z_arr
+        return self._shaped_geo_array(self.coords_x_arr),\
+               self._shaped_geo_array(self.coords_y_arr),\
+               self._shaped_geo_array(self.coords_z_arr)
 
 ##-----------------------------
 
@@ -273,7 +282,7 @@ class PyDetectorAccess :
         else :
             if  self.areas_arr is None : 
                 self.areas_arr = self.geo.get_pixel_areas()
-        return  self.areas_arr
+        return  self._shaped_geo_array(self.areas_arr)
 
 ##-----------------------------
 
@@ -288,7 +297,7 @@ class PyDetectorAccess :
         else :
             if  self.mask_geo_arr is None : 
                 self.mask_geo_arr = self.geo.get_pixel_mask(mbits=mbits)
-        return  self.mask_geo_arr
+        return  self._shaped_geo_array(self.mask_geo_arr)
 
 ##-----------------------------
 
@@ -309,14 +318,14 @@ class PyDetectorAccess :
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iX."""
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
-        return self.iX
+        return self._shaped_geo_array(self.iX)
 
 ##-----------------------------
 
     def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iY."""
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
-        return self.iY
+        return self._shaped_geo_array(self.iY)
 
 ##-----------------------------
 
@@ -324,7 +333,7 @@ class PyDetectorAccess :
         """Returns two pixel index arrays iX and iY."""
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         if self.iX is None : return None, None # single None is not the same as (None, None) !
-        return self.iX, self.iY 
+        return self._shaped_geo_array(self.iX), self._shaped_geo_array(self.iY)
 
 ##-----------------------------
 
@@ -341,9 +350,9 @@ class PyDetectorAccess :
     def pixel_size(self, par) :
         if self.geoaccess(par) is None : return None
         else :
-            if  self.pixel_size_arr is None : 
-                self.pixel_size_arr = self.geo.get_pixel_scale_size()
-        return  self.pixel_size_arr
+            if  self.pixel_size_val is None : 
+                self.pixel_size_val = self.geo.get_pixel_scale_size()
+        return  self.pixel_size_val
 
 ##-----------------------------
 
@@ -405,7 +414,7 @@ class PyDetectorAccess :
             return np.array(image, copy=True)
 
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
-        return np.array([image[r,c] for r,c in zip(self.iX, self.iY)])
+        return self._shaped_geo_array(np.array([image[r,c] for r,c in zip(self.iX, self.iY)]))
 
 ##-----------------------------
 ##-----------------------------

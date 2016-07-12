@@ -210,7 +210,7 @@ img_arr = data_sub_peds
 img = None
 
 # Image producer is different for 3-d and 2-d arrays 
-if len(nda_raw.shape) > 2 :
+if len(nda_raw.shape) > 2 or det.dettype == gu.EPIX100A :
     #img = det.image(evt)
     
     t0_sec = time()

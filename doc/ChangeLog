@@ -13,6 +13,11 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-86
+2016-07-11 Mikhail S. Dubrovin
+- PyDetectorAccess - return all geometry arrays through _shaped_geo_array, force EPIX100A shape=(704, 768) (PSAS-139)
+- ex_all_dets.py - use det.image for 2-d epix100 array
+
 Tag: V00-03-85
 2016-07-05 Mikhail S. Dubrovin
 - det.ndarray_from_image - do not modify input array, return its re-shaped copy
