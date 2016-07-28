@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-88
+2016-07-28 Mikhail S. Dubrovin
+- in PyDetectorAccess.py add shape_config_cspad and expyda_cspad_shape.py
+
 Tag: V00-03-87
 2016-07-18 Christopher O'Grady
 Fix bug where det.calib() was not checked early enough for None

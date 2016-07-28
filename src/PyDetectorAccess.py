@@ -1037,7 +1037,16 @@ class PyDetectorAccess :
         if self.pbits & 8 : print 'nda.shape: ', nda.shape
         nda.shape = (32,185,388)
         return nda
-    
+
+##-----------------------------
+
+    def shape_config_cspad(self, env) :
+        # configuration from data
+        c = pda.get_cspad_config_object(env, self.source)
+        if c is None : return None
+        #c.numQuads()
+        return (c.numSect(), 185, 388)
+
 ##-----------------------------
 # Static methods
 ##-----------------------------
