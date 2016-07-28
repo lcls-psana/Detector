@@ -191,7 +191,8 @@ class DetNDArrRawProc :
             raise ValueError('Can not create the Detector object for source %s' % self.src)
 
         ndaraw = self.det.raw(evt)
-        
+
+        if ndaraw is None : return False
         if ndaraw.size == 0 : return False
         if ndaraw.shape[0] == 0 : return False
 
