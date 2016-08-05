@@ -150,6 +150,8 @@ Usage::
     # load n-d numpy array from the text file with metadata
     nda = det.load_txtnda(fname)
 
+    # merge photons split between pixels and return array with integer number of photons per pixel
+    nda_nphotons = det.photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None)
 
 @see classes
 \n  :py:class:`Detector.PyDetector` - factory for different detectors
@@ -221,6 +223,8 @@ class AreaDetector(object):
         self.set_gain_mask_factor(gfactor=6.85) # cpo default value for CSPAD(2x2) gain_mask, det.calib, det.image
 
         self.do_reshape_2d_to_3d(flag=False)    # Chuck - mandatory re-shaping 2-d to 3-d arrays        
+
+        self.alg_photons = None
 
 ##-----------------------------
 
@@ -1409,6 +1413,43 @@ class AreaDetector(object):
 
         return self.pyda.load_txtnda(fname)
 
+##-----------------------------
+
+    def photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None) :
+        """Returns 2-d or 3-d array of integer number of merged photons - algorithm suggested by Chuck.
+
+           Parameters
+           ----------
+           evt            : psana.Event() - psana event object.
+           nda_calib      : (float, double, int, int16) numpy.array - calibrated data, float number of photons per pixel.
+           mask           : (uint8) numpy.array user defined mask.
+           adu_per_photon : float conversion factor which is applied as nda_calib/adu_per_photon.
+
+           Returns
+           -------
+           np.array - 2-d or 3-d array of integer number of merged photons.
+        """
+
+        if self.alg_photons is None :
+            from Detector.AlgoAccess import alg_photons; self.alg_photons = alg_photons
+
+        #rnum = self.runnum(evt)
+        nda = nda_calib if nda_calib is not None else self.calib(evt)
+        if adu_per_photon is not None and adu_per_photon !=0 :
+            f = 1./adu_per_photon
+            nda *= f
+
+        msk = self.mask(evt, calib=True, status=True, edges=True, central=True, unbond=True, unbondnbrs=True) \
+              if mask is None else mask
+
+        return self.alg_photons(nda, msk)
+
+##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------
+##-----------------------------
 ##-----------------------------
 
 if __name__ == "__main__" :

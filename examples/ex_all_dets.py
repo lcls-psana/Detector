@@ -250,6 +250,8 @@ print_ndarr(det.pedestals(par), 'pedestals reshaped to 3d')
 
 print_ndarr(img, 'img')
 print_ndarr(det.ndarray_from_image(par, img), 'nda_from_img')
+
+print_ndarr(det.photons(evt), 'photons')
          
 ##-----------------------------
 
