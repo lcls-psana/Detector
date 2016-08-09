@@ -1445,6 +1445,10 @@ class AreaDetector(object):
         return self.alg_photons(nda, msk)
 
 ##-----------------------------
+
+    def shape_config(self, env) :
+        return self.pyda.shape_config(env)
+
 ##-----------------------------
 ##-----------------------------
 ##-----------------------------

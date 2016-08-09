@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-91
+2016-08-08 Mikhail S. Dubrovin
+- AreaDetector.py, PyDetectorAccess.py - add method shape_config, update examples (PSAS-139)
+
 Tag: V00-03-90
 2016-08-05 Mikhail S. Dubrovin
 - AreaDetector.py add method photons(.), update self-doc and ex_all_dets.py (PSAS-139)

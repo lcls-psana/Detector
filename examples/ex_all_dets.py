@@ -34,7 +34,11 @@ elif ntest==4 : #dsname, src = 'exp=xppi0614:run=74',  'NoDetector.0:Epix100a.0'
 
 elif ntest==5 : dsname, src = 'exp=sxrg3715:run=46',  'SxrEndstation.0:Andor.2'
 elif ntest==6 : dsname, src = 'exp=sxrf9414:run=72',  'SxrEndstation.0:Fccd960.0'
-elif ntest==7 : dsname, src = 'exp=xcsi0112:run=15',  'XcsBeamline.0:Princeton.0'
+
+elif ntest==7 : #dsname, src = 'exp=xcsi0112:run=15',  'XcsBeamline.0:Princeton.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0012-XcsBeamline.0-Princeton.0.xtc', 'XcsBeamline.0:Princeton.0'
+    psana.setOption('psana.calib-dir', '/reg/d/psdm/xcs/xcsi0112/calib')
+
 elif ntest==8 : dsname, src = 'exp=amo42112:run=120', 'AmoBPS.0:Opal1000.0'
 elif ntest==9 : dsname, src = 'exp=cxib2313:run=46',  'CxiDg2.0:Tm6740.0'
 
@@ -58,13 +62,11 @@ elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A
 #    # JUST A SUBSTITUTE FOR calib directory
 #    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
 
-elif ntest==16 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
-    #dsname, src = '/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc', 'XppEndstation.0:Rayonix.0'
-    dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0'
+elif ntest==16 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc', 'XppEndstation.0:Rayonix.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/ryonix/calib')
 
-#elif ntest==17 : dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
-elif ntest==17 :
+elif ntest==17 : # dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0009-pnccdFront.xtc', 'pnccdFront'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/pnccd/amo06516-pnccd-2016-04-14/calib')
 
@@ -251,6 +253,7 @@ print_ndarr(det.pedestals(par), 'pedestals reshaped to 3d')
 print_ndarr(img, 'img')
 print_ndarr(det.ndarray_from_image(par, img), 'nda_from_img')
 
+print 'det.shape_config(env): ', det.shape_config(env)
 print_ndarr(det.photons(evt), 'photons')
          
 ##-----------------------------

@@ -1039,13 +1039,97 @@ class PyDetectorAccess :
         return nda
 
 ##-----------------------------
+##-----------------------------
 
     def shape_config_cspad(self, env) :
-        # configuration from data
+        # configuration from data file
+        # config object for cspad contains a number of used 2x1-s numSect()
         c = pda.get_cspad_config_object(env, self.source)
         if c is None : return None
         #c.numQuads()
         return (c.numSect(), 185, 388)
+
+##-----------------------------
+
+    def shape_config_cspad2x2(self, env) :
+        return (185, 388, 2) # no other choice
+
+##-----------------------------
+
+    def shape_config_epix100(self, env) :
+        return (704, 768) # no other choice
+
+##-----------------------------
+
+    def shape_config_pnccd(self, env) :
+        return (4, 512, 512) # no other choice
+
+##-----------------------------
+
+    def shape_config_princeton(self, env) :
+        return (1300, 1340)
+
+##-----------------------------
+
+    def shape_config_rayonix(self, env) :
+        # configuration from data file
+        # config object for rayonix has a number of pixel in the bin for both dimansions
+        # maximal detector size is 3840x3840, pixel size is 44.5um 
+        c = pda.get_rayonix_config_object(env, self.source)
+        if c is None : return None
+        npix_in_colbin = c.binning_f()
+        npix_in_rowbin = c.binning_s()
+        if npix_in_rowbin>0 and npix_in_colbin>0 : return (3840/npix_in_rowbin, 3840/npix_in_colbin)
+        return None
+
+##-----------------------------
+
+    def shape_config_andor(self, env) :
+        # configuration from data file
+        c = pda.get_andor_config_object(env, self.source)
+        if c is None : return None
+        nsegs = None
+        try    : nsegs = c.numSensors()
+        except : pass
+        #npixx = c.numPixelsY() # for Andor3D only
+        #npixy = c.numPixelsX() # for Andor3D only
+        npixx = c.width() / c.binY()
+        npixy = c.height() / c.binX()
+
+        if npixx and npixy :
+            return (npixx, npixy) if nsegs is None else (nsegs, npixx, npixy)
+        return None
+
+##-----------------------------
+
+    def shape_config(self, env) :
+
+        #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
+        #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
+
+        if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
+        elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
+        elif self.dettype == gu.PRINCETON  : return self.shape_config_princeton(env)
+        elif self.dettype == gu.PNCCD      : return self.shape_config_pnccd(env)
+        elif self.dettype == gu.ANDOR      : return self.shape_config_andor(env)
+        elif self.dettype == gu.ANDOR3D    : return self.shape_config_andor(env)
+        #elif self.dettype == gu.FCCD960    : return self.shape_config_fccd960(env)
+        elif self.dettype == gu.EPIX100A   : return self.shape_config_epix100(env)
+        #elif self.dettype == gu.ACQIRIS    : return self.shape_config_acqiris(env)
+        #elif self.dettype == gu.OPAL1000   : return self.shape_config_camera(env)
+        #elif self.dettype == gu.OPAL2000   : return self.shape_config_camera(env)
+        #elif self.dettype == gu.OPAL4000   : return self.shape_config_camera(env)
+        #elif self.dettype == gu.OPAL8000   : return self.shape_config_camera(env)
+        #elif self.dettype == gu.ORCAFL40   : return self.shape_config_camera(env)
+        #elif self.dettype == gu.TM6740     : return self.shape_config_camera(env)
+        #elif self.dettype == gu.QUARTZ4A150: return self.shape_config_camera(env)
+        elif self.dettype == gu.RAYONIX    : return self.shape_config_rayonix(env)
+        #elif self.dettype == gu.IMP        : return self.shape_config_imp(env)
+        #elif self.dettype == gu.FCCD       : return self.shape_config_camera(env)
+        #elif self.dettype == gu.TIMEPIX    : return self.shape_config_timepix(env)
+        #elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
+        #elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
+        else                               : return None
 
 ##-----------------------------
 # Static methods
