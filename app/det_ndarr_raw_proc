@@ -396,12 +396,13 @@ class EventCodeManager :
         self.do_check = self.lst_ec is not None and self.evrdet is not None
         if self.verbos & 1 : print '%s: list of requested event codes: %s, do_check=%s' %\
            (self.__class__.__name__, str(self.lst_ec), self.do_check)
+        self.counter = 0
 
 
     def set_event_codes(self, evcode) :
         """Splits input (str) for list of integer event codes. Any negative event code inverts selection decision for all event codes."""
 
-        if evcode is None :
+        if evcode is None or evcode.lower() == 'none' :
             self.lst_ec = None
             return
         try :
@@ -420,7 +421,11 @@ class EventCodeManager :
         evt_codes = self.evrdet.eventCodes(evt)
         ec_in_event = any(ec in evt_codes for ec in self.lst_ec)
         res = (not ec_in_event) if self.do_deselect else ec_in_event
-        if self.verbos & 2 : print '%s.select: evt_codes=%s, result=%s' % (self.__class__.__name__, str(evt_codes), res)
+        if self.counter < 20 :
+            self.counter += 1
+            if self.verbos & 2 : 
+                print '%s.select: evt_codes=%s, result=%s' % (self.__class__.__name__, str(evt_codes), res)
+                if self.counter == 20 : print '%s.select: stop printing messages' % (self.__class__.__name__)
         return res
 
 
