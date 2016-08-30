@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-03-92
+2016-08-29 Mikhail S. Dubrovin
+- app/det_ndarr_raw_proc - add option -c and class EventCodeManager (PSAS-139)
+	
 Tag: V00-03-91
 2016-08-08 Mikhail S. Dubrovin
 - AreaDetector.py, PyDetectorAccess.py - add method shape_config, update examples (PSAS-139)
