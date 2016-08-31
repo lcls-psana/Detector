@@ -476,12 +476,19 @@ class PyDetectorAccess :
         else :
             self.cfg_gain_mask_is_loaded = True
             self._gain_mask = None
-
-        # DO NOT APPLY correction if ALL pixels have high gain
-        if self._gain_mask is not None :
-            if self._gain_mask.mean() == 0 : self._gain_mask = None 
-
         return self._gain_mask
+
+##-----------------------------
+
+    def gain_mask_non_zero(self, par, gain=None) :
+        """The same as gain_mask, but returns None if ALL pixels have high gain"""
+
+        gm = self.gain_mask(par, gain)
+
+        if gm is not None :
+            if not gm.any() : return None 
+
+        return gm
 
 ##-----------------------------
 

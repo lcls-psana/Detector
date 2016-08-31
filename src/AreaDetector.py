@@ -67,6 +67,7 @@ Usage::
     # per-pixel (int16) gain mask from configuration data; 1/0 for low/high gain pixels,
     # or (float) per-pixel gain factors if gain is not None
     gmap = det.gain_mask(par, gain=None) 
+    gmnz = det.gain_mask_non_zero(par, gain=None) # returns None if ALL pixels have high gain and mask should not be applied
 
     # set gfactor=high/low gain factor for CSPAD(2X2) in det.calib and det.image methods
     det.set_gain_mask_factor(gfactor=6.85)
@@ -690,6 +691,22 @@ class AreaDetector(object):
 
 ##-----------------------------
 
+    def gain_mask_non_zero(self, par, gain=None) :
+        """The same as gain_mask, but return None if ALL pixels have high gain.
+
+           Parameter
+           ---------
+           par  : int or psana.Event() - integer run number or psana event object.
+           gain : float - gain factor; mask will be multiplied by this factor if it is specified.
+
+           Returns
+           -------
+           np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
+        """
+        return self.pyda.gain_mask_non_zero(par, gain)
+
+##-----------------------------
+
     def common_mode(self, par) :
         """Returns array of common mode correction parameters.
 
@@ -899,8 +916,8 @@ class AreaDetector(object):
         if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2 ->(2, 185, 388)
 
 
-        # ------------- 2016-06-24
-        gainmask = self.gain_mask(rnum, gain=self._gain_mask_factor)
+        # ------------- 2016-06-24, 08-30 gain_mask -> gain_mask_non_zero
+        gainmask = self.gain_mask_non_zero(rnum, gain=self._gain_mask_factor)
         #print 'XXX: use _gain_mask_factor = ', self._gain_mask_factor        
         #print 'XXX: gainmask.mean(): ', gainmask.mean()
         #print_ndarr(gainmask, 'XXX: det.calib(): apply gain_mask')
