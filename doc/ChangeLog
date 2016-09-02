@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-03-96
+2016-09-02 Mikhail S. Dubrovin
+- PyDetectorAccess._shaped_array_ - fix n-dimensional shape returned by natural geometry to config shape (PSAS-139).
+
 Tag: V00-03-95
 2016-09-02 Mikhail S. Dubrovin
 - AreaDetector, PyDetectorAccess - retrieve shape from env.configStore() object, and as a fallback from calib store (PSAS-139).

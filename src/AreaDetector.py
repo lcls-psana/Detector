@@ -419,12 +419,12 @@ class AreaDetector(object):
 
            Parameter
            ---------
-           par : int or psana.Event() - integer run number or psana event object.
+           par : int or psana.Event() - integer run number or psana event object.\
 
            Returns
            -------
-           np.array - detector pixel-array shape. If ndim>3 shape is reduced to 3-d.
-                      Ex.: the shape like [4,8,185,388] is reduced to [32,185,388]
+           np.array - detector pixel-array shape. If ndim .gt. 3 shape is reduced to 3-d.
+                      Ex.: the shape like (4,8,185,388) is reduced to (32,185,388)
         """
         if self._shape is None :
             rnum = self.runnum(par)
@@ -492,6 +492,8 @@ class AreaDetector(object):
             #if self.reshape_to_3d and len(shape)==2 :
             if self.reshape_to_3d :
                 arr.shape = (1,shape[-2],shape[-1])
+            else :
+                arr.shape = self._shape_daq_(rnum)
             return arr
 
         if calibtype is not None :

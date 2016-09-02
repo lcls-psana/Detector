@@ -67,6 +67,9 @@ def ex_source_dsname(ntest) :
     elif ntest == 18: # (384, 384)
         src, dsn = ':Rayonix.0', '/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc'
 
+    elif ntest == 19: # (1920, 1920)
+        src, dsn = ':Rayonix.0', '/reg/g/psdm/detector/data_test/types/0017-MfxEndstation.0-Rayonix.0.xtc'
+
     else :
         sys.exit('Non-implemented sample for test number # %d' % ntest)
 
