@@ -11,12 +11,14 @@ from time import time
 ##-----------------------------
 
 ds  = psana.DataSource('exp=sxrg3715:run=119')
+#ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/0013-SxrEndstation.0-Andor.0.xtc') # exp=sxrb6813:run=34
 evt = ds.events().next()
 env = ds.env()
 rnum = evt.run()
 calibdir = env.calibDir()
 
 src = psana.Source('DetInfo(SxrEndstation.0:Andor.1)')
+#src = psana.Source('DetInfo(SxrEndstation.0:Andor.0)')
 pda = PyDetectorAccess(src, env, pbits=0)
 
 #print evt.keys()

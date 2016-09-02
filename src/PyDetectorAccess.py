@@ -203,17 +203,21 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def ndim(self, par, ctype=gu.PEDESTALS) :
+    def ndim(self, par=0, ctype=gu.PEDESTALS) :
+        sh = np.array(self.shape())
+        if sh is not None : return sh.size
         return self.cpstore(par).ndim(ctype)
 
 ##-----------------------------
 
-    def size(self, par, ctype=gu.PEDESTALS) :
+    def size(self, par=0, ctype=gu.PEDESTALS) :
+        sh = np.array(self.shape())
+        if sh is not None : return sh.prod()
         return self.cpstore(par).size(ctype)
 
 ##-----------------------------
 
-    def shape(self, par, ctype=gu.PEDESTALS) :
+    def shape_calib(self, par, ctype=gu.PEDESTALS) :
         return self.cpstore(par).shape(ctype)
 
 ##-----------------------------
@@ -1054,27 +1058,41 @@ class PyDetectorAccess :
         c = pda.get_cspad_config_object(env, self.source)
         if c is None : return None
         #c.numQuads()
-        return (c.numSect(), 185, 388)
+        #return (c.numSect(), 185, 388)
+        return (32, 185, 388)
 
 ##-----------------------------
 
     def shape_config_cspad2x2(self, env) :
+        c = pda.get_cspad2x2_config_object(env, self.source)
+        #c.numAsicsStored(), o.payloadSize()
         return (185, 388, 2) # no other choice
 
 ##-----------------------------
 
     def shape_config_epix100(self, env) :
-        return (704, 768) # no other choice
+        c = pda.get_epix_config_object(env, self.source)
+        if c is None : return None
+        return (c.numberOfRows(), c.numberOfColumns()) 
+        #return (704, 768) # no other choice
 
 ##-----------------------------
 
     def shape_config_pnccd(self, env) :
-        return (4, 512, 512) # no other choice
+        c = pda.get_pnccd_config_object(env, self.source)
+        if c is None : return None
+        return (c.numSubmodules(), c.numSubmoduleRows(), c.numSubmoduleChannels())
+        #c.numRows(), c.numChannels(), c.numLinks()
+        #return (4, 512, 512) # no other choice
 
 ##-----------------------------
 
     def shape_config_princeton(self, env) :
-        return (1300, 1340)
+        c = pda.get_princeton_config_object(env, self.source)
+        if c is None : return None
+        return (c.numPixelsY(), c.numPixelsX())
+        #return (c.height()/c.binY(), c.width()/c.binX())
+        #return (1300, 1340)
 
 ##-----------------------------
 
@@ -1100,12 +1118,84 @@ class PyDetectorAccess :
         except : pass
         #npixx = c.numPixelsY() # for Andor3D only
         #npixy = c.numPixelsX() # for Andor3D only
-        npixx = c.width() / c.binY()
-        npixy = c.height() / c.binX()
+        npixx = c.width() / c.binX()
+        npixy = c.height() / c.binY()
 
         if npixx and npixy :
-            return (npixx, npixy) if nsegs is None else (nsegs, npixx, npixy)
+            return (npixy, npixx) if nsegs is None else (nsegs, npixy, npixx)
         return None
+
+##-----------------------------
+
+    def shape_config_timepix(self, env) :
+        # configuration from data file
+        #c = pda.get_timepix_config_object(env, self.source)
+        # config object does not have shape parameters,
+        # (o.height(), o.width()) are available in data object  
+        return (512, 512)
+
+
+    def shape_config_fli(self, env) :
+        # configuration from data file
+        c = pda.get_fli_config_object(env, self.source)
+        if c is None : return None
+        return (c.numPixelsY(), c.numPixelsX())
+        #return (c.height()/c.binY(), c.width()/c.binX()) # (4096, 4096)
+
+
+    def shape_config_pimax(self, env) :
+        # configuration from data file
+        c = pda.get_pimax_config_object(env, self.source)
+        if c is None : return None
+        return (c.numPixelsY(), c.numPixelsX())
+        #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
+
+
+    #def shape_config_imp(self, env) :
+    #    #Waveform detector
+    #    # configuration from data file
+    #    #c = pda.get_imp_config_object(env, self.source)
+    #    # config object does not have shape parameters,
+    #    return (4, 1023) # ???
+
+##-----------------------------
+
+    def shape_config_camera(self, env) :
+        # configuration from data file
+        c = None
+        if self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000) :
+            c = pda.get_opal1k_config_object(env, self.source)
+
+        elif self.dettype == gu.FCCD :
+            c = pda.get_fccd_config_object(env, self.source)     
+            #return (c.height(), c.width())
+
+        elif self.dettype == gu.FCCD960 :
+            c = pda.get_fccd_config_object(env, self.source)
+            #return (c.height(), c.width())
+
+        elif self.dettype == gu.ORCAFL40 :
+            c = pda.get_orca_config_object(env, self.source)
+            #return (c.height(), c.width())
+
+        elif self.dettype == gu.TM6740 :
+            c = pda.get_tm6740_config_object(env, self.source)
+
+        elif self.dettype == gu.QUARTZ4A150 :
+            c = pda.get_quartz_config_object(env, self.source) 
+
+        #print c
+        if c is None : return None
+        return (c.Row_Pixels, c.Column_Pixels)
+
+
+##-----------------------------
+
+    def shape_data_camera(self, evt) :
+        # camera shape from data object
+        o = pda.get_camera_data_object(evt, self.source)
+        if o is None : return None
+        return (o.width(),o.height())
 
 ##-----------------------------
 
@@ -1116,27 +1206,34 @@ class PyDetectorAccess :
 
         if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
         elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
+        elif self.dettype == gu.EPIX100A   : return self.shape_config_epix100(env)
         elif self.dettype == gu.PRINCETON  : return self.shape_config_princeton(env)
         elif self.dettype == gu.PNCCD      : return self.shape_config_pnccd(env)
         elif self.dettype == gu.ANDOR      : return self.shape_config_andor(env)
         elif self.dettype == gu.ANDOR3D    : return self.shape_config_andor(env)
-        #elif self.dettype == gu.FCCD960    : return self.shape_config_fccd960(env)
-        elif self.dettype == gu.EPIX100A   : return self.shape_config_epix100(env)
-        #elif self.dettype == gu.ACQIRIS    : return self.shape_config_acqiris(env)
-        #elif self.dettype == gu.OPAL1000   : return self.shape_config_camera(env)
-        #elif self.dettype == gu.OPAL2000   : return self.shape_config_camera(env)
-        #elif self.dettype == gu.OPAL4000   : return self.shape_config_camera(env)
-        #elif self.dettype == gu.OPAL8000   : return self.shape_config_camera(env)
-        #elif self.dettype == gu.ORCAFL40   : return self.shape_config_camera(env)
-        #elif self.dettype == gu.TM6740     : return self.shape_config_camera(env)
-        #elif self.dettype == gu.QUARTZ4A150: return self.shape_config_camera(env)
         elif self.dettype == gu.RAYONIX    : return self.shape_config_rayonix(env)
+        elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
+                              gu.FCCD, gu.FCCD960, gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150) \
+                                           : return self.shape_config_camera(env)       
+        elif self.dettype == gu.TIMEPIX    : return self.shape_config_timepix(env)
+        elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
+        elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
+
+        # waveform detectors:
+        #elif self.dettype == gu.ACQIRIS    : return self.shape_config_acqiris(env)
         #elif self.dettype == gu.IMP        : return self.shape_config_imp(env)
-        #elif self.dettype == gu.FCCD       : return self.shape_config_camera(env)
-        #elif self.dettype == gu.TIMEPIX    : return self.shape_config_timepix(env)
-        #elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
-        #elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
         else                               : return None
+
+##-----------------------------
+
+    def shape(self, par=0) :
+        """Returns the detector shape.
+
+        Shape is retrieved from configuration object and
+        if it is None, then from calibration file. 
+        """
+        shc = self.shape_config(self.env)
+        return shc if shc is not None else self.shape_calib(par, ctype=gu.PEDESTALS)
 
 ##-----------------------------
 # Static methods

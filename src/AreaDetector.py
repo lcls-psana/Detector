@@ -49,9 +49,9 @@ Usage::
     det.print_config(evt)
 
     # get pixel array shape, size, and nomber of dimensions
-    shape = det.shape(par)
-    size  = det.size(par)
-    ndim  = det.ndim(par)
+    shape = det.shape(par=0)
+    size  = det.size(par=0)
+    ndim  = det.ndim(par=0)
     instrument = det.instrument()
 
     # access intensity calibration parameters
@@ -342,10 +342,7 @@ class AreaDetector(object):
            -------
            bool - True if current detector is CSPAD, False otherwise.
         """
-        if self.dettype == gu.CSPAD :
-            return True
-        else :
-            return False
+        return self.dettype == gu.CSPAD
 
 ##-----------------------------
 
@@ -356,10 +353,7 @@ class AreaDetector(object):
            -------
            bool - True if current detector is CSPAD2x2, False otherwise.
         """
-        if self.dettype == gu.CSPAD2X2 :
-            return True
-        else :
-            return False
+        return  self.dettype == gu.CSPAD2X2
         #if arr is not None and arr.size == 143560 : return True
 
 ##-----------------------------
@@ -377,7 +371,8 @@ class AreaDetector(object):
         """
         if self._ndim is None :
             rnum = self.runnum(par)
-            nd = self.da.ndim_v0(rnum) if self.iscpp else self.pyda.ndim(rnum)
+            #nd = self.da.ndim_v0(rnum) if self.iscpp else self.pyda.ndim(rnum)
+            nd = self.pyda.ndim(rnum)
             self._ndim = nd if nd<4 else 3
         return self._ndim
 
@@ -396,13 +391,16 @@ class AreaDetector(object):
         """
         if self._size is None :
             rnum = self.runnum(par)
-            self._size = self.da.size_v0(rnum) if self.iscpp else self.pyda.size(rnum)
+            #self._size = self.da.size_v0(rnum) if self.iscpp else self.pyda.size(rnum)
+            self._size = self.pyda.size(rnum)
         return self._size
     
 ##-----------------------------
 
-    def shape(self, par) :
+    def shape(self, par=0) :
         """Returns shape of the detector pixel-array.
+
+           For all detectors except cspad2x2 shape is the same as in DAQ. 
 
            Parameter
            ---------
@@ -416,7 +414,7 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def _shape_daq_(self, par) :
+    def _shape_daq_(self, par=0) :
         """Returns 2- or 3-d shape of the detector pixel-array as in DAQ.
 
            Parameter
@@ -430,7 +428,8 @@ class AreaDetector(object):
         """
         if self._shape is None :
             rnum = self.runnum(par)
-            sh = self.da.shape_v0(rnum) if self.iscpp else self.pyda.shape(rnum)
+            #sh = self.da.shape_v0(rnum) if self.iscpp else self.pyda.shape(rnum)
+            sh = self.pyda.shape(rnum)
             self._shape = sh if len(sh)<4 else np.array((self.size(rnum)/sh[-1]/sh[-2], sh[-2], sh[-1]))
         return self._shape        
 

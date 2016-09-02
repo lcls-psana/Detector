@@ -32,15 +32,22 @@ elif ntest==4 : #dsname, src = 'exp=xppi0614:run=74',  'NoDetector.0:Epix100a.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/epix100/xpp-epix100a-2014-12-04/calib')
     #psana.setOption('psana.calib-dir', './calib')
 
-elif ntest==5 : dsname, src = 'exp=sxrg3715:run=46',  'SxrEndstation.0:Andor.2'
-elif ntest==6 : dsname, src = 'exp=sxrf9414:run=72',  'SxrEndstation.0:Fccd960.0'
+elif ntest==5 :
+    #dsname, src = 'exp=sxrg3715:run=46',  'SxrEndstation.0:Andor.2'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0013-SxrEndstation.0-Andor.0.xtc', 'SxrEndstation.0:Andor.0' 
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/andor/calib')
+
+#elif ntest==6 : dsname, src = 'exp=sxrf9414:run=72',  'SxrEndstation.0:Fccd960.0'
 
 elif ntest==7 : #dsname, src = 'exp=xcsi0112:run=15',  'XcsBeamline.0:Princeton.0'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0012-XcsBeamline.0-Princeton.0.xtc', 'XcsBeamline.0:Princeton.0'
     psana.setOption('psana.calib-dir', '/reg/d/psdm/xcs/xcsi0112/calib')
 
-elif ntest==8 : dsname, src = 'exp=amo42112:run=120', 'AmoBPS.0:Opal1000.0'
-elif ntest==9 : dsname, src = 'exp=cxib2313:run=46',  'CxiDg2.0:Tm6740.0'
+elif ntest==8 : #dsname, src = 'exp=amo42112:run=120', 'AmoBPS.0:Opal1000.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0013-SxrBeamline.0-Opal1000.1.xtc', 'SxrBeamline.0:Opal1000.1'
+
+elif ntest==9 : #dsname, src = 'exp=cxib2313:run=46',  'CxiDg2.0:Tm6740.0'
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0015-Pulnix_TM6740ConfigV2.xtc', 'CxiSc1.0:Tm6740.0'
 
 elif ntest==10 : # dsname, src = 'exp=amo86615:run=4',   'Camp.0:pnCCD.0'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0008-Camp.0-pnCCD.1.xtc', 'Camp.0:pnCCD.1'
@@ -54,8 +61,11 @@ elif ntest==12 : # dsname, src = 'exp=cxif5315:run=169', 'DsaCsPad'  # alias
     dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'DsaCsPad'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
 
+#elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
+elif ntest==15 :
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0016-CxiEndstation.0-Quartz4A150.0.xtc', 'CxiEndstation.0:Quartz4A150.0'
+    psana.setOption('psana.calib-dir', '/reg/d/psdm/cxi/cxii8715/calib')
 
-elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 #elif ntest==16 : #dsname, src = 'exp=xppc0115:run=305', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
 #elif ntest==16 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0' # alias='rayonix'
 #    dsname, src = '/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc', 'XppEndstation.0:Rayonix.0'
@@ -64,7 +74,7 @@ elif ntest==15 : dsname, src = 'exp=cxii8715:run=14',  'CxiEndstation.0:Quartz4A
 
 elif ntest==16 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc', 'XppEndstation.0:Rayonix.0'
-    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/ryonix/calib')
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/rayonix/calib')
 
 elif ntest==17 : # dsname, src = 'exp=amoj5415:run=49',  'pnccdFront'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0009-pnccdFront.xtc', 'pnccdFront'
@@ -92,7 +102,9 @@ elif ntest==22 : # dsname, src = 'exp=sxrk4816:run=7',  'SxrEndstation.0:DualAnd
     src = 'SxrEndstation.0:DualAndor.0'# or alias='andorDual'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/andor3d/calib-andor3d-2016-02-09/calib')
 
-print 'Example for\n dataset: %s\n source : %s' % (dsname, src)
+else :
+    print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
+    sys.exit(0)
 
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')

@@ -14,7 +14,8 @@ print 'Test # %d' % ntest
 ##-----------------------------
 
 #dsname, src = 'exp=cxi86715:run=112:idx', psana.Source('DetInfo(CxiDg2.0:Cspad2x2.0)')
-dsname, src = 'exp=cxi86715:run=112', psana.Source('DetInfo(CxiDg2.0:Cspad2x2.0)')
+#dsname, src = 'exp=cxi86715:run=112', psana.Source('DetInfo(CxiDg2.0:Cspad2x2.0)')
+dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspad2x2.1.xtc', 'MecTargetChamber.0:Cspad2x2.1'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 

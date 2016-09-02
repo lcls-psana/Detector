@@ -83,6 +83,17 @@ def get_camera_config_object(env, src) :
     
 ##-----------------------------
 
+def get_opal1k_config_object(env, src) :
+    """get camera config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Opal1k.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+
 def get_princeton_data_object(evt, src) :
     """get princeton data object
     """
@@ -177,6 +188,30 @@ def get_andor_config_object(env, src) :
 
 ##-----------------------------
 
+def get_fccd_data_object(env, src) :
+    """get fccd data object
+    """
+    return get_camera_data_object(evt, src)
+
+##-----------------------------
+
+def get_fccd_config_object(env, src) :
+    """get fccd config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.FCCD.FccdConfigV2, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.FCCD.FccdConfigV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.FCCD.FccdConfig, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+
 def get_fccd960_data_object(env, src) :
     """get fccd960 data object
     """
@@ -187,14 +222,7 @@ def get_fccd960_data_object(env, src) :
 def get_fccd960_config_object(env, src) :
     """get fccd960 config object
     """
-    cfg = env.configStore()
-    o = cfg.get(_psana.Fccd960.ConfigV2, src)
-    if o is not None : return o
-
-    o = cfg.get(_psana.Fccd960.ConfigV1, src)
-    if o is not None : return o
-
-    return None
+    return get_fccd_config_object(env, src)
     
 ##-----------------------------
 
@@ -228,6 +256,20 @@ def get_epix_config_object(env, src) :
     if o is not None : return o
 
     o = cfg.get(_psana.Epix.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+
+def get_tm6740_config_object(env, src) :
+    """get pulnix tm6740 config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Pulnix.TM6740ConfigV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Pulnix.TM6740ConfigV2, src)
     if o is not None : return o
 
     return None
@@ -270,27 +312,6 @@ def get_rayonix_config_object(env, src) :
     if o is not None : return o
 
     o = cfg.get(_psana.Rayonix.ConfigV1, src)
-    if o is not None : return o
-
-    return None
-    
-##-----------------------------
-
-def get_fccd_data_object(env, src) :
-    """get fccd data object
-    """
-    return get_camera_data_object(evt, src)
-
-##-----------------------------
-
-def get_fccd_config_object(env, src) :
-    """get fccd config object
-    """
-    cfg = env.configStore()
-    o = cfg.get(_psana.Fccd.ConfigV2, src)
-    if o is not None : return o
-
-    o = cfg.get(_psana.Fccd.ConfigV1, src)
     if o is not None : return o
 
     return None
@@ -370,6 +391,18 @@ def get_pimax_config_object(env, src) :
     return None
 
 ##-----------------------------
+
+def get_orca_config_object(env, src) :
+    """get orca config object
+    """
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Orca.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
 ##-----------------------------
 ##---- For WFDetector.py ------
 ##-----------------------------
@@ -417,5 +450,19 @@ def get_imp_config_object(env, src) :
     
 ##-----------------------------
 ##-----------------------------
+##----- Other data objects ----
 ##-----------------------------
+##-----------------------------
+
+def get_evr_data_object(evt, src) :
+    """get evr data object for event codes
+    """
+    o = evt.get(_psana.EvrData.DataV4, src)
+    if o is not None : return o
+
+    o = evt.get(_psana.EvrData.DataV3, src)
+    if o is not None : return o
+
+    return None
+
 ##-----------------------------

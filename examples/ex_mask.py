@@ -13,7 +13,11 @@ print 'Test # %d' % ntest
 
 ##-----------------------------
 
-dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0'
+#dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0'
+dsname, src = '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc',  'CxiDs2.0:Cspad.0'
+psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-cxi-camera2-2015-01-20/calib')
+
+
 if ntest==2 : dsname, src = 'exp=meca1113:run=376', psana.Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 

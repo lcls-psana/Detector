@@ -9,7 +9,9 @@ from Detector.GlobalUtils import print_ndarr
 
 import pyimgalgos.GlobalGraphics as gg
 
-dsname, src = 'exp=cxii0215:run=49', psana.Source('DetInfo(CxiEndstation.0:Imp.1)')
+#dsname, src = 'exp=cxii0215:run=49', psana.Source('DetInfo(CxiEndstation.0:Imp.1)')
+dsname = '/reg/g/psdm/detector/data_test/types/0007-XppEndstation.0-Imp.0.xtc'
+src = psana.Source('XppEndstation.0:Imp.0')
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
 ds  = psana.DataSource(dsname)
