@@ -468,8 +468,14 @@ class AreaDetector(object):
         """
         if arr is None   : return None
         if arr.size == 0 : return None
+        if arr.size != self.size(rnum) :
+            #msg = 'WARNING: Array shape %s size %d is different from its configuration shape %s size %d' %\
+            #      (arr.shape, arr.size, self._shape_daq_(rnum), self.size(rnum))
+            #print msg
+            return arr # return array as is
 
-        shape = arr.shape
+        shape = self._shape_daq_(rnum)
+
         # for 2-d detectors
         if self.dettype in (gu.EPIX100A,\
                             gu.PRINCETON,\
@@ -493,13 +499,14 @@ class AreaDetector(object):
             if self.reshape_to_3d :
                 arr.shape = (1,shape[-2],shape[-1])
             else :
-                arr.shape = self._shape_daq_(rnum)
+                arr.shape = shape
             return arr
 
-        if calibtype is not None :
-            status = self.loading_status(rnum, calibtype)
-            if status != gu.LOADED and status != gu.DEFAULT : return None
-        if self.size(rnum) : arr.shape = self._shape_daq_(rnum)
+        #if calibtype is not None :
+        #    status = self.loading_status(rnum, calibtype)
+        #    if status != gu.LOADED and status != gu.DEFAULT : return None
+
+        arr.shape = shape
 
         return arr if not self.is_cspad2x2() else data2x2ToTwo2x1(arr)
 
