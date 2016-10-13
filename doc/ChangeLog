@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-03-98
+2016-10-13 Mikhail S. Dubrovin
+- app/det_ndarr_raw_proc - add protection in summary - do not save results for 0 found events.
+
 Tag: V00-03-97
 2016-09-07 Mikhail S. Dubrovin
 - PyDetectorAccess._shaped_array_ - by cpo request return array as is if its shape differs from config.

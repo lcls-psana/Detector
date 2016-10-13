@@ -23,7 +23,12 @@ if ntest==1 :
 elif ntest==2 :
     dsname, src = '/reg/g/psdm/detector/data_test/types/0007-NoDetector.0-Epix100a.0.xtc', 'NoDetector.0:Epix100a.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/epix100/xpp-epix100a-2014-12-04/calib')
+
+elif ntest==3 :
+    #dsname, src = '/reg/g/psdm/detector/data_test/types/0020-XppGon.0-Epix100a.1.xtc', 'XppGon.0:Epix100a.1'
+    #psana.setOption('psana.calib-dir', '/reg/d/psdm/XPP/xppn4116/calib)
     #psana.setOption('psana.calib-dir', './calib')
+    dsname, src = 'exp=xppn4116:run=137', 'XppGon.0:Epix100a.1'
 
 print 'Example for\n dataset: %s\n source : %s' % (dsname, src)
 
@@ -35,6 +40,7 @@ evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
 print 'Run number %d' % nrun
+print 'calib directory: %s' % env.calibDir()
 
 for key in evt.keys() : print key
 
@@ -105,14 +111,18 @@ if peds is not None and nda_raw is not None : peds.shape = nda_raw.shape
 data_sub_peds = nda_raw - peds if peds is not None else nda_raw
 print_ndarr(data_sub_peds, 'data - peds')
 
-nda_cdata = det.calib(evt, cmpars=(4, 6, 30, 10))
 #nda_cdata = det.calib(evt)
+#nda_cdata = det.calib(evt, cmpars=(4, 6, 30, 10))
+#nda_cdata = det.calib(evt, cmpars=(4, 7, 30, 30))
+nda_cdata = det.calib(evt, cmpars=(4, 6, 30, 30))
+
 print_ndarr(nda_cdata, 'calibrated data')
 
 ##-----------------------------
 #sys.exit('TEST EXIT')
 ##-----------------------------
 
+#img = nda_raw
 #img = data_sub_peds
 img = nda_cdata if nda_cdata is not None else nda_raw
 
@@ -130,8 +140,9 @@ if img is None :
 import pyimgalgos.GlobalGraphics as gg
 
 ave, rms = img.mean(), img.std()
-#amp_range=(ave-1*rms, ave+2*rms)
-amp_range=(-10, 25)
+print 'ave=%.3f rms=%.3f' % (ave, rms)
+amp_range=(ave-1*rms, ave+2*rms)
+#amp_range=(-10, 25)
 gg.plotImageLarge(img, amp_range=amp_range)
 gg.show()
 

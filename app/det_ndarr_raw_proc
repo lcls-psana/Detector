@@ -295,7 +295,14 @@ class DetNDArrRawProc :
     def summary(self, evt, env) :
 
         if self.verbos & 1 :
-            print '%s\nRaw data for %s found in %d events, begin data summary stage' % (80*'_', self.src, self.counter)
+            print '%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter),
+
+        if self.counter :
+            print ', begin data summary stage'
+        else :
+            print ', STOP processing, there are no arrays to save...'
+            return 
+
         t0_sec = time()
 
         # make shorter references
