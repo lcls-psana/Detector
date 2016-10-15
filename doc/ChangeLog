@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-00
+2016-10-14 Christopher O'Grady
+- rename XCS-BEAMMON-01 bld name to MFX-BEAMMON-01 as per Dan Damiani.
+
 Tag: V00-03-98
 2016-10-13 Mikhail S. Dubrovin
 - app/det_ndarr_raw_proc - add protection in summary - do not save results for 0 found events.
