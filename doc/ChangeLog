@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-01
+2016-11-04 Christopher O'Grady
+- Add new ControlsCamera area detector to Detector xface
+
 Tag: V00-04-00
 2016-10-14 Christopher O'Grady
 - rename XCS-BEAMMON-01 bld name to MFX-BEAMMON-01 as per Dan Damiani.

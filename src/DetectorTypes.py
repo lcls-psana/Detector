@@ -67,7 +67,8 @@ detectors = {
     "EpixS"       : AreaDetector,
     "Gotthard"    : AreaDetector,
     "Wave8"       : GenericWFDetector,
-    "LeCroy"      : GenericWFDetector
+    "LeCroy"      : GenericWFDetector,
+    "ControlsCamera" : AreaDetector
 }
 
 
