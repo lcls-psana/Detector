@@ -143,5 +143,6 @@ bld_info = {
     "MFX-BEAMMON-01"   : DdlDetector,
     "EOrbits"          : DdlDetector,
     "MfxDg1_Pim"       : DdlDetector,
-    "MfxDg2_Pim"       : DdlDetector
+    "MfxDg2_Pim"       : DdlDetector,
+    "SXR-AIN-01"       : DdlDetector
 }
