@@ -30,7 +30,6 @@ elif ntest==3 : #dsname, src = 'exp=amob5114:run=403', 'Camp.0:pnCCD.0'
 elif ntest==4 : #dsname, src = 'exp=xppi0614:run=74',  'NoDetector.0:Epix100a.0'
     dsname, src = '/reg/g/psdm/detector/data_test/types/0007-NoDetector.0-Epix100a.0.xtc', 'NoDetector.0:Epix100a.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/epix100/xpp-epix100a-2014-12-04/calib')
-    #psana.setOption('psana.calib-dir', './calib')
 
 elif ntest==5 :
     #dsname, src = 'exp=sxrg3715:run=46',  'SxrEndstation.0:Andor.2'
@@ -102,6 +101,10 @@ elif ntest==22 : # dsname, src = 'exp=sxrk4816:run=7',  'SxrEndstation.0:DualAnd
     src = 'SxrEndstation.0:DualAndor.0'# or alias='andorDual'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/andor3d/calib-andor3d-2016-02-09/calib')
 
+elif ntest==23 : #dsname, src = 'exp=mfxn8316:run=11',  'MfxEndstation.0:Epix100a.0'
+    psana.setOption('psana.calib-dir', './calib') # dark exp=mfxn8316:run=9
+    dsname, src = '/reg/g/psdm/detector/data_test/types/0021-MfxEndstation.0-Epix100a.0.xtc', 'MfxEndstation.0:Epix100a.0'
+
 else :
     print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
     sys.exit(0)
@@ -120,6 +123,7 @@ for key in evt.keys() : print key
 ##-----------------------------
 
 par = nrun # evt or nrun
+par = evt
 det = psana.Detector(src, env)
 
 ins = det.instrument()

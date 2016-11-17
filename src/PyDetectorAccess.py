@@ -87,12 +87,15 @@ class PyDetectorAccess :
         runnum = par if isinstance(par, int) else par.run()
         #print 80*'_'
         #print 'cpstore XXX runnum = %d' % runnum
+        #print 'cpstore XXX par', par,
+        #print 'XXX  isinstance(par, psana.Event)', isinstance(par, _psana.Event)
 
         # for 1st entry and when runnum is changing:
         if runnum != self.runnum_cps or self.cpst is None :
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
-            self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
+            #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
+            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits)
             if self.pbits & 1 : print 'PSCalib.CalibParsStore object is created for run %d' % runnum
 
         return self.cpst

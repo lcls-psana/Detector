@@ -12,6 +12,14 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-03
+2016-11-17 Mikhail S. Dubrovin
+- add ex_cspad_common_mode.py
+- AreaDetector.py
+  - pass par/evt in stead of rnum to get constants from calib store
+  - improve self doc
+- PyDetectorAccess.py - switch to using	cps.CreateForEvtEnv for DCS fallback
+	
 Tag: V00-04-02
 2016-11-14 Christopher O'Grady
 - Add new SXR-AIN-01 bld.

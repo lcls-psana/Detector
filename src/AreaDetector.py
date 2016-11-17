@@ -55,18 +55,19 @@ Usage::
     instrument = det.instrument()
 
     # access intensity calibration parameters
-    peds   = det.pedestals(par)
-    rms    = det.rms(par)
-    gain   = det.gain(par)
-    bkgd   = det.bkgd(par)
-    status = det.status(par)
-    stmask = det.status_as_mask(par, mode=0) # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
-    mask   = det.mask_calib(par)
-    cmod   = det.common_mode(par)
+    peds   = det.pedestals(par) # returns array of pixel pedestals from calib store type pedestals
+    rms    = det.rms(par)       # returns array of pixel dark noise rms from calib store type pixel_rms
+    gain   = det.gain(par)      # returns array of pixel gain from calib store type pixel_gain
+    bkgd   = det.bkgd(par)      # returns array of pixel background from calib store type pixel_bkgd
+    status = det.status(par)    # returns array of pixel status from calib store type pixel_status
+    stmask = det.status_as_mask(par, mode=0) # returns array of masked bad pixels in det.status 
+                                             # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
+    mask   = det.mask_calib(par)  # returns array of pixel mask from calib store type pixel_mask
+    cmod   = det.common_mode(par) # returns 1-d array of common mode parameters from calib store type common_mode
 
     # per-pixel (int16) gain mask from configuration data; 1/0 for low/high gain pixels,
     # or (float) per-pixel gain factors if gain is not None
-    gmap = det.gain_mask(par, gain=None) 
+    gmap = det.gain_mask(par, gain=None) # returns array of pixel gains using configuration data
     gmnz = det.gain_mask_non_zero(par, gain=None) # returns None if ALL pixels have high gain and mask should not be applied
 
     # set gfactor=high/low gain factor for CSPAD(2X2) in det.calib and det.image methods
@@ -93,19 +94,20 @@ Usage::
     cm_corr_nda = det.common_mode_correction(par, nda, cmpars)
 
     # access geometry information
-    geo        = det.geometry(par)
-    cx         = det.coords_x(par)
-    cy         = det.coords_y(par)
-    cz         = det.coords_z(par)
-    cx, cy     = det.coords_xy(par)
-    cx, cy, cz = det.coords_xyz(par)
-    areas      = det.areas(par)
-    mask_geo   = det.mask_geo(par, mbits=15) # mbits = +1-edges; +2-wide central cols;
-    #                                                  +4/+8/+16-non-bond / with four / with eight neighbors
-    ix         = det.indexes_x(par)
-    iy         = det.indexes_y(par)
-    ix, iy     = det.indexes_xy(par)
-    pixel_size = det.pixel_size(par)
+    geo        = det.geometry(par)   # returns geometry object (top-most)
+    cx         = det.coords_x(par)   # returns array of pixel x coordinates
+    cy         = det.coords_y(par)   # returns array of pixel y coordinates
+    cz         = det.coords_z(par)   # returns array of pixel z coordinates
+    cx, cy     = det.coords_xy(par)  # returns arrays of pixel x and y coordinates
+    cx, cy, cz = det.coords_xyz(par) # returns arrays of pixel x, y, and z coordinates
+    areas      = det.areas(par)      # returns array of pixel areas relative smallest pixel
+    mask_geo   = det.mask_geo(par, mbits=15) # returns mask of segment-specific pixels
+                                             #  mbits = +1-edges; +2-wide central cols;
+                                             #          +4/+8/+16-non-bond / with four / with eight neighbors
+    ix         = det.indexes_x(par)  # returns array of pixel indexes along x for image
+    iy         = det.indexes_y(par)  # returns array of pixel indexes along y for image
+    ix, iy     = det.indexes_xy(par) # returns arrays of pixel indexes along x and y for image
+    pixel_size = det.pixel_size(par) # returns array of pixel sizes
     ipx, ipy   = det.point_indexes(par, pxy_um=(0,0)) # by default returns detector origin indexes
 
     # change geometry object parameters
@@ -370,9 +372,9 @@ class AreaDetector(object):
            int - number of dimensions of current detector pixel numpy array. If ndim>3 then returns 3.
         """
         if self._ndim is None :
-            rnum = self.runnum(par)
+            #rnum = self.runnum(par)
             #nd = self.da.ndim_v0(rnum) if self.iscpp else self.pyda.ndim(rnum)
-            nd = self.pyda.ndim(rnum)
+            nd = self.pyda.ndim(par)
             self._ndim = nd if nd<4 else 3
         return self._ndim
 
@@ -390,9 +392,9 @@ class AreaDetector(object):
            int - size of the detector numpy pixel-array (number of pixels)
         """
         if self._size is None :
-            rnum = self.runnum(par)
+            #rnum = self.runnum(par)
             #self._size = self.da.size_v0(rnum) if self.iscpp else self.pyda.size(rnum)
-            self._size = self.pyda.size(rnum)
+            self._size = self.pyda.size(par)
         return self._size
     
 ##-----------------------------
@@ -427,15 +429,15 @@ class AreaDetector(object):
                       Ex.: the shape like (4,8,185,388) is reduced to (32,185,388)
         """
         if self._shape is None :
-            rnum = self.runnum(par)
+            #rnum = self.runnum(par)
             #sh = self.da.shape_v0(rnum) if self.iscpp else self.pyda.shape(rnum)
-            sh = self.pyda.shape(rnum)
-            self._shape = sh if len(sh)<4 else np.array((self.size(rnum)/sh[-1]/sh[-2], sh[-2], sh[-1]))
+            sh = self.pyda.shape(par)
+            self._shape = sh if len(sh)<4 else np.array((self.size(par)/sh[-1]/sh[-2], sh[-2], sh[-1]))
         return self._shape        
 
 ##-----------------------------
 
-    def loading_status(self, rnum, calibtype=None) :
+    def loading_status(self, par, calibtype=None) :
         """Returns loading status of calibration constants of specified type.
            Parameters
            ----------
@@ -447,8 +449,8 @@ class AreaDetector(object):
            -------
            int - enumerated value from the list gu.LOADED, DEFAULT, UNREADABLE, UNDEFINED, WRONGSIZE, NONFOUND.
         """
-        if self.iscpp : return self.da.status_v0(rnum, calibtype)
-        else          : return self.pyda.status(rnum, calibtype)
+        if self.iscpp : return self.da.status_v0(self.runnum(par), calibtype)
+        else          : return self.pyda.status(par, calibtype)
         
 ##-----------------------------
 
@@ -533,7 +535,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
-        else          : return self._shaped_array_(rnum, self.pyda.pedestals(rnum),  gu.PEDESTALS)
+        else          : return self._shaped_array_(rnum, self.pyda.pedestals(par),   gu.PEDESTALS)
 
 ##-----------------------------
 
@@ -550,7 +552,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_rms(rnum),  gu.PIXEL_RMS)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_rms(par),   gu.PIXEL_RMS)
 
 ##-----------------------------
 
@@ -567,7 +569,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(rnum),  gu.PIXEL_GAIN)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)
 
 ##-----------------------------
 
@@ -584,7 +586,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_mask(rnum),  gu.PIXEL_MASK)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_mask(par),   gu.PIXEL_MASK)
 
 ##-----------------------------
 
@@ -601,7 +603,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_bkgd(rnum),  gu.PIXEL_BKGD)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_bkgd(par),   gu.PIXEL_BKGD)
 
 ##-----------------------------
 
@@ -623,7 +625,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_status(rnum),  gu.PIXEL_STATUS)
+        else          : return self._shaped_array_(rnum, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)
 
 ##-----------------------------
 
@@ -640,7 +642,7 @@ class AreaDetector(object):
            np.array - mask generated from calibration type pixel_status (1/0 for status 0/>0, respectively).
         """
         rnum = self.runnum(par)
-        stat = self.status(rnum)
+        stat = self.status(par)
         if stat is None : return None
         smask = np.asarray(np.select((stat>0,), (0,), default=1), dtype=np.uint8)
         if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode==2 else False))
@@ -728,7 +730,7 @@ class AreaDetector(object):
         """
         rnum = self.runnum(par)
         if self.iscpp : return self.da.common_mode_v0(rnum)
-        else          : return self.pyda.common_mode(rnum)
+        else          : return self.pyda.common_mode(par)
 
 ##-----------------------------
 
@@ -903,7 +905,7 @@ class AreaDetector(object):
             if self.pbits & 32 : self._print_warning('calib(...) - raw data are missing.')
             return None
 
-        peds = self.pedestals(rnum)
+        peds = self.pedestals(evt)
         if peds is None :
             if self.pbits & 32 : self._print_warning('calib(...) - pedestals are missing, return raw data.')
             return np.array(raw, dtype=np.float32, copy=True)
@@ -935,7 +937,7 @@ class AreaDetector(object):
         else :
             cdata *= gainmask
 
-        gain = self.gain(rnum)
+        gain = self.gain(evt)
         if gain is None :
             if self.pbits & 32 : self._print_warning('calib(...) - pixel_gain calibration file is missing.')
         else :
@@ -945,7 +947,7 @@ class AreaDetector(object):
 
         if mbits > 0 : 
             #smask = self.status_as_mask(rnum) # (2, 185, 388)
-            mask = self.mask_comb(rnum, mbits)
+            mask = self.mask_comb(evt, mbits)
             if mask is None :
                 if self.pbits & 32 : self._print_warning('combined mask is missing.')
             else :
@@ -980,8 +982,8 @@ class AreaDetector(object):
         rnum = self.runnum(par)
 
         mask_nda = None
-        if calib  : mask_nda = self.mask_calib(rnum)
-        if status : mask_nda = gu.merge_masks(mask_nda, self.status_as_mask(rnum)) 
+        if calib  : mask_nda = self.mask_calib(par)
+        if status : mask_nda = gu.merge_masks(mask_nda, self.status_as_mask(par)) 
 
         mbits = 0
         if edges      : mbits += 1
@@ -1027,7 +1029,7 @@ class AreaDetector(object):
         #Evaluate new mask
         self._rnum_mask  = rnum
         self._mbits_mask = mbits
-        self._mask_nda = self.mask(rnum,\
+        self._mask_nda = self.mask(par,\
                                    status     = mbits&1,\
                                    calib      = mbits&2,\
                                    edges      = mbits&4,\
