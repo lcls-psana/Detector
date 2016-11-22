@@ -12,6 +12,12 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-04
+2016-11-22 Mikhail S. Dubrovin
+- add fallback support for geometry from DCS
+  - AreaDetector - in all geometry methods pass par to self.pyda object
+  - PyDetectorAccess - move part of geoaccess to geoaccess_calib, add geoaccess_dcs
+
 Tag: V00-04-03
 2016-11-17 Mikhail S. Dubrovin
 - add ex_cspad_common_mode.py

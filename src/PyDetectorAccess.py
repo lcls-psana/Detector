@@ -43,9 +43,16 @@ from PSCalib.NDArrIO import save_txt, load_txt
 
 ##-----------------------------
 
+##-----------------------------
+
 class PyDetectorAccess :
     """Direct python access to detector data.
     """
+    GEO_NOT_LOADED     = 0
+    GEO_LOADED_CALIB   = 1
+    GEO_LOADED_DEFAULT = 2
+    GEO_LOADED_DCS     = 3
+
 ##-----------------------------
 
     def __init__(self, source, env, pbits=0) :
@@ -115,6 +122,53 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def geoaccess_dcs(self, evt) :
+        #self.geo_load_status = self.GEO_NOT_LOADED
+        #self.geo_load_status = self.GEO_LOADED_DCS
+        import PSCalib.DCMethods as dcm
+
+        cdir = self.env.calibDir()
+        
+        #print 'XXX  par is Event:', isinstance(evt, _psana.Event)
+        #print 'XXX: cdir, src, pbits, dettype:', cdir, self.str_src, self.pbits, self.dettype
+
+        data = dcm.get_constants(evt, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None, verb=True)
+
+        if data is None : return
+
+        #for s in data : print 'XXX: %s' % s
+        #import tempfile
+        #fntmp = tempfile.NamedTemporaryFile(mode='r+b',suffix='.data')
+        #print 'XXX Save constants in tmp file: %s' % fntmp.name
+        #save_txt(fntmp.name, data, cmts='', fmt='%.1f')
+        #self.geo = GeometryAccess(fntmp.name, 0377 if self.pbits else 0)
+
+        self.geo = GeometryAccess(pbits=0377 if self.pbits else 0)
+        self.geo.load_pars_from_str(data)
+        self.geo.print_list_of_geos()
+
+##-----------------------------
+
+    def geoaccess_calib(self, runnum) :
+
+        group = gu.dic_det_type_to_calib_group[self.dettype]
+        cff = CalibFileFinder(self.env.calibDir(), group, 0377 if self.pbits else 0)
+        fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
+        if fname :
+            self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+            if self.pbits & 1 : print 'PSCalib.GeometryAccess object is created for run %d' % runnum
+            if self.geo.valid : self.geo_load_status = self.GEO_LOADED_CALIB
+        else     :
+            self.geo = None
+            if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
+
+        if self.geo is None :
+            # if geo object is still missing try to load default geometry
+            self.geo = self.default_geometry()
+            if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT
+
+##-----------------------------
+
     def geoaccess(self, par) : # par = evt or runnum
 
         runnum = par if isinstance(par, int) else par.run()
@@ -122,20 +176,15 @@ class PyDetectorAccess :
 
         # for 1st entry and when runnum is changing:
         if  runnum != self.runnum_geo or self.geo is None :
-            self.runnum_geo = runnum
-            group = gu.dic_det_type_to_calib_group[self.dettype]
-            cff = CalibFileFinder(self.env.calibDir(), group, 0377 if self.pbits else 0)
-            fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
-            if fname :
-                self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
-                if self.pbits & 1 : print 'PSCalib.GeometryAccess object is created for run %d' % runnum
-            else     :
-                self.geo = None
-                if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
 
-            if self.geo is None :
-                # if geo object is still missing try to load default geometry
-                self.geo = self.default_geometry()
+            self.geo_load_status = self.GEO_NOT_LOADED
+
+            self.runnum_geo = runnum
+            self.geoaccess_calib(runnum)
+
+            # fallback support from DCS
+            if self.geo is None or self.geo_load_status == self.GEO_LOADED_DEFAULT:
+                self.geoaccess_dcs(par)
 
             # arrays for caching
             self.iX             = None 
