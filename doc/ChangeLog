@@ -12,6 +12,11 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-05
+2016-12-05 Christopher O'Grady
+- add new flag for evr eventCodes method that allows returning of only
+  eventcodes that were sent on precisely this fiducial
+
 Tag: V00-04-04
 2016-11-22 Mikhail S. Dubrovin
 - add fallback support for geometry from DCS

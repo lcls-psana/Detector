@@ -4,7 +4,7 @@ Detector interface for the EVR
 """
 
 from DdlDetector import DdlDetector
-
+from _psana import EventId
 
 class EvrDetector(DdlDetector):
     """
@@ -15,7 +15,7 @@ class EvrDetector(DdlDetector):
     were activated in a particular LCLS event.
     """
 
-    def __call__(self, evt):
+    def __call__(self, evt, **kwargs):
         """
         Parameters
         ----------
@@ -25,13 +25,16 @@ class EvrDetector(DdlDetector):
         -------
         A list of integer event-codes associated with the input event
         """
-        return self.eventCodes(evt)
+        return self.eventCodes(evt, **kwargs)
 
-    def eventCodes(self, evt):
+    def eventCodes(self, evt, thisFiducialOnly=False):
         """
         Parameters
         ----------
         evt: a psana event object
+        thisFiducialOnly: bool.
+            If true, returns only eventcodes that were sent on precisely
+            the fiducial corresponding to evt.
 
         Returns
         -------
@@ -41,14 +44,19 @@ class EvrDetector(DdlDetector):
 
         if len(ddl_evrs) == 1:
             ddl_evr = ddl_evrs[0]
-            event_code_list = [ fifo_event.eventCode() for fifo_event \
-                                in ddl_evr.fifoEvents() ]
+            if thisFiducialOnly:
+                this_fid = evt.get(EventId).fiducials()
+                event_code_list = [ fifo_event.eventCode()
+                                    for fifo_event in ddl_evr.fifoEvents()
+                                    if fifo_event.timestampHigh()==this_fid]
+            else:
+                event_code_list = [ fifo_event.eventCode()
+                                    for fifo_event in ddl_evr.fifoEvents() ]
 
         else:
             event_code_list = None 
 
         return event_code_list
-
 
     # placeholder for idea: attribute that reports the EVR names, telling us
     # what the different codes actually mean -- we have to fetch this info
@@ -72,5 +80,7 @@ if __name__ == '__main__':
 
     for evt in ds.events():
         print evrdet(evt)
+        print evrdet(evt,thisFiducialOnly=True)
         print evrdet.eventCodes(evt)
+        print evrdet.eventCodes(evt,thisFiducialOnly=True)
         break
