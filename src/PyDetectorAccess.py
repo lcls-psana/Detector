@@ -103,7 +103,7 @@ class PyDetectorAccess :
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
-            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits)
+            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 16)
             if self.pbits & 1 : print 'PSCalib.CalibParsStore object is created for run %d' % runnum
 
         return self.cpst
@@ -124,8 +124,6 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def geoaccess_dcs(self, evt) :
-        #self.geo_load_status = self.GEO_NOT_LOADED
-        #self.geo_load_status = self.GEO_LOADED_DCS
         import PSCalib.DCMethods as dcm
 
         cdir = self.env.calibDir()
@@ -133,7 +131,7 @@ class PyDetectorAccess :
         #print 'XXX  par is Event:', isinstance(evt, _psana.Event)
         #print 'XXX: cdir, src, pbits, dettype:', cdir, self.str_src, self.pbits, self.dettype
 
-        data = dcm.get_constants(evt, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None, verb=True)
+        data = dcm.get_constants(evt, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None, verb=self.pbits & 16)
 
         if data is None : return
 
@@ -146,7 +144,8 @@ class PyDetectorAccess :
 
         self.geo = GeometryAccess(pbits=0377 if self.pbits else 0)
         self.geo.load_pars_from_str(data)
-        self.geo.print_list_of_geos()
+        #self.geo.print_list_of_geos()
+        self.geo_load_status = self.GEO_LOADED_DCS
 
 ##-----------------------------
 
