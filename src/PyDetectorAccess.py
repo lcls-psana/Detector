@@ -38,6 +38,7 @@ from PSCalib.CalibParsStore import cps
 from PSCalib.CalibFileFinder import CalibFileFinder
 from PSCalib.GeometryAccess import GeometryAccess, img_from_pixel_arrays
 from PSCalib.NDArrIO import save_txt, load_txt
+from pyimgalgos.cm_epix import cm_epix
 
 #from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
 
@@ -252,6 +253,14 @@ class PyDetectorAccess :
 
     def common_mode(self, par) :
         return self.cpstore(par).common_mode()
+
+##-----------------------------
+
+    def common_mode_apply(self, alg_num, kwargs, nda):
+        if alg_num == 6:
+            cm_epix(img=nda, **kwargs)
+        else:
+            print 'alg_num does not exist'
 
 ##-----------------------------
 

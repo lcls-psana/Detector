@@ -12,6 +12,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-06
+2016-12-07 Jacob Scott and Christopher O'Grady
+- add support for calling common mode algorithm cm_epix.py in PyDetectorAccess.py and AreaDetector.py
+
 Tag: V00-04-05
 2016-12-05 Christopher O'Grady
 - add new flag for evr eventCodes method that allows returning of only

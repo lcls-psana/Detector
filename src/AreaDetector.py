@@ -798,7 +798,7 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def common_mode_apply(self, par, nda, cmpars=None) :
+    def common_mode_apply(self, par, nda, cmpars=None, **kwargs) :
         """Apply common mode correction algorithm.
         
            Apply common mode correction to nda (assuming that nda is data ndarray with subtracted pedestals)
@@ -820,9 +820,22 @@ class AreaDetector(object):
         rnum = self.runnum(par)
         shape0 = nda.shape
         nda.shape = (nda.size,)
-        if cmpars is not None: self.da.set_cmod_pars(rnum, np.array(cmpars, dtype=np.float64))
-        if nda.dtype == np.float64 : self.da.common_mode_double_v0(rnum, nda)
-        if nda.dtype == np.float32 : self.da.common_mode_float_v0 (rnum, nda)
+
+        pycm = False
+        if cmpars is not None:
+            if cmpars[0] in [6]: pycm = True
+        if pycm:
+            # go into python
+            self.pyda.common_mode_apply(cmpars[0], kwargs, nda)
+        else:
+            # go into cpp
+            if cmpars is not None:
+                self.da.set_cmod_pars(rnum, np.array(cmpars, dtype=np.float64))
+            if nda.dtype == np.float64:
+                self.da.common_mode_double_v0(rnum, nda)
+            if nda.dtype == np.float32:
+                self.da.common_mode_float_v0(rnum, nda)
+
         nda.shape = shape0
 
 ##-----------------------------
@@ -866,7 +879,7 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def calib(self, evt, cmpars=None, mbits=1) :
+    def calib(self, evt, cmpars=None, mbits=1, **kwargs) :
         """Returns per-pixel array of calibrated data intensities.
         
            Gets raw data ndarray, applys baic corrections and return thus calibrated data.
@@ -922,7 +935,7 @@ class AreaDetector(object):
         cdata -= peds  # for cspad2x2 (2, 185, 388)
 
         if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2 ->(185, 388, 2)
-        self.common_mode_apply(rnum, cdata, cmpars)
+        self.common_mode_apply(rnum, cdata, cmpars, **kwargs)
         if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2 ->(2, 185, 388)
 
 
