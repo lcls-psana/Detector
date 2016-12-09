@@ -53,7 +53,7 @@ class TestPyDetector(unittest.TestCase) :
             else:
                 raise Exception('new detector? write a test for it!')
 
-        return 
+        return
 
 
     def test_cspad(self):
@@ -67,6 +67,29 @@ class TestPyDetector(unittest.TestCase) :
         assert np.abs(cspad.calib(evt).sum() - cspad.image(evt).sum()) < 1e5
 
         return
+
+
+    def test_cspad_cm1(self):
+    	## Assuming default parameters: [1, 25, 10, 100]
+    	cspad = psana.Detector('cspad')
+	evt = self.ds.events().next()
+	mask = cspad.mask(evt, unbond=True)
+	nda0, nda1, rms = 30, 20, 3
+
+	nda = np.ones((32, 185, 388))
+	## mean > 25, will call alg #5
+	nda[0] *= nda0
+	## mean < 25, will continue with alg #1
+	nda[1] *= nda1
+       	nda[np.where(mask == 0)] = rms
+	nda_before = np.copy(nda)
+
+	cspad.common_mode_apply(evt, nda)
+
+	## Test call to unbonded cm (alg #5) if alg #1 fails
+	assert (nda[0] == nda_before[0] - rms).all()
+	## Test if alg #1 succeeds
+	assert (nda[1] == nda_before[1] - nda1).all()
 
 
     def test_string_pv(self):

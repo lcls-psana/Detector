@@ -12,6 +12,9 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+Tag: V00-04-09
+2016-12-09 Jacob Scott and Christopher O'Grady
+- add test in detectortest for cspad common mode
 
 Tag: V00-04-08
 2016-12-9 David Schneider
