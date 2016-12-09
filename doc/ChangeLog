@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-04-08
+2016-12-9 David Schneider
+- add HX2-BEAMMON-01 to detector xface for pdsdata 8.6.19
+	
 Tag: V00-04-07
 2016-12-08 Mikhail S. Dubrovin
 - eliminate printout from DCStore
