@@ -59,7 +59,6 @@ class TestPyDetector(unittest.TestCase) :
     def test_cspad(self):
         cspad = psana.Detector('cspad')
         evt = self.ds.events().next()
-        print cspad.image(evt).shape
         assert cspad.raw(evt).shape == (32, 185, 388)
         assert cspad.calib(evt).shape == (32, 185, 388)
 
@@ -70,7 +69,6 @@ class TestPyDetector(unittest.TestCase) :
 
 
     def test_cspad_cm1(self):
-    	## Assuming default parameters: [1, 25, 10, 100]
     	cspad = psana.Detector('cspad')
 	evt = self.ds.events().next()
 	mask = cspad.mask(evt, unbond=True)
@@ -84,7 +82,9 @@ class TestPyDetector(unittest.TestCase) :
        	nda[np.where(mask == 0)] = rms
 	nda_before = np.copy(nda)
 
-	cspad.common_mode_apply(evt, nda)
+	# set parameters to nominal default, because test data has cmpars
+	# set in the calib-dir
+	cspad.common_mode_apply(evt, nda, cmpars=[1,25,25,100,1])
 
 	## Test call to unbonded cm (alg #5) if alg #1 fails
 	assert (nda[0] == nda_before[0] - rms).all()

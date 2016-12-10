@@ -12,6 +12,12 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ==============
+
+Tag: V00-04-10
+2016-12-09 Jacob Scott and Christopher O'Grady
+- in common mode test, set parameters to nominal default values,
+  since test data has them over-ridden by calib-dir values.
+
 Tag: V00-04-09
 2016-12-09 Jacob Scott and Christopher O'Grady
 - add test in detectortest for cspad common mode
