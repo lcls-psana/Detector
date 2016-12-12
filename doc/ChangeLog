@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-04-11
+2016-12-12 Christopher O'Grady
+- add support to not crash when detector is missing
+
 Tag: V00-04-10
 2016-12-09 Jacob Scott and Christopher O'Grady
 - in common mode test, set parameters to nominal default values,
