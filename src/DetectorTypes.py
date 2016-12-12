@@ -1,6 +1,6 @@
 
 """
-This file contains static declartions of the known & interpretable detector
+This file contains static declarations of the known & interpretable detector
 types.
 """
 
@@ -13,6 +13,20 @@ from Detector.UsdUsbDetector    import UsdUsbDetector
 from Detector.GenericWFDetector import GenericWFDetector
 from Detector.OceanDetector     import OceanDetector
 from Detector.TDCDetector       import TDCDetector
+
+class MissingDet(object):
+    """
+    This detector is returned by the Detector interface
+    when the user requests that the software not crash
+    when a detector is missing.  It returns a method
+    that returns None for all attributes.
+    """
+    def __init__(self,name,*args,**kwargs):
+        self.name = name
+    def _none(self, *args, **kwargs):
+        return None
+    def __getattr__(self, name):
+        return self._none
 
 def no_device_exception(*args):
     raise TypeError('Detector device is `NoDevice`, which means the'

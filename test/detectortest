@@ -115,9 +115,25 @@ class TestPyDetector(unittest.TestCase) :
 
         dt = Detector.PyDetector.dettype(source_string, self.ds.env())
         assert dt == Detector.AreaDetector.AreaDetector
-        
+
+    def test_missing(self):
+        name = 'incorrectName'
+        missing = psana.Detector(name,accept_missing=True)
+        assert missing.sdfg(123,'hello') is None
+        missing = psana.Detector(name,self.ds.env(),accept_missing=True)
+        assert missing.sdfg(123,'hello') is None
+        missing = psana.Detector(name,self.ds.env(),True)
+        assert missing.sdfg(123,'hello') is None
+        missing = psana.Detector(name,local_env=self.ds.env(),
+                                 accept_missing=True)
+        assert missing.sdfg(123,'hello') is None
+        try:
+            # expect an exception in this case, raise if we don't see it
+            missing = psana.Detector(name)
+            raise NameError('Detector name %s should raise exception' % name)
+        except KeyError:
+            pass
+
  
 if __name__ == '__main__':
      unittest.main(argv=[sys.argv[0], '-v'])
-
-

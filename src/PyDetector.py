@@ -89,47 +89,14 @@ class DetInfo(object):
 
 # the following function is renamed psana.Detector in the
 # psana __init__.py file
-def detector_factory(source_string, env):
+def detector_factory(source_string, env, *args, **kwargs):
     """
-    Create a python Detector from a string identifier.
-
-    Parameters
-    ----------
-    source_string : str
-        A string identifying a piece of data to access, examples include:
-          - 'cspad'                  # a DAQ detector alias
-          - 'XppGon.0:Cspad.0'       # a DAQ detector full-name
-          - 'DIAG:FEE1:202:241:Data' # an EPICS variable name (or alias)
-          - 'EBeam'                  # a BldInfo identifier\n
-        The idea is that you should be able to pass something that makes
-        sense to you as a human here, and you automatically get the right
-        detector object in return.
-
-    env : psana.Env
-        The psana environment object associated with the psana.DataSource
-        you are interested in (from method DataSource.env()).
-
-    Returns
-    -------
-    A psana-python detector object. Try detector(psana.Event) to
-    access your data.
-
-    HOW TO GET MORE HELP
-    --------------------
-    The Detector method returns an object that has methods that
-    change depending on the detector type. To see help for a particular
-    detector type execute commands similar to the following
-
-    env = DataSource('exp=xpptut15:run=54').env()
-    det = Detector('cspad',env)
-
-    and then use the standard ipython "det?" command (and tab completion) to
-    see the documentation for that particular detector type.
+    See psana/src/det_interface.py for documentation
     """
 
     # > create an instance of the determined detector type & return it
     source_string = map_alias_to_source(source_string, env)
-    dt = dettype(source_string, env)
+    dt = dettype(source_string, env, *args, **kwargs)
     det_instance = dt(source_string, env)
     det_instance.name = DetInfo(source_string)
 
@@ -170,7 +137,7 @@ def map_alias_to_source(source_string, env):
 
 # the following function is renamed psana.Detector in the
 # psana __init__.py file
-def dettype(source_string, env):
+def dettype(source_string, env, accept_missing=False, *args, **kwargs):
     """
     Create a python Detector-class "type" from a string identifier.
 
@@ -210,8 +177,11 @@ def dettype(source_string, env):
         if di.dev in dt.detectors.keys():
             detector_class = dt.detectors[di.dev]
         else:
-            raise KeyError('Unknown DetInfo device type: %s (source: %s)'
-                           '' % (di.dev, source_string))
+            if accept_missing:
+                detector_class = dt.MissingDet
+            else:
+                raise KeyError('Unknown DetInfo device type: %s (source: %s)'
+                               '' % (di.dev, source_string))
 
     return detector_class
 
