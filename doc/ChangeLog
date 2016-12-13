@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V00-04-12
+2016-12-12 TJ and Chris
+- thisFiducialOnly to this_fiducial_only
+
 Tag: V00-04-11
 2016-12-12 Christopher O'Grady
 - add support to not crash when detector is missing
