@@ -27,12 +27,12 @@ class EvrDetector(DdlDetector):
         """
         return self.eventCodes(evt, **kwargs)
 
-    def eventCodes(self, evt, thisFiducialOnly=False):
+    def eventCodes(self, evt, this_fiducial_only=False):
         """
         Parameters
         ----------
         evt: a psana event object
-        thisFiducialOnly: bool.
+        this_fiducial_only: bool.
             If true, returns only eventcodes that were sent on precisely
             the fiducial corresponding to evt.
 
@@ -44,7 +44,7 @@ class EvrDetector(DdlDetector):
 
         if len(ddl_evrs) == 1:
             ddl_evr = ddl_evrs[0]
-            if thisFiducialOnly:
+            if this_fiducial_only:
                 this_fid = evt.get(EventId).fiducials()
                 event_code_list = [ fifo_event.eventCode()
                                     for fifo_event in ddl_evr.fifoEvents()
@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     for evt in ds.events():
         print evrdet(evt)
-        print evrdet(evt,thisFiducialOnly=True)
+        print evrdet(evt, this_fiducial_only=True)
         print evrdet.eventCodes(evt)
-        print evrdet.eventCodes(evt,thisFiducialOnly=True)
+        print evrdet.eventCodes(evt, this_fiducial_only=True)
         break
