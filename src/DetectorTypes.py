@@ -82,7 +82,9 @@ detectors = {
     "Gotthard"    : AreaDetector,
     "Wave8"       : GenericWFDetector,
     "LeCroy"      : GenericWFDetector,
-    "ControlsCamera" : AreaDetector
+    "ControlsCamera" : AreaDetector,
+    "Archon"      : AreaDetector,
+    "Jungfrau"    : AreaDetector,
 }
 
 

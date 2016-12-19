@@ -173,6 +173,16 @@ def get_andor_data_object(evt, src) :
 
 ##-----------------------------
 
+def get_jungfrau_data_object(evt, src) :
+    """get jungfrau data object
+    """
+    o = evt.get(_psana.Jungfrau.ElementV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
 def get_andor_config_object(env, src) :
     """get andor config object
     """
@@ -182,6 +192,16 @@ def get_andor_config_object(env, src) :
     if o is not None : return o
 
     o = cfg.get(_psana.Andor.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_jungfrau_config_object(env, src) :
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Jungfrau.ConfigV1, src)
     if o is not None : return o
 
     return None

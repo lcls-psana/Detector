@@ -567,6 +567,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.PNCCD      : return self.raw_data_pnccd(evt, env)     # 0.8 ms
         elif self.dettype == gu.ANDOR      : return self.raw_data_andor(evt, env)     # 0.1 ms
         elif self.dettype == gu.ANDOR3D    : return self.raw_data_andor(evt, env)
+        elif self.dettype == gu.JUNGFRAU   : return self.raw_data_jungfrau(evt, env)
         elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
         elif self.dettype == gu.EPIX100A   : return self.raw_data_epix(evt, env)      # 0.3 ms
         elif self.dettype == gu.EPIX10K    : return self.raw_data_epix(evt, env)
@@ -791,6 +792,13 @@ class PyDetectorAccess :
 
         nda = d.data()
         return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_jungfrau(self, evt, env) :
+        d = pda.get_jungfrau_data_object(evt, self.source)
+        if d is None : return None
+        return d.frame()
 
 ##-----------------------------
 
@@ -1187,6 +1195,18 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def shape_config_jungfrau(self, env) :
+
+        c = pda.get_jungfrau_config_object(env, self.source)
+        if c is None : return None
+        nsegs = c.numberOfModules()
+        npixx = c.numberOfRowsPerModule()
+        npixy = c.numberOfColumnsPerModule()
+
+        return (nsegs, npixy, npixx)
+
+##-----------------------------
+
     def shape_config_timepix(self, env) :
         # configuration from data file
         #c = pda.get_timepix_config_object(env, self.source)
@@ -1271,6 +1291,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.PNCCD      : return self.shape_config_pnccd(env)
         elif self.dettype == gu.ANDOR      : return self.shape_config_andor(env)
         elif self.dettype == gu.ANDOR3D    : return self.shape_config_andor(env)
+        elif self.dettype == gu.JUNGFRAU   : return self.shape_config_jungfrau(env)
         elif self.dettype == gu.RAYONIX    : return self.shape_config_rayonix(env)
         elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
                               gu.FCCD, gu.FCCD960, gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150) \
