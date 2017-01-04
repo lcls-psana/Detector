@@ -30,6 +30,11 @@ elif ntest==4 :
     dsname = '/reg/g/psdm/data_test/types/Pimax_FrameV1.xtc'   # amob5114-r0480
     src = 'AmoEndstation.0:Pimax.0' # Pimax.ConfigV1, Pimax.FrameV1
 
+elif ntest==5 :
+    #dsname = 'exp=cxi11216:run=40' # (1, 1024, 512)
+    dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
+    src = 'CxiEndstation.0:Jungfrau.0'
+
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
@@ -51,7 +56,7 @@ for key in evt.keys() : print key
 from Detector.AreaDetector import AreaDetector
 
 par = nrun # evt or nrun
-det = AreaDetector(src, env, pbits=0, iface='P') # iface='P' or 'C'
+det = AreaDetector(src, env, pbits=0)
 
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins
@@ -146,8 +151,8 @@ img = None
 
 # Image producer is different for 3-d and 2-d arrays 
 if len(nda_raw.shape) > 2 :
-    #img = det.image(evt)
-    img = det(evt) # alias for det.image(evt) implemented in __call__
+    img = det.image(evt)
+    #img = det(evt) # alias for det.image(evt) implemented in __call__
     #img = det.image(evt, img_arr)
 else :
     img = img_arr
