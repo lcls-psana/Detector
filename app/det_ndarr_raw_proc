@@ -203,13 +203,13 @@ class DetNDArrRawProc :
         if self.verbos & 1 : print 'Begin stage 1 for %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
                                    (self.src, str(self.shape), self.int_lo, self.int_hi) 
     
-        self.arr0       = np.zeros(self.shape, dtype=ndaraw.dtype)
-        self.arr1       = np.ones (self.shape, dtype=ndaraw.dtype)
+        self.arr0       = np.zeros(self.shape, dtype=np.int64)
+        self.arr1       = np.ones (self.shape, dtype=np.int64)
 
-        self.sta_int_lo = np.zeros(self.shape, dtype=ndaraw.dtype)
-        self.sta_int_hi = np.zeros(self.shape, dtype=ndaraw.dtype)
+        self.sta_int_lo = np.zeros(self.shape, dtype=np.int64)
+        self.sta_int_hi = np.zeros(self.shape, dtype=np.int64)
 
-        self.arr_sum0   = np.zeros(self.shape, dtype=np.uint32)
+        self.arr_sum0   = np.zeros(self.shape, dtype=np.int64)
         self.arr_sum1   = np.zeros(self.shape, dtype=np.double)
         self.arr_sum2   = np.zeros(self.shape, dtype=np.double)
 
@@ -243,6 +243,12 @@ class DetNDArrRawProc :
         cond_lo = ndaraw<self.gate_lo
         cond_hi = ndaraw>self.gate_hi
         condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
+
+        #print 'XXX:'
+        #print_ndarr(self.arr1, 'arr1')
+        #print_ndarr(self.arr_sum0, 'arr_sum0')
+        #print_ndarr(self.arr_sum1, 'arr_sum1')
+        #print_ndarr(self.arr_sum2, 'arr_sum2')
 
         self.arr_sum0   += np.select(condlist, (self.arr1,), 0)
         self.arr_sum1   += np.select(condlist, (ndadbl,), 0)
@@ -283,7 +289,7 @@ class DetNDArrRawProc :
         self.gate_hi = np.array(self.gate_hi, dtype=ndaraw.dtype)
         self.gate_lo = np.array(self.gate_lo, dtype=ndaraw.dtype)
 
-        self.arr_sum0 = np.zeros(self.shape, dtype=np.uint32)
+        self.arr_sum0 = np.zeros(self.shape, dtype=np.int64)
         self.arr_sum1 = np.zeros(self.shape, dtype=np.double)
         self.arr_sum2 = np.zeros(self.shape, dtype=np.double)
 
@@ -347,7 +353,7 @@ class DetNDArrRawProc :
         print '  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)
 
         #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
-        arr_sta = np.zeros(self.shape, dtype=np.uint16)
+        arr_sta = np.zeros(self.shape, dtype=np.int64)
         arr_sta += arr_sta_rms_hi    # hot rms
         arr_sta += arr_sta_rms_lo*8  # cold rms
         arr_sta += arr_sta_int_hi*2  # satturated
