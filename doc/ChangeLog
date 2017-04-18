@@ -13,10 +13,14 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-01
+2017-04-17 Mikhail S. Dubrovin
+- switch to github, det_ndarr_raw_proc - fix inconsistent dtypes in numpy operations
+
 Tag: V00-04-14
 2017-01-04 Mikhail S. Dubrovin
 - update ex_new_dets.py, ex_source_dsname.py for jungfrau
-	
+
 Tag: V00-04-13
 2016-12-20 Christopher O'Grady
 - Add jungfrau
