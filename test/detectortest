@@ -75,7 +75,7 @@ class TestPyDetector(unittest.TestCase) :
 	nda0, nda1, rms = 30, 20, 3
 
 	nda = np.ones((32, 185, 388))
-	## mean > 25, will call alg #5
+	## mean > 25, will call alg #5 since every pixel is "hit"
 	nda[0] *= nda0
 	## mean < 25, will continue with alg #1
 	nda[1] *= nda1
@@ -90,6 +90,13 @@ class TestPyDetector(unittest.TestCase) :
 	assert (nda[0] == nda_before[0] - rms).all()
 	## Test if alg #1 succeeds
 	assert (nda[1] == nda_before[1] - nda1).all()
+
+	# now try with par[4]=0 (disabling alg #5)
+	nda = np.copy(nda_before)
+	cspad.common_mode_apply(evt, nda, cmpars=[1,25,25,100,0])
+	# should do nothing, since every pixel is "hit" (>25) and we have
+	# disabled algorithm 5
+	assert (nda[0] == nda_before[0]).all()
 
 
     def test_string_pv(self):
