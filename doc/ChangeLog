@@ -13,6 +13,16 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-04
+2017-05-19 Mikhail S. Dubrovin
+- add parameter thr_fraction=0.9 to AreaDetector.photons method
+
+Tag: V01-00-03
+???
+
+Tag: V01-00-02
+???
+
 Tag: V01-00-01
 2017-04-17 Mikhail S. Dubrovin
 - switch to github, det_ndarr_raw_proc - fix inconsistent dtypes in numpy operations

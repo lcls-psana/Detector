@@ -154,7 +154,7 @@ Usage::
     nda = det.load_txtnda(fname)
 
     # merge photons split between pixels and return array with integer number of photons per pixel
-    nda_nphotons = det.photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None)
+    nda_nphotons = det.photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None, thr_fraction=0.9)
 
 @see classes
 \n  :py:class:`Detector.PyDetector` - factory for different detectors
@@ -1455,7 +1455,7 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None) :
+    def photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None, thr_fraction=0.9) :
         """Returns 2-d or 3-d array of integer number of merged photons - algorithm suggested by Chuck.
 
            Parameters
@@ -1464,6 +1464,7 @@ class AreaDetector(object):
            nda_calib      : (float, double, int, int16) numpy.array - calibrated data, float number of photons per pixel.
            mask           : (uint8) numpy.array user defined mask.
            adu_per_photon : float conversion factor which is applied as nda_calib/adu_per_photon.
+           thr_fraction   : float - fraction of the merged intensity which gets converted to one photon, def=0.9.
 
            Returns
            -------
@@ -1482,7 +1483,7 @@ class AreaDetector(object):
         msk = self.mask(evt, calib=True, status=True, edges=True, central=True, unbond=True, unbondnbrs=True) \
               if mask is None else mask
 
-        return self.alg_photons(nda, msk)
+        return self.alg_photons(nda, msk, thr_fraction)
 
 ##-----------------------------
 
