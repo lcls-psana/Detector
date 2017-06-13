@@ -85,6 +85,7 @@ detectors = {
     "ControlsCamera" : AreaDetector,
     "Archon"      : AreaDetector,
     "Jungfrau"    : AreaDetector,
+    "Zyla"        : AreaDetector,
 }
 
 

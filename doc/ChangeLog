@@ -13,15 +13,25 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-05
+2017-06-13 Mikhail S. Dubrovin
+- add support for new detector Zyla
+	modified:   examples/ex_all_dets.py
+	modified:   examples/ex_new_dets.py
+	modified:   examples/ex_source_dsname.py
+	modified:   src/DetectorTypes.py
+	modified:   src/PyDataAccess.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V01-00-04
 2017-05-19 Mikhail S. Dubrovin
 - add parameter thr_fraction=0.9 to AreaDetector.photons method
 
 Tag: V01-00-03
-???
+Who, when and what ???
 
 Tag: V01-00-02
-???
+Who, when and what ???
 
 Tag: V01-00-01
 2017-04-17 Mikhail S. Dubrovin

@@ -423,6 +423,27 @@ def get_orca_config_object(env, src) :
     return None
 
 ##-----------------------------
+
+def get_zyla_data_object(evt, src) :
+    """get zyla data object
+    """
+    o = evt.get(_psana.Zyla.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_zyla_config_object(env, src) :
+    """get zyla config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Zyla.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
 ##-----------------------------
 ##---- For WFDetector.py ------
 ##-----------------------------

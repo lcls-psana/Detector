@@ -35,6 +35,11 @@ elif ntest==5 :
     dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
     src = 'CxiEndstation.0:Jungfrau.0'
 
+elif ntest==6 :
+    #dsname = 'exp=xppx23615:run=75' # (2160, 2560)
+    dsname = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc'
+    src = 'XppEndstation.0:Zyla.0' # 'zyla'
+
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
