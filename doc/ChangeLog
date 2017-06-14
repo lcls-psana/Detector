@@ -13,6 +13,13 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-06
+2017-06-14 Mikhail S. Dubrovin
+- fix a few ndarray deprecared indexing problems
+	modified:   include/NDArrProducerAndor.h
+	modified:   include/NDArrProducerCSPAD.h
+	modified:   src/NDArrProducerAndor.cpp
+
 Tag: V01-00-05
 2017-06-13 Mikhail S. Dubrovin
 - add support for new detector Zyla

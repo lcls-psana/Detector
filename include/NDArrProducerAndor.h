@@ -104,7 +104,7 @@ private:
 
           if(m_pbits & 2) { 
               MsgLog(name(), info, "Andor::FrameV# data for entry:" << m_count_ent << ":\n");
-              for (int i=0; i<10; ++i) cout << " " << nda_data[0][i]; cout << "\n"; 
+              for (int i=0; i<10; ++i) cout << " " << nda_data(0,i); cout << "\n"; 
           }      
 
           // Return ndarray directly from data
@@ -117,7 +117,7 @@ private:
               *it_out = (TOUT)*it;
           }
 
-          if(m_pbits & 2) {for (int i=0; i<10; ++i) cout << " " << nda_out[0][i]; cout << "\n"; }      
+          if(m_pbits & 2) {for (int i=0; i<10; ++i) cout << " " << nda_out(0,i); cout << "\n"; }      
  
           return nda_out;
       }

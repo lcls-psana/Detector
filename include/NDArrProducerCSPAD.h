@@ -161,8 +161,8 @@ private:
                     //std::memcpy(&nda_out[ind2x1_in_det][0][0], &nda_quad[ind2x1_in_quad][0][0], Size2x1*sizeof(T));
 
 		    // Copy with type conversion:
-		    const data_t* p_sect = &nda_quad[ind2x1_in_quad][0][0];
-		    TOUT*          p_out = &nda_out[ind2x1_in_det][0][0];
+		    const data_t* p_sect = &nda_quad(ind2x1_in_quad,0,0);
+		    TOUT*          p_out = &nda_out(ind2x1_in_det,0,0);
 		    for(unsigned i=0; i<Size2x1; ++i) {
                       p_out[i]=(TOUT)p_sect[i];
 		    }
