@@ -7,35 +7,35 @@ from Detector.GlobalUtils import print_ndarr
 
 ##-----------------------------
 
-ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+tname = sys.argv[1] if len(sys.argv)>1 else '1'
+print 'Test "%s"' % tname
 
 ##-----------------------------
 
 dsname = '/reg/g/psdm/data_test/types/FCCD_FccdConfigV2.xtc' # sxr61612-r0332
 src = 'SxrEndstation.0:Fccd.0' # Camera.FrameV1. Fccd.ConfigV2
 
-if ntest==2 :
+if tname=='2' :
     #dsname = '/reg/g/psdm/data_test/types/Timepix_ConfigV3.xtc' # xcsi0113-r0030
     dsname = '/reg/g/psdm/data_test/types/Timepix_DataV2.xtc'    # xcsi0113-r0030
     src = 'XcsEndstation.0:Timepix.0' # Timepix.DataV2 Timepix.ConfigV3
 
-elif ntest==3 :
+elif tname=='3' :
     dsname = '/reg/g/psdm/data_test/types/Fli_ConfigV1.xtc' # meca6013-r0009
     dsname = '/reg/g/psdm/data_test/types/Fli_FrameV1.xtc'  # meca6013-r0009
     src = 'MecTargetChamber.0:Fli.0' # Fli.FrameV1, Fli.ConfigV1
 
-elif ntest==4 :
+elif tname=='4' :
     #dsname = '/reg/g/psdm/data_test/types/Pimax_ConfigV1.xtc' # amob5114-r0549
     dsname = '/reg/g/psdm/data_test/types/Pimax_FrameV1.xtc'   # amob5114-r0480
     src = 'AmoEndstation.0:Pimax.0' # Pimax.ConfigV1, Pimax.FrameV1
 
-elif ntest==5 :
+elif tname=='5' :
     #dsname = 'exp=cxi11216:run=40' # (1, 1024, 512)
     dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
     src = 'CxiEndstation.0:Jungfrau.0'
 
-elif ntest==6 :
+elif tname=='6' :
     #dsname = 'exp=xppx23615:run=75' # (2160, 2560)
     dsname = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc'
     src = 'XppEndstation.0:Zyla.0' # 'zyla'
