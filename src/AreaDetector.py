@@ -935,20 +935,23 @@ class AreaDetector(object):
         cdata -= peds  # for cspad2x2 (2, 185, 388)
 
         if self.is_cspad2x2() : cdata = two2x1ToData2x2(cdata) # convert to DAQ shape for cspad2x2 ->(185, 388, 2)
+
         self.common_mode_apply(rnum, cdata, cmpars, **kwargs)
+
         if self.is_cspad2x2() : cdata = data2x2ToTwo2x1(cdata) # convert to Natural shape for cspad2x2 ->(2, 185, 388)
 
-
         # ------------- 2016-06-24, 08-30 gain_mask -> gain_mask_non_zero
-        gainmask = self.gain_mask_non_zero(rnum, gain=self._gain_mask_factor)
-        #print 'XXX: use _gain_mask_factor = ', self._gain_mask_factor        
-        #print 'XXX: gainmask.mean(): ', gainmask.mean()
-        #print_ndarr(gainmask, 'XXX: det.calib(): apply gain_mask')
 
-        if gainmask is None :
-            if self.pbits & 32 : self._print_warning('calib(...) - gain_mask calibration in config store is missing.')
-        else :
-            cdata *= gainmask
+        if self.is_cspad() :
+            gainmask = self.gain_mask_non_zero(rnum, gain=self._gain_mask_factor)
+            #print 'XXX: use _gain_mask_factor = ', self._gain_mask_factor        
+            #print 'XXX: gainmask.mean(): ', gainmask.mean()
+            #print_ndarr(gainmask, 'XXX: det.calib(): apply gain_mask')
+
+            if gainmask is None :
+                if self.pbits & 32 : self._print_warning('calib(...) - gain_mask calibration in config store is missing.')
+            else :
+                cdata *= gainmask
 
         gain = self.gain(evt)
         if gain is None :

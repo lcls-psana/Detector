@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-08
+2017-06-19 Mikhail S. Dubrovin
+- AreaDetector.py - apply gainmask to CSPAD only
+
 Tag: V01-00-07
 2017-06-16 Mikhail S. Dubrovin
 - add app/jungfrau_ndarr_dark_proc - this version saves separate files for 3 gain modes
