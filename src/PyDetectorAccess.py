@@ -103,7 +103,7 @@ class PyDetectorAccess :
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
-            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 16)
+            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0377)
             if self.pbits & 1 : print 'PSCalib.CalibParsStore object is created for run %d' % runnum
 
         return self.cpst
@@ -497,6 +497,8 @@ class PyDetectorAccess :
 
     def set_print_bits(self, pbits) :
         self.pbits  = pbits
+        if self.cpst is not None : self.cpst.set_print_bits(0177777)
+        if self.geo  is not None : self.geo.set_print_bits(0377 if pbits else 0)
 
 ##-----------------------------
 

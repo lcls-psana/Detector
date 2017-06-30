@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-09
+2017-06-30 Mikhail S. Dubrovin
+- PyDetectorAccess - fix set_print_bits to propagate pbits to self.cpst and self.geo objects
+
 Tag: V01-00-08
 2017-06-19 Mikhail S. Dubrovin
 - AreaDetector.py - apply gainmask to CSPAD only
