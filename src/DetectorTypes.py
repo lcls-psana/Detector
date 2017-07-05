@@ -163,4 +163,9 @@ bld_info = {
     "MfxDg2_Pim"       : DdlDetector,
     "SXR-AIN-01"       : DdlDetector,
     "HX2-BEAMMON-01"   : DdlDetector,
+    "XRT-USB-ENCODER-01" : UsdUsbDetector,
+    "XPP-USB-ENCODER-01" : UsdUsbDetector,
+    "XPP-USB-ENCODER-02" : UsdUsbDetector,
+    "XCS-USB-ENCODER-01" : UsdUsbDetector,
+    "CXI-USB-ENCODER-01" : UsdUsbDetector,
 }
