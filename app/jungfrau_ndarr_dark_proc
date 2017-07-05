@@ -9,6 +9,15 @@ from time import time, localtime, strftime
 from pyimgalgos.GlobalUtils import print_ndarr, divide_protected, print_command_line_parameters, reshape_to_2d
 #from Detector.GlobalUtils import print_ndarr, divide_protected
 
+NUMBER_OF_GAIN_MODES = 3
+
+DIC_GAIN_MODE = {'FixedGain1':  1,
+                 'FixedGain2':  2,
+                 'ForcedGain1': 1,
+                 'ForcedGain2': 2,
+                 'HighGain0':   0,
+                 'Normal':      0}
+
 #------------------------------
 
 def get_jungfrau_data_object(evt, src) :
@@ -158,14 +167,14 @@ class JungfrauNDArrDarkProc :
         self.intnhi = popts.intnhi
         self.rmsnlo = popts.rmsnlo
         self.rmsnhi = popts.rmsnhi
-
-        self.evstg1 = max(self.events*0.05, 5)
+        self.evstg1 = min(max(self.events*0.05, 5), 50)
         self.nsigma = popts.nsigma
         
-        self.det     = None
-        self.shape   = None
-        self.counter = 0
-        self.stage   = 0
+        self.det      = None
+        self.shape    = None
+        self.counter  = 0
+        self.stage    = 0
+        self.gmname   = None
 
 
     def print_attrs(self) :
@@ -232,6 +241,10 @@ class JungfrauNDArrDarkProc :
         if self.det is None : self.det = psana.Detector(self.src, env)
         if self.det is None :
             raise ValueError('Can not create the Detector object for source %s' % self.src)
+
+        gmo = get_gain_mode(env, self.src)
+        self.gmname = gmo.name
+        self.gmind = DIC_GAIN_MODE[self.gmname]
 
         ndaraw = self.det.raw(evt)
 
@@ -325,8 +338,8 @@ class JungfrauNDArrDarkProc :
         gate_half = self.nsigma*rms_ave
 
         if self.verbos & 1 :
-            print '%s\nBegin stage 2 for %s after %d events' % (80*'_', self.src, self.counter)
-            print '  mean rms=%.3f x %.1f = intensity gate= +/- %.3f around pixel average intensity' %\
+            print '%s\nBegin stage 2 for %s after %d events' % (50*'_', self.src, self.counter)
+            print '  mean per pixel rms=%.3f x %.1f = intensity gate= +/- %.3f around each pixel average intensity' %\
                   (rms_ave, self.nsigma, gate_half)
 
         #print_ndarr(arr_av1, 'arr_av1')
@@ -354,7 +367,7 @@ class JungfrauNDArrDarkProc :
         if self.counter :
             print ', begin data summary stage'
         else :
-            print ', STOP processing, there are no arrays to save...'
+            print ', counter=%d there are no arrays to save...' % self.counter
             return 
 
         t0_sec = time()
@@ -459,40 +472,111 @@ class JungfrauNDArrDarkProc :
             np.savetxt(template % 'cmo', cmod, fmt='%d', delimiter=' ', newline=' ')
             det.save_asdaq(template % 'cmm', cmod, cmts + ['ARR_TYPE  common_mode'],'%d', verbos, False)
 
-        if verbos & 1 : print 'Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec)
+        #if verbos & 1 : print 'Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec)
 
-#------------------------------
+
+    def get_ndarrays(self) :
+        """Returns n-d arrays after summary"""
+        return self.arr_av1, self.arr_rms, self.arr_sta, self.arr_msk, self.arr_max, self.arr_min
+
+
+    def status_bw(self) :
+        sbw = 0
+        if self.gmname is None : sbw |= 1
+        if self.shape  is None : sbw |= 2
+        if self.stage != 2     : sbw |= 4
+        if self.counter < 10   : sbw |= 8
+        if not(self.gmind < NUMBER_OF_GAIN_MODES) : sbw |= 16
+        return sbw
+
+
+    def str_status(self) :
+        return 'ind:%1d gm:%s exp:%s run:%04d src:%s shape:%s stage:%1d events:%6d status:%s'%\
+               (self.gmind, self.gmname.ljust(12), self.exp.ljust(9), self.runnum,\
+                self.src.ljust(20), str(self.shape), self.stage, self.counter, oct(self.status_bw()))
+
 #------------------------------
 
 class JungfrauDarkProc :
     """Takes care about jungfrau dark data processing for a few (currently 3) gain modes.
     """
-    number_of_gain_modes = 3
-
-    dic_gain_mode = {'FixedGain1':  1,
-                     'FixedGain2':  2,
-                     'ForcedGain1': 1,
-                     'ForcedGain2': 2,
-                     'HighGain0':   0,
-                     'Normal':      0}
-
     def __init__(self, parser=None):
         # make gain-mode processing modules:
-        self.lst_gdp = [JungfrauNDArrDarkProc(parser) for igm in range(self.number_of_gain_modes)]
+        self.lst_jdp = [JungfrauNDArrDarkProc(parser) for igm in range(NUMBER_OF_GAIN_MODES)]
+        self.status = None
 
 
     def event(self, evt, env, evnum, igm) :
         """Switch between gain mode processing objects using igm index of the gain mode (0,1,2).
            - evnum (int) - event number
-           - igm (int) - index of the gain mode in JungfrauDarkProc().dic_gain_mode
+           - igm (int) - index of the gain mode in DIC_GAIN_MODE
         """
-        self.lst_gdp[igm].event(evt, env, evnum)
+        self.lst_jdp[igm].event(evt, env, evnum)
+
+
+    def stack_ndarrays(self) :
+        self.arr_av1 = np.stack([o.arr_av1 for o in self.lst_jdp])
+        self.arr_rms = np.stack([o.arr_rms for o in self.lst_jdp])
+        self.arr_sta = np.stack([o.arr_sta for o in self.lst_jdp])
+        self.arr_msk = np.stack([o.arr_msk for o in self.lst_jdp])
+        self.arr_max = np.stack([o.arr_max for o in self.lst_jdp])
+        self.arr_min = np.stack([o.arr_min for o in self.lst_jdp])
+
+
+    def print_ndarrays(self) :
+        print '%s\nStacked for gain modes np.arrays:' % (80*'_')
+
+        print_ndarr(self.arr_av1, 'arr_av1')
+        print_ndarr(self.arr_rms, 'arr_rms')
+        print_ndarr(self.arr_sta, 'arr_sta')
+        print_ndarr(self.arr_msk, 'arr_msk')
+        print_ndarr(self.arr_max, 'arr_max')
+        print_ndarr(self.arr_min, 'arr_min')
+
+
+    def save_ndarrays(self, addmetad=True) :
+        print '%s\nSave arrays:' % (80*'_')
+
+        jdp0 = self.lst_jdp[0]
+
+        det      = jdp0.det
+        ofname   = jdp0.ofname
+        verbos   = jdp0.verbos
+        savebw   = jdp0.savebw
+        counter  = jdp0.counter
+
+        cmts = ['DATASET  %s' % jdp0.dsname, 'STATISTICS  %d' % counter]        
+        template = fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
+                                  jdp0.tsdate, jdp0.tstime, jdp0.src, counter, ofname)
+
+        if savebw &  1 : det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
+        if savebw &  2 : det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
+        if savebw &  4 : det.save_asdaq(template % 'sta', self.arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
+        if savebw &  8 : det.save_asdaq(template % 'msk', self.arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
+        if savebw & 16 : det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
+        if savebw & 32 : det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
+        if verbos : print 'All files saved'
 
 
     def summary(self, evt, env) :
-        for o in self.lst_gdp : 
+        for o in self.lst_jdp : 
             o.summary(evt, env)
-            o.save_ndarrays()
+
+        print '%s\nBrief summary:' % (80*'_')
+
+        self.status = 0
+        for i,o in enumerate(self.lst_jdp) :
+            print o.str_status()
+            if o.status_bw() : self.status |= (1<<i)
+
+        if self.status :
+            print 'WARNING: further processing is termenated due to problem with data, status=%d' % self.status
+            return
+
+        else :
+            self.stack_ndarrays()
+            self.print_ndarrays()
+            self.save_ndarrays()
 
 #------------------------------
 #------------------------------
@@ -522,9 +606,8 @@ def jungfrau_ndarr_raw_proc():
 
     # ecm = EventCodeManager(evcode, verbos)
 
-    dic_gain_mode = JungfrauDarkProc().dic_gain_mode
-    print '\ndic_gain_mode:'
-    for item in dic_gain_mode.iteritems() : print item
+    print '\nDIC_GAIN_MODE:'
+    for item in DIC_GAIN_MODE.iteritems() : print item
 
     lst_dpo = [JungfrauDarkProc(parser) for src in source.split(',') if 'Jungfrau' in src]
     #          if PROC_DATA else []
@@ -539,16 +622,18 @@ def jungfrau_ndarr_raw_proc():
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
+    nevtot = 0
 
     # Loop over runs
     for irun, run in enumerate(ds.runs()):
-        print 'Run %d' % run.run()
+        print '%s\nRun %d' % (50*'=', run.run())
         
         # Loop over calibcycles
+        nevclc = 0
         for istep, step in enumerate(run.steps()):
             env = step.env()
             gm = get_gain_mode(env, src)
-            igm = dic_gain_mode[gm.name]
+            igm = DIC_GAIN_MODE[gm.name]
 
             if irun==0 and istep==0 :
               print '\ngm.names:'
@@ -566,7 +651,10 @@ def jungfrau_ndarr_raw_proc():
                 if i<SKIP : continue
                 if not i<EVENTS : break
                 #if not ecm.select(evt) : continue 
-            
+
+                nevtot += 1
+                nevclc += 1
+
                 if PROC_DATA :
                     for dpo in lst_dpo : dpo.event(evt,env,i,igm)
                 if verbos & 2 :
@@ -579,7 +667,8 @@ def jungfrau_ndarr_raw_proc():
                       tdt  = tsec
                       print '  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
 
-            print '  Run %d, calibcycle %d, number of events processed %d' % (run.run(), istep, i-SKIP)
+            print '  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
+                  (run.run(), istep, nevclc, nevtot, gm.name)
         print '  Run %d, number of calibcycles processed %d' % (run.run(), istep+1)
     print 'Number of runs processed %d' % (irun+1)
 
@@ -605,14 +694,14 @@ def usage(mode=0) :
 def option_parser() :
     from optparse import OptionParser
 
-    d_dsname = 'exp=cxi11216:run=9,12,13' # None
+    d_dsname = 'exp=cxi11216:run=9,12,13:smd' # None
     d_source = 'CxiEndstation.0:Jungfrau.0' # None 
     d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
-    d_events = 10000000
+    d_events = 10000
     d_evskip = 0
-    d_intlow = 0
+    d_intlow = 1
     d_inthig = 16000
-    d_rmslow = 0
+    d_rmslow = 0.001
     d_rmshig = 16000
     d_fraclm = 0.1
     d_nsigma = 6.0
@@ -674,7 +763,6 @@ def option_parser() :
 
 if __name__ == "__main__" :
     if len(sys.argv)==1 : print '\n%s' % usage(2)
-    #dpo = JungfrauNDArrDarkProc()
     jungfrau_ndarr_raw_proc()
     sys.exit(0)
 
