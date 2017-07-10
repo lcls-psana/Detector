@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-11
+2017-07-10 Mikhail S. Dubrovin
+- AreaDetector.photons - add protection, returns None if data if calibrated data is missing.
+
 Tag: V01-00-10
 2017-07-05 Mikhail S. Dubrovin
 - add app/jungfrau_ndarr_dark_proc

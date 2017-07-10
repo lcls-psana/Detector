@@ -1479,6 +1479,8 @@ class AreaDetector(object):
 
         #rnum = self.runnum(evt)
         nda = nda_calib if nda_calib is not None else self.calib(evt)
+        if nda is None : return None
+
         if adu_per_photon is not None and adu_per_photon !=0 :
             f = 1./adu_per_photon
             nda *= f
