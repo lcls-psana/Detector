@@ -1,5 +1,5 @@
 # Detector
-A set of pythonic methods for data processing with back-end implementation in C++ and cython interface.
+Pythonic interface to LCLS data.
 
 ## Documentation
 - Sphinx generated documentation: https://lcls-psana.github.io/Detector/
