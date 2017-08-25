@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Detector documentation
-=====================
+======================
 
 .. toctree::
    :maxdepth: 3

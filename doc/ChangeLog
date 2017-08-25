@@ -13,6 +13,13 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-13
+2017-08-25 Mikhail S. Dubrovin
+- Add sphinx documentation on gh-pages.
+
+Tag: V01-00-12
+- ???
+
 Tag: V01-00-11
 2017-07-10 Mikhail S. Dubrovin
 - AreaDetector.photons - add protection, returns None if data if calibrated data is missing.
