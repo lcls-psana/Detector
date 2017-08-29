@@ -1,20 +1,29 @@
 #--------------------------------------------------------------------------
-# File and Version Information:
-#  $Id$
-#
-# Description:
-#  module PyDetector
-#--------------------------------------------------------------------------
 """
-Method detector_factory(src,env) returns instance of the detector data accessor. 
+Method :meth:`detector_factory`(src,env) in :py:class:`PyDetector` returns instance of the detector data accessor. 
 
    Method detector_factory(src,env) switches between detector data access objects depending on source parameter.
    Currently implemented detector data access classes:
-   \n :py:class:`Detector.AreaDetector`  - access to area detector data
-   \n :py:class:`Detector.WFDetector`    - access to waveform detector data
-   \n :py:class:`Detector.EvrDetector`   - access to EVR data
-   \n :py:class:`Detector.DdlDetector`   - access to DDL data
-   \n :py:class:`Detector.EpicsDetector` - access to EPICS data
+
+See classes
+  - :py:class:`AlgoAccess.py`
+  - :py:class:`AreaDetector.py`
+  - :py:class:`ControlDataDetector.py`
+  - :py:class:`DdlDetector.py`       - access to DDL data
+  - :py:class:`DetectorTypes.py`
+  - :py:class:`EpicsDetector.py`     - access to EPICS data
+  - :py:class:`EvrDetector.py`       - access to EVR data
+  - :py:class:`Generic1DDetector.py`
+  - :py:class:`GenericWFDetector.py`
+  - :py:class:`GlobalUtils.py`
+  - :py:class:`IpimbDetector.py`
+  - :py:class:`OceanDetector.py`
+  - :py:class:`PyDataAccess.py`
+  - :py:class:`PyDetectorAccess.py`  - Python access interface to data
+  - :py:class:`PyDetector.py`        - factory for different detectors
+  - :py:class:`TDCDetector.py`
+  - :py:class:`UsdUsbDetector.py`
+  - :py:class:`WFDetector.py`        - access to waveform detector data
 
 Usage::
 
@@ -38,10 +47,9 @@ Usage::
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
+
+--------
 """
-#------------------------------
-__version__ = "$Revision$"
-##-----------------------------
 
 import _psana
 import re
@@ -110,7 +118,7 @@ def map_alias_to_source(source_string, env):
     corresponding to that alias.
 
     Parameters
-    ----------
+
     source_string : str
         A string identifying a piece of data to access, examples include:
 
@@ -119,7 +127,7 @@ def map_alias_to_source(source_string, env):
         you are interested in (from method DataSource.env()).
 
     Returns
-    -------
+
     source_string : str
         De-aliased source string -- a unique identifier.
     """
@@ -142,7 +150,7 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
     Create a python Detector-class "type" from a string identifier.
 
     Parameters
-    ----------
+
     source_string : str
         A string identifying a piece of data to access, examples include:
           - 'cspad'                  # a DAQ detector alias
@@ -158,8 +166,10 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
         you are interested in (from method DataSource.env()).
 
     Returns
-    -------
+
     The type of the appropriate detector class
+
+    -------
     """
 
     epics = env.epicsStore()

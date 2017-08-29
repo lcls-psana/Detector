@@ -5,7 +5,7 @@
 # Description:
 #  class AreaDetector
 #--------------------------------------------------------------------------
-""" Class contains a collection of access methods to detector data and meta-data.
+"""Class :py:class:`AreaDetector` contains a collection of access methods to detector data and meta-data.
 
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on C++ or python.
@@ -156,23 +156,34 @@ Usage::
     # merge photons split between pixels and return array with integer number of photons per pixel
     nda_nphotons = det.photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None, thr_fraction=0.9)
 
-@see classes
-\n  :py:class:`Detector.PyDetector` - factory for different detectors
-\n  :py:class:`Detector.DetectorAccess` - c++ access interface to data
-\n  :py:class:`Detector.PyDetectorAccess` - Python access interface to data
-\n  :py:class:`Detector.WFDetector` - access waveform detector data ACQIRIS and IMP
+See classes
+  - :py:class:`AlgoAccess.py`
+  - :py:class:`AreaDetector.py`
+  - :py:class:`ControlDataDetector.py`
+  - :py:class:`DdlDetector.py`       - access to DDL data
+  - :py:class:`DetectorTypes.py`
+  - :py:class:`EpicsDetector.py`     - access to EPICS data
+  - :py:class:`EvrDetector.py`       - access to EVR data
+  - :py:class:`Generic1DDetector.py`
+  - :py:class:`GenericWFDetector.py`
+  - :py:class:`GlobalUtils.py`
+  - :py:class:`IpimbDetector.py`
+  - :py:class:`OceanDetector.py`
+  - :py:class:`PyDataAccess.py`
+  - :py:class:`PyDetectorAccess.py`  - Python access interface to data
+  - :py:class:`PyDetector.py`        - factory for different detectors
+  - :py:class:`TDCDetector.py`
+  - :py:class:`UsdUsbDetector.py`
+  - :py:class:`WFDetector.py`        - access to waveform detector data
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
-@version $Id$
+Author Mikhail Dubrovin
 
-@author Mikhail S. Dubrovin
+--------
 """
 #------------------------------
-__version__ = "$Revision$"
-# $Source$
-##-----------------------------
 
 import sys
 import _psana

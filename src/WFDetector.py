@@ -1,11 +1,5 @@
 #--------------------------------------------------------------------------
-# File and Version Information:
-#  $Id$
-#
-# Description:
-#  class WFDetector
-#--------------------------------------------------------------------------
-"""Class contains a collection of access methods to waveform detector data.
+"""Class :py:class:`WFDetector` contains a collection of access methods to waveform detector data.
 
 Usage::
 
@@ -62,18 +56,21 @@ Usage::
     wf = det.raw(evt)
     # returns numpy array with shape=(4, 1023) - samples for 4 channels or None if unavailable.
 
-@see  :py:class:`Detector.PyDetectorAccess`,  :py:class:`Detector.AreaDetector`,  :py:class:`Detector.PyDetector`
+See classes
+  - :py:class:`PyDetector` - factory for different detectors
+  - :py:class:`PyDetectorAccess` - Python access interface to data
+  - :py:class:`AreaDetector`  - access to area detector data
+  - :py:class:`PyDetector` - factory for different detectors
+  - :py:class:`WFDetector` - access waveform detector data ACQIRIS and IMP
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
-@version $Id$
+Author Mikhail Dubrovin
 
-@author Mikhail S. Dubrovin
+--------
 """
 #------------------------------
-__version__ = "$Revision$"
-##-----------------------------
 
 import sys
 import _psana

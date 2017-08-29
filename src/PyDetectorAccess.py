@@ -1,30 +1,37 @@
 #--------------------------------------------------------------------------
-# File and Version Information:
-#  $Id$
-#
-# Description:
-#------------------------------------------------------------------------
-
-"""Class contains a collection of direct python access methods to detector associated information.
+"""Class :py:class:`PyDetectorAccess` contains a collection of python access methods to detector associated information.
 
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on python.
 
-@see classes
-\n  :py:class:`Detector.PyDetector` - factory for different detectors
-\n  :py:class:`Detector.DetectorAccess` - c++ access interface to data
+See classes
+  - :py:class:`AlgoAccess.py`
+  - :py:class:`AreaDetector.py`
+  - :py:class:`ControlDataDetector.py`
+  - :py:class:`DdlDetector.py`       - access to DDL data
+  - :py:class:`DetectorTypes.py`
+  - :py:class:`EpicsDetector.py`     - access to EPICS data
+  - :py:class:`EvrDetector.py`       - access to EVR data
+  - :py:class:`Generic1DDetector.py`
+  - :py:class:`GenericWFDetector.py`
+  - :py:class:`GlobalUtils.py`
+  - :py:class:`IpimbDetector.py`
+  - :py:class:`OceanDetector.py`
+  - :py:class:`PyDataAccess.py`
+  - :py:class:`PyDetectorAccess.py`  - Python access interface to data
+  - :py:class:`PyDetector.py`        - factory for different detectors
+  - :py:class:`TDCDetector.py`
+  - :py:class:`UsdUsbDetector.py`
+  - :py:class:`WFDetector.py`        - access to waveform detector data
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
-@version $Id$
+Author Mikhail Dubrovin
 
-@author Mikhail S. Dubrovin
+--------
 """
 #------------------------------
-__version__ = "$Revision$"
-# $Source$
-##-----------------------------
 
 import sys
 import numpy as np
