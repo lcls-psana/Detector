@@ -47,6 +47,8 @@ Usage::
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
+
+--------
 """
 
 import _psana
@@ -166,8 +168,6 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
     Returns
 
     The type of the appropriate detector class
-
-    -------
     """
 
     epics = env.epicsStore()
