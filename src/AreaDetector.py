@@ -1117,12 +1117,12 @@ class AreaDetector(object):
         """Returns per-pixel array of z coordinates.
 
            Parameter
-           ---------
-           par : int or psana.Event() - integer run number or psana event object.
+
+           - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
-           -------
-           np.array - array of pixel z coordinates.
+
+           - np.array - array of pixel z coordinates.
         """
         rnum = self.runnum(par)
         if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_z_v0(rnum))
@@ -1361,7 +1361,7 @@ class AreaDetector(object):
            - do_update         : bool - force to update cached array.
 
            Returns
-           -------
+
            - np.array - 2-d array of intensities for imaging.
         """
         rnum = self.runnum(evt)
@@ -1459,7 +1459,8 @@ class AreaDetector(object):
            - np.array - array with values loaded from file,
                       shaped in accordance with metadata (if available).
                       If metadata is missing, output array will have 2- or 1-d shape;
-                      spaces and '\n' characters in the text file are used to find the shape of the array. 
+                      spaces and <next-lene> characters in the text file are used to find the shape of the array.
+ 
         """
 
         return self.pyda.load_txtnda(fname)
