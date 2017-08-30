@@ -95,6 +95,11 @@ Detector documentation
    :show-inheritance:
    :special-members:
 
+.. automodule:: UsdUsbDetector
+   :members:
+   :show-inheritance:
+   :special-members:
+
 .. automodule:: WFDetector
    :members:
    :show-inheritance:
