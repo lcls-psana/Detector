@@ -5,24 +5,24 @@ Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on python.
 
 See classes
-  - :py:class:`AlgoAccess.py`
-  - :py:class:`AreaDetector.py`
-  - :py:class:`ControlDataDetector.py`
-  - :py:class:`DdlDetector.py`       - access to DDL data
-  - :py:class:`DetectorTypes.py`
-  - :py:class:`EpicsDetector.py`     - access to EPICS data
-  - :py:class:`EvrDetector.py`       - access to EVR data
-  - :py:class:`Generic1DDetector.py`
-  - :py:class:`GenericWFDetector.py`
-  - :py:class:`GlobalUtils.py`
-  - :py:class:`IpimbDetector.py`
-  - :py:class:`OceanDetector.py`
-  - :py:class:`PyDataAccess.py`
-  - :py:class:`PyDetectorAccess.py`  - Python access interface to data
-  - :py:class:`PyDetector.py`        - factory for different detectors
-  - :py:class:`TDCDetector.py`
-  - :py:class:`UsdUsbDetector.py`
-  - :py:class:`WFDetector.py`        - access to waveform detector data
+  - :class:`AlgoAccess`
+  - :class:`AreaDetector`
+  - :class:`ControlDataDetector`
+  - :class:`DdlDetector`       - access to DDL data
+  - :class:`DetectorTypes`
+  - :class:`EpicsDetector`     - access to EPICS data
+  - :class:`EvrDetector`       - access to EVR data
+  - :class:`Generic1DDetector`
+  - :class:`GenericWFDetector`
+  - :class:`GlobalUtils`
+  - :class:`IpimbDetector`
+  - :class:`OceanDetector`
+  - :class:`PyDataAccess`
+  - :class:`PyDetectorAccess`  - Python access interface to data
+  - :class:`PyDetector`        - factory for different detectors
+  - :class:`TDCDetector`
+  - :class:`UsdUsbDetector`    - UsdUsb Encoder Box
+  - :class:`WFDetector`        - access to waveform detector dataSee classes
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
@@ -48,8 +48,6 @@ from PSCalib.NDArrIO import save_txt, load_txt
 from pyimgalgos.cm_epix import cm_epix
 
 #from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
-
-##-----------------------------
 
 ##-----------------------------
 

@@ -22,7 +22,7 @@ See classes
   - :class:`PyDetectorAccess`  - Python access interface to data
   - :class:`PyDetector`        - factory for different detectors
   - :class:`TDCDetector`
-  - :class:`UsdUsbDetector`
+  - :class:`UsdUsbDetector`    - UsdUsb Encoder Box
   - :class:`WFDetector`        - access to waveform detector data
 
 Usage::
