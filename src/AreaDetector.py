@@ -1030,6 +1030,7 @@ class AreaDetector(object):
 
            - par   : int or psana.Event() - integer run number or psana event object.
            - mbits : int - mask control bit-word.
+
                  = 0  - returns None
                  + 1  - pixel_status ("bad pixels" deployed by calibman)
                  + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
@@ -1184,6 +1185,7 @@ class AreaDetector(object):
 
            - par   : int or psana.Event() - integer run number or psana event object.
            - mbits : int - mask control bit-word.
+
                  = 0 - returns None
                  + 1 - edges     
                  + 2 - central   
@@ -1222,12 +1224,14 @@ class AreaDetector(object):
         """Returns array of pixel integer y indexes.
 
            Parameters
+
            - par               : int or psana.Event() - integer run number or psana event object.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
            - do_update         : bool - force to update cached array.
 
            Returns
+
            - np.array - array of pixel y indexes.
         """
         rnum = self.runnum(par)
