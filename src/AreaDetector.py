@@ -200,6 +200,7 @@ class AreaDetector(object):
         """Constructor of the class :class:`AreaDetector`.
 
            Parameters
+
            - src   : str       - data source, e.g. 'CxiDs2.0:Cspad.0'
            - env   : psana.Env - environment, e.g. env=ds.env(), where ds=psana.DataSource('exp=cxif5315:run=169')
            - pbits : int       - print control bit-word
@@ -238,6 +239,7 @@ class AreaDetector(object):
         """Sets data source parameter.
         
            Parameters
+
            - srcpar  : str  - regular source or its alias, ex.: 'XppEndstation.0:Rayonix.0' or 'rayonix'
            - set_sub : bool - default=True - propagates source parameter to low level package  
         """
@@ -290,6 +292,7 @@ class AreaDetector(object):
         """Sets print-control bitword.
 
            Parameter
+
            - pbits : int - print-control bitword, ex.: 0377 (octal) 
         """
         self.pbits = pbits
@@ -302,6 +305,7 @@ class AreaDetector(object):
         """Sets environment variable.
         
            Parameter
+
            - env : psana.Env() - psana environment variable, ex.: env=ds.env()
         """
         self.env = env
@@ -314,6 +318,7 @@ class AreaDetector(object):
         """Switch mode of the Camera type of detector.
 
            Parameter
+
            - do_offset : bool - control parameter to turn on/off Camera intensity offset, default=False
         """
         self.pyda.set_do_offset(do_offset)
@@ -325,9 +330,11 @@ class AreaDetector(object):
         """Returns integer run number from different options of input parameter.
         
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - int - run number
         """
         return par if isinstance(par, int) else par.run()
@@ -338,6 +345,7 @@ class AreaDetector(object):
         """Returns True/False for CSPAD/other detector type
 
            Returns
+
            - bool - True if current detector is CSPAD, False otherwise.
         """
         return self.dettype == gu.CSPAD
@@ -348,6 +356,7 @@ class AreaDetector(object):
         """Returns True/False for CSPAD2x2/other detector type
 
            Returns
+
            - bool - True if current detector is CSPAD2x2, False otherwise.
         """
         return  self.dettype == gu.CSPAD2X2
@@ -359,9 +368,11 @@ class AreaDetector(object):
         """Returns number of dimensions of current detector pixel numpy array.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - int - number of dimensions of current detector pixel numpy array. If ndim>3 then returns 3.
         """
         if self._ndim is None :
@@ -377,9 +388,11 @@ class AreaDetector(object):
         """Returns size of the detector pixel-array.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - int - size of the detector numpy pixel-array (number of pixels)
         """
         if self._size is None :
@@ -396,9 +409,11 @@ class AreaDetector(object):
            For all detectors except cspad2x2 shape is the same as in DAQ. 
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - shape of the detector pixel-array, ex. for cspad (32,185,388).
         """        
         return np.array((2,185,388)) if self.is_cspad2x2() else self._shape_daq_(par)
@@ -409,9 +424,11 @@ class AreaDetector(object):
         """Returns 2- or 3-d shape of the detector pixel-array as in DAQ.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.\
 
            Returns
+
            - np.array - detector pixel-array shape. If ndim .gt. 3 shape is reduced to 3-d.
                       Ex.: the shape like (4,8,185,388) is reduced to (32,185,388)
         """
@@ -428,11 +445,13 @@ class AreaDetector(object):
         """Returns loading status of calibration constants of specified type.
 
            Parameters
+
            - rnum      : int - run number
            - calibtype : int - enumerated value from the list
                          gu.PEDESTALS, PIXEL_STATUS, PIXEL_RMS, PIXEL_GAIN, PIXEL_MASK, PIXEL_BKGD, COMMON_MODE.
 
            Returns
+
            - int - enumerated value from the list gu.LOADED, DEFAULT, UNREADABLE, UNDEFINED, WRONGSIZE, NONFOUND.
         """
         if self.iscpp : return self.da.status_v0(self.runnum(par), calibtype)
@@ -444,6 +463,7 @@ class AreaDetector(object):
         """For Chuck - if flag is True - reshape 2-d arrays to 3-d.
 
            Parameters
+
            - flag : bool - False(def)/True 
         """        
         self.reshape_to_3d = flag
@@ -512,9 +532,11 @@ class AreaDetector(object):
         """Returns per-pixel array of pedestals (dark run intensities) from calib directory.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - per-pixel values loaded for calibration type pedestals.
         """
         rnum = self.runnum(par)
@@ -527,9 +549,11 @@ class AreaDetector(object):
         """Returns per-pixel array of RMS values from calib directory.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - per-pixel values loaded for calibration type pixel_rms.
         """
         rnum = self.runnum(par)
@@ -542,9 +566,11 @@ class AreaDetector(object):
         """Returns per-pixel array of gain factors from calib directory.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - per-pixel values loaded for calibration type pixel_gain.
         """
         rnum = self.runnum(par)
@@ -557,9 +583,11 @@ class AreaDetector(object):
         """Returns per-pixel array of mask from calib directory.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - per-pixel values loaded for calibration type pixel_mask.
         """
         rnum = self.runnum(par)
@@ -572,9 +600,11 @@ class AreaDetector(object):
         """Returns per-pixel array of background intensities from calib directory.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - per-pixel values loaded for calibration type pixel_bkgd.
         """
         rnum = self.runnum(par)
@@ -587,9 +617,11 @@ class AreaDetector(object):
         """Returns array of pixel-status from calib directory.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - per-pixel values loaded for calibration type pixel_status.
                     status bits: 0 - good pixel
                                  1 - saturated intensity
@@ -607,10 +639,12 @@ class AreaDetector(object):
         """Returns per-pixel array of mask generated from pixel_status.
 
            Parameter
+
            - par  : int or psana.Event() - integer run number or psana event object.
            - mode : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel
 
            Returns
+
            - np.array - mask generated from calibration type pixel_status (1/0 for status 0/>0, respectively).
         """
         rnum = self.runnum(par)
@@ -628,10 +662,12 @@ class AreaDetector(object):
         """Returns n-d array of mask with masked neighbors on each 2-d segment.
 
            Parameter
+
            - mask    : np.array - input mask of good/bad (1/0) pixels
            - allnbrs : bool - False/True masks 4/8 of neighbors around each bad pixel
 
            Returns
+
            - np.array - mask with masked neighbors, shape = mask.shape
         """
         return gu.mask_neighbors(mask, allnbrs)
@@ -642,11 +678,13 @@ class AreaDetector(object):
         """Returns n-d array of mask with masked mrows and mcols edges on each 2-d segment.
 
            Parameter
+
            - mask  : np.array - input mask of good/bad (1/0) pixels
            - mrows : int - number of edge rows to mask
            - mcols : int - number of edge columns to mask
 
            Returns
+
            - np.array - mask with masked edges, shape = mask.shape
         """
         return gu.mask_edges(mask, mrows, mcols)
@@ -657,10 +695,12 @@ class AreaDetector(object):
         """Returns per-pixel array with gain mask evaluated from detector configuration data.
 
            Parameter
+
            - par  : int or psana.Event() - integer run number or psana event object.
            - gain : float - gain factor; mask will be multiplied by this factor if it is specified.
 
            Returns
+
            - np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
         """
         return self.pyda.gain_mask(par, gain)
@@ -671,10 +711,12 @@ class AreaDetector(object):
         """The same as gain_mask, but return None if ALL pixels have high gain.
 
            Parameter
+
            - par  : int or psana.Event() - integer run number or psana event object.
            - gain : float - gain factor; mask will be multiplied by this factor if it is specified.
 
            Returns
+
            - np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
         """
         return self.pyda.gain_mask_non_zero(par, gain)
@@ -685,9 +727,11 @@ class AreaDetector(object):
         """Returns array of common mode correction parameters.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - values loaded for calibration type common_mode.
         """
         rnum = self.runnum(par)
@@ -700,6 +744,7 @@ class AreaDetector(object):
         """Returns name of instrument.
 
            Returns
+
            - str - name of instrument, ex.: 'AMO', 'XPP', 'SXR', 'CXI, 'MEC', 'XCS', etc.   
         """
         if self.iscpp : return self.da.instrument(self.env)
@@ -711,6 +756,7 @@ class AreaDetector(object):
         """Prints configuration parameters if available.
 
            Parameter
+
            - evt : psana.Event() - psana event object.
         """
         if self.iscpp : self.da.print_config(evt, self.env)
@@ -721,7 +767,6 @@ class AreaDetector(object):
     def raw_data(self, evt) :
         """Alias for depricated method renamed to raw(evt) 
         """
-
         return self.raw(evt)
 
 ##-----------------------------
@@ -730,9 +775,11 @@ class AreaDetector(object):
         """Returns per-pixel array of intensities from raw data.
 
            Parameter
+
            - evt : psana.Event() - psana event object.
 
            Returns
+
            - np.array - per-pixel intensities [ADU] of raw data.
         """
         rdata = None
@@ -765,12 +812,14 @@ class AreaDetector(object):
            calib/.../common_mode/...
 
            Parameters
+
            - par    : int or psana.Event() - integer run number or psana event object.
            - nda    : np.array - input: raw data with subtracted pedestals, output: cm corrected data.
            - cmpars : list - common mode parameters, ex.: (1,50,50,100).
                     By default uses parameters from calib directory. 
 
            Returns
+
            - I/O parameter nda : np.array - per-pixel corrected intensities.
         """
         rnum = self.runnum(par)
@@ -800,12 +849,14 @@ class AreaDetector(object):
         """Returns per-pixel array of common mode correction offsets.
   
            Parameters
+
            - par    : int or psana.Event() - integer run number or psana event object.
            - nda    : np.array - raw data with subtracted pedestals. Input data is not modified.
            - cmpars : list - common mode parameters, ex.: (1,50,50,100)
                     By default uses parameters from calib directory. 
 
            Returns
+
            - np.array - per-pixel common mode correction offsets.
         """
         nda_cm_corr = np.array(nda, dtype=np.float32, copy=True)
@@ -848,11 +899,13 @@ class AreaDetector(object):
              "mbits" parameter set
   
            Parameters
+
            - evt    : psana.Event() - psana event object.
            - cmpars : list - common mode parameters, ex.: (1,50,50,100)
                     By default uses parameters from calib directory. 
            - mbits  : int - mask control bit-word.  optional.
                  defaults to 1.  Bit definitions:
+
                  + 1  - pixel_status ("bad pixels" deployed by calibman)
                  + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
                  + 4  - edge pixels
@@ -862,6 +915,7 @@ class AreaDetector(object):
                  + 64 - unbonded pixel with eight neighbors
 
            Returns
+
            - np.array - per-pixel array of calibrated intensities from data.
         """
         rnum = self.runnum(evt)
@@ -932,11 +986,13 @@ class AreaDetector(object):
         """Returns per-pixel array with mask values (per-pixel product of all requested masks).
 
            Parameters
+
            - par     : int or psana.Event() - integer run number or psana event object.
            - calib   : bool - True/False = on/off mask from calib directory.
            - status  : bool - True/False = on/off mask generated from calib pixel_status. 
 
            Other parameters make sense for cspad 2x1 sensors only:
+
            - edges      : bool - True/False = on/off mask of edges. 
            - central    : bool - True/False = on/off mask of two central columns. 
            - unbond     : bool - True/False = on/off mask of unbonded pixels.
@@ -944,6 +1000,7 @@ class AreaDetector(object):
            - unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors. 
 
            Returns
+
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
         rnum = self.runnum(par)
@@ -970,6 +1027,7 @@ class AreaDetector(object):
            This method has same functionality as method mask(...) but under control of a single bit-word mbits. 
 
            Parameters
+
            - par   : int or psana.Event() - integer run number or psana event object.
            - mbits : int - mask control bit-word.
                  = 0  - returns None
@@ -982,6 +1040,7 @@ class AreaDetector(object):
                  + 64 - unbonded pixel with eight neighbors
 
            Returns
+
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
         rnum = self.runnum(par)
@@ -1011,9 +1070,11 @@ class AreaDetector(object):
         """Creates and returns detector geometry object.
 
            Parameter
+
            - par : psana.Event() | int - psana event object or run number
 
            Returns
+
            - PSCalib.GeometryAccess - detector geometry object.
         """
         #rnum = self.runnum(par)
@@ -1024,9 +1085,11 @@ class AreaDetector(object):
         """Returns per-pixel array of x coordinates.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - array of pixel x coordinates.
         """
         rnum = self.runnum(par)
@@ -1038,9 +1101,11 @@ class AreaDetector(object):
         """Returns per-pixel array of y coordinates.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - array of pixel y coordinates.
         """
         rnum = self.runnum(par)
@@ -1052,9 +1117,11 @@ class AreaDetector(object):
         """Returns per-pixel array of z coordinates.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - array of pixel z coordinates.
         """
         rnum = self.runnum(par)
@@ -1066,9 +1133,11 @@ class AreaDetector(object):
         """Returns per-pixel arrays of x and y coordinates.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - 2 arrays of pixel x and y coordinates, respectively.
         """
         rnum = self.runnum(par)
@@ -1080,9 +1149,11 @@ class AreaDetector(object):
         """Returns per-pixel arrays of x, y, and z coordinates.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - 3 arrays of pixel x, y, and z coordinates, respectively.
         """
         rnum = self.runnum(par)
@@ -1094,9 +1165,11 @@ class AreaDetector(object):
         """Returns per-pixel array of pixel area.
 
            Parameter
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - np.array - array of pixel areas.
         """
         rnum = self.runnum(par)
@@ -1108,6 +1181,7 @@ class AreaDetector(object):
         """Returns per-pixel array with mask controlled by mbits bit-word.
 
            Parameters
+
            - par   : int or psana.Event() - integer run number or psana event object.
            - mbits : int - mask control bit-word.
                  = 0 - returns None
@@ -1117,6 +1191,7 @@ class AreaDetector(object):
                  + 8 - unbondnbrs
 
            Returns
+
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
         rnum = self.runnum(par)
@@ -1128,12 +1203,14 @@ class AreaDetector(object):
         """Returns array of pixel integer x indexes.
 
            Parameters
+
            - par               : int or psana.Event() - integer run number or psana event object.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
            - do_update         : bool - force to update cached array.
 
            Returns
+
            - np.array - array of pixel x indexes.
         """
         rnum = self.runnum(par)
@@ -1162,12 +1239,14 @@ class AreaDetector(object):
         """Returns two arrays of pixel integer x and y indexes.
 
            Parameters
+
            - par               : int or psana.Event() - integer run number or psana event object.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
            - do_update         : bool - force to update cached array.
 
            Returns
+
            - (np.array, np.array) - list of two arrays of pixel x and y indexes, respectively.
         """
         rnum = self.runnum(par)
@@ -1179,12 +1258,14 @@ class AreaDetector(object):
         """Returns (ix, iy) indexes of the point (x,y) specified in [um].
 
            Parameters
+
            - par               : int or psana.Event() - integer run number or psana event object.
            - pxy_um            : list of two float values - coordinates of the point in the detector frame, default (0,0)
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
 
            Returns
+
            - tuple - (ix, iy) tuple of two indexes associated with input point coordinates.
         """
         rnum = self.runnum(par)
@@ -1196,9 +1277,11 @@ class AreaDetector(object):
         """Returns pixel scale size in [um]. 
 
            Parameters
+
            - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
+
            - float - pixel size in [um].
         """
         psize = self.da.pixel_scale_size_v0(self.runnum(par)) if self.iscpp\
@@ -1210,6 +1293,7 @@ class AreaDetector(object):
         """Moves detector. 
 
            Parameters
+
            - par : int or psana.Event() - integer run number or psana event object.
            - dx, dy, dz : float - three coordinate increments [um] of the detector motion. 
         """
@@ -1221,6 +1305,7 @@ class AreaDetector(object):
         """Tilts detector. 
 
            Parameters
+
            - par : int or psana.Event() - integer run number or psana event object.
            - dtx, dty, dtz : float - three angular increments [deg] of the detector tilt. 
         """
@@ -1232,11 +1317,13 @@ class AreaDetector(object):
         """Returns array of pixel x coordinates associated with image x-y grid.
 
            Parameters
+
            - par : int or psana.Event() - integer run number or psana event object.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - x0_off_pix        : float - origin x coordinate offset in number of pixels
 
            Returns
+
            - np.array - array of pixel x coordinates of image x-y grid.
         """
         #rnum = self.runnum(par)
@@ -1247,11 +1334,13 @@ class AreaDetector(object):
         """Returns array of pixel x coordinates associated with image x-y grid.
 
            Parameters
+
            - par : int or psana.Event() - integer run number or psana event object.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - y0_off_pix        : float - origin y coordinate offset in number of pixels
 
            Returns
+
            - np.array - array of pixel y coordinates of image x-y grid.
         """
         #rnum = self.runnum(par)
@@ -1262,6 +1351,7 @@ class AreaDetector(object):
         """Returns 2-d array of intensities for imaging.
 
            Parameters
+
            - evt               : psana.Event() - psana event object.
            - nda_in            : input n-d array which needs to be converted in image; default - use calib methood.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
@@ -1269,6 +1359,7 @@ class AreaDetector(object):
            - do_update         : bool - force to update cached array.
 
            Returns
+
            - np.array - 2-d array of intensities for imaging.
         """
         rnum = self.runnum(evt)
@@ -1292,6 +1383,7 @@ class AreaDetector(object):
         """Returns n-d array of intensities extracted from image using image bin indexes.
 
            Parameters
+
            - par               : int or psana.Event() - integer run number or psana event object.
            - image             : np.array - input 2-d array which will be converted to n-d array.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
@@ -1299,6 +1391,7 @@ class AreaDetector(object):
            - do_update         : bool - force to update cached array.
 
            Returns
+
            - np.array - n-d array of intensities made from image.
         """
         rnum = self.runnum(par)
@@ -1314,6 +1407,7 @@ class AreaDetector(object):
         """Saves n-d array in the formatted text file with hash-type cumments and metadata.
 
            Parameters
+
            - fname    : str - output file name.
            - ndarr    : np.array - array of numerical values to save in text file.
            - cmts     : list of str - list of strings which will be saved as comments in the file header.
@@ -1337,6 +1431,7 @@ class AreaDetector(object):
            For all other detectors n-d array is saved unchanged. 
 
            Parameters
+
            - fname    : str - output file name.
            - ndarr    : np.array - array of numerical values to save in text file.
            - cmts     : list of str - list of strings which will be saved as comments in the file header.
@@ -1354,9 +1449,11 @@ class AreaDetector(object):
         """Returns n-d array loaded from specified formatted text file.
 
            Parameters
+
            - fname : str - input file name.
 
            Returns
+
            - np.array - array with values loaded from file,
                       shaped in accordance with metadata (if available).
                       If metadata is missing, output array will have 2- or 1-d shape;
@@ -1371,6 +1468,7 @@ class AreaDetector(object):
         """Returns 2-d or 3-d array of integer number of merged photons - algorithm suggested by Chuck.
 
            Parameters
+
            - evt            : psana.Event() - psana event object.
            - nda_calib      : (float, double, int, int16) numpy.array - calibrated data, float number of photons per pixel.
            - mask           : (uint8) numpy.array user defined mask.
@@ -1378,6 +1476,7 @@ class AreaDetector(object):
            - thr_fraction   : float - fraction of the merged intensity which gets converted to one photon, def=0.9.
 
            Returns
+
            - np.array - 2-d or 3-d array of integer number of merged photons.
         """
 
