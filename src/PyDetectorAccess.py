@@ -52,7 +52,7 @@ from pyimgalgos.cm_epix import cm_epix
 ##-----------------------------
 
 class PyDetectorAccess :
-    """Direct python access to detector data.
+    """Class :py:class:`PyDetectorAccess` - python access to detector data.
     """
     GEO_NOT_LOADED     = 0
     GEO_LOADED_CALIB   = 1
@@ -62,7 +62,8 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def __init__(self, source, env, pbits=0) :
-        """Constructor.
+        """Class :py:class:`PyDetectorAccess` constructor parameters:
+
            - source - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
            - env    - environment
            - pbits  - print control bit-word
@@ -95,9 +96,31 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def runnum(self, par) :
+        """Returns integer run number from different options of input parameter.
+        
+           Parameter
+
+           - par : int or psana.Event() - integer run number or psana event object.
+
+           Returns
+
+           - int - run number or 0 if can't be defined.
+        """
+        return par if isinstance(par, int) else par.run() if isinstance(par, _psana.Event) else 0 
+
+##-----------------------------
+
+    def time_par(self, par) :
+        """Returns parameter which can be used to define dataset time, _psana.Event or _psana.Env.object.
+        """
+        return par if isinstance(par,_psana.Event) else self.env
+
+##-----------------------------
+
     def cpstore(self, par) : # par = evt or runnum
 
-        runnum = par if isinstance(par, int) else par.run()
+        runnum = self.runnum(par)
         #print 80*'_'
         #print 'cpstore XXX runnum = %d' % runnum
         #print 'cpstore XXX par', par,
@@ -119,24 +142,40 @@ class PyDetectorAccess :
         """Returns default geometry object for some of detectors"""
         import CalibManager.AppDataPath as apputils
 
-        if self.dettype == gu.EPIX100A :
-            fname = apputils.AppDataPath('Detector/geometry-def-epix100a.data').path()
-            if self.pbits : print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
-            return GeometryAccess(fname, 0377 if self.pbits else 0)
+        defname = 'Detector/geometry-def-epix100a.data' if self.dettype == gu.EPIX100A\
+             else 'Detector/geometry-def-pnccd.data'    if self.dettype == gu.PNCCD\
+             else 'Detector/geometry-def-cspad.data'    if self.dettype == gu.CSPAD\
+             else 'Detector/geometry-def-cspad2x2.data' if self.dettype == gu.CSPAD2X2\
+             else None
 
-        return None
+        if defname is None :
+            self.geo = None
+            return
+
+        fname = apputils.AppDataPath(defname).path()
+        if self.pbits : print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
+         
+        self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+        if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT    
+        #return GeometryAccess(fname, 0377 if self.pbits else 0)
 
 ##-----------------------------
 
-    def geoaccess_dcs(self, evt) :
+    def geoaccess_dcs(self, tpar) :
+        """Returns geometry object.
+
+        Parameter
+
+        - tpar : _psana.Event | _psana.Env | float time
+
+        Returns
+
+        - GeometryAccess - geometry object
+        """
         import PSCalib.DCMethods as dcm
 
         cdir = self.env.calibDir()
-        
-        #print 'XXX  par is Event:', isinstance(evt, _psana.Event)
-        #print 'XXX: cdir, src, pbits, dettype:', cdir, self.str_src, self.pbits, self.dettype
-
-        data = dcm.get_constants(evt, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None, verb=self.pbits & 16)
+        data = dcm.get_constants(tpar, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None, verb=self.pbits & 16)
 
         if data is None : return
 
@@ -148,14 +187,16 @@ class PyDetectorAccess :
         #self.geo = GeometryAccess(fntmp.name, 0377 if self.pbits else 0)
 
         self.geo = GeometryAccess(pbits=0377 if self.pbits else 0)
-        self.geo.load_pars_from_str(data)
-        #self.geo.print_list_of_geos()
-        self.geo_load_status = self.GEO_LOADED_DCS
+        if self.geo is not None :
+            self.geo.load_pars_from_str(data)
+            #self.geo.print_list_of_geos()
+            self.geo_load_status = self.GEO_LOADED_DCS
 
 ##-----------------------------
 
     def geoaccess_calib(self, runnum) :
-
+        """Returns geometry object from calib store or None if can't load geometry.
+        """
         group = gu.dic_det_type_to_calib_group[self.dettype]
         cff = CalibFileFinder(self.env.calibDir(), group, 0377 if self.pbits else 0)
         fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
@@ -163,33 +204,33 @@ class PyDetectorAccess :
             self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
             if self.pbits & 1 : print 'PSCalib.GeometryAccess object is created for run %d' % runnum
             if self.geo.valid : self.geo_load_status = self.GEO_LOADED_CALIB
-        else     :
+        else :
             self.geo = None
             if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
 
-        if self.geo is None :
-            # if geo object is still missing try to load default geometry
-            self.geo = self.default_geometry()
-            if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT
-
 ##-----------------------------
 
-    def geoaccess(self, par) : # par = evt or runnum
+    def geoaccess(self, par) : # par = _psana.Event | int runnum
+        """Returns geometry or None if can't load.
+        """
+        runnum = self.runnum(par)
 
-        runnum = par if isinstance(par, int) else par.run()
-        #print 'geoaccess XXX runnum = %d' % runnum
-
-        # for 1st entry and when runnum is changing:
-        if  runnum != self.runnum_geo or self.geo is None :
-
-            self.geo_load_status = self.GEO_NOT_LOADED
-
+        if  runnum != self.runnum_geo :
+            # for 1st entry and when run is changing:
             self.runnum_geo = runnum
+            self.geo_load_status = self.GEO_NOT_LOADED
+            self.geo = None
+
+            # 1) load geometry object from calib store
             self.geoaccess_calib(runnum)
 
-            # fallback support from DCS
-            if self.geo is None or self.geo_load_status == self.GEO_LOADED_DEFAULT:
-                self.geoaccess_dcs(par)
+            # 2) fallback load file from DCS
+            if self.geo is None :
+                self.geoaccess_dcs(self.time_par(par))
+
+            # 3) load default geometry if it is still unavailable. Implemented for a few detectors.
+            if self.geo is None :
+                self.default_geometry()
 
             # arrays for caching
             self.iX             = None 
@@ -533,7 +574,7 @@ class PyDetectorAccess :
            Currently implemented for CSPAD only.
            Returns None for other detectors or missing configuration for CSPAD.
         """
-        runnum = par if isinstance(par, int) else par.run()
+        runnum = self.runnum(par)
 
         if runnum == self.runnum_cfg :
             if self.cfg_gain_mask_is_loaded :

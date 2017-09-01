@@ -13,6 +13,24 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-14
+2017-09-01 Mikhail S. Dubrovin
+- AreaDetector, PyDetectorAccess - use env_time, add examples, add more default geometries (tilted)
+
+	new file:   data/geometry-def-cspad.data
+	new file:   data/geometry-def-cspad2x2.data
+	new file:   data/geometry-def-pnccd.data
+	modified:   doc/ChangeLog
+	modified:   doc/web/Makefile
+	modified:   doc/web/conf.py
+	modified:   doc/web/index.rst
+	modified:   examples/ex_all_dets.py
+	new file:   examples/ex_gain_meclp5415.py
+	modified:   examples/ex_new_dets.py
+	new file:   examples/ex_time_from_env.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V01-00-13
 2017-08-25 Mikhail S. Dubrovin
 - Add sphinx documentation on gh-pages.

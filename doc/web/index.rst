@@ -7,8 +7,9 @@ Detector documentation
 ======================
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 2
+
+..   :caption: Contents:
 
 .. automodule:: PyDetector
    :members:
