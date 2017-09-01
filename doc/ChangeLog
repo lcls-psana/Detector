@@ -13,6 +13,10 @@ reverse time order.
 
 ==============
 
+Tag: V01-00-14
+2017-09-01 Daniel Damiani
+- Add new BLD to src/DetectorTypes.py.
+
 Tag: V01-00-13
 2017-08-25 Mikhail S. Dubrovin
 - Add sphinx documentation on gh-pages.
