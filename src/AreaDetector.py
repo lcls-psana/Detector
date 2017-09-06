@@ -1355,7 +1355,7 @@ class AreaDetector(object):
            Parameters
 
            - evt               : psana.Event() - psana event object.
-           - nda_in            : input n-d array which needs to be converted in image; default - use calib methood.
+           - nda_in            : input n-d array which needs to be converted in image; default - use calib method. (see calib method for list of corrections)
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
            - do_update         : bool - force to update cached array.
