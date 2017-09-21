@@ -11,11 +11,9 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-##  Tag: V01-00-18
-
-
+Tag: V01-00-18
 2017-09-21 Mikhail S. Dubrovin
-Recover files losed since Tag: V01-00-14:
+Recover files lost since Tag: V01-00-14:
 	new file:   data/geometry-def-cspad.data
 	new file:   data/geometry-def-cspad2x2.data
 	new file:   data/geometry-def-pnccd.data
