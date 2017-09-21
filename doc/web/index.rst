@@ -7,8 +7,9 @@ Detector documentation
 ======================
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 2
+
+..   :caption: Contents:
 
 .. automodule:: PyDetector
    :members:
@@ -95,6 +96,11 @@ Detector documentation
    :show-inheritance:
    :special-members:
 
+.. automodule:: UsdUsbDetector
+   :members:
+   :show-inheritance:
+   :special-members:
+
 .. automodule:: WFDetector
    :members:
    :show-inheritance:
@@ -116,3 +122,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

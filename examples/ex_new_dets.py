@@ -31,8 +31,8 @@ elif tname=='4' :
     src = 'AmoEndstation.0:Pimax.0' # Pimax.ConfigV1, Pimax.FrameV1
 
 elif tname=='5' :
-    #dsname = 'exp=cxi11216:run=40' # (1, 1024, 512)
-    dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
+    dsname = 'exp=cxi11216:run=40' # (1, 1024, 512)
+    #dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
     src = 'CxiEndstation.0:Jungfrau.0'
 
 elif tname=='6' :
@@ -51,6 +51,11 @@ ds  = psana.DataSource(dsname)
 evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
+
+print 'experiment %s' % env.experiment()
+print 'Run number %d' % nrun
+print 'dataset exp=%s:run=%d' % (env.experiment(),nrun) 
+print 'calibDir:', env.calibDir()
 
 for key in evt.keys() : print key
 
@@ -156,9 +161,14 @@ img = None
 
 # Image producer is different for 3-d and 2-d arrays 
 if len(nda_raw.shape) > 2 :
-    img = det.image(evt)
-    #img = det(evt) # alias for det.image(evt) implemented in __call__
-    #img = det.image(evt, img_arr)
+    if 'Jungfrau' in src : 
+        img = nda_raw
+        sh = nda_raw.shape
+        img.shape = (sh[-2],sh[-1])
+    else :
+        img = det.image(evt)
+        #img = det(evt) # alias for det.image(evt) implemented in __call__
+        #img = det.image(evt, img_arr)
 else :
     img = img_arr
     img.shape = nda_raw.shape

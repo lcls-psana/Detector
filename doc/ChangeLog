@@ -11,11 +11,64 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-==============
+##  Tag: V01-00-18
+
+
+2017-09-21 Mikhail S. Dubrovin
+Recover files losed since Tag: V01-00-14:
+	new file:   data/geometry-def-cspad.data
+	new file:   data/geometry-def-cspad2x2.data
+	new file:   data/geometry-def-pnccd.data
+	modified:   doc/ChangeLog
+	modified:   doc/web/Makefile
+	modified:   doc/web/conf.py
+	modified:   doc/web/index.rst
+	modified:   examples/ex_all_dets.py
+	new file:   examples/ex_gain_meclp5415.py
+	new file:   examples/ex_get_calib_constants.py
+	modified:   examples/ex_new_dets.py
+	new file:   examples/ex_template.py
+	new file:   examples/ex_time_from_env.py
+	modified:   src/AreaDetector.py
+	modified:   src/GlobalUtils.py
+	modified:   src/PyDetector.py
+	modified:   src/PyDetectorAccess.py
+
+Tag: V01-00-17
+chrisvam change xcs-dio bld to be ipimb
+
+Tag: V01-00-16
+chrisvam update image doc string
+
+# Tag: V01-00-15
+#  - AreaDetector, PyDetectorAccess - use env_time, add examples, add more default geometries
+
+==========================================================
+HERE happens mess with tag between my and Dan's (non-updated code) commit.
+My changes has been losed... recovered in Tag: V01-00-18
+==========================================================
 
 Tag: V01-00-14
 2017-09-01 Daniel Damiani
 - Add new BLD to src/DetectorTypes.py.
+
+Tag: V01-00-14
+2017-09-01 Mikhail S. Dubrovin
+- AreaDetector, PyDetectorAccess - use env_time, add examples, add more default geometries (tilted)
+
+	new file:   data/geometry-def-cspad.data
+	new file:   data/geometry-def-cspad2x2.data
+	new file:   data/geometry-def-pnccd.data
+	modified:   doc/ChangeLog
+	modified:   doc/web/Makefile
+	modified:   doc/web/conf.py
+	modified:   doc/web/index.rst
+	modified:   examples/ex_all_dets.py
+	new file:   examples/ex_gain_meclp5415.py
+	modified:   examples/ex_new_dets.py
+	new file:   examples/ex_time_from_env.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
 
 Tag: V01-00-13
 2017-08-25 Mikhail S. Dubrovin

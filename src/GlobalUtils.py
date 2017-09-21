@@ -1,24 +1,13 @@
-
-#--------------------------------------------------------------------------
-# File and Version Information:
-#  $Id$
-#
-# Description:
-#  file GlobalUtils.py
 #------------------------------------------------------------------------
 
-"""Contains Global Utilities
+""":py:class:`GlobalUtils` contains global utilities.
 
 This software was developed for the SIT project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
-@version $Id$
-
-@author Mikhail S. Dubrovin
+Author Mikhail Dubrovin
 """
 
-#--------------------------------
-__version__ = "$Revision$"
 #--------------------------------
 
 import numpy as np

@@ -22,7 +22,7 @@ See classes
   - :class:`PyDetectorAccess`  - Python access interface to data
   - :class:`PyDetector`        - factory for different detectors
   - :class:`TDCDetector`
-  - :class:`UsdUsbDetector`
+  - :class:`UsdUsbDetector`    - UsdUsb Encoder Box
   - :class:`WFDetector`        - access to waveform detector data
 
 Usage::
@@ -119,16 +119,16 @@ def map_alias_to_source(source_string, env):
 
     Parameters
 
-    source_string : str
+    - source_string : str
         A string identifying a piece of data to access, examples include:
 
-    env : psana.Env
+    - env : psana.Env
         The psana environment object associated with the psana.DataSource
         you are interested in (from method DataSource.env()).
 
     Returns
 
-    source_string : str
+    - source_string : str
         De-aliased source string -- a unique identifier.
     """
 
@@ -151,7 +151,7 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
 
     Parameters
 
-    source_string : str
+    - source_string : str
         A string identifying a piece of data to access, examples include:
           - 'cspad'                  # a DAQ detector alias
           - 'XppGon.0:Cspad.0'       # a DAQ detector full-name
@@ -161,13 +161,13 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
         sense to you as a human here, and you automatically get the right
         detector object in return.
 
-    env : psana.Env
+    - env : psana.Env
         The psana environment object associated with the psana.DataSource
         you are interested in (from method DataSource.env()).
 
     Returns
 
-    The type of the appropriate detector class
+    - The type of the appropriate detector class
     """
 
     epics = env.epicsStore()

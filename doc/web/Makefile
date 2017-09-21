@@ -27,7 +27,8 @@ helpme:
 	@echo "  docdir      to create documentation directory $(BUILDDIR), clone repo"
 	@echo "  html        to generate html documentation"
 	@echo "  gh-pages    to add, commit and push documentation to gh-pages"
-	@echo "  newdoc      sequence of commands: helpme, clean, docdir, html, gh-pages"
+	@echo "  update      to update repo from github"
+	@echo "  newdoc      sequence of commands: helpme, clean, docdir, html, gh-pages, update"
 	@echo 
 
 printpars:
@@ -36,12 +37,16 @@ printpars:
 	@echo "MYPKGNAME : $(MYPKGNAME)"
 	@echo "SPHINXPROJ: $(SPHINXPROJ)"
 	@echo "BUILDDIR  : $(BUILDDIR)"
-	@echo "Sequence of make commands: clean, docdir, html, gh-pages"
+	@echo "Sequence of make commands: clean, docdir, html, gh-pages, update"
 	@echo
 
 clean:
 	rm -rf $(BUILDDIR)
 	@echo "Documentation directory $(BUILDDIR) is removed"
+
+update:
+	cd ../.. && ls src && rm src/*.pyc && git pull
+	@echo "Repo is updated from github"
 
 docdir:
 	mkdir $(BUILDDIR) && cd $(BUILDDIR) && rm -rf * && git clone https://github.com/lcls-psana/$(MYPKGNAME).git html && cd html && git branch gh-pages && git symbolic-ref HEAD refs/heads/gh-pages && rm .git/index && git clean -fdx
@@ -54,6 +59,6 @@ gh-pages:
 	@echo "Documentation is pushed on gh-pages"
 
 newdoc:
-	$(MAKE) helpme && $(MAKE) clean && $(MAKE) docdir && $(MAKE) html && $(MAKE) gh-pages
+	$(MAKE) helpme && $(MAKE) clean && $(MAKE) docdir && $(MAKE) html && $(MAKE) gh-pages && $(MAKE) -i -k update
 	@echo
-	@echo "Documentation is built and committed"
+	@echo "Documentation is built and committed, repo is updated."

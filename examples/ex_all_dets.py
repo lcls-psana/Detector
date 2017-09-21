@@ -120,7 +120,11 @@ ds  = psana.DataSource(dsname)
 evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
+
+print 'experiment %s' % env.experiment()
 print 'Run number %d' % nrun
+print 'dataset exp=%s:run=%d' % (env.experiment(),nrun) 
+print 'calibDir:', env.calibDir()
 
 for key in evt.keys() : print key
 
@@ -137,7 +141,8 @@ print 80*'_', '\nInstrument: ', ins
 #det.set_def_value(-5.)
 #det.set_mode(1)
 #det.set_do_offset(True) # works for ex. Opal1000
-det.print_attributes()
+#det.print_attributes()
+print 'det.source:', det.source
 
 shape_nda = det.shape(par)
 print_ndarr(shape_nda, 'shape of ndarray')

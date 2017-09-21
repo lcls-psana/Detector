@@ -167,7 +167,7 @@ See classes
   - :class:`PyDetectorAccess`  - Python access interface to data
   - :class:`PyDetector`        - factory for different detectors
   - :class:`TDCDetector`
-  - :class:`UsdUsbDetector`
+  - :class:`UsdUsbDetector`    - UsdUsb Encoder Box
   - :class:`WFDetector`        - access to waveform detector data
 
 This software was developed for the LCLS project.
@@ -197,14 +197,14 @@ class AreaDetector(object):
 ##-----------------------------
 
     def __init__(self, src, env, pbits=0, iface='P') :
-        """Constructor of the class AreaDetector.
-        
+        """Constructor of the class :class:`AreaDetector`.
+
            Parameters
 
-           - src   : str       - data source, ex: 'CxiDs2.0:Cspad.0'
-           - env   : psana.Env - environment, ex: env=ds.env(), where ds=psana.DataSource('exp=cxif5315:run=169')
+           - src   : str       - data source, e.g. 'CxiDs2.0:Cspad.0'
+           - env   : psana.Env - environment, e.g. env=ds.env(), where ds=psana.DataSource('exp=cxif5315:run=169')
            - pbits : int       - print control bit-word
-           - iface : char      - preferable interface: 'C' - C++ (everything) or 'P' - Python based (everything except common mode) 
+           - iface : char      - preferable interface: 'C' - C++ (everything) or 'P' - Python based (everything except common mode)
         """
 
         self.env     = env
@@ -239,7 +239,7 @@ class AreaDetector(object):
         """Sets data source parameter.
         
            Parameters
- 
+
            - srcpar  : str  - regular source or its alias, ex.: 'XppEndstation.0:Rayonix.0' or 'rayonix'
            - set_sub : bool - default=True - propagates source parameter to low level package  
         """
@@ -335,29 +335,21 @@ class AreaDetector(object):
 
            Returns
 
-           - int - run number
+           - int - run number or 0 if can't be defined.
         """
-        return par if isinstance(par, int) else par.run()
+        return par if isinstance(par, int) else par.run() if isinstance(par, _psana.Event) else 0 
 
 ##-----------------------------
 
     def is_cspad(self) :
-        """Returns True/False for CSPAD/other detector type
-
-           Returns
-
-           - bool - True if current detector is CSPAD, False otherwise.
+        """Returns (bool) True/False for CSPAD/other detector type
         """
         return self.dettype == gu.CSPAD
 
 ##-----------------------------
 
     def is_cspad2x2(self) :
-        """Returns True/False for CSPAD2x2/other detector type
-
-           Returns
-
-           - bool - True if current detector is CSPAD2x2, False otherwise.
+        """Returns (bool) True/False for CSPAD2x2/other detector type
         """
         return  self.dettype == gu.CSPAD2X2
         #if arr is not None and arr.size == 143560 : return True
@@ -376,8 +368,6 @@ class AreaDetector(object):
            - int - number of dimensions of current detector pixel numpy array. If ndim>3 then returns 3.
         """
         if self._ndim is None :
-            #rnum = self.runnum(par)
-            #nd = self.da.ndim_v0(rnum) if self.iscpp else self.pyda.ndim(rnum)
             nd = self.pyda.ndim(par)
             self._ndim = nd if nd<4 else 3
         return self._ndim
@@ -396,8 +386,6 @@ class AreaDetector(object):
            - int - size of the detector numpy pixel-array (number of pixels)
         """
         if self._size is None :
-            #rnum = self.runnum(par)
-            #self._size = self.da.size_v0(rnum) if self.iscpp else self.pyda.size(rnum)
             self._size = self.pyda.size(par)
         return self._size
     
@@ -433,8 +421,6 @@ class AreaDetector(object):
                       Ex.: the shape like (4,8,185,388) is reduced to (32,185,388)
         """
         if self._shape is None :
-            #rnum = self.runnum(par)
-            #sh = self.da.shape_v0(rnum) if self.iscpp else self.pyda.shape(rnum)
             sh = self.pyda.shape(par)
             self._shape = sh if len(sh)<4 else np.array((self.size(par)/sh[-1]/sh[-2], sh[-2], sh[-1]))
         return self._shape        
@@ -471,15 +457,29 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def _shaped_array_(self, rnum, arr, calibtype=None) :
+    def _shaped_array_(self, par, arr, calibtype=None) :
         """Returns shaped numpy.array if shape is defined and constants are loaded from file, None othervise.
+
+           Parameters
+
+           - par : int | psana.Event - run number of event object
+           - arr : np.array - array to re-shape
+           - calibtype : int - DEPRICATED calibration type
+
+           Returns
+           - np.array - reshaped input array, None if arr is None or zero size,
+                        input array as is if its size is inconsistent with expected 
+                        (should be better to rise.IOError).
         """
+        rnum = self.runnum(par)
+
         if arr is None   : return None
         if arr.size == 0 : return None
         if arr.size != self.size(rnum) :
             #msg = 'WARNING: Array shape %s size %d is different from its configuration shape %s size %d' %\
             #      (arr.shape, arr.size, self._shape_daq_(rnum), self.size(rnum))
             #print msg
+            #raise IOError(msg)
             return arr # return array as is
 
         shape = self._shape_daq_(rnum)
@@ -539,9 +539,11 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pedestals.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
-        else          : return self._shaped_array_(rnum, self.pyda.pedestals(par),   gu.PEDESTALS)
+        return self._shaped_array_(par, self.pyda.pedestals(par),   gu.PEDESTALS)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
+        #else          : return self._shaped_array_(rnum, self.pyda.pedestals(par),   gu.PEDESTALS)
 
 ##-----------------------------
 
@@ -556,9 +558,11 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_rms.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_rms(par),   gu.PIXEL_RMS)
+        return self._shaped_array_(par, self.pyda.pixel_rms(par),   gu.PIXEL_RMS)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
+        #else          : return self._shaped_array_(rnum, self.pyda.pixel_rms(par),   gu.PIXEL_RMS)
 
 ##-----------------------------
 
@@ -573,9 +577,11 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_gain.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)
+        return self._shaped_array_(par, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
+        #else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)
 
 ##-----------------------------
 
@@ -590,9 +596,11 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_mask.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_mask(par),   gu.PIXEL_MASK)
+        return self._shaped_array_(par, self.pyda.pixel_mask(par),   gu.PIXEL_MASK)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
+        #else          : return self._shaped_array_(rnum, self.pyda.pixel_mask(par),   gu.PIXEL_MASK)
 
 ##-----------------------------
 
@@ -607,9 +615,11 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_bkgd.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_bkgd(par),   gu.PIXEL_BKGD)
+        return self._shaped_array_(par, self.pyda.pixel_bkgd(par),   gu.PIXEL_BKGD)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
+        #else          : return self._shaped_array_(rnum, self.pyda.pixel_bkgd(par),   gu.PIXEL_BKGD)
 
 ##-----------------------------
 
@@ -629,9 +639,11 @@ class AreaDetector(object):
                                  4 - cold
                                  8 - cold rms
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
-        else          : return self._shaped_array_(rnum, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)
+        return self._shaped_array_(par, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
+        #else          : return self._shaped_array_(rnum, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)
 
 ##-----------------------------
 
@@ -647,14 +659,13 @@ class AreaDetector(object):
 
            - np.array - mask generated from calibration type pixel_status (1/0 for status 0/>0, respectively).
         """
-        rnum = self.runnum(par)
         stat = self.status(par)
         if stat is None : return None
         smask = np.asarray(np.select((stat>0,), (0,), default=1), dtype=np.uint8)
         if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode==2 else False))
         
         if self.is_cspad2x2() : return smask # stat already has a shape (2,185,388)
-        return self._shaped_array_(rnum, smask, gu.PIXEL_STATUS)
+        return self._shaped_array_(par, smask, gu.PIXEL_STATUS)
 
 ##-----------------------------
 
@@ -703,7 +714,9 @@ class AreaDetector(object):
 
            - np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
         """
-        return self.pyda.gain_mask(par, gain)
+
+        return self._shaped_array_(par, self.pyda.gain_mask(par, gain), gu.PIXEL_MASK)
+        #return self.pyda.gain_mask(par, gain)
 
 ##-----------------------------
 
@@ -712,14 +725,15 @@ class AreaDetector(object):
 
            Parameter
 
-           par  : int or psana.Event() - integer run number or psana event object.
-           gain : float - gain factor; mask will be multiplied by this factor if it is specified.
+           - par  : int or psana.Event() - integer run number or psana event object.
+           - gain : float - gain factor; mask will be multiplied by this factor if it is specified.
 
            Returns
 
-           np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
+           - np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.
         """
-        return self.pyda.gain_mask_non_zero(par, gain)
+        return self._shaped_array_(par, self.pyda.gain_mask_non_zero(par, gain), gu.PIXEL_MASK)
+        #return self.pyda.gain_mask_non_zero(par, gain)
 
 ##-----------------------------
 
@@ -734,9 +748,11 @@ class AreaDetector(object):
 
            - np.array - values loaded for calibration type common_mode.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self.da.common_mode_v0(rnum)
-        else          : return self.pyda.common_mode(par)
+        return self.pyda.common_mode(par)
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self.da.common_mode_v0(rnum)
+        #else          : return self.pyda.common_mode(par)
 
 ##-----------------------------
 
@@ -747,8 +763,10 @@ class AreaDetector(object):
 
            - str - name of instrument, ex.: 'AMO', 'XPP', 'SXR', 'CXI, 'MEC', 'XCS', etc.   
         """
-        if self.iscpp : return self.da.instrument(self.env)
-        else          : return self.pyda.inst()
+        return self.pyda.inst()
+
+        #if self.iscpp : return self.da.instrument(self.env)
+        #else          : return self.pyda.inst()
 
 ##-----------------------------
 
@@ -759,15 +777,16 @@ class AreaDetector(object):
 
            - evt : psana.Event() - psana event object.
         """
-        if self.iscpp : self.da.print_config(evt, self.env)
-        else          : self.pyda.print_config(evt)
+        self.pyda.print_config(evt)
+
+        #if self.iscpp : self.da.print_config(evt, self.env)
+        #else          : self.pyda.print_config(evt)
 
 ##-----------------------------
 
     def raw_data(self, evt) :
         """Alias for depricated method renamed to raw(evt) 
         """
-
         return self.raw(evt)
 
 ##-----------------------------
@@ -891,6 +910,7 @@ class AreaDetector(object):
            Gets raw data ndarray, applys baic corrections and return thus calibrated data.
 
            Applied corrections:
+
            - pedestal subtraction, returns det.raw(evt) if file with pedestals is missing   
            - apply common mode correction
            - gain_mask or "hybrid" gain from configuration object for CSPAD(2x2) only
@@ -906,6 +926,7 @@ class AreaDetector(object):
                     By default uses parameters from calib directory. 
            - mbits  : int - mask control bit-word.  optional.
                  defaults to 1.  Bit definitions:
+
                  + 1  - pixel_status ("bad pixels" deployed by calibman)
                  + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
                  + 4  - edge pixels
@@ -1030,6 +1051,7 @@ class AreaDetector(object):
 
            - par   : int or psana.Event() - integer run number or psana event object.
            - mbits : int - mask control bit-word.
+
                  = 0  - returns None
                  + 1  - pixel_status ("bad pixels" deployed by calibman)
                  + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
@@ -1092,9 +1114,11 @@ class AreaDetector(object):
 
            - np.array - array of pixel x coordinates.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_x_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.coords_x(par)) 
+        return self._shaped_array_(par, self.pyda.coords_x(par)) 
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_x_v0(rnum))
+        #else          : return self._shaped_array_(rnum, self.pyda.coords_x(par)) 
 
     
     def coords_y(self, par) :
@@ -1108,9 +1132,11 @@ class AreaDetector(object):
 
            - np.array - array of pixel y coordinates.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_y_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.coords_y(par)) 
+        return self._shaped_array_(par, self.pyda.coords_y(par)) 
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_y_v0(rnum))
+        #else          : return self._shaped_array_(rnum, self.pyda.coords_y(par)) 
 
 
     def coords_z(self, par) :
@@ -1124,9 +1150,11 @@ class AreaDetector(object):
 
            - np.array - array of pixel z coordinates.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_z_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.coords_z(par)) 
+        return self._shaped_array_(par, self.pyda.coords_z(par))
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_z_v0(rnum))
+        #else          : return self._shaped_array_(rnum, self.pyda.coords_z(par)) 
 
 
     def coords_xy(self, par) :
@@ -1172,9 +1200,11 @@ class AreaDetector(object):
 
            - np.array - array of pixel areas.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_areas_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.areas(par)) 
+        return self._shaped_array_(par, self.pyda.areas(par)) 
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_areas_v0(rnum))
+        #else          : return self._shaped_array_(rnum, self.pyda.areas(par)) 
 
 
     def mask_geo(self, par, mbits=255) :
@@ -1184,6 +1214,7 @@ class AreaDetector(object):
 
            - par   : int or psana.Event() - integer run number or psana event object.
            - mbits : int - mask control bit-word.
+
                  = 0 - returns None
                  + 1 - edges     
                  + 2 - central   
@@ -1194,9 +1225,11 @@ class AreaDetector(object):
 
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
-        else          : return self._shaped_array_(rnum, self.pyda.mask_geo(par, mbits))
+        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits))
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))
+        #else          : return self._shaped_array_(rnum, self.pyda.mask_geo(par, mbits))
 
 
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
@@ -1213,9 +1246,11 @@ class AreaDetector(object):
 
            - np.array - array of pixel x indexes.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_x_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.indexes_x(par, pix_scale_size_um, xy0_off_pix, do_update))
+        return self._shaped_array_(par, self.pyda.indexes_x(par, pix_scale_size_um, xy0_off_pix, do_update))
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_x_v0(rnum))
+        #else          : return self._shaped_array_(rnum, self.pyda.indexes_x(par, pix_scale_size_um, xy0_off_pix, do_update))
 
 
     def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
@@ -1232,9 +1267,11 @@ class AreaDetector(object):
 
            - np.array - array of pixel y indexes.
         """
-        rnum = self.runnum(par)
-        if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_y_v0(rnum))
-        else          : return self._shaped_array_(rnum, self.pyda.indexes_y(par, pix_scale_size_um, xy0_off_pix, do_update))
+        return self._shaped_array_(par, self.pyda.indexes_y(par, pix_scale_size_um, xy0_off_pix, do_update))
+
+        #rnum = self.runnum(par)
+        #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_y_v0(rnum))
+        #else          : return self._shaped_array_(rnum, self.pyda.indexes_y(par, pix_scale_size_um, xy0_off_pix, do_update))
 
 
     def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
@@ -1270,7 +1307,7 @@ class AreaDetector(object):
 
            - tuple - (ix, iy) tuple of two indexes associated with input point coordinates.
         """
-        rnum = self.runnum(par)
+        #rnum = self.runnum(par)
         ix, iy = self.pyda.point_indexes(par, pxy_um, pix_scale_size_um, xy0_off_pix)
         return ix, iy
 
@@ -1280,14 +1317,15 @@ class AreaDetector(object):
 
            Parameters
 
-           par : int or psana.Event() - integer run number or psana event object.
+           - par : int or psana.Event() - integer run number or psana event object.
 
            Returns
 
-           float - pixel size in [um].
+           - float - pixel size in [um].
         """
-        psize = self.da.pixel_scale_size_v0(self.runnum(par)) if self.iscpp\
-                else self.pyda.pixel_size(par) # Ex: 109.92 [um]
+        psize = self.pyda.pixel_size(par) # Ex: 109.92 [um]
+        #psize = self.da.pixel_scale_size_v0(self.runnum(par)) if self.iscpp\
+        #        else self.pyda.pixel_size(par) # Ex: 109.92 [um]
         return psize if psize != 1 else None
 
 
@@ -1308,8 +1346,8 @@ class AreaDetector(object):
 
            Parameters
 
-           par : int or psana.Event() - integer run number or psana event object.
-           dtx, dty, dtz : float - three angular increments [deg] of the detector tilt. 
+           - par : int or psana.Event() - integer run number or psana event object.
+           - dtx, dty, dtz : float - three angular increments [deg] of the detector tilt. 
         """
         #rnum = self.runnum(par)
         self.pyda.tilt_geo(par, dtx, dty, dtz)
@@ -1355,7 +1393,7 @@ class AreaDetector(object):
            Parameters
 
            - evt               : psana.Event() - psana event object.
-           - nda_in            : input n-d array which needs to be converted in image; default - use calib method. (see calib method for list of corrections)
+           - nda_in            : input n-d array which needs to be converted in image; default - use calib methood.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
            - do_update         : bool - force to update cached array.
@@ -1377,8 +1415,10 @@ class AreaDetector(object):
 
         if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2
         nda_img = np.array(nda, dtype=np.double).flatten()        
-        if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
-        else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))
+        return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))
+
+        #if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))
+        #else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))
 
 
     def ndarray_from_image(self, par, image, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
@@ -1396,8 +1436,8 @@ class AreaDetector(object):
 
            - np.array - n-d array of intensities made from image.
         """
-        rnum = self.runnum(par)
-        return self._shaped_array_(rnum, self.pyda.ndarray_from_image(par, image, pix_scale_size_um, xy0_off_pix, do_update))
+        #rnum = self.runnum(par)
+        return self._shaped_array_(par, self.pyda.ndarray_from_image(par, image, pix_scale_size_um, xy0_off_pix, do_update))
 
     #def __call__(self, evt, nda_in=None) :
     #    """Alias for image in order to call it as det(evt,...)"""
@@ -1460,7 +1500,6 @@ class AreaDetector(object):
                       shaped in accordance with metadata (if available).
                       If metadata is missing, output array will have 2- or 1-d shape;
                       spaces and <next-lene> characters in the text file are used to find the shape of the array.
- 
         """
 
         return self.pyda.load_txtnda(fname)
