@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-19
+2017-09-27 Mikhail S. Dubrovin
+- app/jungfrau_ndarr_dark_proc - add file deployment and loging main messages
+
 Tag: V01-00-18
 2017-09-21 Mikhail S. Dubrovin
 Recover files lost since Tag: V01-00-14:
