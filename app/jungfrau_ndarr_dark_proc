@@ -7,6 +7,7 @@ import psana
 import numpy as np
 from time import time, localtime, strftime
 from pyimgalgos.GlobalUtils import print_ndarr, divide_protected, print_command_line_parameters, reshape_to_2d
+from Detector.PyDataAccess import get_jungfrau_data_object, get_jungfrau_config_object, get_jungfrau_gain_mode_object, time_pars_evt
 import PSCalib.GlobalUtils as gu
 
 #from Detector.GlobalUtils import print_ndarr, divide_protected
@@ -21,56 +22,6 @@ DIC_GAIN_MODE = {'FixedGain1':  1,
                  'Normal':      0}
 
 LOG_FILE = '/reg/g/psdm/logs/calibman/#YYYY-MM/jungfrau_ndarr_dark_proc.txt'
-
-#------------------------------
-
-def get_jungfrau_data_object(evt, src) :
-    """get jungfrau data object
-    """
-    o = evt.get(psana.Jungfrau.ElementV1, src)
-    if o is not None : return o
-    return None
-
-
-def get_jungfrau_config_object(env, src) :
-    cfg = env.configStore()
-    o = cfg.get(psana.Jungfrau.ConfigV1, src)
-    if o is not None : return o
-    return None
-
-
-def get_gain_mode(env, src) :
-    """Returns gain mode object, e.g. psana.Jungfrau.GainMode.ForcedGain1
-    """
-    co = get_jungfrau_config_object(env, psana.Source(src))
-    return co.gainMode()
-
-#------------------------------
-
-def time_pars(evt):
-    """Returns time relevant parameters from evt"""
-    evtid = evt.get(psana.EventId)
-    tsec, tnsec = evtid.time()
-    fid = evtid.fiducials()
-    date = gu.str_tstamp('%Y-%m-%d', tsec)
-    time = gu.str_tstamp('%H:%M:%S', tsec)
-    return tsec, tnsec, fid, date, time
-
-#------------------------------
-
-def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=1000, verbos=1, cmt='') :
-    """Evaluates low and high limit of the array, which are used to find bad pixels.
-    """
-    ave, std = (arr.mean(), arr.std()) if (nneg>0 or npos>0) else (None,None)
-    lo = ave-nneg*std if nneg>0 else lim_lo
-    hi = ave+npos*std if npos>0 else lim_hi
-    lo, hi = max(lo, lim_lo), min(hi, lim_hi)
-
-    if verbos & 1 :
-        print '  %s: %s ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
-              (sys._getframe().f_code.co_name, cmt, ave, std, lo, hi)
-
-    return lo, hi
 
 #------------------------------
 
@@ -89,71 +40,6 @@ def plot_det_image(det, evt, nda, tit='') :
     ave, rms = nda.mean(), nda.std()
     gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+3*rms), title=tit)
     gg.show()
-
-#------------------------------
-
-def fname_template(exp, runnum, tsec, tnsec, fid, tsdate, tstime, src, nevts, ofname):
-    """Replaces parts of the file name ofname specified as
-       #src, #exp, #run, #evts, #type, #date, #time, #fid, #sec, #nsec
-       with actual values.
-
-       RETURNS
-
-       - template (str) - file name template, e.g.: nda-cxi11216-r0009-CxiEndstation.0:Jungfrau.0-e000010-%s.txt,
-                        where %s stands for supplied late type.
-    """
-    template = gu.replace(ofname,   '#src',  src)
-    template = gu.replace(template, '#exp',  exp)
-    template = gu.replace(template, '#run',  'r%04d'%runnum)
-    template = gu.replace(template, '#type', '%s')
-    template = gu.replace(template, '#date', tsdate)
-    template = gu.replace(template, '#time', tstime)
-    template = gu.replace(template, '#fid',  '%06d'%fid)
-    template = gu.replace(template, '#sec',  '%d' % tsec)
-    template = gu.replace(template, '#nsec', '%09d' % tnsec)
-    template = gu.replace(template, '#evts', 'e%06d' % nevts)
-    if not '%s' in template : template += '-%s'
-    return template
-
-#------------------------------
-
-def add_rec_to_log(rec, verbos=False) :
-    path = gu.replace(LOG_FILE, '#YYYY-MM', gu.str_tstamp(fmt='%Y/%m'))
-    #print 'Log file: %s' % path
-    #print 'Record: %s' % rec
-
-    if gu.create_path(path, depth=5, mode=0777, verb=verbos) :
-        cmd = 'echo "%s" >> %s' % (rec, path)
-        if verbos : print 'command: %s' % cmd
-        os.system(cmd)
-
-#------------------------------
-
-def deploy_file(ifname, ctypedir, ctype, ofname, verbos) :
-    """Deploys file with calibration constants in the calib store and adds history record.
-
-    Parameters
-
-    - ifname : str - input file name, e.g.: 'fname.txt'
-    - ctypedir : str - path to calibtype directory, e.g. '/some-path/calib/Jungfrau::CalibV1/CxiEndstation.0:Jungfrau.0/'
-    - ctype : str - calibration type, e.g.: 'pedestals'
-    - ofname : str - output file name, e.g.: '123-end.data'
-    - verbos : bool - verbosity
-    """
-    path_clb = gu.path_to_calib_file(ctypedir, ctype, ofname)
-    path_his = gu.path_to_history_file(ctypedir, ctype)
-
-    if gu.create_path(path_clb, depth=5, mode=0777, verb=verbos) :
-
-        cmd = gu.command_deploy_file(ifname, path_clb)
-        print 'cmd: %s' % cmd
-        os.system(cmd)
-
-        rec = gu.history_record(ifname, ctypedir, ctype, ofname, comment='')
-        cmd = gu.command_add_record_to_file(rec, path_his)
-        if verbos : print 'cmd: %s' % cmd
-        os.system(cmd)
-        add_rec_to_log('  %s' % rec, verbos)
 
 #------------------------------
 
@@ -279,7 +165,7 @@ class JungfrauNDArrDarkProc :
         if self.det is None :
             raise ValueError('Can not create the Detector object for source %s' % self.src)
 
-        gmo = get_gain_mode(env, self.src)
+        gmo = get_jungfrau_gain_mode_object(env, self.src)
         self.gmname = gmo.name
         self.gmind = DIC_GAIN_MODE[self.gmname]
 
@@ -313,7 +199,7 @@ class JungfrauNDArrDarkProc :
 
         self.exp = env.experiment()
         self.runnum = evt.run()
-        self.tsec, self.tnsec, self.fid, self.tsdate, self.tstime = time_pars(evt)
+        self.tsec, self.tnsec, self.fid, self.tsdate, self.tstime = time_pars_evt(evt)
 
         self.stage = 1
         return True
@@ -401,8 +287,8 @@ class JungfrauNDArrDarkProc :
 
     def summary(self, evt, env) :
 
-        if self.verbos & 1 :
-            print '%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter),
+        #if self.verbos & 1 :
+        print '%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter),
 
         if self.counter :
             print ', begin data summary stage'
@@ -431,12 +317,12 @@ class JungfrauNDArrDarkProc :
 
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
         
-        rms_min, rms_max = evaluate_limits(arr_rms, self.rmsnlo, self.rmsnhi, self.rms_lo, self.rms_hi, self.verbos, cmt='RMS')
+        rms_min, rms_max = gu.evaluate_limits(arr_rms, self.rmsnlo, self.rmsnhi, self.rms_lo, self.rms_hi, self.verbos, cmt='RMS')
                            #if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0.\
                            #else (self.rms_lo, self.rms_hi)
         #if rms_min<0 : rms_min=0
 
-        ave_min, ave_max = evaluate_limits(arr_av1, self.intnlo, self.intnhi, self.int_lo, self.int_hi, self.verbos, cmt='AVE')\
+        ave_min, ave_max = gu.evaluate_limits(arr_av1, self.intnlo, self.intnhi, self.int_lo, self.int_hi, self.verbos, cmt='AVE')\
 
         arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (self.arr1,), 0)
         arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (self.arr1,), 0)
@@ -497,8 +383,8 @@ class JungfrauNDArrDarkProc :
         counter  = self.counter
 
         cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]        
-        template = fname_template(self.exp, self.runnum, self.tsec, self.tnsec, self.fid,\
-                                  self.tsdate, self.tstime, self.src, counter, ofname)
+        template = gu.calib_fname_template(self.exp, self.runnum, self.tsec, self.tnsec, self.fid,\
+                                           self.tsdate, self.tstime, self.src, counter, ofname)
 
         if savebw &  1 : det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
         if savebw &  2 : det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
@@ -589,8 +475,8 @@ class JungfrauDarkProc :
         str_src  = gu.string_from_source(det.source) # 'CxiEndstation.0:Jungfrau.0'
 
         cmts = ['DATASET  %s' % jdp0.dsname, 'STATISTICS  %d' % counter]        
-        template = fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
-                                  jdp0.tsdate, jdp0.tstime, str_src, counter, ofname)
+        template = gu.calib_fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
+                                           jdp0.tsdate, jdp0.tstime, str_src, counter, ofname)
 
         if verbos : print 'File name template: %s' % template
 
@@ -612,12 +498,12 @@ class JungfrauDarkProc :
             #print 'Deploy files in %s' % clbdir
             print 'Deploy files in %s' % ctypedir
 
-            if savebw &  1 : deploy_file(template % 'ave', ctypedir, 'pedestals',    fname, verbos)
-            if savebw &  2 : deploy_file(template % 'rms', ctypedir, 'pixel_rms',    fname, verbos) 
-            if savebw &  4 : deploy_file(template % 'sta', ctypedir, 'pixel_status', fname, verbos) 
-            if savebw &  8 : deploy_file(template % 'msk', ctypedir, 'pixel_mask',   fname, verbos)  
-            if savebw & 16 : deploy_file(template % 'max', ctypedir, 'pixel_max',    fname, verbos)   
-            if savebw & 32 : deploy_file(template % 'min', ctypedir, 'pixel_min',    fname, verbos)   
+            if savebw &  1 : gu.deploy_file(template % 'ave', ctypedir, 'pedestals',    fname, LOG_FILE, verbos)
+            if savebw &  2 : gu.deploy_file(template % 'rms', ctypedir, 'pixel_rms',    fname, LOG_FILE, verbos) 
+            if savebw &  4 : gu.deploy_file(template % 'sta', ctypedir, 'pixel_status', fname, LOG_FILE, verbos) 
+            if savebw &  8 : gu.deploy_file(template % 'msk', ctypedir, 'pixel_mask',   fname, LOG_FILE, verbos)  
+            if savebw & 16 : gu.deploy_file(template % 'max', ctypedir, 'pixel_max',    fname, LOG_FILE, verbos)   
+            if savebw & 32 : gu.deploy_file(template % 'min', ctypedir, 'pixel_min',    fname, LOG_FILE, verbos)   
 
 
     def summary(self, evt, env) :
@@ -679,7 +565,7 @@ def jungfrau_ndarr_raw_proc():
         raise IOError('WARNING: list of sources "%s" does not have Jungfrau' % source)
 
     rec = gu.log_rec_on_start()
-    add_rec_to_log(rec, verbos)
+    gu.add_rec_to_log(LOG_FILE, rec, verbos)
 
     #====================
     #sys.exit('TEST EXIT')
@@ -697,7 +583,7 @@ def jungfrau_ndarr_raw_proc():
         nevclc = 0
         for istep, step in enumerate(run.steps()):
             env = step.env()
-            gm = get_gain_mode(env, src)
+            gm = get_jungfrau_gain_mode_object(env, src)
             igm = DIC_GAIN_MODE[gm.name]
 
             if irun==0 and istep==0 :
@@ -751,9 +637,10 @@ def usage(mode=0) :
            '\n%prog -d <dataset> [-s <source>] [-f <file-name-template>]'\
            '\n       [-n <events-collect>] [-m <events-skip>] [-v <verbosity-bitword>] [-p <plot-bitword>] ...'\
            '\n       where -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi'\
-           '\nEx.1:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda.expand -n 20 -m 0 -v 7 -p 1'\
-           '\nEx.2:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda-#exp-#run-#src-#evts-#type.txt -n 100'\
-           '\nEx.3:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100'
+           '\nEx.1:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100'\
+           '\nEx.2:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda.expand -n 20 -m 0 -v 7 -p 1'\
+           '\nEx.3:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type.txt -n 5000 -u'\
+           '\nEx.4:  bsub -q psnehq -o log.txt python jungfrau_ndarr_dark_proc -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type.txt -n 100 -u'
 #------------------------------
 
 def option_parser() :
@@ -771,7 +658,7 @@ def option_parser() :
     d_fraclm = 0.1
     d_nsigma = 6.0
     d_plotim = 0      
-    d_verbos = 7
+    d_verbos = 0
     d_savebw = 0377
     d_intnlo = 6.0
     d_intnhi = 6.0

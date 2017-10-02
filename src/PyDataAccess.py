@@ -2,6 +2,7 @@
 
 #import sys
 import _psana
+from time import strftime, localtime
 
 ##-----------------------------
 
@@ -444,6 +445,31 @@ def get_zyla_config_object(env, src) :
     return None
 
 ##-----------------------------
+
+def get_jungfrau_data_object(evt, src) :
+    """get jungfrau data object
+    """
+    o = evt.get(_psana.Jungfrau.ElementV1, src)
+    if o is not None : return o
+    return None
+
+##-----------------------------
+
+def get_jungfrau_config_object(env, src) :
+    cfg = env.configStore()
+    o = cfg.get(_psana.Jungfrau.ConfigV1, src)
+    if o is not None : return o
+    return None
+
+##-----------------------------
+
+def get_jungfrau_gain_mode_object(env, src) :
+    """Returns gain mode object, usage: gmo=..., gmo.name, gmo.names.iteritems(), gm.values.iteritems(), etc.
+    """
+    co = get_jungfrau_config_object(env, _psana.Source(src))
+    return co.gainMode()
+
+##-----------------------------
 ##-----------------------------
 ##---- For WFDetector.py ------
 ##-----------------------------
@@ -505,5 +531,28 @@ def get_evr_data_object(evt, src) :
     if o is not None : return o
 
     return None
+
+##-----------------------------
+
+def time_pars_evt(evt):
+    """Returns time parameters from psana.Event object.
+
+    Parameter
+    - evt (psana.Event) - psana event object
+
+    Returns tuple of the event time parameters:
+
+    - tsec (int) - time in sec since 1970
+    - tnsec (int) - time in nanosecond
+    - fid (uint16) - fiducials
+    - date (str) - date in format YYYY-MM-DD
+    - time (str) - date in format MM:MM:SS
+    """
+    evtid = evt.get(_psana.EventId)
+    tsec, tnsec = evtid.time()
+    fid = evtid.fiducials()
+    date = strftime('%Y-%m-%d', localtime(tsec))
+    time = strftime('%H:%M:%S', localtime(tsec))
+    return tsec, tnsec, fid, date, time
 
 ##-----------------------------

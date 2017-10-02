@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-20
+2017-10-02 Mikhail S. Dubrovin
+- move methods from app/jungfrau_ndarr_dark_proc to PyDataAccess and PSCalib.GlobalUtils
+
 Tag: V01-00-19
 2017-09-27 Mikhail S. Dubrovin
 - app/jungfrau_ndarr_dark_proc - add file deployment and loging main messages
