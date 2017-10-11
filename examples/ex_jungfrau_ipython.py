@@ -1,11 +1,11 @@
 
-# Exaqmple of code for ipython
+# Example of code for ipython
 
 import psana
 nrun = 9 #  9, 11, 12
 dsname = 'exp=cxi11216:run=%d' % nrun # (1, 1024, 512)
 s_src = 'CxiEndstation.0:Jungfrau.0'
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+print 'Example for\n  dataset: %s\n  source : %s' % (dsname, s_src)
 
 src = psana.Source(s_src)
 ds  = psana.DataSource(dsname)
@@ -73,13 +73,6 @@ for step in ds.steps():
     for evt in step.events():
 
 
-
-
-
-
-
-
-
 evt = ds.events().next()
 dato = evt.get(psana.Jungfrau.ElementV1, src)
 
@@ -98,4 +91,12 @@ def get_jungfrau_config_object(env, src) :
     if o is not None : return o
     return None
 
+#------------------------------
+#------------------------------
+
+
+
+#------------------------------
+#------------------------------
+#------------------------------
 #------------------------------

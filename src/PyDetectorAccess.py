@@ -281,6 +281,11 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def pixel_offset(self, par) :
+        return self.cpstore(par).pixel_offset()
+
+##-----------------------------
+
     def pixel_mask(self, par) :
         return self.cpstore(par).pixel_mask()
 
@@ -293,6 +298,11 @@ class PyDetectorAccess :
 
     def pixel_status(self, par) :
         return self.cpstore(par).pixel_status()
+
+##-----------------------------
+
+    def pixel_datast(self, par) :
+        return self.cpstore(par).pixel_datast()
 
 ##-----------------------------
 
@@ -1260,13 +1270,13 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def shape_config_jungfrau(self, env) :
-
+        """Shape of jungfrau data array. Returns tuple like (nsegs,1024,512)
+        """
         c = pda.get_jungfrau_config_object(env, self.source)
         if c is None : return None
         nsegs = c.numberOfModules()
         npixx = c.numberOfRowsPerModule()
         npixy = c.numberOfColumnsPerModule()
-
         return (nsegs, npixy, npixx)
 
 ##-----------------------------

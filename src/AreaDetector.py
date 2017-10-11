@@ -24,7 +24,7 @@ Usage::
     par = runnum # or = evt
     cmpars=(1,25,10,91) # custom tuple of common mode parameters
 
-    det = psana.Detector(src, env, pbits=0)
+    det = psana.Detector(src, env)
 
     # or directly
     from Detector.AreaDetector import AreaDetector    
@@ -187,6 +187,8 @@ import PSCalib.GlobalUtils as gu
 from   PSCalib.GeometryObject import data2x2ToTwo2x1, two2x1ToData2x2
 from   Detector.PyDetectorAccess import PyDetectorAccess
 #from   Detector.GlobalUtils import print_ndarr
+
+from Detector.UtilsJungfrau import calib_jungfrau
 
 ##-----------------------------
 
@@ -351,8 +353,15 @@ class AreaDetector(object):
     def is_cspad2x2(self) :
         """Returns (bool) True/False for CSPAD2x2/other detector type
         """
-        return  self.dettype == gu.CSPAD2X2
+        return self.dettype == gu.CSPAD2X2
         #if arr is not None and arr.size == 143560 : return True
+
+##-----------------------------
+
+    def is_jungfrau(self) :
+        """Returns (bool) True/False for jungfrau/other detector type
+        """
+        return self.dettype == gu.JUNGFRAU
 
 ##-----------------------------
 
@@ -539,7 +548,7 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pedestals.
         """
-        return self._shaped_array_(par, self.pyda.pedestals(par),   gu.PEDESTALS)
+        return self._shaped_array_(par, self.pyda.pedestals(par), gu.PEDESTALS)
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)
@@ -558,7 +567,7 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_rms.
         """
-        return self._shaped_array_(par, self.pyda.pixel_rms(par),   gu.PIXEL_RMS)
+        return self._shaped_array_(par, self.pyda.pixel_rms(par), gu.PIXEL_RMS)
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)
@@ -577,11 +586,26 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_gain.
         """
-        return self._shaped_array_(par, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)
+        return self._shaped_array_(par, self.pyda.pixel_gain(par), gu.PIXEL_GAIN)
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)
         #else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)
+
+##-----------------------------
+
+    def offset(self, par) :
+        """Returns per-pixel array of offsets from calib directory.
+
+           Parameter
+
+           - par : int or psana.Event() - integer run number or psana event object.
+
+           Returns
+
+           - np.array - per-pixel values loaded for calibration type pixel_offset.
+        """
+        return self._shaped_array_(par, self.pyda.pixel_offset(par), gu.PIXEL_OFFSET)
 
 ##-----------------------------
 
@@ -596,7 +620,7 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_mask.
         """
-        return self._shaped_array_(par, self.pyda.pixel_mask(par),   gu.PIXEL_MASK)
+        return self._shaped_array_(par, self.pyda.pixel_mask(par), gu.PIXEL_MASK)
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)
@@ -615,7 +639,7 @@ class AreaDetector(object):
 
            - np.array - per-pixel values loaded for calibration type pixel_bkgd.
         """
-        return self._shaped_array_(par, self.pyda.pixel_bkgd(par),   gu.PIXEL_BKGD)
+        return self._shaped_array_(par, self.pyda.pixel_bkgd(par), gu.PIXEL_BKGD)
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)
@@ -639,11 +663,29 @@ class AreaDetector(object):
                                  4 - cold
                                  8 - cold rms
         """
-        return self._shaped_array_(par, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)
+        return self._shaped_array_(par, self.pyda.pixel_status(par), gu.PIXEL_STATUS)
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)
         #else          : return self._shaped_array_(rnum, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)
+
+##-----------------------------
+
+    def datast(self, par) :
+        """Returns array of pixel data status from calib directory,
+           the same as status, but evaluated for non-dark data runs.
+
+           Parameter
+
+           - par : int or psana.Event() - integer run number or psana event object.
+
+           Returns
+
+           - np.array - per-pixel values loaded for calibration type pixel_datast.
+                    status bits: 0 - good pixel
+                                 1,2,4,8,.. TBD
+        """
+        return self._shaped_array_(par, self.pyda.pixel_datast(par), gu.PIXEL_DATAST)
 
 ##-----------------------------
 
@@ -939,6 +981,8 @@ class AreaDetector(object):
 
            - np.array - per-pixel array of calibrated intensities from data.
         """
+        if self.is_jungfrau() : return calib_jungfrau(self, evt, self.source, cmpars)
+
         rnum = self.runnum(evt)
 
         raw = self.raw(evt) 

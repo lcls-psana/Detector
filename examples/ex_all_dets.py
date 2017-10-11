@@ -109,6 +109,11 @@ elif ntest==24 : #dsname, src = 'exp=xppx23615:run=75',  'XppEndstation.0:Zyla.0
     psana.setOption('psana.calib-dir', './calib') # dark exp=mfxn8316:run=9
     dsname, src = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc', 'XppEndstation.0:Zyla.0'
 
+elif ntest==25 : #dsname, src = 'exp=cxi11216:run=40',  'CxiEndstation.0:Jungfrau.0' # 'Jungfrau'
+    #psana.setOption('psana.calib-dir', './calib') # dark exp=mfxn8316:run=9
+    #dsname, src = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc', 'CxiEndstation.0:Jungfrau.0'
+    dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
+
 else :
     print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
     sys.exit(0)

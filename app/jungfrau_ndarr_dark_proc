@@ -45,9 +45,15 @@ def plot_det_image(det, evt, nda, tit='') :
 
 class JungfrauNDArrDarkProc :
 
-    BW1 =  040000 # 16384 or 1<<14 (15-th bit starting from 0)
-    BW2 = 0100000 # 32768 or 2<<14 or 1<<15
-    BW3 = 0140000 # 49152 or 3<<14
+    # Jungfrau gain range coding
+    # bit: 15,14,...,0   Gain range, ind
+    #       0, 0       - Normal,       0
+    #       0, 1       - ForcedGain1,  1
+    #       1, 1       - FixedGain2,   2
+
+    #BW1 =  040000 # 16384 or 1<<14 (14-th bit starting from 0)
+    #BW2 = 0100000 # 32768 or 2<<14 or 1<<15
+    #BW3 = 0140000 # 49152 or 3<<14
     MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
     #MSK =  037777 # 16383 or (1<<14)-1
 
@@ -174,6 +180,12 @@ class JungfrauNDArrDarkProc :
         if ndaraw is None : return False
         if ndaraw.size == 0 : return False
         if ndaraw.shape[0] == 0 : return False
+
+        #n1, n2 = 1000, 1005
+        #print_ndarr(ndaraw,            'XXX:ndaraw',       first=n1, last=n2)
+        #print_ndarr(ndaraw & self.BW1, 'XXX:ndaraw & BW1', first=n1, last=n2)
+        #print_ndarr(ndaraw & self.BW2, 'XXX:ndaraw & BW2', first=n1, last=n2)
+        #print_ndarr(ndaraw & self.BW3, 'XXX:ndaraw & BW3', first=n1, last=n2)
 
         self.shape = ndaraw.shape
         self.dtype_raw = ndaraw.dtype

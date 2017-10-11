@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-21
+2017-10-10 Mikhail S. Dubrovin
+- add stuff for Jungfrau in AreaDetector, GlobalUtils, PyDetectorAccess, UtilsJungfrau
+- update examples
+
 Tag: V01-00-20
 2017-10-02 Mikhail S. Dubrovin
 - move methods from app/jungfrau_ndarr_dark_proc to PyDataAccess and PSCalib.GlobalUtils
