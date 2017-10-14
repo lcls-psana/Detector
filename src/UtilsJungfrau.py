@@ -39,9 +39,9 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
         - cmpars[1] - control bit-word 1-in rows, 2-in columns
         - cmpars[2] - maximal applied correction 
     """
-    arr  = det.raw(evt) # shape:(1, 1024, 512) dtype:uint16
+    arr  = det.raw(evt) # shape:(1, 512, 1024) dtype:uint16
     #arr  = np.array(det.raw(evt), dtype=np.float32)
-    peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 1024, 512) dtype:float32
+    peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 512, 1024) dtype:float32
 
     #mask = det.status_as_mask(evt, mode=0) # - 4d mask
 
@@ -82,19 +82,22 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
     arrf[gr1] = peds[1,gr1] - arrf[gr1]
     arrf[gr2] = peds[2,gr2] - arrf[gr2]
 
-    #t0_sec = time()
+    t0_sec = time()
+    #if False :
     if cmp is not None :
-      mode, cormax = int(cmp[1]),cmp[2] 
+      mode, cormax = int(cmp[1]), cmp[2] 
       #common_mode_2d(arrf, mask=gr0, cormax=cormax)
       for s in range(arrf.shape[0]) :
           if mode & 1 :
-            #common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
-            common_mode_rows(arrf[s,:,:256], mask=gr0[s,:,:256], cormax=cormax)
-            common_mode_rows(arrf[s,:,256:], mask=gr0[s,:,256:], cormax=cormax)
+            common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
+            #common_mode_rows(arrf[s,:,:256], mask=gr0[s,:,:256], cormax=cormax)
+            #common_mode_rows(arrf[s,:,256:], mask=gr0[s,:,256:], cormax=cormax)
             #common_mode_cols(arrf[s,:512,:], mask=gr0[s,:512,:], cormax=cormax)
           if mode & 2 :
             common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
-    #print '\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total
+            pass
+
+    print '\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total
 
     # Apply gain and offset
     #gri = gr0*0 + gr1*1 + gr2*2
@@ -178,11 +181,11 @@ def common_mode_2d(arr, mask=None, cormax=None) :
 
 #------------------------------
 
-def common_mode_jungfrau(frame) :
+def common_mode_jungfrau(frame, cormax) :
     """
     Parameters
 
-    - frame (np.array) - shape=(1024, 512)
+    - frame (np.array) - shape=(512, 1024)
     """
 
     intmax = 100
@@ -196,11 +199,11 @@ def common_mode_jungfrau(frame) :
         col0 = 0
         for b in range(banks):
             try:
-                cmode = np.median(frame[r, col0:col0+bsize][frame[r, col0:col0+bsize]<intmax])
+                cmode = np.median(frame[r, col0:col0+bsize][frame[r, col0:col0+bsize]<cormax])
                 if not np.isnan(cmode):
                     ## e.g. found no pixels below intmax
                     ##                    print r, cmode, col0, b, bsize
-                    if cmode<intmax-1 :
+                    if cmode<cormax-1 :
                         frame[r, col0:col0+bsize] -= cmode
             except:
                 cmode = -666

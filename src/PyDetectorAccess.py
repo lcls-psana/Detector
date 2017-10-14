@@ -407,7 +407,7 @@ class PyDetectorAccess :
 ##-----------------------------
 
     # mbits = +1-edges; +2-wide central cols; +4-non-bond; +8/+16-four/eight non-bond neighbors
-    def mask_geo(self, par, mbits=15) :
+    def mask_geo(self, par, mbits=15, **kwargs) :
 
         if mbits != self.mbits : # check if update is required
             self.mbits = mbits
@@ -416,7 +416,7 @@ class PyDetectorAccess :
         if self.geoaccess(par) is None : return None
         else :
             if  self.mask_geo_arr is None : 
-                self.mask_geo_arr = self.geo.get_pixel_mask(mbits=mbits)
+                self.mask_geo_arr = self.geo.get_pixel_mask(mbits=mbits, **kwargs)
         return  self._shaped_geo_array(self.mask_geo_arr)
 
 ##-----------------------------
@@ -1270,14 +1270,14 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def shape_config_jungfrau(self, env) :
-        """Shape of jungfrau data array. Returns tuple like (nsegs,1024,512)
+        """Shape of jungfrau data array. Returns tuple like (nsegs,512,1024)
         """
         c = pda.get_jungfrau_config_object(env, self.source)
         if c is None : return None
         nsegs = c.numberOfModules()
-        npixx = c.numberOfRowsPerModule()
-        npixy = c.numberOfColumnsPerModule()
-        return (nsegs, npixy, npixx)
+        nrows = c.numberOfRowsPerModule()
+        ncols = c.numberOfColumnsPerModule()
+        return (nsegs, nrows, ncols)
 
 ##-----------------------------
 

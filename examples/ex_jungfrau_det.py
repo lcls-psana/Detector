@@ -8,14 +8,15 @@ import PSCalib.GlobalUtils as gu
 
 #------------------------------
 
-def test_jungfrau_constans(tname) :
+def test_jungfrau_methods(tname) :
 
     dsname, src = None, None
     
     if tname=='1' : #dsname, src = 'exp=cxi11216:run=40',  'CxiEndstation.0:Jungfrau.0' # 'Jungfrau'
         #psana.setOption('psana.calib-dir', './calib') # dark exp=mfxn8316:run=9
         #dsname, src = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc', 'CxiEndstation.0:Jungfrau.0'
-        dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
+        dsname, src = 'exp=cxi11216:run=9', 'CxiEndstation.0:Jungfrau.0' ## 9,11,12 - dark for gain modes
+        #dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
     elif tname=='2' :
         dsname, src = 'exp=mfx00616:run=8', 'MfxEndstation.0:Jungfrau:0'
     else :
@@ -69,15 +70,22 @@ def test_jungfrau_constans(tname) :
     gain = det.gain(par)
     print_ndarr(gain, 'gain')
     
+    offset = det.offset(par)
+    print_ndarr(offset, 'offset')
+    
     bkgd = det.bkgd(par)
     print_ndarr(bkgd, 'bkgd')
     
+    datast = det.datast(par)
+    print_ndarr(datast, 'datast')
+
     status = det.status(par)
     print_ndarr(status, 'status')
 
     statmask = det.status_as_mask(par)
     print_ndarr(statmask, 'statmask')
-    
+    print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+
     status_mask = det.status_as_mask(par)
     print_ndarr(status_mask, 'status_mask')
     
@@ -112,24 +120,20 @@ def test_jungfrau_constans(tname) :
         sys.exit('FURTHER TEST IS TERMINATED')
         
     ##-----------------------------
-    sys.exit('TEST EXIT')
+    #sys.exit('TEST EXIT')
     ##-----------------------------
 
-#------------------------------
-
-def test_jungfrau_methods(tname) :
-    
-    if peds is not None and nda_raw is not None : peds.shape = nda_raw.shape 
-    
-    data_sub_peds = nda_raw - peds if peds is not None else nda_raw
-    print_ndarr(data_sub_peds, 'data - peds')
+    #if peds is not None and nda_raw is not None : peds.shape = nda_raw.shape 
+    #data_sub_peds = nda_raw - peds if peds is not None else nda_raw
+    #print_ndarr(data_sub_peds, 'data - peds')
     
     nda_cdata = det.calib(evt)
     print_ndarr(nda_cdata, 'calibrated data')
     
-    
-    mask_geo = det.mask_geo(par)
+    mask_geo = det.mask_geo(par, mbits=3, width=10)
     print_ndarr(mask_geo, 'mask_geo')
+
+    nda_cdata*=mask_geo
     
     #mask_geo.shape = (32,185,388)
     #print mask_geo
@@ -141,7 +145,8 @@ def test_jungfrau_methods(tname) :
     print 'Detector origin indexes: ix, iy:', ipx, ipy
     ##-----------------------------
     
-    img_arr = data_sub_peds
+    #img_arr = data_sub_peds
+    img_arr = nda_cdata
     #img_arr = nda_cdata if nda_cdata is not None else nda_raw
     img = None
     
@@ -169,7 +174,7 @@ def test_jungfrau_methods(tname) :
     import pyimgalgos.GlobalGraphics as gg
     
     ave, rms = img.mean(), img.std()
-    gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+2*rms))
+    gg.plotImageLarge(img, amp_range=(-20,20), figsize=(13,6)) # amp_range=(ave-1*rms, ave+2*rms))
     gg.show()
     
     ##-----------------------------
@@ -178,24 +183,13 @@ def test_jungfrau_methods(tname) :
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
     
     ##-----------------------------
-    print 80*'_','\nTest do_reshape_2d_to_3d'
-    
-    print_ndarr(det.pedestals(par), 'pedestals w/o reshape')
-    det.do_reshape_2d_to_3d(flag=True)
-    print_ndarr(det.pedestals(par), 'pedestals reshaped to 3d')
 
-    print_ndarr(img, 'img')
-    print_ndarr(det.ndarray_from_image(par, img), 'nda_from_img')
-
-    print 'det.shape_config(env): ', det.shape_config(env)
-    print_ndarr(det.photons(evt), 'photons')
-         
 #------------------------------
 
 if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     print '%s\nTest %s' % (80*'_', tname)
-    if tname in ('1', '2', '3') : test_jungfrau_constans(tname)
+    if tname in ('1', '2', '3') : test_jungfrau_methods(tname)
     else : sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit ('End of %s' % sys.argv[0])
 

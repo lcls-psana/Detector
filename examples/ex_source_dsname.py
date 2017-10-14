@@ -70,7 +70,7 @@ def ex_source_dsname(ntest) :
     elif ntest == 19: # (1920, 1920)
         src, dsn = ':Rayonix.0', '/reg/g/psdm/detector/data_test/types/0017-MfxEndstation.0-Rayonix.0.xtc'
 
-    elif ntest == 20: # (1, 1024, 512)
+    elif ntest == 20: # (1, 512, 1024)
         src, dsn = ':Jungfrau.0', '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
 
     elif ntest == 21: # (2160, 2560)

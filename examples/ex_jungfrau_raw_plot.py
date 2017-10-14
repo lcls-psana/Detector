@@ -54,17 +54,18 @@ def h1d(hlst, bins=None, amp_range=None, weights=None, color=None, show_stat=Tru
 def test_jungfrau(tname) :
 
     """The data is in cxi11216.  There is one tile.  I appear to be using 
-       runs 9, 12, and 13 as pedestals for gain 0, 1, 2.  Runs 18-22 have some data,
+       runs 9, 11, and 12 as pedestals for gain 0, 1, 2.  Runs 18-22 have some data,
        which is highly non-optimal; we have better stuff but in a painful format.
     """
     #/reg/d/psdm/cxi/cxi11216/xtc/
     #/reg/d/psdm/cxi/cxi11216/calib/Jungfrau::CalibV1/CxiEndstation.0:Jungfrau.0/
 
     exp = 'cxi11216'
-    nrun = 9
-    dsname = 'exp=%s:run=%d' % (exp, nrun) # (1, 1024, 512)
+    nrun = 9 # 9 11 12
+    dsname = 'exp=%s:run=%d' % (exp, nrun) # (1, 512, 1024)
+    #sp.prefix = 'fig-%s-r%04d-%s' % (exp, nrun, tname) 
     sp.prefix = 'fig-%s-r%04d-%s-cm' % (exp, nrun, tname) 
-    #dsname = 'exp=cxi11216:run=40' # (1, 1024, 512)
+    #dsname = 'exp=cxi11216:run=40' # (1, 512, 1024)
     #dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
     src = 'CxiEndstation.0:Jungfrau.0'
 
@@ -80,6 +81,8 @@ def test_jungfrau(tname) :
     co = get_jungfrau_config_object(env, source)
     gm = co.gainMode()
 
+    print '  env.calibDir: %s' % env.calibDir()
+
     from Detector.AreaDetector import AreaDetector
 
     par = nrun # evt or nrun
@@ -92,11 +95,13 @@ def test_jungfrau(tname) :
 
     #nda = det.raw(evt)
     #print_ndarr(nda, 'nda')
+    cmp = det.common_mode(9)
+    print_ndarr(cmp, 'common_mode')
 
     if nda is None :
         for i, evt in enumerate(ds.events()) :
             nda = det.raw(evt) if tname=='0' else\
-                  det.calib(evt)
+                  det.calib(evt, cmpars=(7,1,100)) # cmpars=(7,0,100)
                   #calib_jungfrau(det, evt, source)
 
             print 'Event %d' % i
@@ -116,10 +121,8 @@ def test_jungfrau(tname) :
         sys.exit('FURTHER TEST IS TERMINATED')
 
     img = nda
-    img.shape = (1024, 512)
-    #img = img[512:,:]
-    img = img[:512,:]
-    #img.shape = (512, 512)
+    img.shape = (512, 1024)
+    img = img[:,:512]
 
     print_ndarr(img, 'img')
     print 80*'_'

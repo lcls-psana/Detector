@@ -11,6 +11,20 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-22
+2017-10-13 Mikhail S. Dubrovin
+- Jungfrau - add real segment geometry and all masks
+	modified:   app/jungfrau_ndarr_dark_proc
+	modified:   examples/ex_all_dets.py
+	modified:   examples/ex_jungfrau_det.py
+	modified:   examples/ex_jungfrau_ipython.py
+	modified:   examples/ex_jungfrau_raw_plot.py
+	modified:   examples/ex_new_dets.py
+	modified:   examples/ex_source_dsname.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+	modified:   src/UtilsJungfrau.py
+
 Tag: V01-00-21
 2017-10-10 Mikhail S. Dubrovin
 - add stuff for Jungfrau in AreaDetector, GlobalUtils, PyDetectorAccess, UtilsJungfrau

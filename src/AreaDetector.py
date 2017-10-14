@@ -52,8 +52,10 @@ Usage::
     peds   = det.pedestals(par) # returns array of pixel pedestals from calib store type pedestals
     rms    = det.rms(par)       # returns array of pixel dark noise rms from calib store type pixel_rms
     gain   = det.gain(par)      # returns array of pixel gain from calib store type pixel_gain
+    offset = det.offset(par)    # returns array of pixel offset from calib store type pixel_offset
     bkgd   = det.bkgd(par)      # returns array of pixel background from calib store type pixel_bkgd
     status = det.status(par)    # returns array of pixel status from calib store type pixel_status
+    datast = det.datast(par)    # returns array of pixel status from calib store type pixel_datast
     stmask = det.status_as_mask(par, mode=0) # returns array of masked bad pixels in det.status 
                                              # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
     mask   = det.mask_calib(par)  # returns array of pixel mask from calib store type pixel_mask
@@ -95,9 +97,10 @@ Usage::
     cx, cy     = det.coords_xy(par)  # returns arrays of pixel x and y coordinates
     cx, cy, cz = det.coords_xyz(par) # returns arrays of pixel x, y, and z coordinates
     areas      = det.areas(par)      # returns array of pixel areas relative smallest pixel
-    mask_geo   = det.mask_geo(par, mbits=15) # returns mask of segment-specific pixels
+    mask_geo   = det.mask_geo(par, mbits=15, **kwargs) # returns mask of segment-specific pixels
                                              #  mbits = +1-edges; +2-wide central cols;
                                              #          +4/+8/+16-non-bond / with four / with eight neighbors
+                                             # **kwargs - dict of additional parameters (width=5,...)
     ix         = det.indexes_x(par)  # returns array of pixel indexes along x for image
     iy         = det.indexes_y(par)  # returns array of pixel indexes along y for image
     ix, iy     = det.indexes_xy(par) # returns arrays of pixel indexes along x and y for image
@@ -110,10 +113,10 @@ Usage::
 
     # access to combined mask
     # NOTE: by default none of mask keywords is set to True, returns None.
-    mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False, unbondnbrs8=False)
+    mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False, unbondnbrs8=False, **kwargs)
 
     # or cashed mask with mbits - bitword control
-    mask = det.mask_comb(par, mbits)
+    mask = det.mask_comb(par, mbits, **kwargs)
     # where mbits has bits for pixel_status, pixel_mask, edges, central, unbond, unbondnbrs, unbondnbrs8, respectively
 
     # static-mask methods for n-d mask arrays
@@ -706,6 +709,10 @@ class AreaDetector(object):
         smask = np.asarray(np.select((stat>0,), (0,), default=1), dtype=np.uint8)
         if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode==2 else False))
         
+        if self.is_jungfrau() : 
+            mask01 = gu.merge_masks(smask[0,:], smask[1,:])
+            return   gu.merge_masks(smask[2,:], mask01)
+
         if self.is_cspad2x2() : return smask # stat already has a shape (2,185,388)
         return self._shaped_array_(par, smask, gu.PIXEL_STATUS)
 
@@ -1035,7 +1042,7 @@ class AreaDetector(object):
 
         if mbits > 0 : 
             #smask = self.status_as_mask(rnum) # (2, 185, 388)
-            mask = self.mask_comb(evt, mbits)
+            mask = self.mask_comb(evt, mbits, **kwargs)
             if mask is None :
                 if self.pbits & 32 : self._print_warning('combined mask is missing.')
             else :
@@ -1047,7 +1054,7 @@ class AreaDetector(object):
 ##-----------------------------
 
     def mask(self, par, calib=False, status=False, edges=False, central=False,\
-             unbond=False, unbondnbrs=False, unbondnbrs8=False) :
+             unbond=False, unbondnbrs=False, unbondnbrs8=False, **kwargs) :
         """Returns per-pixel array with mask values (per-pixel product of all requested masks).
 
            Parameters
@@ -1063,6 +1070,7 @@ class AreaDetector(object):
            - unbond     : bool - True/False = on/off mask of unbonded pixels.
            - unbondnbrs : bool - True/False = on/off mask of unbonded pixel with four neighbors. 
            - unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors. 
+           - kwargs     : dict - additional parameters passed to low level methods (width,...) 
 
            Returns
 
@@ -1081,12 +1089,12 @@ class AreaDetector(object):
         if unbondnbrs : mbits += 8
         if unbondnbrs8: mbits += 16
 
-        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits)) 
+        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits, **kwargs)) 
         return mask_nda
 
 ##-----------------------------
 
-    def mask_comb(self, par, mbits=0) :
+    def mask_comb(self, par, mbits=0, **kwargs) :
         """Returns per-pixel array with combined mask controlled by mbits bit-word.
 
            This method has same functionality as method mask(...) but under control of a single bit-word mbits. 
@@ -1104,6 +1112,8 @@ class AreaDetector(object):
                  + 16 - unbonded pixels
                  + 32 - unbonded pixel with four neighbors
                  + 64 - unbonded pixel with eight neighbors
+
+           - kwargs : dict - additional parameters passed to low level methods (width,...) 
 
            Returns
 
@@ -1126,7 +1136,8 @@ class AreaDetector(object):
                                    central    = mbits&8,\
                                    unbond     = mbits&16,\
                                    unbondnbrs = mbits&32,\
-                                   unbondnbrs8= mbits&64)
+                                   unbondnbrs8= mbits&64,\
+                                   **kwargs)
         return self._mask_nda
 
 ##-----------------------------
@@ -1251,7 +1262,7 @@ class AreaDetector(object):
         #else          : return self._shaped_array_(rnum, self.pyda.areas(par)) 
 
 
-    def mask_geo(self, par, mbits=255) :
+    def mask_geo(self, par, mbits=255, **kwargs) :
         """Returns per-pixel array with mask controlled by mbits bit-word.
 
            Parameters
@@ -1264,12 +1275,13 @@ class AreaDetector(object):
                  + 2 - central   
                  + 4 - unbond    
                  + 8 - unbondnbrs
+           - kwargs     : dict - additional parameters passed to low level methods (width,...) 
 
            Returns
 
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
-        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits))
+        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits, **kwargs))
 
         #rnum = self.runnum(par)
         #if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))

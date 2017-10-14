@@ -31,7 +31,7 @@ elif tname=='4' :
     src = 'AmoEndstation.0:Pimax.0' # Pimax.ConfigV1, Pimax.FrameV1
 
 elif tname=='5' :
-    dsname = 'exp=cxi11216:run=40' # (1, 1024, 512)
+    dsname = 'exp=cxi11216:run=40' # (1, 512, 1024)
     #dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
     src = 'CxiEndstation.0:Jungfrau.0'
 

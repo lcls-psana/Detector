@@ -199,11 +199,6 @@ if nda_raw is None :
 
 ##-----------------------------
 
-if peds is not None and nda_raw is not None : peds.shape = nda_raw.shape 
-
-data_sub_peds = nda_raw - peds if peds is not None else nda_raw
-print_ndarr(data_sub_peds, 'data - peds')
-
 nda_cdata = det.calib(evt)
 print_ndarr(nda_cdata, 'calibrated data')
 
@@ -236,6 +231,11 @@ print '%s\npixel size: %s' % (80*'_', str(pixel_size))
 ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
 print 'Detector origin indexes: ix, iy:', ipx, ipy
 ##-----------------------------
+
+if peds is not None and nda_raw is not None : peds.shape = nda_raw.shape 
+
+data_sub_peds = nda_raw - peds if peds is not None else nda_raw
+print_ndarr(data_sub_peds, 'data - peds')
 
 img_arr = data_sub_peds
 #img_arr = nda_cdata if nda_cdata is not None else nda_raw
