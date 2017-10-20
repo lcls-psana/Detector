@@ -1,5 +1,7 @@
 #--------------------------------------------------------------------------
-"""Class :py:class:`PyDetectorAccess` contains a collection of python access methods to detector associated information.
+"""
+Class :py:class:`PyDetectorAccess` contains a collection of python access methods to detector associated information
+====================================================================================================================
 
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on python.
@@ -28,8 +30,6 @@ This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
-
---------
 """
 #------------------------------
 

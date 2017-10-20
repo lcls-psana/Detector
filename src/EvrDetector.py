@@ -1,6 +1,7 @@
 
 """
 Detector interface for the EVR
+==============================
 """
 
 from DdlDetector import DdlDetector

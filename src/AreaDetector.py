@@ -1,5 +1,7 @@
 #--------------------------------------------------------------------------
-"""Class :py:class:`AreaDetector` contains a collection of access methods to detector data and meta-data.
+"""
+Class :py:class:`AreaDetector` contains a collection of access methods to detector data and meta-data
+=====================================================================================================
 
 Access method to calibration and geometry parameters, raw data, etc.
 Low level implementation is done on C++ or python.
@@ -177,8 +179,6 @@ This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
-
---------
 """
 #------------------------------
 

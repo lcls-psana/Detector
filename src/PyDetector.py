@@ -1,6 +1,7 @@
 #------------------------------
 """
-Method :meth:`detector_factory` in :class:`PyDetector` returns instance of the detector data accessor. 
+Method :meth:`detector_factory` in :class:`PyDetector` returns instance of the detector data accessor 
+=====================================================================================================
 
    Method detector_factory(src,env) switches between detector data access objects depending on source parameter.
    Currently implemented detector data access classes:
@@ -47,8 +48,6 @@ Usage::
 
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
-
---------
 """
 
 import _psana

@@ -111,6 +111,11 @@ Detector documentation
    :show-inheritance:
    :special-members:
 
+.. automodule:: EventCodeManager
+   :members:
+   :show-inheritance:
+   :special-members:
+
 ..   :private-members:
 
 .. autosummary::

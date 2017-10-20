@@ -1,6 +1,7 @@
 
 """
 Detector interface for the Ipimb
+================================
 """
 
 # issues with ipimb: 

@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-24
+2017-10-20 Mikhail S. Dubrovin
+- improve app/det_ndarr_data_status, add src/EventCodeManager.py
+- mark module titles for sphinx doc
+
 Tag: V01-00-23
 2017-10-19 Mikhail S. Dubrovin
 - add app/det_ndarr_data_status

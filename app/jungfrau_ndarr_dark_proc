@@ -492,6 +492,8 @@ class JungfrauDarkProc :
 
         if verbos : print 'File name template: %s' % template
 
+        gu.create_path(template, depth=0, mode=0770, verb=True) # in case if template is work/...
+
         if savebw &  1 : det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
         if savebw &  2 : det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
         if savebw &  4 : det.save_asdaq(template % 'sta', self.arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
@@ -564,7 +566,7 @@ def jungfrau_ndarr_raw_proc():
 
     if verbos & 1 : print 'Raw data processing of dataset: %s' % dsname
 
-    # ecm = EventCodeManager(evcode, verbos)
+    # ecm = EventCodeManager(popts.evcode, verbos)
 
     print '\nDIC_GAIN_MODE:'
     for item in DIC_GAIN_MODE.iteritems() : print item
@@ -652,7 +654,8 @@ def usage(mode=0) :
            '\nEx.1:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100'\
            '\nEx.2:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda.expand -n 20 -m 0 -v 7 -p 1'\
            '\nEx.3:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type.txt -n 5000 -u'\
-           '\nEx.4:  bsub -q psnehq -o log.txt python jungfrau_ndarr_dark_proc -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type.txt -n 100 -u'
+           +'\nEx.4:  bsub -q psnehq -o log-%%J.txt %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 100 -u' % sys.argv[0]
+
 #------------------------------
 
 def option_parser() :
@@ -660,7 +663,8 @@ def option_parser() :
 
     d_dsname = 'exp=cxi11216:run=9,12,13:smd' # None
     d_source = 'CxiEndstation.0:Jungfrau.0' # None 
-    d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
+    #d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
+    d_ofname = 'nda-#exp-#run-#src-#evts-#type.txt'
     d_events = 10000
     d_evskip = 0
     d_intlow = 1
@@ -670,7 +674,7 @@ def option_parser() :
     d_fraclm = 0.1
     d_nsigma = 6.0
     d_plotim = 0      
-    d_verbos = 0
+    d_verbos = 0377
     d_savebw = 0377
     d_intnlo = 6.0
     d_intnhi = 6.0
@@ -732,7 +736,7 @@ def option_parser() :
 
 if __name__ == "__main__" :
     if len(sys.argv)==1 : print '\n%s' % usage(2)
-    jungfrau_ndarr_raw_proc()
+    else : jungfrau_ndarr_raw_proc()
     sys.exit(0)
 
 #------------------------------

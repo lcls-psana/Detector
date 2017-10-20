@@ -1,5 +1,7 @@
 #------------------------------
-""":py:class:`UtilsJungfrau` contains utilities for Jungfrau detector correction.
+"""
+:py:class:`UtilsJungfrau` contains utilities for Jungfrau detector correction
+=============================================================================
 
     Jungfrau gain range coding
     bit: 15,14,...,0   Gain range, ind

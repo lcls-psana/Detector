@@ -1,6 +1,7 @@
 
 """
 Detector interface for the Generic1D type
+=========================================
 """
 
 from DdlDetector import DdlDetector

@@ -1,6 +1,7 @@
 
 """
 Detector interface for the UsdUsb Encoder Box
+=============================================
 """
 
 # issues with usdusb: 
