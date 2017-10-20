@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-23
+2017-10-19 Mikhail S. Dubrovin
+- add app/det_ndarr_data_status
+
 Tag: V01-00-22
 2017-10-13 Mikhail S. Dubrovin
 - Jungfrau - add real segment geometry and all masks
