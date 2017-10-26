@@ -651,10 +651,11 @@ def usage(mode=0) :
            '\n%prog -d <dataset> [-s <source>] [-f <file-name-template>]'\
            '\n       [-n <events-collect>] [-m <events-skip>] [-v <verbosity-bitword>] [-p <plot-bitword>] ...'\
            '\n       where -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi'\
-           '\nEx.1:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100'\
-           '\nEx.2:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f nda.expand -n 20 -m 0 -v 7 -p 1'\
-           '\nEx.3:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type.txt -n 5000 -u'\
-           +'\nEx.4:  bsub -q psnehq -o log-%%J.txt %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 100 -u' % sys.argv[0]
+           '\nEx.1:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100'\
+           '\nEx.2:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 5000 -u'\
+           '\nEx.3:  %prog -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 20 -m 0 -v 7 -p 1'\
+           +'\nEx.4:  bsub -q psnehq -o log-%%J.txt %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 100 -u' % sys.argv[0]\
+           +'\nEx.5:  %prog -d exp=xcsx22015:run=503,504,505:smd -s XcsEndstation.0:Jungfrau.0 -u'
 
 #------------------------------
 
@@ -664,7 +665,7 @@ def option_parser() :
     d_dsname = 'exp=cxi11216:run=9,12,13:smd' # None
     d_source = 'CxiEndstation.0:Jungfrau.0' # None 
     #d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
-    d_ofname = 'nda-#exp-#run-#src-#evts-#type.txt'
+    d_ofname = 'work/nda-#exp-#run-#src-#evts-#type.txt'
     d_events = 10000
     d_evskip = 0
     d_intlow = 1
@@ -675,7 +676,7 @@ def option_parser() :
     d_nsigma = 6.0
     d_plotim = 0      
     d_verbos = 0377
-    d_savebw = 0377
+    d_savebw = 0367 # do not save pixel_mask
     d_intnlo = 6.0
     d_intnhi = 6.0
     d_rmsnlo = 6.0
@@ -696,8 +697,8 @@ def option_parser() :
     h_fraclm='allowed fraction limit, default = %s' % d_fraclm
     h_nsigma='number of sigma for gated average, default = %s' % d_nsigma
     h_plotim='control bit-word to plot images, default = %s' % d_plotim
-    h_verbos='control bit-word for verbosity, default = %s' % d_verbos
-    h_savebw='control bit-word to save arrays, default = %s' % d_savebw
+    h_verbos='control bit-word for verbosity, default = (oct) %s' % oct(d_verbos)
+    h_savebw='control bit-word to save arrays, default = (oct) %s' % oct(d_savebw)
     h_intnlo='number of sigma from mean for low limit on INTENSITY, default = %s' % d_intnlo
     h_intnhi='number of sigma from mean for high limit on INTENSITY, default = %s' % d_intnhi
     h_rmsnlo='number of sigma from mean for low limit on RMS, default = %s' % d_rmsnlo

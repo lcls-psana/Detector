@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-25
+2017-10-26 Mikhail S. Dubrovin
+- PyDataAccess.py - add Jungfrau.ConfigV2 and ElementV2, update examples for 1M detector
+
 Tag: V01-00-24
 2017-10-20 Mikhail S. Dubrovin
 - improve app/det_ndarr_data_status, add src/EventCodeManager.py

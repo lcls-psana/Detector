@@ -17,8 +17,13 @@ def test_jungfrau_methods(tname) :
         #dsname, src = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc', 'CxiEndstation.0:Jungfrau.0'
         dsname, src = 'exp=cxi11216:run=9', 'CxiEndstation.0:Jungfrau.0' ## 9,11,12 - dark for gain modes
         #dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
+
     elif tname=='2' :
         dsname, src = 'exp=mfx00616:run=8', 'MfxEndstation.0:Jungfrau:0'
+
+    elif tname=='3' :
+        dsname, src = 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0' # 503,504,505
+
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -130,7 +135,7 @@ def test_jungfrau_methods(tname) :
     nda_cdata = det.calib(evt)
     print_ndarr(nda_cdata, 'calibrated data')
     
-    mask_geo = det.mask_geo(par, mbits=3, width=10)
+    mask_geo = det.mask_geo(par, mbits=3, width=1)
     print_ndarr(mask_geo, 'mask_geo')
 
     nda_cdata*=mask_geo
@@ -174,7 +179,7 @@ def test_jungfrau_methods(tname) :
     import pyimgalgos.GlobalGraphics as gg
     
     ave, rms = img.mean(), img.std()
-    gg.plotImageLarge(img, amp_range=(-20,20), figsize=(13,6)) # amp_range=(ave-1*rms, ave+2*rms))
+    gg.plotImageLarge(img, amp_range=(-20,20), figsize=(13,12)) # amp_range=(ave-1*rms, ave+2*rms))
     gg.show()
     
     ##-----------------------------

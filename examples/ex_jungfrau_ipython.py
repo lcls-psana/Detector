@@ -96,8 +96,14 @@ def get_jungfrau_config_object(env, src) :
 import psana
 ds  = psana.DataSource('exp=cxi11216:run=9')
 src = psana.Source('CxiEndstation.0:Jungfrau.0')
+
+import psana
+ds  = psana.DataSource('exp=xcsx22015:run=503:smd') # dark runs 503,504,505
+src = psana.Source('XcsEndstation.0:Jungfrau.0')
+
 env = ds.env()
-co = env.configStore().get(psana.Jungfrau.ConfigV1, src)
+#co = env.configStore().get(psana.Jungfrau.ConfigV1, src)
+co = env.configStore().get(psana.Jungfrau.ConfigV2, src)
 
 print 'Content of Jungfrau.ConfigV1:'
 

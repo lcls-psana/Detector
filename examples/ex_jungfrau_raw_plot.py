@@ -25,14 +25,23 @@ sp = Store()
 def get_jungfrau_data_object(evt, src) :
     """get jungfrau data object
     """
+    o = evt.get(psana.Jungfrau.ElementV2, src)
+    if o is not None : return o
+
     o = evt.get(psana.Jungfrau.ElementV1, src)
     if o is not None : return o
+
     return None
 
 def get_jungfrau_config_object(env, src) :
     cfg = env.configStore()
+
+    o = cfg.get(psana.Jungfrau.ConfigV2, src)
+    if o is not None : return o
+
     o = cfg.get(psana.Jungfrau.ConfigV1, src)
     if o is not None : return o
+
     return None
 
 #------------------------------
@@ -60,14 +69,17 @@ def test_jungfrau(tname) :
     #/reg/d/psdm/cxi/cxi11216/xtc/
     #/reg/d/psdm/cxi/cxi11216/calib/Jungfrau::CalibV1/CxiEndstation.0:Jungfrau.0/
 
-    exp = 'cxi11216'
-    nrun = 9 # 9 11 12
+    #src = 'CxiEndstation.0:Jungfrau.0'
+    #exp = 'cxi11216'
+    #nrun = 9 # 9 11 12
+
+    src = 'XcsEndstation.0:Jungfrau.0'
+    exp = 'xcsx22015'
+    nrun = 503 # 503,504,505
+
     dsname = 'exp=%s:run=%d' % (exp, nrun) # (1, 512, 1024)
     #sp.prefix = 'fig-%s-r%04d-%s' % (exp, nrun, tname) 
     sp.prefix = 'fig-%s-r%04d-%s-cm' % (exp, nrun, tname) 
-    #dsname = 'exp=cxi11216:run=40' # (1, 512, 1024)
-    #dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
-    src = 'CxiEndstation.0:Jungfrau.0'
 
     print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
     #psana.setOption('psana.calib-dir', './calib')
@@ -121,8 +133,10 @@ def test_jungfrau(tname) :
         sys.exit('FURTHER TEST IS TERMINATED')
 
     img = nda
-    img.shape = (512, 1024)
-    img = img[:,:512]
+    #img.shape = (512, 1024)
+    #img = img[:,:512]
+
+    img.shape = (img.size/1024, 1024)
 
     print_ndarr(img, 'img')
     print 80*'_'
