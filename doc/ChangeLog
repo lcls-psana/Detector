@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-26
+2017-10-27 Mikhail S. Dubrovin
+- UtilsJungfrau - change formulae of intensity correction for constants provided by PSI and Philip
+- add ex_jungfrau_images.py, ex_jungfrau_merge_constants.py
+
 Tag: V01-00-25
 2017-10-26 Mikhail S. Dubrovin
 - PyDataAccess.py - add Jungfrau.ConfigV2 and ElementV2, update examples for 1M detector

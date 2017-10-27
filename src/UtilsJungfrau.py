@@ -19,7 +19,7 @@ Created on 2017-10-03 by Mikhail Dubrovin
 import numpy as np
 from time import time
 from math import fabs
-from Detector.GlobalUtils import print_ndarr
+from Detector.GlobalUtils import print_ndarr, divide_protected
 
 BW1 =  040000 # 16384 or 1<<14 (15-th bit starting from 1)
 BW2 = 0100000 # 32768 or 2<<14 or 1<<15
@@ -29,8 +29,27 @@ MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #------------------------------
 
+class Storage :
+    def __init__(self) :
+        self.offs = None
+        self.gfac = None
+
+#------------------------------
+store = Storage() # singleton
+#------------------------------
+
+#------------------------------
+
 def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
     """
+    Returns calibrated jungfrau data
+
+    - gets constants
+    - gets raw data
+    - evaluates (code - pedestal - offset)
+    - applys common mode correction if turned on
+    - apply gain factor
+
     Parameters
 
     - det (psana.Detector) - Detector object
@@ -52,6 +71,10 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
     cmp  = det.common_mode(evt) if cmpars is None else cmpars
     if gain is None : gain = np.ones_like(peds)  # - 4d gains
     if offs is None : offs = np.zeros_like(peds) # - 4d gains
+
+    gfac = store.gfac
+    if store.gfac is None :
+       store.gfac = gfac = divide_protected(np.ones_like(peds), gain)
 
     #print_ndarr(cmp,  'XXX: common mode parameters ')
     #print_ndarr(arr,  'XXX: calib_jungfrau arr ')
@@ -80,9 +103,19 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
 
     # Subtract pedestals
     arrf = np.array(arr & MSK, dtype=np.float32)
-    arrf[gr0]-= peds[0,gr0]
-    arrf[gr1] = peds[1,gr1] - arrf[gr1]
-    arrf[gr2] = peds[2,gr2] - arrf[gr2]
+    arrf[gr0] -= peds[0,gr0]
+    arrf[gr1] -= peds[1,gr1] #- arrf[gr1]
+    arrf[gr2] -= peds[2,gr2] #- arrf[gr2]
+
+    #a = np.select((gr0, gr1, gr2), (gain[0,:], gain[1,:], gain[2,:]), default=1) # 2msec
+    factor = np.select((gr0, gr1, gr2), (gfac[0,:], gfac[1,:], gfac[2,:]), default=1) # 2msec
+    offset = np.select((gr0, gr1, gr2), (offs[0,:], offs[1,:], offs[2,:]), default=0)
+
+    #print_ndarr(factor, 'XXX: calib_jungfrau factor')
+    #print_ndarr(offset, 'XXX: calib_jungfrau offset')
+
+    # Apply offset
+    arrf -= offset
 
     t0_sec = time()
     #if False :
@@ -99,28 +132,11 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
             common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
             pass
 
-    print '\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total
+    #print '\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total
 
-    # Apply gain and offset
-    #gri = gr0*0 + gr1*1 + gr2*2
-    ####a = gain[0,gr0] + gain[1,gr1] + gain[2,gr2]
-    ####b = offs[0,gr0] + offs[1,gr1] + offs[2,gr2]
-    #a = gain[gri]
-    #b = offs[gri]
+    # Apply gain
 
-    #t0_sec = time()
-    #print '\nXXX: Consumed time (sec) =', time()-t0_sec # 7msec
-
-    #a = gain[0,:]*gr0 + gain[1,:]*gr1 + gain[2,:]*gr2 # 3.5 msec
-    #b = offs[0,:]*gr0 + offs[1,:]*gr1 + offs[2,:]*gr2
-
-    a = np.select((gr0, gr1, gr2), (gain[0,:], gain[1,:], gain[2,:]), default=1) # 2msec
-    b = np.select((gr0, gr1, gr2), (offs[0,:], offs[1,:], offs[2,:]), default=0)
-
-    #print_ndarr(a, 'XXX: calib_jungfrau a')
-    #print_ndarr(b, 'XXX: calib_jungfrau b')
-
-    return a*arrf + b # 1msec
+    return arrf * factor
 
 #------------------------------
 

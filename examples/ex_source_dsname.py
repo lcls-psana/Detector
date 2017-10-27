@@ -76,6 +76,9 @@ def ex_source_dsname(ntest) :
     elif ntest == 21: # (2160, 2560)
         src, dsn = ':Zyla.0', '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc'
 
+    elif ntest == 22: # (2, 512, 1024)
+        src, dsn = ':Jungfrau.0', 'exp=xcsx22015:run=513'
+
     else :
         sys.exit('Non-implemented sample for test number # %d' % ntest)
 

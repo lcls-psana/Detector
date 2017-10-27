@@ -8,26 +8,19 @@ import PSCalib.GlobalUtils as gu
 
 #------------------------------
 
-def test_jungfrau_methods(tname) :
-
-    dsname, src = None, None
-    
-    if tname=='1' : #dsname, src = 'exp=cxi11216:run=40',  'CxiEndstation.0:Jungfrau.0' # 'Jungfrau'
-        #psana.setOption('psana.calib-dir', './calib') # dark exp=mfxn8316:run=9
-        #dsname, src = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc', 'CxiEndstation.0:Jungfrau.0'
-        dsname, src = 'exp=cxi11216:run=9', 'CxiEndstation.0:Jungfrau.0' ## 9,11,12 - dark for gain modes
-        #dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
-
-    elif tname=='2' :
-        dsname, src = 'exp=mfx00616:run=8', 'MfxEndstation.0:Jungfrau:0'
-
-    elif tname=='3' :
-        dsname, src = 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0' # 503,504,505
-
+def dsname_source(tname) :
+    if   tname=='1': return 'exp=cxi11216:run=9', 'CxiEndstation.0:Jungfrau.0' ## 9,11,12 - dark for gain modes
+    elif tname=='2': return 'exp=xcsx22015:run=508', 'XcsEndstation.0:Jungfrau.0' # dark: 503, 504, 505; 508, 509, 510; 516, 517, 518
+    elif tname=='3': return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0' # 513 data with variable gain
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
+
     
+def test_jungfrau_methods(tname) :
+
+    dsname, src = dsname_source(tname)
+
     ds  = psana.DataSource(dsname)
     evt = ds.events().next()
     env = ds.env()
@@ -180,8 +173,18 @@ def test_jungfrau_methods(tname) :
     
     ave, rms = img.mean(), img.std()
     gg.plotImageLarge(img, amp_range=(-20,20), figsize=(13,12)) # amp_range=(ave-1*rms, ave+2*rms))
-    gg.show()
     
+    ##-----------------------------
+    hnda = nda_raw 
+
+    range_x = (0,(1<<16)-1) # (hnda.min(), hnda.max()) # (0,(2<<16)-1)
+    fighi, axhi, hi = gg.hist1d(hnda.flatten(), bins=256, amp_range=range_x,\
+                              weights=None, color=None, show_stat=True, log=True, \
+                              figsize=(6,5), axwin=(0.15, 0.12, 0.78, 0.80), \
+                              title='Image spectrum', xlabel='ADU', ylabel=None, titwin=None) 
+
+    gg.show()
+
     ##-----------------------------
     
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
