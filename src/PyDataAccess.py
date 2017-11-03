@@ -469,6 +469,17 @@ def get_jungfrau_gain_mode_object(env, src) :
     return co.gainMode()
 
 ##-----------------------------
+
+def get_epicscam_config_object(env, src) :
+    """get epics camera config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Camera.ControlsCameraConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
 ##-----------------------------
 ##---- For WFDetector.py ------
 ##-----------------------------

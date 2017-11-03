@@ -645,6 +645,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.FLI        : return self.raw_data_fli(evt, env)
         elif self.dettype == gu.PIMAX      : return self.raw_data_pimax(evt, env)
         elif self.dettype == gu.ZYLA       : return self.raw_data_zyla(evt, env)
+        elif self.dettype == gu.EPICSCAM   : return self.raw_data_camera(evt, env)
         else                               : return None
 
 ##-----------------------------
@@ -1344,7 +1345,11 @@ class PyDetectorAccess :
             c = pda.get_tm6740_config_object(env, self.source)
 
         elif self.dettype == gu.QUARTZ4A150 :
-            c = pda.get_quartz_config_object(env, self.source) 
+            c = pda.get_quartz_config_object(env, self.source)
+
+        elif self.dettype == gu.EPICSCAM :
+            c = pda.get_epicscam_config_object(env, self.source)
+            return (c.height(), c.width())
 
         #print c
         if c is None : return None
@@ -1376,7 +1381,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.JUNGFRAU   : return self.shape_config_jungfrau(env)
         elif self.dettype == gu.RAYONIX    : return self.shape_config_rayonix(env)
         elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
-                              gu.FCCD, gu.FCCD960, gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150) \
+                              gu.FCCD, gu.FCCD960, gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150, gu.EPICSCAM) \
                                            : return self.shape_config_camera(env)       
         elif self.dettype == gu.TIMEPIX    : return self.shape_config_timepix(env)
         elif self.dettype == gu.FLI        : return self.shape_config_fli(env)

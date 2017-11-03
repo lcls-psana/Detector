@@ -11,6 +11,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-27
+2017-11-03 Daniel Damiani
+- Support for ControlsCamera type added to Detector interface
+	modified:   src/PyDataAccess.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V01-00-26
 2017-10-27 Mikhail S. Dubrovin
 - UtilsJungfrau - change formulae of intensity correction for constants provided by PSI and Philip
