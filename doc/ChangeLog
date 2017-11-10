@@ -11,6 +11,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-28
+2017-11-09 Mikhail S. Dubrovin
+- PyDataAccess.py - add Jungfrau.ConfigV3
+- add example examples/ex_pnccd_plot_in_evloop.py
+
 Tag: V01-00-27
 2017-11-03 Daniel Damiani
 - Support for ControlsCamera type added to Detector interface

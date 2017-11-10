@@ -452,6 +452,9 @@ def get_jungfrau_data_object(evt, src) :
 def get_jungfrau_config_object(env, src) :
     cfg = env.configStore()
 
+    o = cfg.get(_psana.Jungfrau.ConfigV3, src)
+    if o is not None : return o
+
     o = cfg.get(_psana.Jungfrau.ConfigV2, src)
     if o is not None : return o
 
