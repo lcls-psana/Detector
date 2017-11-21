@@ -1,0 +1,1746 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>AreaDetector &#8212; Detector-doc 1 documentation</title>
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">Detector-doc 1 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for AreaDetector</h1><div class="highlight"><pre>
+<span></span><span class="c1">#--------------------------------------------------------------------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Class :py:class:`AreaDetector` contains a collection of access methods to detector data and meta-data</span>
+<span class="sd">=====================================================================================================</span>
+
+<span class="sd">Access method to calibration and geometry parameters, raw data, etc.</span>
+<span class="sd">Low level implementation is done on C++ or python.</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    # !!! NOTE: None is returned whenever requested information is missing.</span>
+
+<span class="sd">    # import</span>
+<span class="sd">    import psana</span>
+
+<span class="sd">    # retreive parameters from psana etc.</span>
+<span class="sd">    dsname = &#39;exp=xpptut15:run=54&#39;</span>
+<span class="sd">    src = &#39;XppGon.0:Cspad.0&#39; # or its alias &#39;cspad&#39;</span>
+
+<span class="sd">    ds  = psana.DataSource(dsname)</span>
+<span class="sd">    env = ds.env()</span>
+<span class="sd">    evt = ds.events().next()</span>
+<span class="sd">    runnum = evt.run()</span>
+
+<span class="sd">    # parameter par can be either runnum or evt    </span>
+<span class="sd">    par = runnum # or = evt</span>
+<span class="sd">    cmpars=(1,25,10,91) # custom tuple of common mode parameters</span>
+
+<span class="sd">    det = psana.Detector(src, env)</span>
+
+<span class="sd">    # or directly</span>
+<span class="sd">    from Detector.AreaDetector import AreaDetector    </span>
+<span class="sd">    det = AreaDetector(src, env, pbits=0)</span>
+
+<span class="sd">    # set parameters, if changed</span>
+<span class="sd">    det.set_env(env)</span>
+<span class="sd">    det.set_source(source)</span>
+<span class="sd">    det.set_print_bits(pbits)</span>
+
+<span class="sd">    # for Camera type of detector only</span>
+<span class="sd">    det.set_do_offset(do_offset=False) # NOTE: should be called right after det object is created, before getting data</span>
+
+<span class="sd">    # print info</span>
+<span class="sd">    det.print_attributes()    </span>
+<span class="sd">    det.print_config(evt)</span>
+
+<span class="sd">    # get pixel array shape, size, and nomber of dimensions</span>
+<span class="sd">    shape = det.shape(par=0)</span>
+<span class="sd">    size  = det.size(par=0)</span>
+<span class="sd">    ndim  = det.ndim(par=0)</span>
+<span class="sd">    instrument = det.instrument()</span>
+
+<span class="sd">    # access intensity calibration parameters</span>
+<span class="sd">    peds   = det.pedestals(par) # returns array of pixel pedestals from calib store type pedestals</span>
+<span class="sd">    rms    = det.rms(par)       # returns array of pixel dark noise rms from calib store type pixel_rms</span>
+<span class="sd">    gain   = det.gain(par)      # returns array of pixel gain from calib store type pixel_gain</span>
+<span class="sd">    offset = det.offset(par)    # returns array of pixel offset from calib store type pixel_offset</span>
+<span class="sd">    bkgd   = det.bkgd(par)      # returns array of pixel background from calib store type pixel_bkgd</span>
+<span class="sd">    status = det.status(par)    # returns array of pixel status from calib store type pixel_status</span>
+<span class="sd">    datast = det.datast(par)    # returns array of pixel status from calib store type pixel_datast</span>
+<span class="sd">    stmask = det.status_as_mask(par, mode=0) # returns array of masked bad pixels in det.status </span>
+<span class="sd">                                             # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel</span>
+<span class="sd">    mask   = det.mask_calib(par)  # returns array of pixel mask from calib store type pixel_mask</span>
+<span class="sd">    cmod   = det.common_mode(par) # returns 1-d array of common mode parameters from calib store type common_mode</span>
+
+<span class="sd">    # per-pixel (int16) gain mask from configuration data; 1/0 for low/high gain pixels,</span>
+<span class="sd">    # or (float) per-pixel gain factors if gain is not None</span>
+<span class="sd">    gmap = det.gain_mask(par, gain=None) # returns array of pixel gains using configuration data</span>
+<span class="sd">    gmnz = det.gain_mask_non_zero(par, gain=None) # returns None if ALL pixels have high gain and mask should not be applied</span>
+
+<span class="sd">    # set gfactor=high/low gain factor for CSPAD(2X2) in det.calib and det.image methods</span>
+<span class="sd">    det.set_gain_mask_factor(gfactor=6.85)</span>
+
+<span class="sd">    # set flag (for Chuck)</span>
+<span class="sd">    det.do_reshape_2d_to_3d(flag=False) </span>
+
+<span class="sd">    # get raw data</span>
+<span class="sd">    nda_raw = det.raw(evt)</span>
+
+<span class="sd">    # get calibrated data (applied corrections: pedestals, common mode, gain mask, gain, pixel status mask)</span>
+<span class="sd">    nda_cdata = det.calib(evt)</span>
+<span class="sd">    # and with custom common mode parameter sequence</span>
+<span class="sd">    nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence,</span>
+<span class="sd">    # and with combined mask.</span>
+<span class="sd">    nda_cdata = det.calib(evt, mbits=1) # see description of det.mask_comb method.</span>
+
+<span class="sd">    # common mode correction for pedestal-subtracted numpy array nda:</span>
+<span class="sd">    det.common_mode_apply(par, nda)</span>
+<span class="sd">    cm_corr_nda = det.common_mode_correction(par, nda)</span>
+<span class="sd">    # or with custom common mode parameter sequence</span>
+<span class="sd">    det.common_mode_apply(par, nda, cmpars)</span>
+<span class="sd">    cm_corr_nda = det.common_mode_correction(par, nda, cmpars)</span>
+
+<span class="sd">    # access geometry information</span>
+<span class="sd">    geo        = det.geometry(par)   # returns geometry object (top-most)</span>
+<span class="sd">    cx         = det.coords_x(par)   # returns array of pixel x coordinates</span>
+<span class="sd">    cy         = det.coords_y(par)   # returns array of pixel y coordinates</span>
+<span class="sd">    cz         = det.coords_z(par)   # returns array of pixel z coordinates</span>
+<span class="sd">    cx, cy     = det.coords_xy(par)  # returns arrays of pixel x and y coordinates</span>
+<span class="sd">    cx, cy, cz = det.coords_xyz(par) # returns arrays of pixel x, y, and z coordinates</span>
+<span class="sd">    areas      = det.areas(par)      # returns array of pixel areas relative smallest pixel</span>
+<span class="sd">    mask_geo   = det.mask_geo(par, mbits=15, **kwargs) # returns mask of segment-specific pixels</span>
+<span class="sd">                                             #  mbits = +1-edges; +2-wide central cols;</span>
+<span class="sd">                                             #          +4/+8/+16-non-bond / with four / with eight neighbors</span>
+<span class="sd">                                             # **kwargs - dict of additional parameters (width=5,...)</span>
+<span class="sd">    ix         = det.indexes_x(par)  # returns array of pixel indexes along x for image</span>
+<span class="sd">    iy         = det.indexes_y(par)  # returns array of pixel indexes along y for image</span>
+<span class="sd">    ix, iy     = det.indexes_xy(par) # returns arrays of pixel indexes along x and y for image</span>
+<span class="sd">    pixel_size = det.pixel_size(par) # returns array of pixel sizes</span>
+<span class="sd">    ipx, ipy   = det.point_indexes(par, pxy_um=(0,0)) # by default returns detector origin indexes</span>
+
+<span class="sd">    # change geometry object parameters</span>
+<span class="sd">    det.move_geo(par, dx, dy, dz)    # move detector it 3-d space</span>
+<span class="sd">    det.tilt_geo(par, dtx, dty, dtz) # tilt detector around 3 axes</span>
+
+<span class="sd">    # access to combined mask</span>
+<span class="sd">    # NOTE: by default none of mask keywords is set to True, returns None.</span>
+<span class="sd">    mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False, unbondnbrs8=False, **kwargs)</span>
+
+<span class="sd">    # or cashed mask with mbits - bitword control</span>
+<span class="sd">    mask = det.mask_comb(par, mbits, **kwargs)</span>
+<span class="sd">    # where mbits has bits for pixel_status, pixel_mask, edges, central, unbond, unbondnbrs, unbondnbrs8, respectively</span>
+
+<span class="sd">    # static-mask methods for n-d mask arrays</span>
+<span class="sd">    mask_nbr = det.mask_neighbors(mask, allnbrs=True) # allnbrs=False/True for 4/8 neighbors</span>
+<span class="sd">    mask_edg = det.mask_edges(mask, mrows=1, mcols=1)</span>
+
+<span class="sd">    # reconstruct image</span>
+<span class="sd">    img   = det.image(evt) # uses calib() by default</span>
+<span class="sd">    img   = det.image(evt, img_nda)</span>
+<span class="sd">    xaxis = det.image_xaxis(par)</span>
+<span class="sd">    yaxis = det.image_yaxis(par)</span>
+
+<span class="sd">    # special case of indexing using non-default pixel scale size and x, y coordinate offset</span>
+<span class="sd">    ix       = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))</span>
+<span class="sd">    iy       = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)</span>
+<span class="sd">    ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)</span>
+<span class="sd">    ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) </span>
+<span class="sd">    img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)</span>
+<span class="sd">    xaxis    = det.image_xaxis(par, pix_scale_size_um=None, x0_off_pix=None)</span>
+<span class="sd">    yaxis    = det.image_yaxis(par, pix_scale_size_um=None, y0_off_pix=None)</span>
+
+<span class="sd">    # converting 2-d image to non-assembled array using pixel geometry information.</span>
+<span class="sd">    # if geometry info is missing - returns None, except the case when flag is set by det.do_reshape_2d_to_3d(True).  </span>
+<span class="sd">    nda      = det.ndarray_from_image(par, image, pix_scale_size_um=None, xy0_off_pix=None)</span>
+
+<span class="sd">    # save n-d numpy array in the text file with metadata (global methods under hood of the class object)</span>
+<span class="sd">    det.save_txtnda(fname=&#39;nda.txt&#39;, ndarr=myndarr, cmts=(&#39;comment1&#39;, &#39;comment2&#39;), fmt=&#39;%.1f&#39;, verbos=False, addmetad=True)</span>
+<span class="sd">    # or convenience method for cspad2x2</span>
+<span class="sd">    det.save_asdaq(fname=&#39;nda.txt&#39;, ndarr=myndarr, cmts=(&#39;comment1&#39;, &#39;comment2&#39;), fmt=&#39;%.1f&#39;, verbos=False, addmetad=True)</span>
+
+<span class="sd">    # load n-d numpy array from the text file with metadata</span>
+<span class="sd">    nda = det.load_txtnda(fname)</span>
+
+<span class="sd">    # merge photons split between pixels and return array with integer number of photons per pixel</span>
+<span class="sd">    nda_nphotons = det.photons(self, evt, nda_calib=None, mask=None, adu_per_photon=None, thr_fraction=0.9)</span>
+
+<span class="sd">See classes</span>
+<span class="sd">  - :class:`AlgoAccess`</span>
+<span class="sd">  - :class:`AreaDetector`</span>
+<span class="sd">  - :class:`ControlDataDetector`</span>
+<span class="sd">  - :class:`DdlDetector`       - access to DDL data</span>
+<span class="sd">  - :class:`DetectorTypes`</span>
+<span class="sd">  - :class:`EpicsDetector`     - access to EPICS data</span>
+<span class="sd">  - :class:`EvrDetector`       - access to EVR data</span>
+<span class="sd">  - :class:`Generic1DDetector`</span>
+<span class="sd">  - :class:`GenericWFDetector`</span>
+<span class="sd">  - :class:`GlobalUtils`</span>
+<span class="sd">  - :class:`IpimbDetector`</span>
+<span class="sd">  - :class:`OceanDetector`</span>
+<span class="sd">  - :class:`PyDataAccess`</span>
+<span class="sd">  - :class:`PyDetectorAccess`  - Python access interface to data</span>
+<span class="sd">  - :class:`PyDetector`        - factory for different detectors</span>
+<span class="sd">  - :class:`TDCDetector`</span>
+<span class="sd">  - :class:`UsdUsbDetector`    - UsdUsb Encoder Box</span>
+<span class="sd">  - :class:`WFDetector`        - access to waveform detector data</span>
+
+<span class="sd">This software was developed for the LCLS project.</span>
+<span class="sd">If you use all or part of it, please give an appropriate acknowledgment.</span>
+
+<span class="sd">Author Mikhail Dubrovin</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#------------------------------</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">_psana</span>
+<span class="kn">import</span> <span class="nn">Detector</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">PSCalib.GlobalUtils</span> <span class="k">as</span> <span class="nn">gu</span>
+<span class="kn">from</span>   <span class="nn">PSCalib.GeometryObject</span> <span class="k">import</span> <span class="n">data2x2ToTwo2x1</span><span class="p">,</span> <span class="n">two2x1ToData2x2</span>
+<span class="kn">from</span>   <span class="nn">Detector.PyDetectorAccess</span> <span class="k">import</span> <span class="n">PyDetectorAccess</span>
+<span class="c1">#from   Detector.GlobalUtils import print_ndarr</span>
+
+<span class="kn">from</span> <span class="nn">Detector.UtilsJungfrau</span> <span class="k">import</span> <span class="n">calib_jungfrau</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector">[docs]</a><span class="k">class</span> <span class="nc">AreaDetector</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python access to area detector data.</span>
+<span class="sd">       Low level access is implemented on python or C++ through the boost::python wrapper</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.__init__"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">pbits</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">iface</span><span class="o">=</span><span class="s1">&#39;P&#39;</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Constructor of the class :class:`AreaDetector`.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - src   : str       - data source, e.g. &#39;CxiDs2.0:Cspad.0&#39;</span>
+<span class="sd">           - env   : psana.Env - environment, e.g. env=ds.env(), where ds=psana.DataSource(&#39;exp=cxif5315:run=169&#39;)</span>
+<span class="sd">           - pbits : int       - print control bit-word</span>
+<span class="sd">           - iface : char      - preferable interface: &#39;C&#39; - C++ (everything) or &#39;P&#39; - Python based (everything except common mode)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span>     <span class="o">=</span> <span class="n">env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span>   <span class="o">=</span> <span class="n">pbits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iscpp</span>   <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">iface</span><span class="o">==</span><span class="s1">&#39;C&#39;</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ispyt</span>   <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">iface</span><span class="o">==</span><span class="s1">&#39;P&#39;</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_source</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">set_sub</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">=</span> <span class="n">gu</span><span class="o">.</span><span class="n">det_type_from_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">da</span>   <span class="o">=</span> <span class="n">Detector</span><span class="o">.</span><span class="n">DetectorAccess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">pbits</span><span class="p">)</span> <span class="c1"># , 0xffff) C++ access methods</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span> <span class="o">=</span> <span class="n">PyDetectorAccess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">pbits</span><span class="p">)</span> <span class="c1"># Python data access methods</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>  <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span>  <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rnum_mask</span>  <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mbits_mask</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_nda</span>   <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_members</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_gain_mask_factor</span><span class="p">(</span><span class="n">gfactor</span><span class="o">=</span><span class="mf">6.85</span><span class="p">)</span> <span class="c1"># cpo default value for CSPAD(2x2) gain_mask, det.calib, det.image</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_reshape_2d_to_3d</span><span class="p">(</span><span class="n">flag</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>    <span class="c1"># Chuck - mandatory re-shaping 2-d to 3-d arrays        </span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">alg_photons</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.set_source"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.set_source">[docs]</a>    <span class="k">def</span> <span class="nf">set_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">srcpar</span><span class="p">,</span> <span class="n">set_sub</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Sets data source parameter.</span>
+<span class="sd">        </span>
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - srcpar  : str  - regular source or its alias, ex.: &#39;XppEndstation.0:Rayonix.0&#39; or &#39;rayonix&#39;</span>
+<span class="sd">           - set_sub : bool - default=True - propagates source parameter to low level package  </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#print &#39;type of srcpar: &#39;, type(srcpar)</span>
+        
+        <span class="n">src</span> <span class="o">=</span> <span class="n">srcpar</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">srcpar</span><span class="p">,</span> <span class="n">_psana</span><span class="o">.</span><span class="n">Source</span><span class="p">)</span> <span class="k">else</span> <span class="n">_psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="n">srcpar</span><span class="p">)</span>
+        <span class="n">str_src</span> <span class="o">=</span> <span class="n">gu</span><span class="o">.</span><span class="n">string_from_source</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+
+        <span class="c1"># in case of alias convert it to _psana.Src</span>
+        <span class="n">amap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">aliasMap</span><span class="p">()</span>
+        <span class="n">psasrc</span> <span class="o">=</span> <span class="n">amap</span><span class="o">.</span><span class="n">src</span><span class="p">(</span><span class="n">str_src</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span>  <span class="o">=</span> <span class="n">src</span> <span class="k">if</span> <span class="n">amap</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">psasrc</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="n">amap</span><span class="o">.</span><span class="n">src</span><span class="p">(</span><span class="n">str_src</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">_psana</span><span class="o">.</span><span class="n">Source</span><span class="p">)</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">_psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">16</span> <span class="p">:</span>
+            <span class="nb">print</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: input source: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">src</span><span class="p">),</span>\
+                  <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  string source: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">str_src</span><span class="p">),</span>\
+                  <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  source object: </span><span class="si">%s</span><span class="s1"> of type: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">set_sub</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">set_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">set_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.print_members"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.print_members">[docs]</a>    <span class="k">def</span> <span class="nf">print_members</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Depricated method renamed to print_attributes() </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_attributes</span><span class="p">()</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.print_attributes"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.print_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">print_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Prints some of object attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span> <span class="s1">&#39;AreaDetector object attributes:&#39;</span><span class="p">,</span> \
+              <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  source : </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> \
+              <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  dettype: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span><span class="p">,</span> \
+              <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  detname: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">gu</span><span class="o">.</span><span class="n">dic_det_type_to_name</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dettype</span><span class="p">],</span> \
+              <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  pbits  : </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span><span class="p">,</span> \
+              <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  iscpp  : </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">iscpp</span><span class="p">,</span> \
+              <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  ispyt  : </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">ispyt</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iscpp</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">print_members</span><span class="p">()</span>
+        <span class="k">else</span>          <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">print_attributes</span><span class="p">()</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.set_print_bits"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.set_print_bits">[docs]</a>    <span class="k">def</span> <span class="nf">set_print_bits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pbits</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Sets print-control bitword.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - pbits : int - print-control bitword, ex.: 0377 (octal) </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">=</span> <span class="n">pbits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">set_print_bits</span><span class="p">(</span><span class="n">pbits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">set_print_bits</span><span class="p">(</span><span class="n">pbits</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.set_env"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.set_env">[docs]</a>    <span class="k">def</span> <span class="nf">set_env</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Sets environment variable.</span>
+<span class="sd">        </span>
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - env : psana.Env() - psana environment variable, ex.: env=ds.env()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">set_env</span><span class="p">(</span><span class="n">env</span><span class="p">)</span></div>
+        <span class="c1">#self.da.set_env(env) # is not implemented and is not used this way</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.set_do_offset"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.set_do_offset">[docs]</a>    <span class="k">def</span> <span class="nf">set_do_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_offset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Switch mode of the Camera type of detector.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - do_offset : bool - control parameter to turn on/off Camera intensity offset, default=False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">set_do_offset</span><span class="p">(</span><span class="n">do_offset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">setMode</span><span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">do_offset</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.runnum"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.runnum">[docs]</a>    <span class="k">def</span> <span class="nf">runnum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns integer run number from different options of input parameter.</span>
+<span class="sd">        </span>
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - int - run number or 0 if can&#39;t be defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">par</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">par</span><span class="o">.</span><span class="n">run</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">_psana</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span> </div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.is_cspad"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.is_cspad">[docs]</a>    <span class="k">def</span> <span class="nf">is_cspad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns (bool) True/False for CSPAD/other detector type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">==</span> <span class="n">gu</span><span class="o">.</span><span class="n">CSPAD</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.is_cspad2x2"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.is_cspad2x2">[docs]</a>    <span class="k">def</span> <span class="nf">is_cspad2x2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns (bool) True/False for CSPAD2x2/other detector type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">==</span> <span class="n">gu</span><span class="o">.</span><span class="n">CSPAD2X2</span></div>
+        <span class="c1">#if arr is not None and arr.size == 143560 : return True</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.is_jungfrau"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.is_jungfrau">[docs]</a>    <span class="k">def</span> <span class="nf">is_jungfrau</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns (bool) True/False for jungfrau/other detector type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">==</span> <span class="n">gu</span><span class="o">.</span><span class="n">JUNGFRAU</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.ndim"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.ndim">[docs]</a>    <span class="k">def</span> <span class="nf">ndim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span> <span class="c1"># par = evt or runnum(int)</span>
+        <span class="sd">&quot;&quot;&quot;Returns number of dimensions of current detector pixel numpy array.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - int - number of dimensions of current detector pixel numpy array. If ndim&gt;3 then returns 3.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span> <span class="o">=</span> <span class="n">nd</span> <span class="k">if</span> <span class="n">nd</span><span class="o">&lt;</span><span class="mi">4</span> <span class="k">else</span> <span class="mi">3</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.size"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.size">[docs]</a>    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns size of the detector pixel-array.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - int - size of the detector numpy pixel-array (number of pixels)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.shape"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.shape">[docs]</a>    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns shape of the detector pixel-array.</span>
+
+<span class="sd">           For all detectors except cspad2x2 shape is the same as in DAQ. </span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - shape of the detector pixel-array, ex. for cspad (32,185,388).</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">185</span><span class="p">,</span><span class="mi">388</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad2x2</span><span class="p">()</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape_daq_</span><span class="p">(</span><span class="n">par</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+    <span class="k">def</span> <span class="nf">_shape_daq_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns 2- or 3-d shape of the detector pixel-array as in DAQ.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.\</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - detector pixel-array shape. If ndim .gt. 3 shape is reduced to 3-d.</span>
+<span class="sd">                      Ex.: the shape like (4,8,185,388) is reduced to (32,185,388)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">sh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span> <span class="o">=</span> <span class="n">sh</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">4</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">par</span><span class="p">)</span><span class="o">/</span><span class="n">sh</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="n">sh</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">sh</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">sh</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span>        
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.loading_status"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.loading_status">[docs]</a>    <span class="k">def</span> <span class="nf">loading_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">calibtype</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns loading status of calibration constants of specified type.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - rnum      : int - run number</span>
+<span class="sd">           - calibtype : int - enumerated value from the list</span>
+<span class="sd">                         gu.PEDESTALS, PIXEL_STATUS, PIXEL_RMS, PIXEL_GAIN, PIXEL_MASK, PIXEL_BKGD, COMMON_MODE.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - int - enumerated value from the list gu.LOADED, DEFAULT, UNREADABLE, UNDEFINED, WRONGSIZE, NONFOUND.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iscpp</span> <span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">status_v0</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">calibtype</span><span class="p">)</span>
+        <span class="k">else</span>          <span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">calibtype</span><span class="p">)</span></div>
+        
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.do_reshape_2d_to_3d"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.do_reshape_2d_to_3d">[docs]</a>    <span class="k">def</span> <span class="nf">do_reshape_2d_to_3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;For Chuck - if flag is True - reshape 2-d arrays to 3-d.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - flag : bool - False(def)/True </span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">reshape_to_3d</span> <span class="o">=</span> <span class="n">flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">do_reshape_2d_to_3d</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+    <span class="k">def</span> <span class="nf">_shaped_array_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">calibtype</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns shaped numpy.array if shape is defined and constants are loaded from file, None othervise.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par : int | psana.Event - run number of event object</span>
+<span class="sd">           - arr : np.array - array to re-shape</span>
+<span class="sd">           - calibtype : int - DEPRICATED calibration type</span>
+
+<span class="sd">           Returns</span>
+<span class="sd">           - np.array - reshaped input array, None if arr is None or zero size,</span>
+<span class="sd">                        input array as is if its size is inconsistent with expected </span>
+<span class="sd">                        (should be better to rise.IOError).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="kc">None</span>   <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">rnum</span><span class="p">)</span> <span class="p">:</span>
+            <span class="c1">#msg = &#39;WARNING: Array shape %s size %d is different from its configuration shape %s size %d&#39; %\</span>
+            <span class="c1">#      (arr.shape, arr.size, self._shape_daq_(rnum), self.size(rnum))</span>
+            <span class="c1">#print msg</span>
+            <span class="c1">#raise IOError(msg)</span>
+            <span class="k">return</span> <span class="n">arr</span> <span class="c1"># return array as is</span>
+
+        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape_daq_</span><span class="p">(</span><span class="n">rnum</span><span class="p">)</span>
+
+        <span class="c1"># for 2-d detectors</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">gu</span><span class="o">.</span><span class="n">EPIX100A</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">PRINCETON</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">ANDOR</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">ANDOR3D</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">OPAL1000</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">OPAL2000</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">OPAL4000</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">OPAL8000</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">TM6740</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">ORCAFL40</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">FCCD960</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">QUARTZ4A150</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">RAYONIX</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">FCCD</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">TIMEPIX</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">FLI</span><span class="p">,</span>\
+                            <span class="n">gu</span><span class="o">.</span><span class="n">PIMAX</span><span class="p">)</span> <span class="p">:</span>
+
+            <span class="c1">#if self.reshape_to_3d and len(shape)==2 :</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape_to_3d</span> <span class="p">:</span>
+                <span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+            <span class="k">return</span> <span class="n">arr</span>
+
+        <span class="c1">#if calibtype is not None :</span>
+        <span class="c1">#    status = self.loading_status(rnum, calibtype)</span>
+        <span class="c1">#    if status != gu.LOADED and status != gu.DEFAULT : return None</span>
+
+        <span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+
+        <span class="k">return</span> <span class="n">arr</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad2x2</span><span class="p">()</span> <span class="k">else</span> <span class="n">data2x2ToTwo2x1</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+
+<span class="c1">##-----------------------------</span>
+
+    <span class="k">def</span> <span class="nf">_nda_or_none_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nda</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns ndarray or None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">nda</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">nda</span> <span class="k">if</span> <span class="n">nda</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="kc">None</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.pedestals"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.pedestals">[docs]</a>    <span class="k">def</span> <span class="nf">pedestals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of pedestals (dark run intensities) from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pedestals.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pedestals</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PEDESTALS</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pedestals_v0(rnum), gu.PEDESTALS)</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.pedestals(par),   gu.PEDESTALS)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.rms"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.rms">[docs]</a>    <span class="k">def</span> <span class="nf">rms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of RMS values from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_rms.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_rms</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_RMS</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_rms_v0(rnum), gu.PIXEL_RMS)</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.pixel_rms(par),   gu.PIXEL_RMS)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.gain"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.gain">[docs]</a>    <span class="k">def</span> <span class="nf">gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of gain factors from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_gain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_gain</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_GAIN</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_gain_v0(rnum), gu.PIXEL_GAIN)</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.pixel_gain(par),   gu.PIXEL_GAIN)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.offset"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.offset">[docs]</a>    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of offsets from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_offset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_offset</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_OFFSET</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.mask_calib"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.mask_calib">[docs]</a>    <span class="k">def</span> <span class="nf">mask_calib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of mask from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_mask.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_mask</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_MASK</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_v0(rnum), gu.PIXEL_MASK)</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.pixel_mask(par),   gu.PIXEL_MASK)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.bkgd"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.bkgd">[docs]</a>    <span class="k">def</span> <span class="nf">bkgd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of background intensities from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_bkgd.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_bkgd</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_BKGD</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_bkgd_v0(rnum), gu.PIXEL_BKGD)</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.pixel_bkgd(par),   gu.PIXEL_BKGD)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.status"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.status">[docs]</a>    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of pixel-status from calib directory.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_status.</span>
+<span class="sd">                    status bits: 0 - good pixel</span>
+<span class="sd">                                 1 - saturated intensity</span>
+<span class="sd">                                 2 - hot rms</span>
+<span class="sd">                                 4 - cold</span>
+<span class="sd">                                 8 - cold rms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_status</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_STATUS</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_status_v0(rnum), gu.PIXEL_STATUS)</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.pixel_status(par),   gu.PIXEL_STATUS)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.datast"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.datast">[docs]</a>    <span class="k">def</span> <span class="nf">datast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of pixel data status from calib directory,</span>
+<span class="sd">           the same as status, but evaluated for non-dark data runs.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel values loaded for calibration type pixel_datast.</span>
+<span class="sd">                    status bits: 0 - good pixel</span>
+<span class="sd">                                 1,2,4,8,.. TBD</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_datast</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_DATAST</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.status_as_mask"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.status_as_mask">[docs]</a>    <span class="k">def</span> <span class="nf">status_as_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of mask generated from pixel_status.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par  : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - mode : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - mask generated from calibration type pixel_status (1/0 for status 0/&gt;0, respectively).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stat</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">smask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">((</span><span class="n">stat</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="p">:</span> <span class="n">smask</span> <span class="o">=</span> <span class="n">gu</span><span class="o">.</span><span class="n">mask_neighbors</span><span class="p">(</span><span class="n">smask</span><span class="p">,</span> <span class="n">allnbrs</span><span class="o">=</span><span class="p">(</span><span class="kc">True</span> <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="mi">2</span> <span class="k">else</span> <span class="kc">False</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_jungfrau</span><span class="p">()</span> <span class="p">:</span> 
+            <span class="n">mask01</span> <span class="o">=</span> <span class="n">gu</span><span class="o">.</span><span class="n">merge_masks</span><span class="p">(</span><span class="n">smask</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">smask</span><span class="p">[</span><span class="mi">1</span><span class="p">,:])</span>
+            <span class="k">return</span>   <span class="n">gu</span><span class="o">.</span><span class="n">merge_masks</span><span class="p">(</span><span class="n">smask</span><span class="p">[</span><span class="mi">2</span><span class="p">,:],</span> <span class="n">mask01</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad2x2</span><span class="p">()</span> <span class="p">:</span> <span class="k">return</span> <span class="n">smask</span> <span class="c1"># stat already has a shape (2,185,388)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">smask</span><span class="p">,</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_STATUS</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.mask_neighbors"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.mask_neighbors">[docs]</a>    <span class="k">def</span> <span class="nf">mask_neighbors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">allnbrs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns n-d array of mask with masked neighbors on each 2-d segment.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - mask    : np.array - input mask of good/bad (1/0) pixels</span>
+<span class="sd">           - allnbrs : bool - False/True masks 4/8 of neighbors around each bad pixel</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - mask with masked neighbors, shape = mask.shape</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">gu</span><span class="o">.</span><span class="n">mask_neighbors</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">allnbrs</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.mask_edges"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.mask_edges">[docs]</a>    <span class="k">def</span> <span class="nf">mask_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">mrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mcols</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns n-d array of mask with masked mrows and mcols edges on each 2-d segment.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - mask  : np.array - input mask of good/bad (1/0) pixels</span>
+<span class="sd">           - mrows : int - number of edge rows to mask</span>
+<span class="sd">           - mcols : int - number of edge columns to mask</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - mask with masked edges, shape = mask.shape</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">gu</span><span class="o">.</span><span class="n">mask_edges</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">mrows</span><span class="p">,</span> <span class="n">mcols</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.gain_mask"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.gain_mask">[docs]</a>    <span class="k">def</span> <span class="nf">gain_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array with gain mask evaluated from detector configuration data.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par  : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - gain : float - gain factor; mask will be multiplied by this factor if it is specified.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">gain_mask</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">gain</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_MASK</span><span class="p">)</span></div>
+        <span class="c1">#return self.pyda.gain_mask(par, gain)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.gain_mask_non_zero"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.gain_mask_non_zero">[docs]</a>    <span class="k">def</span> <span class="nf">gain_mask_non_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The same as gain_mask, but return None if ALL pixels have high gain.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par  : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - gain : float - gain factor; mask will be multiplied by this factor if it is specified.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel gain mask; (int16) 1/0 or (float) gain/1 for low/high gain pixels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">gain_mask_non_zero</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">gain</span><span class="p">),</span> <span class="n">gu</span><span class="o">.</span><span class="n">PIXEL_MASK</span><span class="p">)</span></div>
+        <span class="c1">#return self.pyda.gain_mask_non_zero(par, gain)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.common_mode"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.common_mode">[docs]</a>    <span class="k">def</span> <span class="nf">common_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of common mode correction parameters.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - values loaded for calibration type common_mode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">common_mode</span><span class="p">(</span><span class="n">par</span><span class="p">)</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self.da.common_mode_v0(rnum)</span>
+        <span class="c1">#else          : return self.pyda.common_mode(par)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.instrument"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.instrument">[docs]</a>    <span class="k">def</span> <span class="nf">instrument</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns name of instrument.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - str - name of instrument, ex.: &#39;AMO&#39;, &#39;XPP&#39;, &#39;SXR&#39;, &#39;CXI, &#39;MEC&#39;, &#39;XCS&#39;, etc.   </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">inst</span><span class="p">()</span></div>
+
+        <span class="c1">#if self.iscpp : return self.da.instrument(self.env)</span>
+        <span class="c1">#else          : return self.pyda.inst()</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.print_config"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.print_config">[docs]</a>    <span class="k">def</span> <span class="nf">print_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Prints configuration parameters if available.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - evt : psana.Event() - psana event object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">print_config</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span></div>
+
+        <span class="c1">#if self.iscpp : self.da.print_config(evt, self.env)</span>
+        <span class="c1">#else          : self.pyda.print_config(evt)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.raw_data"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.raw_data">[docs]</a>    <span class="k">def</span> <span class="nf">raw_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Alias for depricated method renamed to raw(evt) </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.raw"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.raw">[docs]</a>    <span class="k">def</span> <span class="nf">raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of intensities from raw data.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - evt : psana.Event() - psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel intensities [ADU] of raw data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rdata</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iscpp</span> <span class="p">:</span>
+            <span class="k">if</span>   <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">==</span> <span class="n">gu</span><span class="o">.</span><span class="n">CSPAD</span>    <span class="p">:</span> <span class="n">rdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">data_int16_3</span> <span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">==</span> <span class="n">gu</span><span class="o">.</span><span class="n">CSPAD2X2</span> <span class="p">:</span> <span class="n">rdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">data_int16_3</span> <span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">==</span> <span class="n">gu</span><span class="o">.</span><span class="n">PNCCD</span>    <span class="p">:</span> <span class="n">rdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">data_uint16_3</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">:</span>                             <span class="n">rdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">data_uint16_2</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">raw_data</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rdata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">evt</span><span class="p">),</span> <span class="n">rdata</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="p">:</span>
+            <span class="nb">print</span> <span class="s1">&#39;WARNING: AreaDetector.raw - data for source </span><span class="si">%s</span><span class="s1"> is not found in </span><span class="si">%s</span><span class="s1"> interface.&#39;</span><span class="o">%</span>\
+                  <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;C++&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iscpp</span> <span class="k">else</span> <span class="s1">&#39;Python&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rdata</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.common_mode_apply"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.common_mode_apply">[docs]</a>    <span class="k">def</span> <span class="nf">common_mode_apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">nda</span><span class="p">,</span> <span class="n">cmpars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Apply common mode correction algorithm.</span>
+<span class="sd">        </span>
+<span class="sd">           Apply common mode correction to nda (assuming that nda is data ndarray with subtracted pedestals)</span>
+<span class="sd">           nda.dtype = np.float32 (or 64) is considered only, because common mode does not make sense for int data.</span>
+<span class="sd">           If cmpars is not None then this sequence is used to override default common mode parameters coming from</span>
+<span class="sd">           calib/.../common_mode/...</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par    : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - nda    : np.array - input: raw data with subtracted pedestals, output: cm corrected data.</span>
+<span class="sd">           - cmpars : list - common mode parameters, ex.: (1,50,50,100).</span>
+<span class="sd">                    By default uses parameters from calib directory. </span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - I/O parameter nda : np.array - per-pixel corrected intensities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="n">shape0</span> <span class="o">=</span> <span class="n">nda</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">nda</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">nda</span><span class="o">.</span><span class="n">size</span><span class="p">,)</span>
+
+        <span class="n">pycm</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">cmpars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cmpars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">pycm</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">pycm</span><span class="p">:</span>
+            <span class="c1"># go into python</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">common_mode_apply</span><span class="p">(</span><span class="n">cmpars</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">nda</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># go into cpp</span>
+            <span class="k">if</span> <span class="n">cmpars</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">set_cmod_pars</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cmpars</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">nda</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">common_mode_double_v0</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">nda</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">nda</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">common_mode_float_v0</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">nda</span><span class="p">)</span>
+
+        <span class="n">nda</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape0</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.common_mode_correction"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.common_mode_correction">[docs]</a>    <span class="k">def</span> <span class="nf">common_mode_correction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">nda</span><span class="p">,</span> <span class="n">cmpars</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of common mode correction offsets.</span>
+<span class="sd">  </span>
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par    : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - nda    : np.array - raw data with subtracted pedestals. Input data is not modified.</span>
+<span class="sd">           - cmpars : list - common mode parameters, ex.: (1,50,50,100)</span>
+<span class="sd">                    By default uses parameters from calib directory. </span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel common mode correction offsets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nda_cm_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nda</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">common_mode_apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">),</span> <span class="n">nda_cm_corr</span><span class="p">,</span> <span class="n">cmpars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nda_cm_corr</span> <span class="o">-</span> <span class="n">nda</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.calib_data"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.calib_data">[docs]</a>    <span class="k">def</span> <span class="nf">calib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Alias for depricated method renamed to calib.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calib</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+    <span class="k">def</span> <span class="nf">_print_warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="p">:</span>
+        <span class="nb">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">WARNING! </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.set_gain_mask_factor"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.set_gain_mask_factor">[docs]</a>    <span class="k">def</span> <span class="nf">set_gain_mask_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gfactor</span><span class="o">=</span><span class="mf">6.85</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Sets the gain factor which is passed to gain_mask(...) in the det.calib and det.image methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gain_mask_factor</span> <span class="o">=</span> <span class="n">gfactor</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.calib"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.calib">[docs]</a>    <span class="k">def</span> <span class="nf">calib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">,</span> <span class="n">cmpars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mbits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of calibrated data intensities.</span>
+<span class="sd">        </span>
+<span class="sd">           Gets raw data ndarray, applys baic corrections and return thus calibrated data.</span>
+
+<span class="sd">           Applied corrections:</span>
+
+<span class="sd">           - pedestal subtraction, returns det.raw(evt) if file with pedestals is missing   </span>
+<span class="sd">           - apply common mode correction</span>
+<span class="sd">           - gain_mask or &quot;hybrid&quot; gain from configuration object for CSPAD(2x2) only</span>
+<span class="sd">           - gain if pixel_gain calibration file is available</span>
+<span class="sd">           - apply mask generated from pixel status (&quot;bad pixels&quot;</span>
+<span class="sd">             from calibration).  Optionally apply other masks if</span>
+<span class="sd">             &quot;mbits&quot; parameter set</span>
+<span class="sd">  </span>
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - evt    : psana.Event() - psana event object.</span>
+<span class="sd">           - cmpars : list - common mode parameters, ex.: (1,50,50,100)</span>
+<span class="sd">                    By default uses parameters from calib directory. </span>
+<span class="sd">           - mbits  : int - mask control bit-word.  optional.</span>
+<span class="sd">                 defaults to 1.  Bit definitions:</span>
+
+<span class="sd">                 + 1  - pixel_status (&quot;bad pixels&quot; deployed by calibman)</span>
+<span class="sd">                 + 2  - pixel_mask (deployed by user in &quot;pixel_mask&quot; calib dir)</span>
+<span class="sd">                 + 4  - edge pixels</span>
+<span class="sd">                 + 8  - big &quot;central&quot; pixels of a cspad2x1</span>
+<span class="sd">                 + 16 - unbonded pixels</span>
+<span class="sd">                 + 32 - unbonded pixel with four neighbors</span>
+<span class="sd">                 + 64 - unbonded pixel with eight neighbors</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel array of calibrated intensities from data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_jungfrau</span><span class="p">()</span> <span class="p">:</span> <span class="k">return</span> <span class="n">calib_jungfrau</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">cmpars</span><span class="p">)</span>
+
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">32</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_warning</span><span class="p">(</span><span class="s1">&#39;calib(...) - raw data are missing.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">peds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pedestals</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">peds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">32</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_warning</span><span class="p">(</span><span class="s1">&#39;calib(...) - pedestals are missing, return raw data.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">peds</span><span class="o">.</span><span class="n">shape</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">32</span> <span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;calib(...) - raw.shape = </span><span class="si">%s</span><span class="s1"> is different from peds.shape = </span><span class="si">%s</span><span class="s1">. Try reshaping to data...&#39;</span> \
+                      <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">peds</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print_warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">try</span>    <span class="p">:</span> <span class="n">peds</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">except</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">cdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cdata</span> <span class="o">-=</span> <span class="n">peds</span>  <span class="c1"># for cspad2x2 (2, 185, 388)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad2x2</span><span class="p">()</span> <span class="p">:</span> <span class="n">cdata</span> <span class="o">=</span> <span class="n">two2x1ToData2x2</span><span class="p">(</span><span class="n">cdata</span><span class="p">)</span> <span class="c1"># convert to DAQ shape for cspad2x2 -&gt;(185, 388, 2)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">common_mode_apply</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">cdata</span><span class="p">,</span> <span class="n">cmpars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad2x2</span><span class="p">()</span> <span class="p">:</span> <span class="n">cdata</span> <span class="o">=</span> <span class="n">data2x2ToTwo2x1</span><span class="p">(</span><span class="n">cdata</span><span class="p">)</span> <span class="c1"># convert to Natural shape for cspad2x2 -&gt;(2, 185, 388)</span>
+
+        <span class="c1"># ------------- 2016-06-24, 08-30 gain_mask -&gt; gain_mask_non_zero</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad</span><span class="p">()</span> <span class="p">:</span>
+            <span class="n">gainmask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain_mask_non_zero</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gain_mask_factor</span><span class="p">)</span>
+            <span class="c1">#print &#39;XXX: use _gain_mask_factor = &#39;, self._gain_mask_factor        </span>
+            <span class="c1">#print &#39;XXX: gainmask.mean(): &#39;, gainmask.mean()</span>
+            <span class="c1">#print_ndarr(gainmask, &#39;XXX: det.calib(): apply gain_mask&#39;)</span>
+
+            <span class="k">if</span> <span class="n">gainmask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">32</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_warning</span><span class="p">(</span><span class="s1">&#39;calib(...) - gain_mask calibration in config store is missing.&#39;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="n">cdata</span> <span class="o">*=</span> <span class="n">gainmask</span>
+
+        <span class="n">gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gain</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">32</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_warning</span><span class="p">(</span><span class="s1">&#39;calib(...) - pixel_gain calibration file is missing.&#39;</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="c1">#print_ndarr(gain, &#39;XXX: det.calib(): apply gain&#39;)</span>
+            <span class="n">cdata</span> <span class="o">*=</span> <span class="n">gain</span>     
+        <span class="c1"># -------------</span>
+
+        <span class="k">if</span> <span class="n">mbits</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">:</span> 
+            <span class="c1">#smask = self.status_as_mask(rnum) # (2, 185, 388)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_comb</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">mbits</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pbits</span> <span class="o">&amp;</span> <span class="mi">32</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_print_warning</span><span class="p">(</span><span class="s1">&#39;combined mask is missing.&#39;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">cdata</span><span class="o">.</span><span class="n">shape</span>
+                <span class="n">cdata</span> <span class="o">*=</span> <span class="n">mask</span>      
+
+        <span class="k">return</span> <span class="n">cdata</span> </div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.mask"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.mask">[docs]</a>    <span class="k">def</span> <span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">calib</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">central</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>\
+             <span class="n">unbond</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unbondnbrs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unbondnbrs8</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array with mask values (per-pixel product of all requested masks).</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par     : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - calib   : bool - True/False = on/off mask from calib directory.</span>
+<span class="sd">           - status  : bool - True/False = on/off mask generated from calib pixel_status. </span>
+
+<span class="sd">           Other parameters make sense for cspad 2x1 sensors only:</span>
+
+<span class="sd">           - edges      : bool - True/False = on/off mask of edges. </span>
+<span class="sd">           - central    : bool - True/False = on/off mask of two central columns. </span>
+<span class="sd">           - unbond     : bool - True/False = on/off mask of unbonded pixels.</span>
+<span class="sd">           - unbondnbrs : bool - True/False = on/off mask of unbonded pixel with four neighbors. </span>
+<span class="sd">           - unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors. </span>
+<span class="sd">           - kwargs     : dict - additional parameters passed to low level methods (width,...) </span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel mask values 1/0 for good/bad pixels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+
+        <span class="n">mask_nda</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">calib</span>  <span class="p">:</span> <span class="n">mask_nda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_calib</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="p">:</span> <span class="n">mask_nda</span> <span class="o">=</span> <span class="n">gu</span><span class="o">.</span><span class="n">merge_masks</span><span class="p">(</span><span class="n">mask_nda</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_as_mask</span><span class="p">(</span><span class="n">par</span><span class="p">))</span> 
+
+        <span class="n">mbits</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">edges</span>      <span class="p">:</span> <span class="n">mbits</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">central</span>    <span class="p">:</span> <span class="n">mbits</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="n">unbond</span>     <span class="p">:</span> <span class="n">mbits</span> <span class="o">+=</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="n">unbondnbrs</span> <span class="p">:</span> <span class="n">mbits</span> <span class="o">+=</span> <span class="mi">8</span>
+        <span class="k">if</span> <span class="n">unbondnbrs8</span><span class="p">:</span> <span class="n">mbits</span> <span class="o">+=</span> <span class="mi">16</span>
+
+        <span class="k">if</span> <span class="n">mbits</span>      <span class="p">:</span> <span class="n">mask_nda</span> <span class="o">=</span> <span class="n">gu</span><span class="o">.</span><span class="n">merge_masks</span><span class="p">(</span><span class="n">mask_nda</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_geo</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">mbits</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span> 
+        <span class="k">return</span> <span class="n">mask_nda</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.mask_comb"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.mask_comb">[docs]</a>    <span class="k">def</span> <span class="nf">mask_comb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">mbits</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array with combined mask controlled by mbits bit-word.</span>
+
+<span class="sd">           This method has same functionality as method mask(...) but under control of a single bit-word mbits. </span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par   : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - mbits : int - mask control bit-word.</span>
+
+<span class="sd">                 = 0  - returns None</span>
+<span class="sd">                 + 1  - pixel_status (&quot;bad pixels&quot; deployed by calibman)</span>
+<span class="sd">                 + 2  - pixel_mask (deployed by user in &quot;pixel_mask&quot; calib dir)</span>
+<span class="sd">                 + 4  - edge pixels</span>
+<span class="sd">                 + 8  - big &quot;central&quot; pixels of a cspad2x1</span>
+<span class="sd">                 + 16 - unbonded pixels</span>
+<span class="sd">                 + 32 - unbonded pixel with four neighbors</span>
+<span class="sd">                 + 64 - unbonded pixel with eight neighbors</span>
+
+<span class="sd">           - kwargs : dict - additional parameters passed to low level methods (width,...) </span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel mask values 1/0 for good/bad pixels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        
+        <span class="c1">#Check/return cached mask</span>
+        <span class="k">if</span> <span class="n">rnum</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rnum_mask</span>\
+           <span class="ow">and</span> <span class="n">mbits</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mbits_mask</span>\
+           <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_nda</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_nda</span>
+
+        <span class="c1">#Evaluate new mask</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rnum_mask</span>  <span class="o">=</span> <span class="n">rnum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mbits_mask</span> <span class="o">=</span> <span class="n">mbits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_nda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">par</span><span class="p">,</span>\
+                                   <span class="n">status</span>     <span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">1</span><span class="p">,</span>\
+                                   <span class="n">calib</span>      <span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">2</span><span class="p">,</span>\
+                                   <span class="n">edges</span>      <span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">4</span><span class="p">,</span>\
+                                   <span class="n">central</span>    <span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">8</span><span class="p">,</span>\
+                                   <span class="n">unbond</span>     <span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">16</span><span class="p">,</span>\
+                                   <span class="n">unbondnbrs</span> <span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">32</span><span class="p">,</span>\
+                                   <span class="n">unbondnbrs8</span><span class="o">=</span> <span class="n">mbits</span><span class="o">&amp;</span><span class="mi">64</span><span class="p">,</span>\
+                                   <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_nda</span></div>
+
+<span class="c1">##-----------------------------</span>
+<span class="c1"># Geometry info</span>
+
+<div class="viewcode-block" id="AreaDetector.geometry"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.geometry">[docs]</a>    <span class="k">def</span> <span class="nf">geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Creates and returns detector geometry object.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : psana.Event() | int - psana event object or run number</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - PSCalib.GeometryAccess - detector geometry object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">geoaccess</span><span class="p">(</span><span class="n">par</span><span class="p">)</span> </div>
+
+
+<div class="viewcode-block" id="AreaDetector.coords_x"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.coords_x">[docs]</a>    <span class="k">def</span> <span class="nf">coords_x</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of x coordinates.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel x coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">coords_x</span><span class="p">(</span><span class="n">par</span><span class="p">))</span> </div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_x_v0(rnum))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.coords_x(par)) </span>
+
+    
+<div class="viewcode-block" id="AreaDetector.coords_y"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.coords_y">[docs]</a>    <span class="k">def</span> <span class="nf">coords_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of y coordinates.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel y coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">coords_y</span><span class="p">(</span><span class="n">par</span><span class="p">))</span> </div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_y_v0(rnum))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.coords_y(par)) </span>
+
+
+<div class="viewcode-block" id="AreaDetector.coords_z"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.coords_z">[docs]</a>    <span class="k">def</span> <span class="nf">coords_z</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of z coordinates.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel z coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">coords_z</span><span class="p">(</span><span class="n">par</span><span class="p">))</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_coords_z_v0(rnum))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.coords_z(par)) </span>
+
+
+<div class="viewcode-block" id="AreaDetector.coords_xy"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.coords_xy">[docs]</a>    <span class="k">def</span> <span class="nf">coords_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel arrays of x and y coordinates.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - 2 arrays of pixel x and y coordinates, respectively.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">coords_xy</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">cx</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">cy</span><span class="p">)</span> </div>
+
+
+<div class="viewcode-block" id="AreaDetector.coords_xyz"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.coords_xyz">[docs]</a>    <span class="k">def</span> <span class="nf">coords_xyz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel arrays of x, y, and z coordinates.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - 3 arrays of pixel x, y, and z coordinates, respectively.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">cz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">coords_xyz</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">cx</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">cy</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">cz</span><span class="p">)</span> </div>
+
+
+<div class="viewcode-block" id="AreaDetector.areas"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.areas">[docs]</a>    <span class="k">def</span> <span class="nf">areas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array of pixel area.</span>
+
+<span class="sd">           Parameter</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel areas.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">areas</span><span class="p">(</span><span class="n">par</span><span class="p">))</span> </div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_areas_v0(rnum))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.areas(par)) </span>
+
+
+<div class="viewcode-block" id="AreaDetector.mask_geo"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.mask_geo">[docs]</a>    <span class="k">def</span> <span class="nf">mask_geo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">mbits</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns per-pixel array with mask controlled by mbits bit-word.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par   : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - mbits : int - mask control bit-word.</span>
+
+<span class="sd">                 = 0 - returns None</span>
+<span class="sd">                 + 1 - edges     </span>
+<span class="sd">                 + 2 - central   </span>
+<span class="sd">                 + 4 - unbond    </span>
+<span class="sd">                 + 8 - unbondnbrs</span>
+<span class="sd">           - kwargs     : dict - additional parameters passed to low level methods (width,...) </span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - per-pixel mask values 1/0 for good/bad pixels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">mask_geo</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">mbits</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_mask_geo_v0(rnum, mbits))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.mask_geo(par, mbits))</span>
+
+
+<div class="viewcode-block" id="AreaDetector.indexes_x"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.indexes_x">[docs]</a>    <span class="k">def</span> <span class="nf">indexes_x</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">do_update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of pixel integer x indexes.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par               : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.</span>
+<span class="sd">           - do_update         : bool - force to update cached array.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel x indexes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">indexes_x</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="p">,</span> <span class="n">do_update</span><span class="p">))</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_x_v0(rnum))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.indexes_x(par, pix_scale_size_um, xy0_off_pix, do_update))</span>
+
+
+<div class="viewcode-block" id="AreaDetector.indexes_y"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.indexes_y">[docs]</a>    <span class="k">def</span> <span class="nf">indexes_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">do_update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of pixel integer y indexes.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par               : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.</span>
+<span class="sd">           - do_update         : bool - force to update cached array.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel y indexes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">indexes_y</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="p">,</span> <span class="n">do_update</span><span class="p">))</span></div>
+
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="c1">#if self.iscpp : return self._shaped_array_(rnum, self.da.pixel_indexes_y_v0(rnum))</span>
+        <span class="c1">#else          : return self._shaped_array_(rnum, self.pyda.indexes_y(par, pix_scale_size_um, xy0_off_pix, do_update))</span>
+
+
+<div class="viewcode-block" id="AreaDetector.indexes_xy"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.indexes_xy">[docs]</a>    <span class="k">def</span> <span class="nf">indexes_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">do_update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns two arrays of pixel integer x and y indexes.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par               : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.</span>
+<span class="sd">           - do_update         : bool - force to update cached array.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - (np.array, np.array) - list of two arrays of pixel x and y indexes, respectively.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+        <span class="n">iX</span><span class="p">,</span> <span class="n">iY</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">indexes_xy</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="p">,</span> <span class="n">do_update</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">iX</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">iY</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.point_indexes"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.point_indexes">[docs]</a>    <span class="k">def</span> <span class="nf">point_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">pxy_um</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns (ix, iy) indexes of the point (x,y) specified in [um].</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par               : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - pxy_um            : list of two float values - coordinates of the point in the detector frame, default (0,0)</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - tuple - (ix, iy) tuple of two indexes associated with input point coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="n">ix</span><span class="p">,</span> <span class="n">iy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">point_indexes</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">pxy_um</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ix</span><span class="p">,</span> <span class="n">iy</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.pixel_size"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.pixel_size">[docs]</a>    <span class="k">def</span> <span class="nf">pixel_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns pixel scale size in [um]. </span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - float - pixel size in [um].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">psize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">(</span><span class="n">par</span><span class="p">)</span> <span class="c1"># Ex: 109.92 [um]</span>
+        <span class="c1">#psize = self.da.pixel_scale_size_v0(self.runnum(par)) if self.iscpp\</span>
+        <span class="c1">#        else self.pyda.pixel_size(par) # Ex: 109.92 [um]</span>
+        <span class="k">return</span> <span class="n">psize</span> <span class="k">if</span> <span class="n">psize</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.move_geo"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.move_geo">[docs]</a>    <span class="k">def</span> <span class="nf">move_geo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Moves detector. </span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - dx, dy, dz : float - three coordinate increments [um] of the detector motion. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">move_geo</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.tilt_geo"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.tilt_geo">[docs]</a>    <span class="k">def</span> <span class="nf">tilt_geo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">dtx</span><span class="p">,</span> <span class="n">dty</span><span class="p">,</span> <span class="n">dtz</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Tilts detector. </span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - dtx, dty, dtz : float - three angular increments [deg] of the detector tilt. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">tilt_geo</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">dtx</span><span class="p">,</span> <span class="n">dty</span><span class="p">,</span> <span class="n">dtz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.image_xaxis"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.image_xaxis">[docs]</a>    <span class="k">def</span> <span class="nf">image_xaxis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of pixel x coordinates associated with image x-y grid.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - x0_off_pix        : float - origin x coordinate offset in number of pixels</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel x coordinates of image x-y grid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">image_xaxis</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">x0_off_pix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.image_yaxis"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.image_yaxis">[docs]</a>    <span class="k">def</span> <span class="nf">image_yaxis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns array of pixel x coordinates associated with image x-y grid.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - y0_off_pix        : float - origin y coordinate offset in number of pixels</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array of pixel y coordinates of image x-y grid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">image_yaxis</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">y0_off_pix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AreaDetector.image"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.image">[docs]</a>    <span class="k">def</span> <span class="nf">image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">,</span> <span class="n">nda_in</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">do_update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns 2-d array of intensities for imaging.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - evt               : psana.Event() - psana event object.</span>
+<span class="sd">           - nda_in            : input n-d array which needs to be converted in image; default - use calib methood.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.</span>
+<span class="sd">           - do_update         : bool - force to update cached array.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - 2-d array of intensities for imaging.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rnum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnum</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+        <span class="n">nda</span> <span class="o">=</span> <span class="n">nda_in</span> <span class="k">if</span> <span class="n">nda_in</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">calib</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">nda</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">nda</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reshape_to_3d</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">3</span> <span class="ow">and</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">nda</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nda</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dettype</span> <span class="o">!=</span> <span class="n">gu</span><span class="o">.</span><span class="n">EPIX100A</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="n">nda</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cspad2x2</span><span class="p">()</span> <span class="p">:</span> <span class="n">nda</span> <span class="o">=</span> <span class="n">two2x1ToData2x2</span><span class="p">(</span><span class="n">nda</span><span class="p">)</span> <span class="c1"># convert to DAQ shape for cspad2x2</span>
+        <span class="n">nda_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nda</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nda_or_none_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">image</span><span class="p">(</span><span class="n">rnum</span><span class="p">,</span> <span class="n">nda_img</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="p">,</span> <span class="n">do_update</span><span class="p">))</span></div>
+
+        <span class="c1">#if self.iscpp : return self._nda_or_none_(self.da.get_image_v0(rnum, nda_img))</span>
+        <span class="c1">#else          : return self._nda_or_none_(self.pyda.image(rnum, nda_img, pix_scale_size_um, xy0_off_pix, do_update))</span>
+
+
+<div class="viewcode-block" id="AreaDetector.ndarray_from_image"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.ndarray_from_image">[docs]</a>    <span class="k">def</span> <span class="nf">ndarray_from_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">do_update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns n-d array of intensities extracted from image using image bin indexes.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - par               : int or psana.Event() - integer run number or psana event object.</span>
+<span class="sd">           - image             : np.array - input 2-d array which will be converted to n-d array.</span>
+<span class="sd">           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.</span>
+<span class="sd">           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.</span>
+<span class="sd">           - do_update         : bool - force to update cached array.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - n-d array of intensities made from image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#rnum = self.runnum(par)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shaped_array_</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">ndarray_from_image</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">pix_scale_size_um</span><span class="p">,</span> <span class="n">xy0_off_pix</span><span class="p">,</span> <span class="n">do_update</span><span class="p">))</span></div>
+
+    <span class="c1">#def __call__(self, evt, nda_in=None) :</span>
+    <span class="c1">#    &quot;&quot;&quot;Alias for image in order to call it as det(evt,...)&quot;&quot;&quot;</span>
+    <span class="c1">#    return self.image(evt, nda_in)</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.save_txtnda"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.save_txtnda">[docs]</a>    <span class="k">def</span> <span class="nf">save_txtnda</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;nda.txt&#39;</span><span class="p">,</span> <span class="n">ndarr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmts</span><span class="o">=</span><span class="p">(),</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.1f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">verbos</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">addmetad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Saves n-d array in the formatted text file with hash-type cumments and metadata.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - fname    : str - output file name.</span>
+<span class="sd">           - ndarr    : np.array - array of numerical values to save in text file.</span>
+<span class="sd">           - cmts     : list of str - list of strings which will be saved as comments in the file header.</span>
+<span class="sd">           - fmt      : str - format of values in the file.</span>
+<span class="sd">           - verbose  : bool - True/False = on/off messages from this method (about saved file etc.)</span>
+<span class="sd">           - addmetad : bool - True/False = on/off saving methadata (data type, and shape info) in file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">list_cmts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cmts</span><span class="p">)</span>
+        <span class="n">list_cmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;SOURCE  </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">gu</span><span class="o">.</span><span class="n">string_from_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">))</span>
+        <span class="c1"># DO NOT ADD metadata for CSPAD and CSPAD2x2</span>
+        <span class="n">addmd</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="n">ndarr</span><span class="o">.</span><span class="n">size</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="mi">185</span><span class="o">*</span><span class="mi">388</span><span class="p">,</span> <span class="mi">32</span><span class="o">*</span><span class="mi">185</span><span class="o">*</span><span class="mi">388</span><span class="p">)</span> <span class="k">else</span> <span class="n">addmetad</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">save_txtnda</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">ndarr</span><span class="p">,</span> <span class="n">list_cmts</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">verbos</span><span class="p">,</span> <span class="n">addmd</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.save_asdaq"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.save_asdaq">[docs]</a>    <span class="k">def</span> <span class="nf">save_asdaq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;nda.txt&#39;</span><span class="p">,</span> <span class="n">ndarr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmts</span><span class="o">=</span><span class="p">(),</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.1f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">verbos</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">addmetad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Saves per-pixel n-d array shaped and ordered as in DAQ.</span>
+
+<span class="sd">           The same functionality as in the method save_txtnda(...), but array is shuffled to DAQ order. </span>
+<span class="sd">           Currently re-shuffle pixels for cspad2x2 only from natural shape=(2,185,388) to daq shape (185,388,2).</span>
+<span class="sd">           For all other detectors n-d array is saved unchanged. </span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - fname    : str - output file name.</span>
+<span class="sd">           - ndarr    : np.array - array of numerical values to save in text file.</span>
+<span class="sd">           - cmts     : list of str - list of strings which will be saved as comments in the file header.</span>
+<span class="sd">           - fmt      : str - format of values in the file.</span>
+<span class="sd">           - verbose  : bool - True/False = on/off messages from this method (about saved file etc.)</span>
+<span class="sd">           - addmetad : bool - True/False = on/off saving methadata (data type, and shape info) in file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">is_cspad2x2_natural</span> <span class="o">=</span> <span class="p">(</span><span class="n">ndarr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">2</span><span class="o">*</span><span class="mi">185</span><span class="o">*</span><span class="mi">388</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ndarr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">ndarr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">388</span><span class="p">)</span>
+        <span class="n">nda</span> <span class="o">=</span> <span class="n">two2x1ToData2x2</span><span class="p">(</span><span class="n">ndarr</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_cspad2x2_natural</span> <span class="k">else</span> <span class="n">ndarr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_txtnda</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">nda</span><span class="p">,</span> <span class="n">cmts</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">verbos</span><span class="p">,</span> <span class="n">addmetad</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.load_txtnda"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.load_txtnda">[docs]</a>    <span class="k">def</span> <span class="nf">load_txtnda</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns n-d array loaded from specified formatted text file.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - fname : str - input file name.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - array with values loaded from file,</span>
+<span class="sd">                      shaped in accordance with metadata (if available).</span>
+<span class="sd">                      If metadata is missing, output array will have 2- or 1-d shape;</span>
+<span class="sd">                      spaces and &lt;next-lene&gt; characters in the text file are used to find the shape of the array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">load_txtnda</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="AreaDetector.photons"><a class="viewcode-back" href="../index.html#AreaDetector.AreaDetector.photons">[docs]</a>    <span class="k">def</span> <span class="nf">photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">,</span> <span class="n">nda_calib</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adu_per_photon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">thr_fraction</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns 2-d or 3-d array of integer number of merged photons - algorithm suggested by Chuck.</span>
+
+<span class="sd">           Parameters</span>
+
+<span class="sd">           - evt            : psana.Event() - psana event object.</span>
+<span class="sd">           - nda_calib      : (float, double, int, int16) numpy.array - calibrated data, float number of photons per pixel.</span>
+<span class="sd">           - mask           : (uint8) numpy.array user defined mask.</span>
+<span class="sd">           - adu_per_photon : float conversion factor which is applied as nda_calib/adu_per_photon.</span>
+<span class="sd">           - thr_fraction   : float - fraction of the merged intensity which gets converted to one photon, def=0.9.</span>
+
+<span class="sd">           Returns</span>
+
+<span class="sd">           - np.array - 2-d or 3-d array of integer number of merged photons.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alg_photons</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">Detector.AlgoAccess</span> <span class="k">import</span> <span class="n">alg_photons</span><span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">alg_photons</span> <span class="o">=</span> <span class="n">alg_photons</span>
+
+        <span class="c1">#rnum = self.runnum(evt)</span>
+        <span class="n">nda</span> <span class="o">=</span> <span class="n">nda_calib</span> <span class="k">if</span> <span class="n">nda_calib</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">calib</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nda</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">adu_per_photon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">adu_per_photon</span> <span class="o">!=</span><span class="mi">0</span> <span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">adu_per_photon</span>
+            <span class="n">nda</span> <span class="o">*=</span> <span class="n">f</span>
+
+        <span class="n">msk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">calib</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">central</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unbond</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unbondnbrs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> \
+              <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">mask</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alg_photons</span><span class="p">(</span><span class="n">nda</span><span class="p">,</span> <span class="n">msk</span><span class="p">,</span> <span class="n">thr_fraction</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+    <span class="k">def</span> <span class="nf">shape_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">)</span> <span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyda</span><span class="o">.</span><span class="n">shape_config</span><span class="p">(</span><span class="n">env</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Self-test method.</span>
+<span class="sd">       Usage: python &lt;path&gt;/AreaDetector.py &lt;test-number&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">time</span>
+    <span class="kn">import</span> <span class="nn">psana</span>
+
+    <span class="n">ntest</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="nb">print</span> <span class="s1">&#39;Test # </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">ntest</span>
+    <span class="n">dsname</span><span class="p">,</span> <span class="n">src</span>                  <span class="o">=</span> <span class="s1">&#39;exp=cxif5315:run=169&#39;</span><span class="p">,</span> <span class="n">psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;DetInfo(CxiDs2.0:Cspad.0)&#39;</span><span class="p">)</span>
+    <span class="k">if</span>   <span class="n">ntest</span><span class="o">==</span><span class="mi">2</span>  <span class="p">:</span> <span class="n">dsname</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="s1">&#39;exp=meca1113:run=376&#39;</span><span class="p">,</span> <span class="n">psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;DetInfo(MecTargetChamber.0:Cspad2x2.1)&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ntest</span><span class="o">==</span><span class="mi">3</span>  <span class="p">:</span> <span class="n">dsname</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="s1">&#39;exp=amob5114:run=403&#39;</span><span class="p">,</span> <span class="n">psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;DetInfo(Camp.0:pnCCD.0)&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ntest</span><span class="o">==</span><span class="mi">4</span>  <span class="p">:</span> <span class="n">dsname</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="s1">&#39;exp=xppi0614:run=74&#39;</span><span class="p">,</span>  <span class="n">psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;DetInfo(NoDetector.0:Epix100a.0)&#39;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s1">&#39;Example for</span><span class="se">\n</span><span class="s1">  dataset: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">  source : </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dsname</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">psana</span><span class="o">.</span><span class="n">DataSource</span><span class="p">(</span><span class="n">dsname</span><span class="p">)</span>
+
+    <span class="n">env</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">env</span><span class="p">()</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">calibStore</span><span class="p">()</span>
+    <span class="n">eviter</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">events</span><span class="p">()</span>
+    <span class="n">evt</span> <span class="o">=</span> <span class="n">eviter</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="n">rnum</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">evt</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="p">:</span> <span class="nb">print</span> <span class="n">key</span>
+
+    <span class="n">det</span> <span class="o">=</span> <span class="n">AreaDetector</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">pbits</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">nda</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">pedestals</span><span class="p">(</span><span class="n">rnum</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">nda:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">nda</span>
+    <span class="nb">print</span> <span class="s1">&#39;nda.dtype: </span><span class="si">%s</span><span class="s1"> nda.shape: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nda</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">nda</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="n">t0_sec</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="n">nda</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Consumed time to get raw data (sec) =&#39;</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0_sec</span>
+    <span class="nb">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">nda:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">nda</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span> <span class="p">(</span><span class="s1">&#39;Self test is done&#39;</span><span class="p">)</span>
+
+<span class="c1">##-----------------------------</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Mikhail Dubrovin.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

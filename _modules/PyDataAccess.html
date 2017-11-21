@@ -1,0 +1,669 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>PyDataAccess &#8212; Detector-doc 1 documentation</title>
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">Detector-doc 1 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for PyDataAccess</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1">#------------------------------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:py:class:`PyDataAccess` contains methods to access psana data objects</span>
+<span class="sd">=======================================================================</span>
+
+<span class="sd">This software was developed for the SIT project.</span>
+<span class="sd">If you use all or part of it, please give an appropriate acknowledgment.</span>
+
+<span class="sd">Created by Mikhail Dubrovin</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#import sys</span>
+<span class="kn">import</span> <span class="nn">_psana</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">strftime</span><span class="p">,</span> <span class="n">localtime</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_cspad_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_cspad_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_cspad_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get cspad data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad</span><span class="o">.</span><span class="n">DataV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad</span><span class="o">.</span><span class="n">DataV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_cspad_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_cspad_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_cspad_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get cspad config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad</span><span class="o">.</span><span class="n">ConfigV5</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad</span><span class="o">.</span><span class="n">ConfigV4</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad</span><span class="o">.</span><span class="n">ConfigV3</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_cspad2x2_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_cspad2x2_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_cspad2x2_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get cspad2x2 data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad2x2</span><span class="o">.</span><span class="n">ElementV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_cspad2x2_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_cspad2x2_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_cspad2x2_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get cspad2x2 config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad2x2</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">CsPad2x2</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_camera_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_camera_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_camera_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get camera data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Camera</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_camera_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_camera_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_camera_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get camera config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Camera</span><span class="o">.</span><span class="n">FrameFexConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_opal1k_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_opal1k_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_opal1k_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get camera config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Opal1k</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_princeton_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_princeton_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_princeton_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get princeton data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">FrameV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Pimax</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_princeton_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_princeton_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_princeton_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get princeton config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">ConfigV5</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">ConfigV4</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">ConfigV3</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Princeton</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Pimax</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_pnccd_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_pnccd_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_pnccd_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get pnccd data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">PNCCD</span><span class="o">.</span><span class="n">FramesV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_pnccd_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_pnccd_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_pnccd_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get pnccd config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">PNCCD</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">PNCCD</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_andor_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_andor_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_andor_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get andor data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Andor3d</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Andor</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_andor_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_andor_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_andor_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get andor config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Andor3d</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Andor</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_fccd_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_fccd_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_fccd_data_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get fccd data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_camera_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_fccd_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_fccd_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_fccd_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get fccd config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">FCCD</span><span class="o">.</span><span class="n">FccdConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">FCCD</span><span class="o">.</span><span class="n">FccdConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">FCCD</span><span class="o">.</span><span class="n">FccdConfig</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_fccd960_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_fccd960_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_fccd960_data_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get fccd960 data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_camera_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_fccd960_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_fccd960_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_fccd960_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get fccd960 config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_fccd_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_epix_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_epix_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_epix_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get epix data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">ElementV3</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">ElementV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">ElementV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_epix_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_epix_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_epix_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get epix config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">Config100aV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">Config100aV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">Config10KV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Epix</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_tm6740_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_tm6740_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_tm6740_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get pulnix tm6740 config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Pulnix</span><span class="o">.</span><span class="n">TM6740ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Pulnix</span><span class="o">.</span><span class="n">TM6740ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_quartz_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_quartz_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_quartz_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get quartz data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_camera_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_quartz_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_quartz_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_quartz_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get quartz config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Quartz</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Quartz</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_rayonix_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_rayonix_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_rayonix_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get rayonix data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_camera_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_rayonix_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_rayonix_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_rayonix_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get rayonix config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Rayonix</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Rayonix</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_timepix_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_timepix_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_timepix_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get timepix data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Timepix</span><span class="o">.</span><span class="n">DataV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Timepix</span><span class="o">.</span><span class="n">DataV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_timepix_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_timepix_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_timepix_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get timepix config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Timepix</span><span class="o">.</span><span class="n">ConfigV3</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Timepix</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Timepix</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_fli_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_fli_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_fli_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get fli data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Fli</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_fli_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_fli_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_fli_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get fli config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Fli</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_pimax_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_pimax_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_pimax_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get pimax data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Pimax</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_pimax_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_pimax_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_pimax_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get pimax config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Pimax</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_orca_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_orca_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_orca_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get orca config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Orca</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_zyla_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_zyla_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_zyla_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get zyla data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Zyla</span><span class="o">.</span><span class="n">FrameV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_zyla_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_zyla_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_zyla_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get zyla config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Zyla</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_jungfrau_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_jungfrau_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_jungfrau_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get jungfrau data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Jungfrau</span><span class="o">.</span><span class="n">ElementV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Jungfrau</span><span class="o">.</span><span class="n">ElementV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<span class="k">def</span> <span class="nf">get_jungfrau_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Jungfrau</span><span class="o">.</span><span class="n">ConfigV3</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Jungfrau</span><span class="o">.</span><span class="n">ConfigV2</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Jungfrau</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_jungfrau_gain_mode_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_jungfrau_gain_mode_object">[docs]</a><span class="k">def</span> <span class="nf">get_jungfrau_gain_mode_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns gain mode object, usage: gmo=..., gmo.name, gmo.names.iteritems(), gm.values.iteritems(), etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">co</span> <span class="o">=</span> <span class="n">get_jungfrau_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">_psana</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">co</span><span class="o">.</span><span class="n">gainMode</span><span class="p">()</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_epicscam_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_epicscam_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_epicscam_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get epics camera config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Camera</span><span class="o">.</span><span class="n">ControlsCameraConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##---- For WFDetector.py ------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_acqiris_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_acqiris_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_acqiris_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get acqiris data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Acqiris</span><span class="o">.</span><span class="n">DataDescV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_acqiris_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_acqiris_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_acqiris_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get acqiris config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Acqiris</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_imp_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_imp_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_imp_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get imp data object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Imp</span><span class="o">.</span><span class="n">ElementV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_imp_config_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_imp_config_object">[docs]</a><span class="k">def</span> <span class="nf">get_imp_config_object</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get imp config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">configStore</span><span class="p">()</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">Imp</span><span class="o">.</span><span class="n">ConfigV1</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+    
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##----- Other data objects ----</span>
+<span class="c1">##-----------------------------</span>
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="get_evr_data_object"><a class="viewcode-back" href="../index.html#PyDataAccess.get_evr_data_object">[docs]</a><span class="k">def</span> <span class="nf">get_evr_data_object</span><span class="p">(</span><span class="n">evt</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;get evr data object for event codes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">EvrData</span><span class="o">.</span><span class="n">DataV4</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">EvrData</span><span class="o">.</span><span class="n">DataV3</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span> <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<span class="c1">##-----------------------------</span>
+
+<div class="viewcode-block" id="time_pars_evt"><a class="viewcode-back" href="../index.html#PyDataAccess.time_pars_evt">[docs]</a><span class="k">def</span> <span class="nf">time_pars_evt</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns time parameters from psana.Event object.</span>
+
+<span class="sd">    Parameter</span>
+<span class="sd">    - evt (psana.Event) - psana event object</span>
+
+<span class="sd">    Returns tuple of the event time parameters:</span>
+
+<span class="sd">    - tsec (int) - time in sec since 1970</span>
+<span class="sd">    - tnsec (int) - time in nanosecond</span>
+<span class="sd">    - fid (uint16) - fiducials</span>
+<span class="sd">    - date (str) - date in format YYYY-MM-DD</span>
+<span class="sd">    - time (str) - date in format MM:MM:SS</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">evtid</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_psana</span><span class="o">.</span><span class="n">EventId</span><span class="p">)</span>
+    <span class="n">tsec</span><span class="p">,</span> <span class="n">tnsec</span> <span class="o">=</span> <span class="n">evtid</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">fid</span> <span class="o">=</span> <span class="n">evtid</span><span class="o">.</span><span class="n">fiducials</span><span class="p">()</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">localtime</span><span class="p">(</span><span class="n">tsec</span><span class="p">))</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">,</span> <span class="n">localtime</span><span class="p">(</span><span class="n">tsec</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">tsec</span><span class="p">,</span> <span class="n">tnsec</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">time</span></div>
+
+<span class="c1">##-----------------------------</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Mikhail Dubrovin.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

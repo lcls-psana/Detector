@@ -1,0 +1,152 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>EpicsDetector &#8212; Detector-doc 1 documentation</title>
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">Detector-doc 1 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for EpicsDetector</h1><div class="highlight"><pre>
+<span></span>
+
+
+
+<div class="viewcode-block" id="EpicsDetector"><a class="viewcode-back" href="../index.html#EpicsDetector.EpicsDetector">[docs]</a><span class="k">class</span> <span class="nc">EpicsDetector</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class is used to access data that is typically acquired</span>
+<span class="sd">    at a rate slower than the LCLS shot rate (e.g. temperatures,</span>
+<span class="sd">    voltages) using the EPICS slow-control system.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EpicsDetector.__init__"><a class="viewcode-back" href="../index.html#EpicsDetector.EpicsDetector.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv_string</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pv_string : str</span>
+<span class="sd">            The full-name or alias of an EPICS variable</span>
+
+<span class="sd">        env : psana.Env</span>
+<span class="sd">            The psana environment, for example from psana.DataSource.env()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pv_string</span> <span class="o">=</span> <span class="n">pv_string</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_epics</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">epicsStore</span><span class="p">()</span>
+        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="EpicsDetector.__call__"><a class="viewcode-back" href="../index.html#EpicsDetector.EpicsDetector.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        evt: a psana event object</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        The value of the EPICS variable for the current event. Note</span>
+<span class="sd">        that the argument evt is actually not required, and that</span>
+<span class="sd">        the value you get returned will be for the *most recently</span>
+<span class="sd">        accessed* event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_epics</span><span class="o">.</span><span class="n">getPV</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pv_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pv</span><span class="o">.</span><span class="n">numElements</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pv</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="c1"># *always* returns an np.array</span>
+        <span class="k">elif</span> <span class="n">pv</span><span class="o">.</span><span class="n">numElements</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pv</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># returns int/float</span></div></div>
+        
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">psana</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">psana</span><span class="o">.</span><span class="n">DataSource</span><span class="p">(</span><span class="s1">&#39;exp=xpptut15:run=59&#39;</span><span class="p">)</span>
+    <span class="n">det</span> <span class="o">=</span> <span class="n">psana</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="s1">&#39;XPP:LAS:MMN:01.RBV&#39;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="n">det</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">events</span><span class="p">()</span><span class="o">.</span><span class="n">next</span><span class="p">())</span>
+ 
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Mikhail Dubrovin.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

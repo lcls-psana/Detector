@@ -1,0 +1,172 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>EventCodeManager &#8212; Detector-doc 1 documentation</title>
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">Detector-doc 1 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for EventCodeManager</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:py:class:`EventCodeManager` class-helper for event selection using event code</span>
+<span class="sd">==============================================================================</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    from Detector.EventCodeManager import EventCodeManager</span>
+<span class="sd">    evcode = &#39;1,2,4&#39;</span>
+<span class="sd">    ecm = EventCodeManager(evcode, verbos=0)</span>
+<span class="sd">    for evt ds.events() :</span>
+<span class="sd">        if not ecm.select(evt) : continue </span>
+
+<span class="sd">Methods:</span>
+<span class="sd">  * :py:meth:`EventCodeManager.set_event_codes`</span>
+<span class="sd">  * :py:meth:`EventCodeManager.select`</span>
+
+<span class="sd">This software was developed for the LCLS project.</span>
+<span class="sd">If you use all or part of it, please give an appropriate acknowledgment.</span>
+
+<span class="sd">Created (moved from app/det_ndarr_raw_proc) on 2017-10-20 by Mikhail Dubrovin</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#------------------------------</span>
+
+<span class="kn">from</span> <span class="nn">Detector.EvrDetector</span> <span class="k">import</span> <span class="n">EvrDetector</span>
+
+<div class="viewcode-block" id="EventCodeManager"><a class="viewcode-back" href="../index.html#EventCodeManager.EventCodeManager">[docs]</a><span class="k">class</span> <span class="nc">EventCodeManager</span> <span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class-helper for event selection using event code.</span>
+
+<span class="sd">    The string of comma-separated event codes is passed in evcode through option -c, (ex.: -c 1,2,4).</span>
+<span class="sd">    If any of listed event codes are available in evt Evr event codes then method select(evt) returns True, otherwise False.</span>
+<span class="sd">    If any of input event codes is set negative - then all event codes are used to deselect event.  </span>
+<span class="sd">    More complicated logical formulaes are not supprorted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evcode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbos</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbos</span> <span class="o">=</span> <span class="n">verbos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_event_codes</span><span class="p">(</span><span class="n">evcode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evrdet</span> <span class="o">=</span> <span class="n">EvrDetector</span><span class="p">(</span><span class="s1">&#39;:Evr&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_check</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lst_ec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">evrdet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbos</span> <span class="o">&amp;</span> <span class="mi">1</span> <span class="p">:</span> <span class="nb">print</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: list of requested event codes: </span><span class="si">%s</span><span class="s1">, do_check=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>\
+           <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lst_ec</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_check</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<div class="viewcode-block" id="EventCodeManager.set_event_codes"><a class="viewcode-back" href="../index.html#EventCodeManager.EventCodeManager.set_event_codes">[docs]</a>    <span class="k">def</span> <span class="nf">set_event_codes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evcode</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Splits input (str) for list of integer event codes. Any negative event code inverts selection decision for all event codes.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">evcode</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">evcode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lst_ec</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
+        <span class="k">try</span> <span class="p">:</span>
+            <span class="n">lst_ec</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">field</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">evcode</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span> <span class="c1"># convert string to a list of int event codes</span>
+        <span class="k">except</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lst_ec</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_deselect</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">ec</span><span class="o">&lt;</span><span class="mi">0</span> <span class="k">for</span> <span class="n">ec</span> <span class="ow">in</span> <span class="n">lst_ec</span><span class="p">))</span>      <span class="c1"># set do_deselect switch for any negative event code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lst_ec</span> <span class="o">=</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">ec</span><span class="p">)</span> <span class="k">for</span> <span class="n">ec</span> <span class="ow">in</span> <span class="n">lst_ec</span><span class="p">]</span>             <span class="c1"># list of unsigned integer event codes</span></div>
+
+
+<div class="viewcode-block" id="EventCodeManager.select"><a class="viewcode-back" href="../index.html#EventCodeManager.EventCodeManager.select">[docs]</a>    <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evt</span><span class="p">)</span> <span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns True/False to select/deselect event.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_check</span> <span class="p">:</span> <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">evt_codes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evrdet</span><span class="o">.</span><span class="n">eventCodes</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+        <span class="n">ec_in_event</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">ec</span> <span class="ow">in</span> <span class="n">evt_codes</span> <span class="k">for</span> <span class="n">ec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lst_ec</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">ec_in_event</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_deselect</span> <span class="k">else</span> <span class="n">ec_in_event</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">&lt;</span> <span class="mi">20</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbos</span> <span class="o">&amp;</span> <span class="mi">2</span> <span class="p">:</span> 
+                <span class="nb">print</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.select: evt_codes=</span><span class="si">%s</span><span class="s1">, result=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">evt_codes</span><span class="p">),</span> <span class="n">res</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">==</span> <span class="mi">20</span> <span class="p">:</span> <span class="nb">print</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.select: stop printing messages&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+<span class="c1">#------------------------------</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Mikhail Dubrovin.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

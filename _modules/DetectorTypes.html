@@ -1,0 +1,281 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>DetectorTypes &#8212; Detector-doc 1 documentation</title>
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../index.html">Detector-doc 1 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for DetectorTypes</h1><div class="highlight"><pre>
+<span></span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This file contains static declarations of the known &amp; interpretable detector</span>
+<span class="sd">types.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">Detector.DdlDetector</span>       <span class="k">import</span> <span class="n">DdlDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.AreaDetector</span>      <span class="k">import</span> <span class="n">AreaDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.WFDetector</span>        <span class="k">import</span> <span class="n">WFDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.EvrDetector</span>       <span class="k">import</span> <span class="n">EvrDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.IpimbDetector</span>     <span class="k">import</span> <span class="n">IpimbDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.UsdUsbDetector</span>    <span class="k">import</span> <span class="n">UsdUsbDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.GenericWFDetector</span> <span class="k">import</span> <span class="n">GenericWFDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.OceanDetector</span>     <span class="k">import</span> <span class="n">OceanDetector</span>
+<span class="kn">from</span> <span class="nn">Detector.TDCDetector</span>       <span class="k">import</span> <span class="n">TDCDetector</span>
+
+<div class="viewcode-block" id="MissingDet"><a class="viewcode-back" href="../index.html#DetectorTypes.MissingDet">[docs]</a><span class="k">class</span> <span class="nc">MissingDet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This detector is returned by the Detector interface</span>
+<span class="sd">    when the user requests that the software not crash</span>
+<span class="sd">    when a detector is missing.  It returns a method</span>
+<span class="sd">    that returns None for all attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">def</span> <span class="nf">_none</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_none</span></div>
+
+<span class="k">def</span> <span class="nf">no_device_exception</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Detector device is `NoDevice`, which means the&#39;</span>
+                    <span class="s1">&#39;data are not interpretable.&#39;</span><span class="p">)</span>
+
+
+
+<span class="c1"># list of all known DetInfo sources and their types</span>
+<span class="c1">#  &gt; names (keys) should be in all caps</span>
+<span class="c1">#  &gt; detector types (values) should be implemented class objects</span>
+<span class="c1">#    originally from pdsdata/xtc/src/DetInfo.cc </span>
+<span class="c1">#    copied 11/30/15</span>
+
+<span class="n">detectors</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;NoDevice&quot;</span>    <span class="p">:</span> <span class="n">no_device_exception</span><span class="p">,</span> <span class="c1"># raises an error</span>
+    <span class="s2">&quot;Evr&quot;</span>         <span class="p">:</span> <span class="n">EvrDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Acqiris&quot;</span>     <span class="p">:</span> <span class="n">WFDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Opal1000&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Tm6740&quot;</span>      <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;pnCCD&quot;</span>       <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Princeton&quot;</span>   <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Fccd&quot;</span>        <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Ipimb&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Encoder&quot;</span>     <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Cspad&quot;</span>       <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;AcqTDC&quot;</span>      <span class="p">:</span> <span class="n">TDCDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Xamps&quot;</span>       <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Cspad2x2&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Fexamp&quot;</span>      <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Gsc16ai&quot;</span>     <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Phasics&quot;</span>     <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Timepix&quot;</span>     <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Opal2000&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Opal4000&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;OceanOptics&quot;</span> <span class="p">:</span> <span class="n">OceanDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Opal1600&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Opal8000&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Fli&quot;</span>         <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Quartz4A150&quot;</span> <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;DualAndor&quot;</span>   <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Andor&quot;</span>       <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;USDUSB&quot;</span>      <span class="p">:</span> <span class="n">UsdUsbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;OrcaFl40&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Imp&quot;</span>         <span class="p">:</span> <span class="n">WFDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Epix&quot;</span>        <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Rayonix&quot;</span>     <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;EpixSampler&quot;</span> <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Pimax&quot;</span>       <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Fccd960&quot;</span>     <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Epix10k&quot;</span>     <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Epix100a&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;EpixS&quot;</span>       <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Gotthard&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Wave8&quot;</span>       <span class="p">:</span> <span class="n">GenericWFDetector</span><span class="p">,</span>
+    <span class="s2">&quot;LeCroy&quot;</span>      <span class="p">:</span> <span class="n">GenericWFDetector</span><span class="p">,</span>
+    <span class="s2">&quot;ControlsCamera&quot;</span> <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Archon&quot;</span>      <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Jungfrau&quot;</span>    <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+    <span class="s2">&quot;Zyla&quot;</span>        <span class="p">:</span> <span class="n">AreaDetector</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+
+<span class="c1"># these are the names of all the BldInfo types</span>
+<span class="c1">#    originally from pdsdata/xtc/src/BldInfo.cc</span>
+<span class="c1">#    copied 11/30/15</span>
+
+<span class="n">bld_info</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;EBeam&quot;</span>            <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;PhaseCavity&quot;</span>      <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;FEEGasDetEnergy&quot;</span>  <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;NH2-SB1-IPM-01&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-01&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-01&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-02&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-02&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-03&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-03&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-03m&quot;</span>      <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-03m&quot;</span>      <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-YAG-1&quot;</span>        <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-YAG-2&quot;</span>        <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-YAG-3m&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-YAG-3&quot;</span>        <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-YAG-mono&quot;</span>     <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-mono&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-mono&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DEC-mono&quot;</span>     <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-LAS-EM-01&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-TCTR-PIP-01&quot;</span>  <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-TCTR-DI-01&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-XT2-IPM-02&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-XT2-IPM-03&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-HXM-IPM-01&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;GMD&quot;</span>              <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg1_Imb01&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg2_Imb01&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg2_Imb02&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg3_Imb01&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg1_Pim&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg2_Pim&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg3_Pim&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppMon_Pim0&quot;</span>      <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppMon_Pim1&quot;</span>      <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppSb2_Ipm&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppSb3_Ipm&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppSb3_Pim&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppSb4_Pim&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppEnds_Ipm0&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XppEnds_Ipm1&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-XT2-PIM-02&quot;</span>   <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MEC-XT2-PIM-03&quot;</span>   <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CxiDg3_Spec&quot;</span>      <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;NH2-SB1-IPM-02&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;FEE-SPEC0&quot;</span>        <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;SXR-SPEC0&quot;</span>        <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XPP-SPEC0&quot;</span>        <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-USR-IPM-01&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-USR-IPM-02&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-USR-IPM-03&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-USR-IPM-04&quot;</span>   <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-04&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-04&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-05&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-DIO-05&quot;</span>       <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-gon&quot;</span>      <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-IPM-ladm&quot;</span>     <span class="p">:</span> <span class="n">IpimbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XPP-AIN-01&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-AIN-01&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;AMO-AIN-01&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MFX-BEAMMON-01&quot;</span>   <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;EOrbits&quot;</span>          <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MfxDg1_Pim&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MfxDg2_Pim&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;SXR-AIN-01&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;HX2-SB1-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XRT-USB-ENCODER-01&quot;</span> <span class="p">:</span> <span class="n">UsdUsbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XPP-USB-ENCODER-01&quot;</span> <span class="p">:</span> <span class="n">UsdUsbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XPP-USB-ENCODER-02&quot;</span> <span class="p">:</span> <span class="n">UsdUsbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-USB-ENCODER-01&quot;</span> <span class="p">:</span> <span class="n">UsdUsbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CXI-USB-ENCODER-01&quot;</span> <span class="p">:</span> <span class="n">UsdUsbDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-SND-DIO&quot;</span>      <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MFX-USR-DIO&quot;</span>      <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XPP-SB2-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XPP-SB3-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;HFX-DG2-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-SB1-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;XCS-SB2-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CXI-DG2-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;CXI-DG3-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MFX-DG1-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MFX-DG2-BMMON&quot;</span>    <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+    <span class="s2">&quot;MFX-AIN-01&quot;</span>       <span class="p">:</span> <span class="n">DdlDetector</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Mikhail Dubrovin.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
