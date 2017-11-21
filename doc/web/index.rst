@@ -116,6 +116,11 @@ Detector documentation
    :show-inheritance:
    :special-members:
 
+.. automodule:: UtilsJungfrau
+   :members:
+   :show-inheritance:
+   :special-members:
+
 ..   :private-members:
 
 .. autosummary::

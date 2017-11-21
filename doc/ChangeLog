@@ -11,6 +11,9 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2017-11-20 Mikhail S. Dubrovin
+- add UtilsJungfrau in doc/web/index.rst
+
 Tag: V01-00-28
 2017-11-09 Mikhail S. Dubrovin
 - PyDataAccess.py - add Jungfrau.ConfigV3
