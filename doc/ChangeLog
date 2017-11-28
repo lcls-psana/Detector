@@ -11,6 +11,9 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2017-11-28 Mikhail S. Dubrovin
+- add a couple of examples ex_hdf5_*
+
 2017-11-20 Mikhail S. Dubrovin
 - add UtilsJungfrau in doc/web/index.rst
 
