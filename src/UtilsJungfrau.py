@@ -60,6 +60,7 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
         - cmpars[1] - control bit-word 1-in rows, 2-in columns
         - cmpars[2] - maximal applied correction 
     """
+
     arr  = det.raw(evt) # shape:(1, 512, 1024) dtype:uint16
     #arr  = np.array(det.raw(evt), dtype=np.float32)
     peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 512, 1024) dtype:float32
@@ -114,88 +115,97 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
     #print_ndarr(factor, 'XXX: calib_jungfrau factor')
     #print_ndarr(offset, 'XXX: calib_jungfrau offset')
 
+    #print 'XXX calib_jungfrau cmp:', cmp
+
     # Apply offset
     arrf -= offset
 
     t0_sec = time()
     #if False :
     if cmp is not None :
-      mode, cormax = int(cmp[1]), cmp[2] 
-      #common_mode_2d(arrf, mask=gr0, cormax=cormax)
-      for s in range(arrf.shape[0]) :
+      mode, cormax = int(cmp[1]), cmp[2]
+      if mode>0 :
+        #common_mode_2d(arrf, mask=gr0, cormax=cormax)
+        for s in range(arrf.shape[0]) :
           if mode & 1 :
             common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
-            #common_mode_rows(arrf[s,:,:256], mask=gr0[s,:,:256], cormax=cormax)
-            #common_mode_rows(arrf[s,:,256:], mask=gr0[s,:,256:], cormax=cormax)
-            #common_mode_cols(arrf[s,:512,:], mask=gr0[s,:512,:], cormax=cormax)
           if mode & 2 :
             common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
-            pass
 
     #print '\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total
 
     # Apply gain
-
     return arrf * factor
 
 #------------------------------
 
-def common_mode_rows(arr, mask=None, cormax=None) :
+def common_mode_rows(arr, mask=None, cormax=None, npix_min=10) :
     """Defines and applys common mode correction to 2-d arr using the same shape mask in loop for rows.
     """
     rows, cols = arr.shape
     #print 'XXX.common_mode_rows.arr.shape', arr.shape
+    #print_ndarr(arr, 'XXX.common_mode_rows.arr')
+    #print_ndarr(mask, 'XXX.mask')
+    #print 'XXX.common_mode_rows cormax =', cormax 
 
-    for r in range(rows) :
-        cmode = 0
-        cmode = np.median(arr[r,:][mask[r,:]]) if mask is not None else\
-                np.median(arr[r,:])
+    #t0_sec = time()
+    #npixs = np.select((mask[r,:],), (arr1[r,:],), 0).sum() # 835us
+    #npix = arr1[mask].sum() # 88us
+    #print 'XXX: index time (sec) = %.6f' % (time()-t0_sec)
+    #print 'XXX.mask total good pixels: %d select: %d' % (npix, npixs)
 
-        #print 'XXX.common_mode_2 cmode=%.3f, len(selected arr)=%d' % (cmode, len(arr[r,:][mask[r,:]]))
-
-        if cormax is None or fabs(cmode) < cormax :
-            if mask is not None : arr[r,:][mask[r,:]] -= cmode
-            else : arr[r,:] -= cmode
-        else :
-            return 
+    if mask is None :
+        for r in range(rows) :
+            cmode = np.median(arr[r,:])
+            if cormax is None or fabs(cmode) < cormax :
+                arr[r,:] -= cmode
+    else :
+        arr1 = np.ones_like(arr, dtype=np.int16)
+        for r in range(rows) :
+            npix = arr1[r,:][mask[r,:]].sum()
+            if npix < npix_min : continue
+            cmode = np.median(arr[r,:][mask[r,:]])
+            if cormax is None or fabs(cmode) < cormax :
+                arr[r,:][mask[r,:]] -= cmode
 
 #------------------------------
 
-def common_mode_cols(arr, mask=None, cormax=None) :
+def common_mode_cols(arr, mask=None, cormax=None, npix_min=10) :
     """Defines and applys common mode correction to 2-d arr using the same shape mask in loop for cols.
     """
     rows, cols = arr.shape
-    #print 'XXX.common_mode_cols.arr.shape', arr.shape
+    #print_ndarr(arr, 'XXX.common_mode_cols.arr')
 
-    for c in range(cols) :
-        cmode = 0
-        cmode = np.median(arr[:,c][mask[:,c]]) if mask is not None else\
-                np.median(arr[:,c])
-
-        #print 'XXX.common_mode_2 cmode=%.3f, len(selected arr)=%d' % (cmode, len(arr[:,c][mask[:,c]]))
-
-        if cormax is None or fabs(cmode) < cormax :
-            if mask is not None : arr[:,c][mask[:,c]] -= cmode
-            else : arr[:,c] -= cmode
-        else :
-            return 
+    if mask is None :
+        for c in range(cols) :
+            cmode = np.median(arr[:,c])
+            if cormax is None or fabs(cmode) < cormax :
+                arr[:,c] -= cmode
+    else :
+        arr1 = np.ones_like(arr, dtype=np.int16)
+        for c in range(cols) :
+            npix = arr1[:,c][mask[:,c]].sum()
+            if npix < npix_min : continue
+            cmode = np.median(arr[:,c][mask[:,c]])
+            if cormax is None or fabs(cmode) < cormax :
+                np.median(arr[:,c][mask[:,c]])
 
 #------------------------------
 
-def common_mode_2d(arr, mask=None, cormax=None) :
+def common_mode_2d(arr, mask=None, cormax=None, npix_min=10) :
     """Defines and applys common mode correction to entire 2-d arr using the same shape mask. 
     """
-    cmode = 0
-    cmode = np.median(arr[mask>0]) if mask is not None else\
-            np.median(arr)
-
-    #print 'XXX.common_mode_2 cmode=%.3f, len(selected arr)=%d' % (cmode, len(arr[mask>0]))
-
-    if cormax is None or fabs(cmode) < cormax :
-        if mask is not None : arr[mask>0] -= cmode
-        else : arr -= cmode
+    if mask is None :
+        cmode = np.median(arr)
+        if cormax is None or fabs(cmode) < cormax :
+            arr -= cmode
     else :
-        return 
+        arr1 = np.ones_like(arr, dtype=np.int16)
+        npix = arr1[mask].sum()
+        if npix < npix_min : return
+        cmode = np.median(arr[mask>0])
+        if cormax is None or fabs(cmode) < cormax :
+            arr[mask>0] -= cmode
 
 #------------------------------
 

@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-29
+2017-11-29 Mikhail S. Dubrovin
+- UtilsJungfrau - fix common mode correction if all pixels in row/col masked.
+
 2017-11-28 Mikhail S. Dubrovin
 - add a couple of examples ex_hdf5_*
 
