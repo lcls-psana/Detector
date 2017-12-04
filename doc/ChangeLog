@@ -11,6 +11,9 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2017-12-04 Mikhail S. Dubrovin
+- add tname='5' in ex_jungfrau_images.py
+
 Tag: V01-00-29
 2017-11-29 Mikhail S. Dubrovin
 - UtilsJungfrau - fix common mode correction if all pixels in row/col masked.

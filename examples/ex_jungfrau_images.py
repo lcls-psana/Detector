@@ -12,8 +12,8 @@ import pyimgalgos.GlobalGraphics as gg
 import pyimgalgos.Graphics as gr
 
 #------------------------------
-
-EVENTS  = 6
+EVSKIP  = 10
+EVENTS  = EVSKIP + 10
 PLOT_IMG = True #False #True #False
 PLOT_SPE = True #False #True #False
 
@@ -27,6 +27,7 @@ def dsname_source(tname) :
     elif tname=='22': return 'exp=xcsx22015:run=510', 'XcsEndstation.0:Jungfrau.0' 
     elif tname=='3' : return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0' # data with variable gain
     elif tname=='4' : return 'exp=xcsx22015:run=552', 'XcsEndstation.0:Jungfrau.0' # Silver behenate, attenuation 1.2e-2
+    elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0'
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -129,6 +130,7 @@ def test_jungfrau_methods(tname) :
     for i, evt in enumerate(ds.events()) :
         print '%s\nEvent %4d' % (50*'_', i)
 
+        if i <EVSKIP: continue
         if i>=EVENTS: break
 
         t0_sec = time()
@@ -157,7 +159,9 @@ def test_jungfrau_methods(tname) :
             imsh = None
 
             ave, rms = ndarr.mean(), ndarr.std()
-            amin, amax = (-1, 10) if tname=='4' else (ave-2*rms, ave+6*rms)
+            amin, amax = (-1, 10) if tname=='4' else\
+                         (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
+                         (ave-2*rms, ave+6*rms)
             gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno')
             #figim.canvas.draw()
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
