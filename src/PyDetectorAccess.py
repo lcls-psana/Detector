@@ -629,6 +629,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
         elif self.dettype == gu.EPIX100A   : return self.raw_data_epix(evt, env)      # 0.3 ms
         elif self.dettype == gu.EPIX10K    : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.EPIX10KA   : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.EPIX       : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
         elif self.dettype == gu.OPAL1000   : return self.raw_data_camera(evt, env)    # 1 ms

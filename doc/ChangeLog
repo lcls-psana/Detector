@@ -11,6 +11,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-30
+2017-12-06 Mikhail S. Dubrovin
+- add support for epix10ka
+	new file:   ex_epix10ka.py
+	new file:   ex_epix10ka_ipython.py
+	modified:   ../src/DetectorTypes.py
+	modified:   ../src/PyDataAccess.py
+	modified:   ../src/PyDetectorAccess.py
+
 2017-12-04 Mikhail S. Dubrovin
 - add tname='5' in ex_jungfrau_images.py
 
