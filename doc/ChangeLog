@@ -11,6 +11,9 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2017-12-07 Mikhail S. Dubrovin
+- modified: examples/ex_epix10ka.py
+
 Tag: V01-00-30
 2017-12-06 Mikhail S. Dubrovin
 - add support for epix10ka
