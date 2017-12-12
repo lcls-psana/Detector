@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-32
+2017-12-11 Daniel Damiani
+- DetectorTypes.py - add new BLD for MEC analog input to bld_info
+
 Tag: V01-00-31
 2017-12-11 Mikhail S. Dubrovin
 - PyDetector.DetInfo - fix bug in regular expression pattern and re-definition global var dt
