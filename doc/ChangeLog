@@ -11,9 +11,39 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag: V01-00-28
+Tag: V01-00-31
 2017-12-11 Mikhail S. Dubrovin
-- PyDetector.DetInfo - fix bug in regular expression pattern \d -> \d+ and re-definition global var dt
+- PyDetector.DetInfo - fix bug in regular expression pattern and re-definition global var dt
+
+2017-12-07 Mikhail S. Dubrovin
+- modified: examples/ex_epix10ka.py
+
+Tag: V01-00-30
+2017-12-06 Mikhail S. Dubrovin
+- add support for epix10ka
+	new file:   ex_epix10ka.py
+	new file:   ex_epix10ka_ipython.py
+	modified:   ../src/DetectorTypes.py
+	modified:   ../src/PyDataAccess.py
+	modified:   ../src/PyDetectorAccess.py
+
+2017-12-04 Mikhail S. Dubrovin
+- add tname='5' in ex_jungfrau_images.py
+
+Tag: V01-00-29
+2017-11-29 Mikhail S. Dubrovin
+- UtilsJungfrau - fix common mode correction if all pixels in row/col masked.
+
+2017-11-28 Mikhail S. Dubrovin
+- add a couple of examples ex_hdf5_*
+
+2017-11-20 Mikhail S. Dubrovin
+- add UtilsJungfrau in doc/web/index.rst
+
+Tag: V01-00-28
+2017-11-09 Mikhail S. Dubrovin
+- PyDataAccess.py - add Jungfrau.ConfigV3
+- add example examples/ex_pnccd_plot_in_evloop.py
 
 Tag: V01-00-27
 2017-11-03 Daniel Damiani

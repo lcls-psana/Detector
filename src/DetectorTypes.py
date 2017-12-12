@@ -77,6 +77,7 @@ detectors = {
     "Pimax"       : AreaDetector,
     "Fccd960"     : AreaDetector,
     "Epix10k"     : AreaDetector,
+    "Epix10ka"    : AreaDetector,
     "Epix100a"    : AreaDetector,
     "EpixS"       : AreaDetector,
     "Gotthard"    : AreaDetector,
