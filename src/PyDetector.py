@@ -76,7 +76,7 @@ class DetInfo(object):
         device_id     --> 0
         """
 
-        m = re.search('(\w+).(\d)\:(\w+).(\d)', source_string)
+        m = re.search('(\w+).(\d+)\:(\w+).(\d+)', source_string)
 
         if m:
             mg = m.groups()
@@ -103,8 +103,9 @@ def detector_factory(source_string, env, *args, **kwargs):
 
     # > create an instance of the determined detector type & return it
     source_string = map_alias_to_source(source_string, env)
-    dt = dettype(source_string, env, *args, **kwargs)
-    det_instance = dt(source_string, env)
+
+    dtype = dettype(source_string, env, *args, **kwargs)
+    det_instance = dtype(source_string, env)
     det_instance.name = DetInfo(source_string)
 
     return det_instance

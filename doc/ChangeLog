@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-28
+2017-12-11 Mikhail S. Dubrovin
+- PyDetector.DetInfo - fix bug in regular expression pattern \d -> \d+ and re-definition global var dt
+
 Tag: V01-00-27
 2017-11-03 Daniel Damiani
 - Support for ControlsCamera type added to Detector interface
