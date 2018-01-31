@@ -11,6 +11,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-34
+2018-01-30 Mikhail S. Dubrovin
+- fix numpy indexing in UtilsJungfrau.py, add UtilsPNCCD.py, update ex_pnccd_plot_in_evloop.py
+
+Tag: V01-00-33
+???
+
 Tag: V01-00-32
 2017-12-11 Daniel Damiani
 - DetectorTypes.py - add new BLD for MEC analog input to bld_info

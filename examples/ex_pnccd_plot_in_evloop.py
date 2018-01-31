@@ -10,27 +10,33 @@
    Pedestals:
    /reg/d/psdm/sxr/sxrx22915/calib/PNCCD::CalibV1/Camp.0:pnCCD.1/pedestals/96-end.data
 """
-
+#from time import time
 import sys
 import numpy as np
-#from time import time
 import psana
 from pyimgalgos.GlobalUtils import print_ndarr
 
 #------------------------------
 
-#DSNAME  = 'exp=sxrx22915:run=210'
-#DETNAME = 'Camp.0:pnCCD.1' # 'pnccd'
+from Detector.UtilsPNCCD import common_mode_pnccd
 
-DSNAME  = 'exp=xpptut15:run=340'
-DETNAME = 'Camp.0:pnCCD.0' # 'pnccdFront'
+#------------------------------
+
 EVENTS  = 10
 
+DSNAME  = 'exp=sxrx22915:run=104'
+DETNAME = 'Camp.0:pnCCD.1' # 'pnccd'
+
+#DSNAME  = 'exp=xpptut15:run=340'
+#DETNAME = 'Camp.0:pnCCD.0' # 'pnccdFront'
+
+#------------------------------
 #------------------------------
 
 def test_pnccd() :
     ds = psana.DataSource(DSNAME)
     d  = psana.Detector(DETNAME)
+    img = None
     for nev,evt in enumerate(ds.events()):
     
         if nev > EVENTS : break
@@ -81,7 +87,9 @@ def test_pnccd_graph() :
         #--------------------
         # DIY corrections
         if peds is None : peds = d.pedestals(evt)
-        if mask is None : mask = d.mask(evt)
+        if mask is None : mask = d.mask(evt, calib=True, status=True)
+        #if mask is None : mask = d.mask_calib(evt)
+        #if mask is None : mask = d.status_as_mask(evt)
         if gain is None : gain = d.gain(evt)
 
         raw = d.raw(evt)
@@ -89,17 +97,43 @@ def test_pnccd_graph() :
         nda = np.array(raw, dtype=np.float32)
 
         if peds is not None : nda -= peds
-        d.common_mode_apply(evt, nda, cmpars=(3, 348, 348, 128))
+
+        #nda = np.multiply(nda, mask)
+
+        #--------------------
+        #t0_sec = time()
+
+        #d.common_mode_apply(evt, nda, cmpars=(3, 348, 348, 128)) # C++ correction           (0.11 s/evt)
+        #common_mode_pnccd(nda, None, cmp=(8,1,500))  # median in rows                      (0.24 s/evt)
+        #common_mode_pnccd(nda, mask, cmp=(8,1,500))  # median in rows 128 - main cm corr   (0.36 s/evt)
+        #common_mode_pnccd(nda, mask, cmp=(8,2,500))  # median in rows 512                  (0.11 s/evt)
+        #common_mode_pnccd(nda, None, cmp=(8,2,500))  # median in rows 512                  (0.08 s/evt)
+        #common_mode_pnccd(nda, mask, cmp=(8,4,500))  # median in columns 512               (0.12 s/evt)
+        #common_mode_pnccd(nda, None, cmp=(8,4,500))  # median in columns 512               (0.09 s/evt)
+        common_mode_pnccd(nda, mask, cmp=(8,5,500))  # median in rows 128 and columns 512  (0.43 s/evt) THE BEST
+        #common_mode_pnccd(nda, mask, cmp=(8,7,500))  # median in rows 128 and columns 512  (0.65 s/evt)
+    
+        #print 'XXX: CM consumed time (sec) =', time()-t0_sec
+        #--------------------
+
         if gain is not None : nda *= gain
-        if mask is not None : nda *= mask
+        #if mask is not None : nda *= mask
+
+        #nda = mask
+        #nda = gain
+        #nda = peds
+        #nda = raw
 
         #--------------------
         #print_ndarr(peds, name='peds', first=0, last=5)
         #print_ndarr(raw, name='raw', first=0, last=5)
-        print_ndarr(nda, name='nda', first=0, last=5)
+        #print_ndarr(nda, name='nda', first=0, last=5)
 
         img = d.image(evt,nda)
+        #img = nda; img.shape = (4*512,512)
 
+        
+        #print_ndarr(img, name='img', first=0, last=5)
         #--------------------
         # plot image
 
@@ -108,7 +142,7 @@ def test_pnccd_graph() :
 
         axim.clear()
         del imsh; imsh = None        
-        plot_imgcb(fig, axim, axcb, imsh, img, amin, amax, title='Event %d'%nev, cmap='inferno')
+        plot_imgcb(fig, axim, axcb, imsh, img, amin, amax, title='Event %d'%nev, cmap='jet') # 'inferno'
         
         #--------------------
         # plot spectral histogram
@@ -122,6 +156,14 @@ def test_pnccd_graph() :
 
         show(mode='Do not hold')
     show()
+
+    ofname = 'pnccd-img.npy'
+    np.save(ofname, img)
+    print 'Last image array saved in %s' % ofname
+
+    ofname = 'pnccd-nda.npy'
+    np.save(ofname, nda)
+    print 'Last n-d array saved in %s' % ofname
 
 #------------------------------
 

@@ -162,11 +162,14 @@ def common_mode_rows(arr, mask=None, cormax=None, npix_min=10) :
     else :
         arr1 = np.ones_like(arr, dtype=np.int16)
         for r in range(rows) :
-            npix = arr1[r,:][mask[r,:]].sum()
+            bmask = mask[r,:]>0
+            npix = arr1[r,:][bmask].sum()
             if npix < npix_min : continue
-            cmode = np.median(arr[r,:][mask[r,:]])
+            cmode = np.median(arr[r,:][bmask])
+            #if npix != 512 : print '  XXX:row:%3d npix:%3d cmode:%.1f' % (r,npix,cmode)
             if cormax is None or fabs(cmode) < cormax :
-                arr[r,:][mask[r,:]] -= cmode
+                arr[r,:][bmask] -= cmode
+                #arr[r,:] -= cmode
 
 #------------------------------
 
@@ -184,11 +187,12 @@ def common_mode_cols(arr, mask=None, cormax=None, npix_min=10) :
     else :
         arr1 = np.ones_like(arr, dtype=np.int16)
         for c in range(cols) :
-            npix = arr1[:,c][mask[:,c]].sum()
+            bmask = mask[:,c]>0
+            npix = arr1[:,c][bmask].sum()
             if npix < npix_min : continue
-            cmode = np.median(arr[:,c][mask[:,c]])
+            cmode = np.median(arr[:,c][bmask])
             if cormax is None or fabs(cmode) < cormax :
-                np.median(arr[:,c][mask[:,c]])
+                arr[:,c][bmask] -= cmode
 
 #------------------------------
 
