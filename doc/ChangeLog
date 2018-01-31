@@ -11,6 +11,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+committed, w/o new tag
+2018-01-30 Mikhail S. Dubrovin
+- comment print in UtilsJungfrau.py
+
 Tag: V01-00-34
 2018-01-30 Mikhail S. Dubrovin
 - fix numpy indexing in UtilsJungfrau.py, add UtilsPNCCD.py, update ex_pnccd_plot_in_evloop.py

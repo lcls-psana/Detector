@@ -10,7 +10,7 @@
    Pedestals:
    /reg/d/psdm/sxr/sxrx22915/calib/PNCCD::CalibV1/Camp.0:pnCCD.1/pedestals/96-end.data
 """
-#from time import time
+from time import time
 import sys
 import numpy as np
 import psana
@@ -101,7 +101,7 @@ def test_pnccd_graph() :
         #nda = np.multiply(nda, mask)
 
         #--------------------
-        #t0_sec = time()
+        t0_sec = time()
 
         #d.common_mode_apply(evt, nda, cmpars=(3, 348, 348, 128)) # C++ correction           (0.11 s/evt)
         #common_mode_pnccd(nda, None, cmp=(8,1,500))  # median in rows                      (0.24 s/evt)
@@ -113,7 +113,7 @@ def test_pnccd_graph() :
         common_mode_pnccd(nda, mask, cmp=(8,5,500))  # median in rows 128 and columns 512  (0.43 s/evt) THE BEST
         #common_mode_pnccd(nda, mask, cmp=(8,7,500))  # median in rows 128 and columns 512  (0.65 s/evt)
     
-        #print 'XXX: CM consumed time (sec) =', time()-t0_sec
+        print 'ex_pnccd_plot_in_evloop: CM consumed time (sec) =', time()-t0_sec
         #--------------------
 
         if gain is not None : nda *= gain

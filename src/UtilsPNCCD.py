@@ -10,7 +10,7 @@ Created on 2018-01-30 by Mikhail Dubrovin
 """
 #------------------------------
 
-from time import time
+#from time import time
 #import numpy as np
 #from math import fabs
 #from Detector.GlobalUtils import print_ndarr, divide_protected
@@ -37,7 +37,7 @@ def common_mode_rows_128(data, mask, cormax) :
 
 def common_mode_pnccd(data, mask, cmp=(8,1,500)) :
 
-    t0_sec = time()
+    #t0_sec = time()
     if cmp is not None :
       mode, cormax = int(cmp[1]), cmp[2]
       if mode>0 :
@@ -52,7 +52,7 @@ def common_mode_pnccd(data, mask, cmp=(8,1,500)) :
           if mode & 4 :
             common_mode_cols(data[s,], mask=smask, cormax=cormax)
 
-    print 'Detector.common_mode_pnccd: CM consumed time (sec) =', time()-t0_sec
+    #print 'Detector.common_mode_pnccd: CM consumed time (sec) =', time()-t0_sec
 
 #------------------------------
 #------------------------------
