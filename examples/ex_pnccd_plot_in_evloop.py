@@ -103,15 +103,23 @@ def test_pnccd_graph() :
         #--------------------
         t0_sec = time()
 
-        #d.common_mode_apply(evt, nda, cmpars=(3, 348, 348, 128)) # C++ correction           (0.11 s/evt)
-        #common_mode_pnccd(nda, None, cmp=(8,1,500))  # median in rows                      (0.24 s/evt)
+        #common_mode_pnccd(nda, None, cmp=(8,1,500))  # median in rows 128                  (0.24 s/evt)
         #common_mode_pnccd(nda, mask, cmp=(8,1,500))  # median in rows 128 - main cm corr   (0.36 s/evt)
         #common_mode_pnccd(nda, mask, cmp=(8,2,500))  # median in rows 512                  (0.11 s/evt)
         #common_mode_pnccd(nda, None, cmp=(8,2,500))  # median in rows 512                  (0.08 s/evt)
         #common_mode_pnccd(nda, mask, cmp=(8,4,500))  # median in columns 512               (0.12 s/evt)
         #common_mode_pnccd(nda, None, cmp=(8,4,500))  # median in columns 512               (0.09 s/evt)
-        common_mode_pnccd(nda, mask, cmp=(8,5,500))  # median in rows 128 and columns 512  (0.43 s/evt) THE BEST
-        #common_mode_pnccd(nda, mask, cmp=(8,7,500))  # median in rows 128 and columns 512  (0.65 s/evt)
+        #common_mode_pnccd(nda, mask, cmp=(8,8,500))  # median in banks_512x128             (0.16 s/evt)
+        #common_mode_pnccd(nda, None, cmp=(8,8,500))  # median in banks_512x128             (0.25 s/evt)
+ 
+        common_mode_pnccd(nda, mask, cmp=(8,5,500))   # median in rows 128 and columns 512  (0.40 s/evt) THE BEST
+        #common_mode_pnccd(nda, mask, cmp=(8,7,500))  # median combined                     (0.65 s/evt)
+        #common_mode_pnccd(nda, mask, cmp=(8,13,500)) # median combined                     (0.43 s/evt)
+
+        # Implementation through Detector interface:
+        #d.common_mode_apply(evt, nda, (3, 348, 348, 128))   # old C++ correction            (0.11 s/evt)
+        #d.common_mode_apply(evt, nda, (8,5,500), mask=mask) # new py                        (0.41 s/evt)
+        #nda = d.calib(evt, (8,5,500), mask=mask) # generic calib method with mask parameter (0.45 s/evt)
     
         print 'ex_pnccd_plot_in_evloop: CM consumed time (sec) =', time()-t0_sec
         #--------------------
@@ -169,7 +177,7 @@ def test_pnccd_graph() :
 
 if __name__ == "__main__" :
     print 80*'_'
-    tname = sys.argv[1] if len(sys.argv)>1 else '1'
+    tname = sys.argv[1] if len(sys.argv)>1 else '2'
     if   tname == '1' : test_pnccd()
     elif tname == '2' : test_pnccd_graph()
     else : sys.exit ('Not recognized test name: "%s"' % tname)

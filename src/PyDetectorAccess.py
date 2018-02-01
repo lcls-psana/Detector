@@ -37,6 +37,7 @@ import sys
 import numpy as np
 import _psana
 import Detector.PyDataAccess as pda
+from Detector.UtilsPNCCD import common_mode_pnccd
 
 #import Detector.GlobalUtils as gu
 import PSCalib.GlobalUtils as gu
@@ -311,11 +312,21 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def common_mode_apply(self, alg_num, kwargs, nda):
+    def common_mode_apply(self, cmpars, nda, **kwargs):
+        alg_num = cmpars[0]
+
         if alg_num == 6:
             cm_epix(img=nda, **kwargs)
+
+        elif alg_num == 8:
+            mask = kwargs.get('mask', None)
+            shape0 = (4,512,512) #pnccd
+            nda.shape = shape0 
+            if mask is not None : mask.shape = shape0
+            common_mode_pnccd(nda, mask, cmp=cmpars)
+
         else:
-            print 'alg_num does not exist'
+            raise IOError('algoritm %d is not implemented' % alg_num)
 
 ##-----------------------------
 

@@ -1,9 +1,5 @@
 #--------------------------------------------------------------------------
-# File and Version Information:
-#  $Id$
-#
-# Description:
-#  ChangeLog file for package Detector
+# ChangeLog file for package Detector
 #------------------------------------------------------------------------
 
 Package author: Mikhail S. Dubrovin
@@ -11,7 +7,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-committed, w/o new tag
+Tag: V01-00-35
+2018-01-31 Mikhail S. Dubrovin
+- refactor Utils, add new pnccd cm correction in det interface
+	modified:   examples/ex_pnccd_plot_in_evloop.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+	new file:   src/UtilsCommonMode.py
+	modified:   src/UtilsJungfrau.py
+	modified:   src/UtilsPNCCD.py
+
 2018-01-30 Mikhail S. Dubrovin
 - comment print in UtilsJungfrau.py
 

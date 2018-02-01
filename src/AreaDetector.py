@@ -83,13 +83,15 @@ Usage::
     nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence,
     # and with combined mask.
     nda_cdata = det.calib(evt, mbits=1) # see description of det.mask_comb method.
+    # NEW - common mode correction for pnCCD:
+    nda_cdata = det.calib(evt, (8,5,500), mask=mask)
 
     # common mode correction for pedestal-subtracted numpy array nda:
     det.common_mode_apply(par, nda)
     cm_corr_nda = det.common_mode_correction(par, nda)
     # or with custom common mode parameter sequence
-    det.common_mode_apply(par, nda, cmpars)
-    cm_corr_nda = det.common_mode_correction(par, nda, cmpars)
+    det.common_mode_apply(par, nda, cmpars, **kwargs)
+    cm_corr_nda = det.common_mode_correction(par, nda, cmpars, **kwargs)
 
     # access geometry information
     geo        = det.geometry(par)   # returns geometry object (top-most)
@@ -895,12 +897,9 @@ class AreaDetector(object):
         shape0 = nda.shape
         nda.shape = (nda.size,)
 
-        pycm = False
-        if cmpars is not None:
-            if cmpars[0] in [6]: pycm = True
-        if pycm:
+        if cmpars is not None and cmpars[0] in [6,8] :
             # go into python
-            self.pyda.common_mode_apply(cmpars[0], kwargs, nda)
+            self.pyda.common_mode_apply(cmpars, nda, **kwargs)
         else:
             # go into cpp
             if cmpars is not None:
@@ -914,7 +913,7 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def common_mode_correction(self, par, nda, cmpars=None) :
+    def common_mode_correction(self, par, nda, cmpars=None, **kwargs) :
         """Returns per-pixel array of common mode correction offsets.
   
            Parameters
@@ -929,7 +928,7 @@ class AreaDetector(object):
            - np.array - per-pixel common mode correction offsets.
         """
         nda_cm_corr = np.array(nda, dtype=np.float32, copy=True)
-        self.common_mode_apply(self.runnum(par), nda_cm_corr, cmpars)
+        self.common_mode_apply(self.runnum(par), nda_cm_corr, cmpars, **kwargs)
         return nda_cm_corr - nda
 
 ##-----------------------------
@@ -983,6 +982,7 @@ class AreaDetector(object):
                  + 16 - unbonded pixels
                  + 32 - unbonded pixel with four neighbors
                  + 64 - unbonded pixel with eight neighbors
+           - **kwargs : dict - parameters for common mode correction algorithm etc., i.e. for pnccd: cmpars=(8,5,500), mask=...
 
            Returns
 
