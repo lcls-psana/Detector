@@ -31,16 +31,6 @@ def common_mode_rows(arr, mask=None, cormax=None, npix_min=10) :
     """Defines and applys common mode correction to 2-d arr and mask in loop for rows.
     """
     rows, cols = arr.shape
-    #print 'XXX.common_mode_rows.arr.shape', arr.shape
-    #print_ndarr(arr, 'XXX.common_mode_rows.arr')
-    #print_ndarr(mask, 'XXX.mask')
-    #print 'XXX.common_mode_rows cormax =', cormax 
-
-    #t0_sec = time()
-    #npixs = np.select((mask[r,:],), (arr1[r,:],), 0).sum() # 835us
-    #npix = arr1[mask].sum() # 88us
-    #print 'XXX: index time (sec) = %.6f' % (time()-t0_sec)
-    #print 'XXX.mask total good pixels: %d select: %d' % (npix, npixs)
 
     if mask is None :
         for r in range(rows) :
@@ -56,8 +46,8 @@ def common_mode_rows(arr, mask=None, cormax=None, npix_min=10) :
             cmode = np.median(arr[r,:][bmask])
             #if npix != 512 : print '  XXX:row:%3d npix:%3d cmode:%.1f' % (r,npix,cmode)
             if cormax is None or fabs(cmode) < cormax :
-                arr[r,:][bmask] -= cmode
-                #arr[r,:] -= cmode
+                #arr[r,:][bmask] -= cmode
+                arr[r,:] -= cmode # apply correction to all pixels in the group
 
 #------------------------------
 
@@ -80,7 +70,8 @@ def common_mode_cols(arr, mask=None, cormax=None, npix_min=10) :
             if npix < npix_min : continue
             cmode = np.median(arr[:,c][bmask])
             if cormax is None or fabs(cmode) < cormax :
-                arr[:,c][bmask] -= cmode
+                #arr[:,c][bmask] -= cmode
+                arr[:,c] -= cmode # apply correction to all pixels in the group
 
 #------------------------------
 
@@ -98,7 +89,8 @@ def common_mode_2d(arr, mask=None, cormax=None, npix_min=10) :
         if npix < npix_min : return
         cmode = np.median(arr[bmask])
         if cormax is None or fabs(cmode) < cormax :
-            arr[bmask] -= cmode
+            #arr[bmask] -= cmode
+            arr -= cmode # apply correction to all pixels in the group
 
 #------------------------------
 
