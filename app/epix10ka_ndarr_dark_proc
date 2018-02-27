@@ -1,0 +1,744 @@
+#!/usr/bin/env python
+
+#------------------------------
+import os
+import sys
+import psana
+import numpy as np
+from time import time, localtime, strftime
+from pyimgalgos.GlobalUtils import print_ndarr, divide_protected, print_command_line_parameters, reshape_to_2d
+#from Detector.PyDataAccess import get_jungfrau_gain_mode_object, time_pars_evt
+from Detector.PyDataAccess import get_epix_data_object, get_epix_config_object, get_jungfrau_gain_mode_object, time_pars_evt
+import PSCalib.GlobalUtils as gu
+
+#from Detector.GlobalUtils import print_ndarr, divide_protected
+
+NUMBER_OF_GAIN_MODES = 3
+
+DIC_GAIN_MODE = {'FixedGain1':  1,
+                 'FixedGain2':  2,
+                 'ForcedGain1': 1,
+                 'ForcedGain2': 2,
+                 'HighGain0':   0,
+                 'Normal':      0}
+
+LOG_FILE = '/reg/g/psdm/logs/calibman/#YYYY-MM/epix10ka_ndarr_dark_proc.txt'
+
+#------------------------------
+
+def plot_det_image(det, evt, nda, tit='') :
+    """Plots averaged image
+    """
+    import pyimgalgos.GlobalGraphics as gg
+
+    #img = det.image(evt, nda)
+    img = reshape_to_2d(nda)
+    if img is None : 
+        print 'plot_det_image - Image "%s" is not available.'%tit
+        #sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
+        return
+    
+    ave, rms = nda.mean(), nda.std()
+    gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+3*rms), title=tit)
+    gg.show()
+
+#------------------------------
+
+class Epix10kaNDArrDarkProc :
+
+    # Epix10ka gain range coding
+    # bit: 15,14,...,0   Gain range, ind
+    #       0, 0       - Normal,       0
+    #       0, 1       - ForcedGain1,  1
+    #       1, 1       - FixedGain2,   2
+
+    #BW1 =  040000 # 16384 or 1<<14 (14-th bit starting from 0)
+     #BW2 = 0100000 # 32768 or 2<<14 or 1<<15
+    #BW3 = 0140000 # 49152 or 3<<14
+    MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
+    #MSK =  037777 # 16383 or (1<<14)-1
+
+    def __init__(self, parser, igm):
+        self.gmind = igm
+        self.init_parameters(parser)
+        if self.verbos & 1 : self.print_attrs()
+
+
+    def init_parameters(self, parser=None) :
+        """Command line parameters parsing"""
+        self.parser = option_parser() if parser is None else parser
+
+        (popts, pargs) = self.parser.parse_args()
+
+        if popts.dsname is None : raise IOError('WARNING: option "-d <dataset>" MUST be specified.') # sys.exit()
+        if popts.source is None : raise IOError('WARNING: option "-s <source>" MUST be specified.')
+
+        self.dsname = popts.dsname
+        self.src    = popts.source
+        self.ofname = popts.ofname
+        self.events = popts.events
+        self.evskip = popts.evskip
+        self.clbdir = popts.clbdir
+        self.upload = popts.upload
+
+        self.int_lo = popts.intlow if popts.intlow is not None else 1
+        self.int_hi = popts.inthig if popts.inthig is not None else 16000
+        self.rms_lo = popts.rmslow # if None - will be evaluated later
+        self.rms_hi = popts.rmshig # if None - will be evaluated later
+        self.fraclm = popts.fraclm
+
+        self.plotim = popts.plotim
+        self.verbos = popts.verbos
+        self.savebw = popts.savebw
+
+        self.intnlo = popts.intnlo
+        self.intnhi = popts.intnhi
+        self.rmsnlo = popts.rmsnlo
+        self.rmsnhi = popts.rmsnhi
+        self.evstg1 = min(max(self.events*0.05, 5), 50)
+        self.nsigma = popts.nsigma
+        
+        self.det      = None
+        self.shape    = None
+        self.counter  = 0
+        self.stage    = 0
+        self.gmname   = None
+
+
+    def print_attrs(self) :
+        print '%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__)
+        print 'dataset name                    : %s'   % self.dsname
+        print 'source name                     : %s'   % self.src   
+        print 'output file name template       : %s'   % self.ofname
+        print 'calib directory                 : %s'   % self.clbdir   
+        print 'upload files in calib directory : %s'   % self.upload  
+        print 'number of events to collect     : %d'   % self.events
+        print 'number of events to skip        : %d'   % self.evskip
+        print 'number of events for stage 1    : %d'   % self.evstg1
+        print 'number of sigma intensity range : %.3f' % self.nsigma
+        print 'control bit-word to plot images : %d'   % self.plotim
+        print 'control bit-word for verbosity  : %d'   % self.verbos
+        print 'control bit-word to save arrays : %d'   % self.savebw
+        print 'INTENSITY low limit (ADU)       : ',      self.int_lo
+        print 'INTENSITY high limit (ADU)      : ',      self.int_hi
+        print 'RMS low limit (ADU)             : ',      self.rms_lo
+        print 'RMS high limit (ADU)            : ',      self.rms_hi
+        print 'allowed low/high fraction limit : %.3f' % self.fraclm
+        print '\nParameters for auto-evaluation of limits:'
+        print 'number of sigma from mean for INTENSITY low limit  : ',  self.intnlo
+        print 'number of sigma from mean for INTENSITY high limit : ',  self.intnhi
+        print 'number of sigma from mean for RMS low limit        : ',  self.rmsnlo
+        print 'number of sigma from mean for RMS high limit       : ',  self.rmsnhi
+        print 50*'_', '\n'
+
+
+    def _common_mode_pars(self, arr_ave, arr_rms, arr_msk) :
+        """Returns detector-dependent common mode parameters as np.array for a few detectors and None for others.
+        """
+        import PSCalib.GlobalUtils as gu 
+        import math
+
+        dettype = gu.det_type_from_source(self.src)
+
+        ave = arr_ave[arr_msk>0].mean()
+        #rms = arr_ave[arr_msk>0].std()
+        rms = arr_rms[arr_msk>0].mean()
+
+        if self.verbos & 1 :
+            print 'Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
+                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms)
+
+        if dettype == gu.PNCCD :
+            return np.array((3, math.ceil(4*rms), math.ceil(4*rms), 128))
+
+        #elif dettype == gu.EPIX100A :
+        #    return np.array((4, 6, math.ceil(2*rms), math.ceil(2*rms)))
+
+        #elif dettype == gu.CSPAD :
+        #    return np.array((1, math.ceil(3*rms), math.ceil(2*rms), 100))
+
+        #elif dettype == gu.CSPAD2X2 :
+        #    return np.array((1, math.ceil(3*rms), math.ceil(2*rms), 100))
+
+        else :
+            return None
+
+
+    def _init_stage1(self, evt, env) :
+
+        if self.shape is not None : return True
+
+        if self.det is None : self.det = psana.Detector(self.src, env)
+        if self.det is None :
+            raise ValueError('Can not create the Detector object for source %s' % self.src)
+
+        gmo = get_epix10ka_gain_mode_object(env, self.src)
+        self.gmname = gmo.name
+        self.gmind = DIC_GAIN_MODE[self.gmname]
+
+        ndaraw = self.det.raw(evt)
+
+        if ndaraw is None : return False
+        if ndaraw.size == 0 : return False
+        if ndaraw.shape[0] == 0 : return False
+
+        #n1, n2 = 1000, 1005
+        #print_ndarr(ndaraw,            'XXX:ndaraw',       first=n1, last=n2)
+        #print_ndarr(ndaraw & self.BW1, 'XXX:ndaraw & BW1', first=n1, last=n2)
+        #print_ndarr(ndaraw & self.BW2, 'XXX:ndaraw & BW2', first=n1, last=n2)
+        #print_ndarr(ndaraw & self.BW3, 'XXX:ndaraw & BW3', first=n1, last=n2)
+
+        self.shape = ndaraw.shape
+        self.dtype_raw = ndaraw.dtype
+
+        if self.verbos & 1 : print 'Begin stage 1 for %s, raw.dtype = %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
+                                   (self.src, str(self.dtype_raw), str(self.shape), self.int_lo, self.int_hi)
+
+        self.arr0       = np.zeros(self.shape, dtype=self.dtype_raw)
+        self.arr1       = np.ones (self.shape, dtype=self.dtype_raw)
+
+        self.sta_int_lo = np.zeros(self.shape, dtype=np.int64)
+        self.sta_int_hi = np.zeros(self.shape, dtype=np.int64)
+
+        self.arr_sum0   = np.zeros(self.shape, dtype=np.int64)
+        self.arr_sum1   = np.zeros(self.shape, dtype=np.double)
+        self.arr_sum2   = np.zeros(self.shape, dtype=np.double)
+
+        self.gate_lo    = self.arr1 * self.int_lo
+        self.gate_hi    = self.arr1 * self.int_hi
+
+        if self.savebw & 16 : self.arr_max = np.zeros(self.shape, dtype=self.dtype_raw)
+        if self.savebw & 32 : self.arr_min = np.ones (self.shape, dtype=self.dtype_raw) * 0xffff
+
+        self.exp = env.experiment()
+        self.runnum = evt.run()
+        self.tsec, self.tnsec, self.fid, self.tsdate, self.tstime = time_pars_evt(evt)
+
+        self.stage = 1
+        return True
+
+
+    def event(self, evt, env, evnum) :
+
+        if self.stage < 1 : # to omit function call
+           if not self._init_stage1(evt, env) : return
+
+        ndaraw = self.det.raw(evt)
+        if ndaraw is None : return
+
+        ndaraw = (ndaraw & self.MSK).astype(self.dtype_raw)
+        ndadbl = np.array(ndaraw, dtype=np.double)
+
+        #print_ndarr(ndadbl, 'XXX:ndadbl') # shape:(1, 512, 1024)
+
+        if self.stage < 2 : 
+           self._init_stage2()
+        self._proc_event(ndadbl, ndaraw)
+
+
+    def _proc_event(self, ndadbl, ndaraw) :
+
+        self.counter += 1
+
+        cond_lo = ndaraw<self.gate_lo
+        cond_hi = ndaraw>self.gate_hi
+        condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
+
+        #print 'XXX:' # shape:(1, 512, 1024)
+        #print_ndarr(self.arr1, 'arr1')
+        #print_ndarr(self.arr_sum0, 'arr_sum0')
+        #print_ndarr(self.arr_sum1, 'arr_sum1')
+        #print_ndarr(self.arr_sum2, 'arr_sum2')
+
+        self.arr_sum0   += np.select(condlist, (self.arr1,), 0)
+        self.arr_sum1   += np.select(condlist, (ndadbl,), 0)
+        self.arr_sum2   += np.select(condlist, (np.square(ndadbl),), 0)
+
+        self.sta_int_lo += np.select((cond_lo,), (self.arr1,), 0)
+        self.sta_int_hi += np.select((cond_hi,), (self.arr1,), 0)
+
+        if self.savebw & 16 : self.arr_max = np.maximum(self.arr_max, ndaraw)
+        if self.savebw & 32 : self.arr_min = np.minimum(self.arr_min, ndaraw)
+
+
+    def _init_stage2(self) :
+
+        #if self.stage & 2 : return
+        if self.counter < self.evstg1 : return
+ 
+        t0_sec = time()
+
+        arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
+        arr_av2 = divide_protected(self.arr_sum2, self.arr_sum0)
+
+        arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+        rms_ave = arr_rms.mean()
+
+        gate_half = self.nsigma*rms_ave
+
+        if self.verbos & 1 :
+            print '%s\nBegin stage 2 for %s after %d events' % (50*'_', self.src, self.counter)
+            print '  mean per pixel rms=%.3f x %.1f = intensity gate= +/- %.3f around each pixel average intensity' %\
+                  (rms_ave, self.nsigma, gate_half)
+
+        #print_ndarr(arr_av1, 'arr_av1')
+
+        self.gate_hi = np.minimum(arr_av1 + gate_half, self.arr1*self.int_hi)
+        self.gate_lo = np.maximum(arr_av1 - gate_half, self.arr1*self.int_lo)
+
+        self.gate_hi = np.array(self.gate_hi, dtype=self.dtype_raw)
+        self.gate_lo = np.array(self.gate_lo, dtype=self.dtype_raw)
+
+        self.arr_sum0 = np.zeros(self.shape, dtype=np.int64)
+        self.arr_sum1 = np.zeros(self.shape, dtype=np.double)
+        self.arr_sum2 = np.zeros(self.shape, dtype=np.double)
+
+        self.stage = 2
+
+        if self.verbos & 1 : print 'Stage 2 initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec)
+
+
+    def summary(self, evt, env) :
+
+        #if self.verbos & 1 :
+        print '%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter),
+
+        if self.counter :
+            print ', begin data summary stage'
+        else :
+            print ', counter=%d there are no arrays to save...' % self.counter
+            return 
+
+        t0_sec = time()
+
+        # make shorter references
+        det     = self.det
+        ofname  = self.ofname
+        plotim  = self.plotim
+        savebw  = self.savebw
+        verbos  = self.verbos
+        int_hi  = self.int_hi
+        int_lo  = self.int_lo
+        fraclm  = self.fraclm
+        counter = self.counter
+
+        arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
+        arr_av2 = divide_protected(self.arr_sum2, self.arr_sum0)
+
+        frac_int_lo = np.array(self.sta_int_lo/counter, dtype=np.float32)
+        frac_int_hi = np.array(self.sta_int_hi/counter, dtype=np.float32)
+
+        arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+        
+        rms_min, rms_max = gu.evaluate_limits(arr_rms, self.rmsnlo, self.rmsnhi, self.rms_lo, self.rms_hi, self.verbos, cmt='RMS')
+                           #if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0.\
+                           #else (self.rms_lo, self.rms_hi)
+        #if rms_min<0 : rms_min=0
+
+        ave_min, ave_max = gu.evaluate_limits(arr_av1, self.intnlo, self.intnhi, self.int_lo, self.int_hi, self.verbos, cmt='AVE')\
+
+        arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (self.arr1,), 0)
+        arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (self.arr1,), 0)
+        arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (self.arr1,), 0)
+        arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (self.arr1,), 0)
+        arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
+        arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
+
+        print '  Bad pixel status:'  
+        print '  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max) 
+        print '  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min) 
+        print '  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm) 
+        print '  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)
+        print '  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max) 
+        print '  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)
+
+        #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
+        arr_sta = np.zeros(self.shape, dtype=np.int64)
+        arr_sta += arr_sta_rms_hi    # hot rms
+        arr_sta += arr_sta_rms_lo*8  # cold rms
+        arr_sta += arr_sta_int_hi*2  # satturated
+        arr_sta += arr_sta_int_lo*4  # cold
+        arr_sta += arr_sta_ave_hi*16 # too large average
+        arr_sta += arr_sta_ave_lo*32 # too small average
+        
+        arr_msk  = np.select((arr_sta>0,), (self.arr0,), 1)
+
+        if plotim &  1 : plot_det_image(det, evt, arr_av1,         tit='average')
+        if plotim &  2 : plot_det_image(det, evt, arr_rms,         tit='RMS')
+        if plotim &  4 : plot_det_image(det, evt, arr_sta,         tit='status')
+        if plotim &  8 : plot_det_image(det, evt, arr_msk,         tit='mask')
+        if plotim & 16 : plot_det_image(det, evt, self.arr_max,    tit='maximum')
+        if plotim & 32 : plot_det_image(det, evt, self.arr_min,    tit='minimum')
+        if plotim & 64 : plot_det_image(det, evt, self.sta_int_lo, tit='statistics below threshold')
+        if plotim &128 : plot_det_image(det, evt, self.sta_int_hi, tit='statistics above threshold')
+
+        self.arr_av1 = arr_av1        
+        self.arr_rms = arr_rms
+        self.arr_sta = arr_sta
+        self.arr_msk = arr_msk
+
+
+    def save_ndarrays(self) :
+        """Saves n-d array in text files"""
+
+        if self.counter :
+            print ' save_ndarrays()'
+        else :
+            print ' save_ndarrays(): counter=0 - do not save files'
+            return 
+
+        addmetad = True
+
+        det      = self.det
+        ofname   = self.ofname
+        verbos   = self.verbos
+        savebw   = self.savebw
+        counter  = self.counter
+
+        cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]        
+        template = gu.calib_fname_template(self.exp, self.runnum, self.tsec, self.tnsec, self.fid,\
+                                           self.tsdate, self.tstime, self.src, counter, ofname)
+
+        if savebw &  1 : det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
+        if savebw &  2 : det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
+        if savebw &  4 : det.save_asdaq(template % 'sta', self.arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
+        if savebw &  8 : det.save_asdaq(template % 'msk', self.arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
+        if savebw & 16 : det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
+        if savebw & 32 : det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
+        if savebw & 64 :
+            cmod = self._common_mode_pars(self.arr_av1, self.arr_rms, self.arr_msk)
+            if cmod is None : return
+            np.savetxt(template % 'cmo', cmod, fmt='%d', delimiter=' ', newline=' ')
+            det.save_asdaq(template % 'cmm', cmod, cmts + ['ARR_TYPE  common_mode'],'%d', verbos, False)
+
+        #if verbos & 1 : print 'Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec)
+
+
+    def get_ndarrays(self) :
+        """Returns n-d arrays after summary"""
+        return self.arr_av1, self.arr_rms, self.arr_sta, self.arr_msk, self.arr_max, self.arr_min
+
+
+    def status_bw(self) :
+        sbw = 0
+        if self.gmname is None : sbw |= 1
+        if self.shape  is None : sbw |= 2
+        if self.stage != 2     : sbw |= 4
+        if self.counter < 10   : sbw |= 8
+        if not(self.gmind < NUMBER_OF_GAIN_MODES) : sbw |= 16
+        return sbw
+
+
+    def str_status(self) :
+        if self.gmname is None : return 'ind:%1d gain mode is not available in %s %s' % (self.gmind, self.dsname, self.src)
+
+        return 'ind:%1d gm:%s exp:%s run:%04d src:%s shape:%s stage:%1d events:%6d status:%s'%\
+            (self.gmind, self.gmname.ljust(12), self.exp.ljust(9), self.runnum, self.src.ljust(20), str(self.shape), self.stage,\
+             self.counter, oct(self.status_bw()))
+
+#------------------------------
+
+class Epix10kaDarkProc :
+    """Takes care about epix10ka dark data processing for a few (currently 3) gain modes.
+    """
+    def __init__(self, parser=None):
+        # make gain-mode processing modules:
+        self.lst_jdp = [Epix10kaNDArrDarkProc(parser, igm) for igm in range(NUMBER_OF_GAIN_MODES)]
+        self.status = None
+
+
+    def event(self, evt, env, evnum, igm) :
+        """Switch between gain mode processing objects using igm index of the gain mode (0,1,2).
+           - evnum (int) - event number
+           - igm (int) - index of the gain mode in DIC_GAIN_MODE
+        """
+        self.lst_jdp[igm].event(evt, env, evnum)
+
+
+    def stack_ndarrays(self) :
+        self.arr_av1 = np.stack([o.arr_av1 for o in self.lst_jdp])
+        self.arr_rms = np.stack([o.arr_rms for o in self.lst_jdp])
+        self.arr_sta = np.stack([o.arr_sta for o in self.lst_jdp])
+        self.arr_msk = np.stack([o.arr_msk for o in self.lst_jdp])
+        self.arr_max = np.stack([o.arr_max for o in self.lst_jdp])
+        self.arr_min = np.stack([o.arr_min for o in self.lst_jdp])
+
+
+    def print_ndarrays(self) :
+        print '%s\nStacked for gain modes np.arrays:' % (80*'_')
+
+        print_ndarr(self.arr_av1, 'arr_av1')
+        print_ndarr(self.arr_rms, 'arr_rms')
+        print_ndarr(self.arr_sta, 'arr_sta')
+        print_ndarr(self.arr_msk, 'arr_msk')
+        print_ndarr(self.arr_max, 'arr_max')
+        print_ndarr(self.arr_min, 'arr_min')
+
+
+    def save_ndarrays(self, addmetad=True) :
+        print '%s\nSave arrays:' % (80*'_')
+
+        jdp0 = self.lst_jdp[0]
+
+        det      = jdp0.det
+        ofname   = jdp0.ofname
+        verbos   = jdp0.verbos
+        savebw   = jdp0.savebw
+        counter  = jdp0.counter
+        str_src  = gu.string_from_source(det.source) # 'CxiEndstation.0:Epix10ka.0'
+
+        cmts = ['DATASET  %s' % jdp0.dsname, 'STATISTICS  %d' % counter]        
+        template = gu.calib_fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
+                                           jdp0.tsdate, jdp0.tstime, str_src, counter, ofname)
+
+        if verbos : print 'File name template: %s' % template
+
+        gu.create_path(template, depth=0, mode=0770, verb=True) # in case if template is work/...
+
+        if savebw &  1 : det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
+        if savebw &  2 : det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
+        if savebw &  4 : det.save_asdaq(template % 'sta', self.arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
+        if savebw &  8 : det.save_asdaq(template % 'msk', self.arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
+        if savebw & 16 : det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
+        if savebw & 32 : det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
+
+        if verbos : print 'All files saved'
+
+        if jdp0.upload :
+            calibgrp = gu.dic_det_type_to_calib_group[gu.EPIX10KA] # 'Epix10ka::CalibV1'
+            clbdir = jdp0.clbdir if jdp0.clbdir is not None else '/reg/d/psdm/%s/%s/calib' % (jdp0.exp[:3], jdp0.exp)
+            ctypedir = '%s/%s/%s' % (clbdir, calibgrp, str_src) # jdp0.src)
+            fname = '%d-end.data' % jdp0.runnum
+
+            #print 'Deploy files in %s' % clbdir
+            print 'Deploy files in %s' % ctypedir
+
+            if savebw &  1 : gu.deploy_file(template % 'ave', ctypedir, 'pedestals',    fname, LOG_FILE, verbos)
+            if savebw &  2 : gu.deploy_file(template % 'rms', ctypedir, 'pixel_rms',    fname, LOG_FILE, verbos) 
+            if savebw &  4 : gu.deploy_file(template % 'sta', ctypedir, 'pixel_status', fname, LOG_FILE, verbos) 
+            if savebw &  8 : gu.deploy_file(template % 'msk', ctypedir, 'pixel_mask',   fname, LOG_FILE, verbos)  
+            if savebw & 16 : gu.deploy_file(template % 'max', ctypedir, 'pixel_max',    fname, LOG_FILE, verbos)   
+            if savebw & 32 : gu.deploy_file(template % 'min', ctypedir, 'pixel_min',    fname, LOG_FILE, verbos)   
+
+
+    def summary(self, evt, env) :
+        for o in self.lst_jdp : 
+            o.summary(evt, env)
+
+        print '%s\nBrief summary:' % (80*'_')
+
+        self.status = 0
+        for i,o in enumerate(self.lst_jdp) :
+            print o.str_status()
+            if o.status_bw() : self.status |= (1<<i)
+
+        if self.status :
+            print 'WARNING: further processing is termenated due to problem with data, status=%d' % self.status
+            return
+
+        else :
+            self.stack_ndarrays()
+            self.print_ndarrays()
+            self.save_ndarrays()
+
+#------------------------------
+#------------------------------
+
+def epix10ka_ndarr_raw_proc():
+
+    PROC_DATA = True
+
+    t0_sec = time()
+    tdt = t0_sec
+
+    parser = option_parser()
+    (popts, pargs) = parser.parse_args()
+    SKIP   = popts.evskip
+    EVENTS = popts.events + SKIP
+    verbos = popts.verbos
+    source = popts.source
+    dsname = popts.dsname
+
+    print '%s\nIn epix10ka_ndarr_raw_proc' % (50*'_')
+    print_command_line_parameters(parser)
+
+    # Non-standard calib directory
+    #psana.setOption('psana.calib-dir', './calib')
+
+    if verbos & 1 : print 'Raw data processing of dataset: %s' % dsname
+
+    # ecm = EventCodeManager(popts.evcode, verbos)
+
+    print '\nDIC_GAIN_MODE:'
+    for item in DIC_GAIN_MODE.iteritems() : print item
+
+    lst_dpo = [Epix10kaDarkProc(parser) for src in source.split(',') if 'Epix10ka' in src]
+    #          if PROC_DATA else []
+    print 'List of sources: %s' % source
+
+    if not len(lst_dpo) : 
+        raise IOError('WARNING: list of sources "%s" does not have Epix10ka' % source)
+
+    rec = gu.log_rec_on_start()
+    gu.add_rec_to_log(LOG_FILE, rec, verbos)
+
+    #====================
+    #sys.exit('TEST EXIT')
+    #====================
+
+    ds  = psana.DataSource(dsname)
+    env = ds.env()
+    nevtot = 0
+
+    # Loop over runs
+    for irun, run in enumerate(ds.runs()):
+        print '%s\nRun %d' % (50*'=', run.run())
+        
+        # Loop over calibcycles
+        nevclc = 0
+        for istep, step in enumerate(run.steps()):
+            env = step.env()
+            gm = get_epix10ka_gain_mode_object(env, src)
+            igm = DIC_GAIN_MODE[gm.name]
+
+            if irun==0 and istep==0 :
+              print '\ngm.names:'
+              for name in gm.names.iteritems()  : print name
+
+              print '\ngm.values:'
+              for value in gm.values.iteritems() : print value
+
+            print '  Calibcycle %d,  gain mode %s,  proc.index %d,  gm.numerator %d,  gm.denominator %d'%\
+                  (istep, gm.name, igm, gm.numerator, gm.denominator)
+
+            # Loop over events
+            for i, evt in enumerate(step.events()):
+            
+                if i<SKIP : continue
+                if not i<EVENTS : break
+                #if not ecm.select(evt) : continue 
+
+                nevtot += 1
+                nevclc += 1
+
+                if PROC_DATA :
+                    for dpo in lst_dpo : dpo.event(evt,env,i,igm)
+                if verbos & 2 :
+                    if (i < 6) \
+                    or (i < 51 and not i%10) \
+                    or (not i%100) :
+                    #or (not i%1000) :
+                      tsec = time()
+                      dt   = tsec - tdt
+                      tdt  = tsec
+                      print '  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
+
+            print '  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
+                  (run.run(), istep, nevclc, nevtot, gm.name)
+        print '  Run %d, number of calibcycles processed %d' % (run.run(), istep+1)
+    print 'Number of runs processed %d' % (irun+1)
+
+    if PROC_DATA : 
+        for dpo in lst_dpo : dpo.summary(evt,env)
+    if verbos & 1 : print '%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec)
+
+#------------------------------
+
+def usage(mode=0) :
+    proc_name = os.path.basename(sys.argv[0])
+    if   mode == 1 : return 'Proceses epix10ka dark dataset.'
+    elif mode == 2 : return 'Try: %s -h' % proc_name
+    else : return\
+           '\n%prog -d <dataset> [-s <source>] [-f <file-name-template>]'\
+           '\n       [-n <events-collect>] [-m <events-skip>] [-v <verbosity-bitword>] [-p <plot-bitword>] ...'\
+           '\n       where -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi'\
+           '\nEx.1:  %prog -d exp=mfxx32516:run=377,378:smd -s MfxEndstation.0:Epix10ka.0 -f work/nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100'\
+           '\nEx.2:  %prog -d exp=mfxx32516:run=377,378:smd -s MfxEndstation.0:Epix10ka.0 -n 5000 -u'\
+           '\nEx.3:  %prog -d exp=mfxx32516:run=377,378:smd -s MfxEndstation.0:Epix10ka.0 -n 20 -m 0 -v 7 -p 1'\
+           +'\nEx.4:  bsub -q psnehq -o log-%%J.txt %s -d exp=mfxx32516:run=377,378:smd -s MfxEndstation.0:Epix10ka.0 -n 100 -u' % sys.argv[0]\
+           +'\nEx.5:  %prog -d exp=xcsx22015:run=503,504,505:smd -s MfxEndstation.0:Epix10ka.0 -u'
+
+#------------------------------
+
+def option_parser() :
+    from optparse import OptionParser
+
+    d_dsname = 'exp=mfxx32516:run=377,378:smd' # None
+    d_source = 'MfxEndstation.0:Epix10ka.0' # None 
+    #d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
+    d_ofname = 'work/nda-#exp-#run-#src-#evts-#type.txt'
+    d_events = 10000
+    d_evskip = 0
+    d_intlow = 1
+    d_inthig = 16000
+    d_rmslow = 0.001
+    d_rmshig = 16000
+    d_fraclm = 0.1
+    d_nsigma = 6.0
+    d_plotim = 0      
+    d_verbos = 0377
+    d_savebw = 0367 # do not save pixel_mask
+    d_intnlo = 6.0
+    d_intnhi = 6.0
+    d_rmsnlo = 6.0
+    d_rmsnhi = 6.0
+    d_evcode = None
+    d_clbdir = None
+    d_upload = False
+ 
+    h_dsname='dataset name, default = %s' % d_dsname
+    h_source='input ndarray source name, default = %s' % d_source
+    h_ofname='output file name template, default = %s' % d_ofname
+    h_events='number of events to collect, default = %s' % d_events
+    h_evskip='number of events to skip, default = %s' % d_evskip
+    h_intlow='intensity low limit, default = %s' % d_intlow
+    h_inthig='intensity high limit, default = %s' % d_inthig
+    h_rmslow='rms low limit, default = %s' % d_rmslow
+    h_rmshig='rms high limit, default = %s' % d_rmshig
+    h_fraclm='allowed fraction limit, default = %s' % d_fraclm
+    h_nsigma='number of sigma for gated average, default = %s' % d_nsigma
+    h_plotim='control bit-word to plot images, default = %s' % d_plotim
+    h_verbos='control bit-word for verbosity, default = (oct) %s' % oct(d_verbos)
+    h_savebw='control bit-word to save arrays, default = (oct) %s' % oct(d_savebw)
+    h_intnlo='number of sigma from mean for low limit on INTENSITY, default = %s' % d_intnlo
+    h_intnhi='number of sigma from mean for high limit on INTENSITY, default = %s' % d_intnhi
+    h_rmsnlo='number of sigma from mean for low limit on RMS, default = %s' % d_rmsnlo
+    h_rmsnhi='number of sigma from mean for high limit on RMS, default = %s' % d_rmsnhi
+    h_evcode='comma separated event codes for selection as OR combination, any negative %s'%\
+             'code inverts selection, default = %s'%str(d_evcode)
+    h_clbdir='calib directory for deployment of calibration files, default = %s' % d_clbdir
+    h_upload='upload files in calib directory, default = %s' % d_upload
+
+    parser = OptionParser(description=usage(1), usage = usage())
+    parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
+    parser.add_option('-s', '--source', dest='source', default=d_source, action='store', type='string', help=h_source)
+    parser.add_option('-f', '--ofname', dest='ofname', default=d_ofname, action='store', type='string', help=h_ofname)
+    parser.add_option('-n', '--events', dest='events', default=d_events, action='store', type='int',    help=h_events)
+    parser.add_option('-m', '--evskip', dest='evskip', default=d_evskip, action='store', type='int',    help=h_evskip)
+    parser.add_option('-b', '--intlow', dest='intlow', default=d_intlow, action='store', type='float',  help=h_intlow)
+    parser.add_option('-t', '--inthig', dest='inthig', default=d_inthig, action='store', type='float',  help=h_inthig)
+    parser.add_option('-B', '--rmslow', dest='rmslow', default=d_rmslow, action='store', type='float',  help=h_rmslow)
+    parser.add_option('-T', '--rmshig', dest='rmshig', default=d_rmshig, action='store', type='float',  help=h_rmshig)
+    parser.add_option('-F', '--fraclm', dest='fraclm', default=d_fraclm, action='store', type='float',  help=h_fraclm)
+    parser.add_option('-g', '--nsigma', dest='nsigma', default=d_nsigma, action='store', type='float',  help=h_nsigma)
+    parser.add_option('-p', '--plotim', dest='plotim', default=d_plotim, action='store', type='int',    help=h_plotim)
+    parser.add_option('-v', '--verbos', dest='verbos', default=d_verbos, action='store', type='int',    help=h_verbos)
+    parser.add_option('-S', '--savebw', dest='savebw', default=d_savebw, action='store', type='int',    help=h_savebw)
+    parser.add_option('-D', '--intnlo', dest='intnlo', default=d_intnlo, action='store', type='float',  help=h_intnlo)
+    parser.add_option('-U', '--intnhi', dest='intnhi', default=d_intnhi, action='store', type='float',  help=h_intnhi)
+    parser.add_option('-L', '--rmsnlo', dest='rmsnlo', default=d_rmsnlo, action='store', type='float',  help=h_rmsnlo)
+    parser.add_option('-H', '--rmsnhi', dest='rmsnhi', default=d_rmsnhi, action='store', type='float',  help=h_rmsnhi)
+    parser.add_option('-c', '--evcode', dest='evcode', default=d_evcode, action='store', type='string', help=h_evcode)
+    parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
+    parser.add_option('-u', '--upload', dest='upload', default=d_upload, action='store_true',           help=h_upload)
+
+    return parser
+
+#------------------------------
+
+if __name__ == "__main__" :
+    if len(sys.argv)==1 : print '\n%s' % usage(2)
+    else : epix10ka_ndarr_raw_proc()
+    sys.exit(0)
+
+#------------------------------

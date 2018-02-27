@@ -176,7 +176,9 @@ class PyDetectorAccess :
         import PSCalib.DCMethods as dcm
 
         cdir = self.env.calibDir()
-        data = dcm.get_constants(tpar, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None, verb=self.pbits & 16)
+
+        data = dcm.get_constants(tpar, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None,\
+                                 verb=self.pbits & 16, use_repo=True)
 
         if data is None : return
 

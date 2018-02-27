@@ -7,6 +7,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-37
+2018-02-27 Mikhail S. Dubrovin
+- begin adding support for epix10ka PyDataAccess, UtilsEpix and examples/ex_epix10ka *
+- fix epix geometry access issue - PyDetectorAccess - for geometry constants check repo directory only
+
 Tag: V01-00-36
 2018-02-01 Mikhail S. Dubrovin
 - pnccd common mode - evaluate cm correction for masked pixels, apply for all in group

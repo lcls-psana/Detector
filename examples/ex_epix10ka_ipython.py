@@ -4,7 +4,7 @@
 # Example of code for ipython
 
 import psana
-ds = psana.DataSource('exp=mfxx32516:run=5')
+ds = psana.DataSource('exp=mfxx32516:run=377')
 det = psana.Detector('MfxEndstation.0:Epix10ka.0') # 'Epix10ka'
 for i, evt in enumerate(ds.events()) :
     if i>100 : break
@@ -54,7 +54,7 @@ raw.dtype #Out[9]: dtype('uint16')
 
 
 evt = ds.events().next()
-dato = evt.get(psana.Jungfrau.ElementV1, src)
+dato = evt.get(psana.Epix.ElementV3, src)
 
 #------------------------------
 
@@ -74,9 +74,10 @@ def get_jungfrau_config_object(env, src) :
 #------------------------------
 
 env = ds.env()
-do = env.configStore().get(psana.Epix.ElementV3, src)
+confo = env.configStore().get(psana.Epix.Config10kaV1, src)
 
-co = cfg.get(psana.Epix.Config10kaV1, src)
+cfg = env.configStore()
+confo = cfg.get(psana.Epix.Config10kaV1, src)
 
 print 'Content of psana.Epix.Config10kaV1:'
 
@@ -98,92 +99,73 @@ print 'asicAcqWidth     :', co.asicAcqWidth()
 print 'asicGR           :', co.asicGR()           
 print 'asicGRControl    :', co.asicGRControl()    
 
-co.acqToAsicR0Delay
-co.adcClkHalfT      
-co.adcPipelineDelay 
-co.adcPipelineDelay0
-co.adcPipelineDelay1
-co.adcPipelineDelay2
-co.adcPipelineDelay3
-co.adcReadsPerPixel 
-co.adcStreamMode    
-co.version     
-co.analogCardId0                    
-co.analogCardId1                    
-co.asicAcq                          
-co.asicAcqControl                   
-co.asicAcqLToPPmatL                 
-co.asicAcqWidth                     
-co.asicGR                           
-co.asicGRControl                    
-co.asicMask                         
-co.asicPixelConfigArray 
-co.asicPpbe             
-co.asicPpbeControl      
-co.asicPpmat            
-co.asicPpmatControl     
-co.asicPPmatToReadout   
-co.asicR0               
-co.asicR0ClkControl     
-co.asicR0Control        
-co.asicR0ToAsicAcq            
-co.asicR0Width                
-co.asicRoClk                  
-co.asicRoClkHalfT             
-co.asics                      
-co.asics_shape                
-co.baseClockFrequency         
-co.calibPixelConfigArray      
-co.calibrationRowCountPerASIC 
-co.carrierId0                    
-co.carrierId1                    
-co.dacSetting                    
-co.digitalCardId0                
-co.digitalCardId1                
-co.enableAutomaticRunTrigger     
-co.environmentalRowCountPerASIC  
-co.epixRunTrigDelay              
-co.evrDaqCode                    
-co.evrRunCode                      
-co.evrRunTrigDelay                 
-co.numberOf125MhzTicksPerRunTrigger
-co.numberOfAsics                   
-co.numberOfAsicsPerColumn          
-co.numberOfAsicsPerRow             
-co.numberOfCalibrationRows         
-co.numberOfColumns                 
-co.numberOfEnvironmentalRows       
-co.numberOfPixelsPerAsicRow    
-co.numberOfReadableRows        
-co.numberOfReadableRowsPerAsic 
-co.numberOfRows                
-co.numberOfRowsPerAsic         
-co.prepulseR0Delay             
-co.prepulseR0En                
-co.prepulseR0Width
-co.R0Mode         
-co.scopeADCsameplesToSkip    
-co.scopeADCThreshold         
-co.scopeArmMode              
-co.scopeChanAwaveformSelect  
-co.scopeChanBwaveformSelect  
-co.scopeEnable               
-co.scopeTraceLength          
-co.scopeTrigChan             
-co.scopeTrigEdge             
-co.scopeTrigHoldoff     
-co.scopeTrigOffset      
-co.SyncDelay            
-co.SyncMode             
-co.SyncWidth            
-co.testPatternEnable    
-co.TypeId               
-co.usePgpEvr            
-co.Version              
-co.version  
+#------------------------------
 
+import psana
 
+nrun = 377
+dsname = 'exp=mfxx32516:run=%d' % nrun
+s_src = 'MfxEndstation.0:Epix10ka.0'
+#s_src1 = 'MfxEndstation.0:Epix10ka.1'
+print 'Example for\n  dataset: %s\n  source : %s' % (dsname, s_src)
+
+ds = psana.DataSource(dsname)
+#det = psana.Detector(s_src) # 'Epix10ka_0'
+#det = psana.Detector(s_src) # 'Epix10ka_1'
+
+env = ds.env()
+evt = ds.events().next()
+src = psana.Source(s_src)
+cfg = env.configStore()
+
+co = cfg.get(psana.Epix.Config10kaV1, src)
+da = evt.get(psana.Epix.ElementV3, src)
+
+asic = co.asics(0)
 
 #------------------------------
+
+psana.Epix.Config10kaV1 :
+
+  co.acqToAsicR0Delay                 co.asicMask                         co.calibPixelConfigArray            co.numberOfCalibrationRows          co.scopeEnable                       
+  co.adcClkHalfT                      co.asicPixelConfigArray             co.calibrationRowCountPerASIC       co.numberOfColumns                  co.scopeTraceLength                  
+  co.adcPipelineDelay                 co.asicPpbe                         co.carrierId0                       co.numberOfEnvironmentalRows        co.scopeTrigChan                     
+  co.adcPipelineDelay0                co.asicPpbeControl                  co.carrierId1                       co.numberOfPixelsPerAsicRow         co.scopeTrigEdge                     
+  co.adcPipelineDelay1                co.asicPpmat                        co.dacSetting                       co.numberOfReadableRows             co.scopeTrigHoldoff                  
+  co.adcPipelineDelay2                co.asicPpmatControl                 co.digitalCardId0                   co.numberOfReadableRowsPerAsic      co.scopeTrigOffset                  
+  co.adcPipelineDelay3                co.asicPPmatToReadout               co.digitalCardId1                   co.numberOfRows                     co.SyncDelay                        
+  co.adcReadsPerPixel                 co.asicR0                           co.enableAutomaticRunTrigger        co.numberOfRowsPerAsic              co.SyncMode                         
+  co.adcStreamMode                    co.asicR0ClkControl                 co.environmentalRowCountPerASIC     co.prepulseR0Delay                  co.SyncWidth                        
+  co.analogCardId0                    co.asicR0Control                    co.epixRunTrigDelay                 co.prepulseR0En                     co.testPatternEnable                
+  co.analogCardId1                    co.asicR0ToAsicAcq                  co.evrDaqCode                       co.prepulseR0Width                  co.TypeId                           
+  co.asicAcq                          co.asicR0Width                      co.evrRunCode                       co.R0Mode                           co.usePgpEvr                        
+  co.asicAcqControl                   co.asicRoClk                        co.evrRunTrigDelay                  co.scopeADCsameplesToSkip           co.Version                          
+  co.asicAcqLToPPmatL                 co.asicRoClkHalfT                   co.numberOf125MhzTicksPerRunTrigger co.scopeADCThreshold                co.version                          
+  co.asicAcqWidth                     co.asics                            co.numberOfAsics                    co.scopeArmMode                                                         
+  co.asicGR                           co.asics_shape                      co.numberOfAsicsPerColumn           co.scopeChanAwaveformSelect                                             
+  co.asicGRControl                    co.baseClockFrequency               co.numberOfAsicsPerRow              co.scopeChanBwaveformSelect        
+
+#------------------------------
+
+asic(0) :
+
+            asic.atest              asic.FELmode            asic.RO_rst_en          asic.S2D_tcomp           
+            asic.chipID             asic.Filter_DAC         asic.RowStart           asic.Sab_test            
+            asic.ColumnStart        asic.Hrtest             asic.RowStop            asic.SLVDSbit            
+            asic.ColumnStop         asic.is_en              asic.S2D                asic.tc                  
+            asic.CompEn_lowBit      asic.Monost             asic.S2D0_DAC           asic.test                
+            asic.CompEn_topTwoBits  asic.Monost_Pulser      asic.S2D0_GR            asic.testBE             
+            asic.CompEnOn           asic.OCB                asic.S2D0_tcDAC         asic.testLVDTransmitter 
+            asic.CompTH_DAC         asic.Pbit               asic.S2D1_DAC           asic.TPS_DAC            
+            asic.DelCCKreg          asic.PixelCB            asic.S2D1_GR            asic.TPS_GR             
+            asic.DelEXEC            asic.pixelDummy         asic.S2D1_tcDAC         asic.TPS_MUX            
+            asic.DM1                asic.PP_OCB_S2D         asic.S2D2_DAC           asic.TPS_tcDAC          
+            asic.DM1en              asic.Preamp             asic.S2D2_GR            asic.TPS_tcomp          
+            asic.DM2                asic.Pulser             asic.S2D2_tcDAC         asic.trbit              
+            asic.DM2en              asic.Pulser_DAC         asic.S2D3_DAC           asic.Vld1_b             
+            asic.emph_bc            asic.PulserR            asic.S2D3_GR            asic.VREF_DAC           
+            asic.emph_bd            asic.PulserSync         asic.S2D3_tcDAC         asic.VrefLow            
+            asic.fastPP_enable      asic.RO_Monost          asic.S2D_DAC_Bias                        
+
 #------------------------------
 #------------------------------

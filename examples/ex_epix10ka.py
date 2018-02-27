@@ -12,7 +12,7 @@ import psana
 import sys
 from Detector.GlobalUtils import print_ndarr
 
-dsname = 'exp=mfxx32516:run=5' if len(sys.argv)==1 else sys.argv[1]
+dsname = 'exp=mfxx32516:run=377' if len(sys.argv)==1 else sys.argv[1]
 srcname = 'MfxEndstation.0:Epix10ka.0' # 'Epix10ka'
 print 'Test of dsname: %s  srcname: %s' % (dsname, srcname)
 
