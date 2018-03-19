@@ -28,6 +28,7 @@ def dsname_source(tname) :
     elif tname=='3' : return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0' # data with variable gain
     elif tname=='4' : return 'exp=xcsx22015:run=552', 'XcsEndstation.0:Jungfrau.0' # Silver behenate, attenuation 1.2e-2
     elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0'
+    elif tname=='6' : return 'exp=mfx11116:run=689',  'MfxEndstation.0:Jungfrau.1' # Philip test 0.5M constants
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -135,6 +136,12 @@ def test_jungfrau_methods(tname) :
 
         t0_sec = time()
         nda_raw = det.raw(evt)
+        if nda_raw is None : 
+            print('raw is None')
+            continue
+
+        print_ndarr(nda_raw, 'nda_raw')
+
         nda = det.calib(evt, cmpars=(7,0,100)) # cmpars=(7,1,100)
 
         if nda is None : continue

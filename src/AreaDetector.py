@@ -1466,7 +1466,7 @@ class AreaDetector(object):
         shape = nda.shape
         if self.reshape_to_3d and len(shape)==3 and shape[0]==1: nda.shape = shape[1:]
 
-        if len(nda.shape)==2 and self.dettype != gu.EPIX100A :
+        if len(nda.shape)==2 and not(self.dettype in (gu.EPIX100A, gu.JUNGFRAU)) :
             return nda
 
         if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2

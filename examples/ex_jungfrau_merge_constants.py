@@ -10,8 +10,9 @@ from PSCalib.NDArrIO import save_txt
 
 print 50*'_'
 
-dirsegs = 'M068', 'M088'
-ifname, ofname, ofmt = '%s/g%d_gain.npy',   'jf_pixel_gain',   '%.4f'
+#dirsegs = 'M068', 'M088'
+dirsegs = ('M044',)
+#ifname, ofname, ofmt = '%s/g%d_gain.npy',   'jf_pixel_gain',   '%.4f'
 ifname, ofname, ofmt = '%s/g%d_offset.npy', 'jf_pixel_offset', '%.1f'
 
 lst_gains = []
