@@ -61,8 +61,11 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
     """
 
     arr  = det.raw(evt) # shape:(1, 512, 1024) dtype:uint16
+    if arr is None : return None
+
     #arr  = np.array(det.raw(evt), dtype=np.float32)
     peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 512, 1024) dtype:float32
+    if peds is None : return None
 
     #mask = det.status_as_mask(evt, mode=0) # - 4d mask
 

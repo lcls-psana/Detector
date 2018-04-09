@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-39
+2018-04-09 Mikhail S. Dubrovin
+- UtilsJungfrau.calib_jungfrau - add protection for raw and pedestals if None
+
 Tag: V01-00-38
 2018-03-19 Mikhail S. Dubrovin
 - AreaDetector - evaluate image for (2-d) JUNGFRAU because of gaps in segment geometry.
