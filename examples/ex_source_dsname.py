@@ -79,6 +79,15 @@ def ex_source_dsname(ntest) :
     elif ntest == 22: # (2, 512, 1024)
         src, dsn = ':Jungfrau.0', 'exp=xcsx22015:run=513'
 
+    elif ntest == 31: # psana.Jungfrau.ConfigV1
+        src, dsn = 'CxiEndstation.0:Jungfrau.0', 'exp=cxi11216:run=9'
+
+    elif ntest == 32: # psana.Jungfrau.ConfigV2
+        src, dsn = 'XcsEndstation.0:Jungfrau.0', 'exp=xcsx22015:run=503'
+
+    elif ntest == 33: # psana.Jungfrau.ConfigV3
+        src, dsn = 'XcsEndstation.0:Jungfrau.0', 'exp=xcsls3716:run=631'
+
     else :
         sys.exit('Non-implemented sample for test number # %d' % ntest)
 

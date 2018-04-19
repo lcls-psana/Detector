@@ -4,6 +4,14 @@
 :py:class:`PyDataAccess` contains methods to access psana data objects
 =======================================================================
 
+Usage ::
+
+    # Import:
+    from Detector.PyDataAccess import get_jungfrau_data_object, get_jungfrau_config_object
+    
+    o  = get_jungfrau_data_object(env, src)
+    co = get_jungfrau_config_object(env, src)
+
 This software was developed for the SIT project.
 If you use all or part of it, please give an appropriate acknowledgment.
 
