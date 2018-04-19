@@ -7,6 +7,17 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-40
+2018-04-19 Mikhail S. Dubrovin
+- add support for jungfrau Id from config object
+	new file:   app/find_detector_runs
+	new file:   app/jungfrau_id
+	new file:   examples/ex_jungfrau_get_id.py
+	modified:   examples/ex_jungfrau_ipython.py
+	modified:   examples/ex_source_dsname.py
+	modified:   src/PyDataAccess.py
+	modified:   src/UtilsJungfrau.py
+
 Tag: V01-00-39
 2018-04-09 Mikhail S. Dubrovin
 - UtilsJungfrau.calib_jungfrau - add protection for raw and pedestals if None
