@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+#------------------------------
+"""
+  Merges per panel gain and offset constants for specified experiment and and jungfrau detector
+
+  Created on 2018-04-30 by Mikhail Dubrovin
+"""
+#------------------------------
+
+import logging
+logger = logging.getLogger(__name__)
+
+import sys
+import psana
+import Detector.UtilsJungfrau as ju 
+from Detector.jungfrau_datasets import DSNAMES, DETNAMES
+
+#------------------------------
+
+DSNAME_DEF  = 'exp=mecls3216:run=226'
+#DSNAME_DEF  = 'exp=xpptut15:run=430'
+DETNAME_DEF = 'Jungfrau'
+TSTAMP_DEF  = None
+
+DSNAME  = sys.argv[1]      if len(sys.argv) > 1 else DSNAME_DEF 
+DETNAME = sys.argv[2]      if len(sys.argv) > 2 else DETNAME_DEF
+TSTAMP  = int(sys.argv[3]) if len(sys.argv) > 3 else TSTAMP_DEF
+
+#------------------------------
+
+def usage():
+    return  'Usage: jungfrau_gain_constants <DSNAME> [<DETNAME>] [<TSTAMP>]\n'\
+           +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES[:3])\
+           +'       <DETNAME> is optional parameterr like one of the list:\n         %s\n' % '\n         '.join(DETNAMES[:3])\
+           +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS,'\
+           +' which is used to select subdirectory: %s' % ju.DIRNAME
+
+#------------------------------
+
+def jungfrau_gain_constants() :    
+    logger.info('%s\nGenerate gain-correction constants for Jungfrau'% (80*'_'))
+    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
+
+    ds = psana.DataSource(DSNAME)
+    source = ju.psana_source(ds.env(), DETNAME) 
+    strsrc = ju.string_from_source(source).replace(':','-')
+    npanels = ju.number_of_modules_in_jungfrau(ds.env(), source)
+    logger.info('Dataset "%s" for name pattern %s' % (DSNAME, DETNAME)\
+               +' contains source: %s, number of panels: %s' %(strsrc, str(npanels)))
+    jfid = ju.id_jungfrau(ds.env(), source)
+
+    if jfid == strsrc : # e.g. 170505-149520170815-3d00b0_170505-149520170815-3d00f7
+        co = ju.jungfrau_config_object(ds.env(), source) 
+        msg = "WARNING: Jungfrau id is not available for config V%d. Constants can't be auto-generated." % co.Version
+        sys.exit(msg)
+
+    cdirs = ju.find_panel_calib_dirs(jfid, dname=ju.DIRNAME, tstamp=TSTAMP)
+    if None in cdirs :        
+        msg = "Calibdirs can't be found for all panels"
+        sys.exit(msg)
+
+    dirs = ['%s/%s' % (ju.DIRNAME, d) for d in cdirs]
+
+    logger.info('Selected panel calibdirs:')
+    for d in dirs : logger.info('    %s' % d)
+
+    ju.merge_panel_constants(dirs, ifname='%s/g%d_gain.npy',   ofname='jf_pixel_gain',   ofmt='%.4f')
+    ju.merge_panel_constants(dirs, ifname='%s/g%d_offset.npy', ofname='jf_pixel_offset', ofmt='%.1f')
+
+#------------------------------
+
+if __name__ == "__main__" :
+    #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    jungfrau_gain_constants()
+
+#------------------------------

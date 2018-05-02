@@ -1,4 +1,4 @@
-#------------------------------------------------------------------------
+#------------------------------
 
 """
 :py:class:`GlobalUtils` contains global utilities
@@ -10,9 +10,22 @@ If you use all or part of it, please give an appropriate acknowledgment.
 Author Mikhail Dubrovin
 """
 
-#--------------------------------
+#------------------------------
 
 import numpy as np
+
+#------------------------------
+
+def info_ndarr(nda, name='', first=0, last=5) :
+    s = ''
+    if nda is None : s = '%s: %s' % (name, nda)
+    elif isinstance(nda, tuple) : s += info_ndarr(np.array(nda), 'ndarray from tuple: %s' % name)
+    elif isinstance(nda, list)  : s += info_ndarr(np.array(nda), 'ndarray from list: %s' % name)
+    elif not isinstance(nda, np.ndarray) :
+                     s = '%s: %s' % (name, type(nda))
+    else : s = '%s:  shape:%s  size:%d  dtype:%s %s...'%\
+               (name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last])
+    return s
 
 #------------------------------
 

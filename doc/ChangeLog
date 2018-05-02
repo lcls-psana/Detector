@@ -7,6 +7,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-41
+2018-05-01 Mikhail S. Dubrovin
+- add app/jungfrau_gain_constants for merging jungfrau panel constants
+	new file:   app/jungfrau_gain_constants
+	modified:   app/jungfrau_id
+	modified:   src/GlobalUtils.py
+	modified:   src/UtilsJungfrau.py
+	new file:   src/jungfrau_datasets.py
+
 Tag: V01-00-40
 2018-04-19 Mikhail S. Dubrovin
 - add support for jungfrau Id from config object

@@ -1,46 +1,21 @@
 #!/usr/bin/env python
 #------------------------------
 """
-  For specified dataset and detector (name pattern like in DetInfo object or alias)
-  prints jungfrau detector numerical name 
+  Prints jungfrau detector id name for specified dataset and detector name pattern or alias.
 
   Created on 2018-04-19 by Mikhail Dubrovin
 """
 #------------------------------
 
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 import psana
-from Detector.UtilsJungfrau import id_jungfrau #, id_jungfrau_from_config
+from Detector.UtilsJungfrau import id_jungfrau, psana_source, number_of_modules_in_jungfrau, string_from_source
+from Detector.jungfrau_datasets import DSNAMES, DETNAMES
 
-DSNAMES = (\
-  'exp=detdaq17:run=68',\
-  'exp=mfx00616:run=8',\
-  'exp=mfx05516:run=16',\
-  'exp=mfxlr1716:run=295',\
-  'exp=mfxlr5016:run=197',\
-  'exp=mfxx20515:run=2',\
-  'exp=mfx11116:run=697',\
-  'exp=mfxls0816:run=193',\
-  'exp=mecls3216:run=226',\
-  'exp=cxi11216:run=54',\
-  'exp=xcs11116:run=18',\
-  'exp=xcslr6316:run=17',\
-  'exp=xcsls3716:run=631',\
-  'exp=xcsx22015:run=555',\
-  'exp=xppls2416:run=247',\
-)
-
-DETNAMES = (\
-  'Jungfrau',\
-  'MfxEndstation.0:Jungfrau.0',\
-  'MfxEndstation.0:Jungfrau.1',\
-  'DetLab.0:Jungfrau.0',\
-  'MecTargetChamber.0:Jungfrau.0',\
-  'CxiEndstation.0:Jungfrau.0',\
-  'XcsEndstation.0:Jungfrau.0',\
-  'XcsEndstation.0:Jungfrau.1',\
-  'or their aliases, etc...',\
-)
+#------------------------------
 
 DSNAME_DEF = 'exp=xpptut15:run=410'
 DETNAME_DEF = 'Jungfrau'
@@ -51,22 +26,29 @@ DETNAME = sys.argv[2] if len(sys.argv) > 2 else DETNAME_DEF
 #------------------------------
 
 def usage():
-    return  'Usage: jungfrau_id <DSNAME> <DETNAME>\n'\
+    return  'Usage: jungfrau_id <DSNAME> [<DETNAME>]\n'\
            +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES)\
-           +'       <DETNAME> is like one of the list:\n         %s  ' % '\n         '.join(DETNAMES)
+           +'       <DETNAME> is optional parameterr like one of the list:\n         %s  ' % '\n         '.join(DETNAMES)
+
 #------------------------------
 
-def find_detector_runs() :    
-    print '%s\nJungfrau Id for dataset "%s" and name pattern %s' % (80*'_', DSNAME, DETNAME)
-    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: 
-        print usage()
-        #sys.exit()
-
+def jungfrau_id() :    
+    logger.info('%s\nFinding Jungfrau Id in dataset "%s" using name pattern %s' % (80*'_', DSNAME, DETNAME))
+    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
     ds = psana.DataSource(DSNAME)
-    print('id_jungfrau in %s : %s' % (DSNAME, id_jungfrau(ds.env(), DETNAME)))
+    source = psana_source(ds.env(), DETNAME) 
+    strsrc = string_from_source(source).replace(':','-')
+    npanels = number_of_modules_in_jungfrau(ds.env(), source)
+    logger.info('Found source: %s, number of panels: %s' %(strsrc, str(npanels)))
+    id_jf = id_jungfrau(ds.env(), source)
+    if id_jf == strsrc : logger.warning('WARNING: numeric id is not available')
+    logger.info('Jungfrau id: %s' % (id_jf))
 
 #------------------------------
 
-find_detector_runs()
+if __name__ == "__main__" :
+    #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    jungfrau_id()
 
 #------------------------------
