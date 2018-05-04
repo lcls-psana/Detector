@@ -1,58 +1,139 @@
 #!/usr/bin/env python
 #------------------------------
 """
-  Merges per panel gain and offset constants for specified experiment and and jungfrau detector
+  Merges panel gain and offset constants for specified experiment and jungfrau detector
 
   Created on 2018-04-30 by Mikhail Dubrovin
 """
 #------------------------------
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
+import os
 import sys
 import psana
+
 import Detector.UtilsJungfrau as ju 
 from Detector.jungfrau_datasets import DSNAMES, DETNAMES
-
-#------------------------------
-
-DSNAME_DEF  = 'exp=mecls3216:run=226'
-#DSNAME_DEF  = 'exp=xpptut15:run=430'
-DETNAME_DEF = 'Jungfrau'
-TSTAMP_DEF  = None
-
-DSNAME  = sys.argv[1]      if len(sys.argv) > 1 else DSNAME_DEF 
-DETNAME = sys.argv[2]      if len(sys.argv) > 2 else DETNAME_DEF
-TSTAMP  = int(sys.argv[3]) if len(sys.argv) > 3 else TSTAMP_DEF
+from pyimgalgos.GlobalUtils import print_command_line_parameters
+from time import time
+import PSCalib.GlobalUtils as gu # str_tstamp, deploy_file, log_rec_on_start, replace
 
 #------------------------------
 
 def usage():
-    return  'Usage: jungfrau_gain_constants <DSNAME> [<DETNAME>] [<TSTAMP>]\n'\
+    return  'Usage: jungfrau_gain_constants -d <DSNAME> [-s <DETNAME>] [-t <TSTAMP>] [-D]\n'\
            +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES[:3])\
            +'       <DETNAME> is optional parameterr like one of the list:\n         %s\n' % '\n         '.join(DETNAMES[:3])\
-           +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS,'\
-           +' which is used to select subdirectory: %s' % ju.DIRNAME
+           +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS - beginning of the validity range'\
+           +'\n\nTry: jungfrau_gain_constants -h' 
+
+#------------------------------
+
+def log_file_name(lfpath, dsname) :
+    # Returns str like /reg/g/psdm/logs/calibman/jungfrau_gain/2018/05/20180503-104619-dubrovin-22122.txt
+    t0_sec = time()
+    tstamp = gu.str_tstamp('%Y%m%dT%H%M%S', t0_sec) 
+    #year_month = gu.str_tstamp('%Y/%m', time_sec=None) 
+    sdsname =  dsname.replace('exp=','')
+    sdsname = sdsname.replace(':run=','-r')
+    year = gu.str_tstamp('%Y', time_sec=None) 
+    return '%s/%s/%s-%s-%s.txt' % (lfpath, year, tstamp, sdsname, gu.get_login())#, os.getpid())
+
+#------------------------------
+
+def config_logger_v0(log_fname, llev) :
+
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=llev)
+    #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+    #logging.basicConfig(format='%(levelname)s: %(message)s',\
+    #                    level=llev,\
+    #                    handlers=[fhandler, shandler]
+    #) 
+
+#------------------------------
+
+def config_logger(log_fname, loglev) :
+
+    llev = logging._levelNames.get(loglev, logging.DEBUG)
+    #print(logging._levelNames)
+
+    fmt = '%(levelname)s: %(name)s %(message)s' if llev == logging.DEBUG else\
+          '%(message)s'
+
+    formatter = logging.Formatter(fmt)
+
+    fhandler = logging.FileHandler(log_fname, 'w')
+    fhandler.setFormatter(formatter)
+    #fhandler.setLevel(logging.INFO) # llev
+
+    shandler = logging.StreamHandler()
+    shandler.setFormatter(formatter)
+    #shandler.setLevel(llev)
+
+    logger.addHandler(fhandler)
+    logger.addHandler(shandler)
+    logger.setLevel(llev)
 
 #------------------------------
 
 def jungfrau_gain_constants() :    
-    logger.info('%s\nGenerate gain-correction constants for Jungfrau'% (80*'_'))
-    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
+
+    print(80*'_')
+
+    parser = option_parser()
+
+    if len(sys.argv)==1 :
+        parser.print_help()
+        print '\n%s' % usage()
+        sys.exit('\nWARNING: MISSING ARGUMENTS\n')
+
+    (popts, pargs) = parser.parse_args()
+    nargs = len(pargs)
+    DSNAME = pargs[0] if nargs>0 else popts.dsname
+    DETNAME= pargs[1] if nargs>1 else popts.source
+    TSTAMP = pargs[2] if nargs>2 else popts.tstamp 
+    clbdir = popts.clbdir 
+    deploy = popts.deploy 
+    reposi = popts.reposi 
+    loglev = popts.loglev 
+    lfpath = popts.lfpath
+
+    defs = vars(parser.get_default_values())
+    DSNAME_DEF  = defs['dsname']
+    DETNAME_DEF = defs['source']
+    TSTAMP_DEF  = defs['tstamp']
+
+    #llev = logging._levelNames.get(loglev, logging.DEBUG)
+    verbose = loglev != 'INFO'
+    if verbose : print_command_line_parameters(parser)
+
+    log_fname = log_file_name(lfpath, DSNAME)
+    gu.create_path(log_fname, depth=6, mode=0777, verb=False)
+
+    #print('==== Start logging ====')
+    config_logger(log_fname, loglev)
+
+    logger.info('Generator of gain correction constants for Jungfrau')
+    logger.info(gu.log_rec_on_start())
+    logger.debug('Log file: %s' % log_fname)
 
     ds = psana.DataSource(DSNAME)
-    source = ju.psana_source(ds.env(), DETNAME) 
-    strsrc = ju.string_from_source(source).replace(':','-')
-    npanels = ju.number_of_modules_in_jungfrau(ds.env(), source)
-    logger.info('Dataset "%s" for name pattern %s' % (DSNAME, DETNAME)\
-               +' contains source: %s, number of panels: %s' %(strsrc, str(npanels)))
-    jfid = ju.id_jungfrau(ds.env(), source)
+    env = ds.env()
+    source = ju.psana_source(env, DETNAME) 
+    ssource = ju.string_from_source(source)
+    strsrc  = ssource.replace(':','-')
+    npanels = ju.number_of_modules_in_jungfrau(env, source)
+    logger.info('Dataset "%s", name pattern "%s"' % (DSNAME, DETNAME)\
+               +'\n      found source "%s" with number of panels: %s' %(strsrc, str(npanels)))
+    jfid = ju.id_jungfrau(env, source)
 
-    if jfid == strsrc : # e.g. 170505-149520170815-3d00b0_170505-149520170815-3d00f7
-        co = ju.jungfrau_config_object(ds.env(), source) 
+    co = ju.jungfrau_config_object(env, source) 
+    if co.Version < 3 : # for old versions of config jfid="MecTargetChamber.0-Jungfrau.0"
         msg = "WARNING: Jungfrau id is not available for config V%d. Constants can't be auto-generated." % co.Version
-        sys.exit(msg)
+        logger.warning(msg)
+        sys.exit()
 
     cdirs = ju.find_panel_calib_dirs(jfid, dname=ju.DIRNAME, tstamp=TSTAMP)
     if None in cdirs :        
@@ -61,17 +142,96 @@ def jungfrau_gain_constants() :
 
     dirs = ['%s/%s' % (ju.DIRNAME, d) for d in cdirs]
 
-    logger.info('Selected panel calibdirs:')
-    for d in dirs : logger.info('    %s' % d)
+    msg = 'Selected panel repository directories:'
+    for d in dirs : msg += '\n      %s' % d
+    logger.info(msg)
 
-    ju.merge_panel_constants(dirs, ifname='%s/g%d_gain.npy',   ofname='jf_pixel_gain',   ofmt='%.4f')
-    ju.merge_panel_constants(dirs, ifname='%s/g%d_offset.npy', ofname='jf_pixel_offset', ofmt='%.1f')
+    ctype_gain   = 'pixel_gain'
+    ctype_offset = 'pixel_offset'
+
+    exp      = env.experiment()
+    runnum   = env.configStore().get(psana.EventId).run()
+    calibdir = env.calibDir() if clbdir is None else clbdir
+    #ctypedir = '/some-path/calib/Jungfrau::CalibV1/CxiEndstation.0:Jungfrau.0/'
+    ctypedir = '%s/Jungfrau::CalibV1/%s' % (calibdir, ssource)
+    ofname   = '%d-end.data' % runnum
+    lfname   = None
+    verbos   = False
+
+    fprefix = '%s-r%04d_%s_%s'%(exp, runnum, ssource, jfid)
+    fprefix_g = '%s_%s'%(fprefix, ctype_gain)
+    fprefix_o = '%s_%s'%(fprefix, ctype_offset)
+
+    #----------
+    if True :
+        logger.info('Begin merging panel arrays')
+        ju.merge_panel_constants(dirs, ifname='%s/g%d_gain.npy',   ofname=fprefix_g, ofmt='%.4f')
+        ju.merge_panel_constants(dirs, ifname='%s/g%d_offset.npy', ofname=fprefix_o, ofmt='%.1f')
+    #else : logger.warning('Add option -M to merge panel arrays')
+
+    #----------
+
+    logger.debug('calibdir: %s'%calibdir)
+    logger.debug('destination file name: %s'%ofname)
+
+    #----------
+    if deploy :
+        logger.info('Deploy calib files under %s' % ctypedir)
+        gu.deploy_file('%s.txt'%fprefix_g, ctypedir, ctype_gain,   ofname, lfname, verbose)
+        gu.deploy_file('%s.txt'%fprefix_o, ctypedir, ctype_offset, ofname, lfname, verbose)
+    else :
+        logger.warning('Add option -D to deploy calib files under directory %s' % ctypedir)
+
+    #----------
+    #if reposi : 
+    #    logger.info('TODO: Insert calibration file in repository')
+    #else :
+    #    logger.warning('Add option -R to insert calibration file in repository')
+
+    logger.info('Log file: %s' % log_fname)
+    #fhandler.close()
 
 #------------------------------
 
+def option_parser() :
+    from optparse import OptionParser
+
+    d_dsname = 'exp=mecls3216:run=226' # 'exp=xpptut15:run=430'
+    d_source = 'Jungfrau'
+    d_tstamp = '20150101000000' # gu.str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=None)
+    d_deploy = False
+    d_reposi = False
+    d_clbdir = None
+    d_loglev = 'INFO'
+    d_lfpath = '/reg/g/psdm/logs/calibman/jungfrau_gain' # '/#YYYY-MM/fname.txt'
+
+    h_dsname='dataset name, default = %s' % d_dsname
+    h_source='input ndarray source name, default = %s' % d_source
+    h_tstamp='time stamp for beginning of the validity range in format YYYYMMDDHHMMSS, default (now) = %s' % d_tstamp
+    h_deploy='deploy files in experiment calib directory, default = %s' % d_deploy
+    h_reposi='add files to reposi repository calibration hdf5 file for this jungfrau detector, default = %s' % d_reposi
+    h_clbdir='non-default calib directory for deployment of calibration files, default = %s' % d_clbdir
+    h_loglev='dataset name, default = %s' % d_loglev
+    h_lfpath='path to log file, default = %s' % d_lfpath
+
+    parser = OptionParser(description='Generator of gain correction constants for Jungfrau', usage = usage())
+    parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
+    parser.add_option('-s', '--source', dest='source', default=d_source, action='store', type='string', help=h_source)
+    parser.add_option('-t', '--tstamp', dest='tstamp', default=d_tstamp, action='store', type='string', help=h_tstamp)
+    parser.add_option('-D', '--deploy', dest='deploy', default=d_deploy, action='store_true',           help=h_deploy)
+    parser.add_option('-R', '--reposi', dest='reposi', default=d_reposi, action='store_true',           help=h_reposi)
+    parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
+    parser.add_option('-L', '--loglev', dest='loglev', default=d_loglev, action='store', type='string', help=h_loglev)
+    parser.add_option('-P', '--lfpath', dest='lfpath', default=d_lfpath, action='store', type='string', help=h_lfpath)
+
+    return parser
+ 
+#------------------------------
+#------------------------------
+#------------------------------
+
 if __name__ == "__main__" :
-    #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
-    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     jungfrau_gain_constants()
+    sys.exit(0)
 
 #------------------------------

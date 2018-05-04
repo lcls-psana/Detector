@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-42
+2018-05-04 Mikhail S. Dubrovin
+- app/jungfrau_gain_constants - add file deployment and logger
+	modified:   app/jungfrau_gain_constants
+	modified:   src/UtilsJungfrau.py
+
 Tag: V01-00-41
 2018-05-01 Mikhail S. Dubrovin
 - add app/jungfrau_gain_constants for merging jungfrau panel constants

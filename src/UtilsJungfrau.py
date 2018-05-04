@@ -323,12 +323,13 @@ class JFPanelCalibDir() :
 def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None) :
     """Returns panel calibration directory from dnos (dirname objects) usint timestamp.
     """
-    logger.info('Find calibdir for panel: %s and timestamp: %s' % (panel, str(tstamp)))
+    msg = 'Find calibdir for panel: %s and timestamp: %s' % (panel, str(tstamp))
     sorted_lst = sorted([o for o in dnos if panel==o.pname])    
     size = len(sorted_lst)
 
-    logger.info('  Selected and sorted list of %d calibdirs:' % size)
-    for o in sorted_lst : print '    %s' % o.dname
+    msg += '\n  Selected and sorted list of %d calibdirs:' % size
+    for o in sorted_lst : msg += '\n    %s' % o.dname
+    logger.debug(msg)
 
     if   size == 0      : return None
     elif size == 1      : return sorted_lst[0].dname  # return 1st
@@ -336,22 +337,22 @@ def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None) :
     else : # select for time stamp
         for i,o in enumerate(sorted_lst[1:]) : 
             if o.int_ts > tstamp : return sorted_lst[i].dname # previous item in the list started from [1:]
-
     return sorted_lst[-1].dname # return latest
 
 #------------------------------
 
 def find_panel_calib_dirs(jfid, dname=DIRNAME, tstamp=None) :
 
-    logger.info('Find panel calib dirs for jungfrau %s' % jfid)
-    msg = '%s content:' % dname
+    msg = 'Find panel diretories for jungfrau %s\n      in repository %s' % (jfid, dname)
+    logger.info(msg)
+    msg = ''
     dnos = []
     for d in os.listdir(DIRNAME) :
         dno = JFPanelCalibDir(d)
         if not dno.is_valid : continue
         dnos.append(dno)
         msg += '\n  %s'%dno.dname
-    logger.info(msg)
+    logger.debug(msg)
 
     return [_find_panel_calib_dir(panel, dnos, tstamp) for panel in jfid.split('_')]
 
@@ -369,25 +370,25 @@ def merge_panel_constants(dirs, ifname='%s/g%d_gain.npy', ofname='jf_pixel_gain'
             if not os.path.lexists(fname) :
                 msg = 'FILE IS NOT AVAILABLE: %s' % fname
                 logger.warning(msg)
-                sys.exit(msg)                
+                sys.exit()                
             nda = np.load(fname)
-            logger.info(info_ndarr(nda, 'file: %s nda\n    ' % fname))
+            logger.debug(info_ndarr(nda, 'file %s nda\n     ' % fname))
             lst_segs.append(nda)
         nda_one_gain = np.stack(tuple(lst_segs))
-        logger.info(info_ndarr(nda_one_gain, 'nda_one_gain'))
+        logger.debug(info_ndarr(nda_one_gain, 'nda'))
 
         lst_gains.append(tuple(nda_one_gain))
 
     nda = np.stack(lst_gains)
-    logger.info(info_ndarr(nda, 'calib nda'))
+    logger.debug(info_ndarr(nda, 'merger nda'))
 
     #sh = (3,<nsegs>,512,1024)
 
     np.save('%s.npy'%ofname, nda)
-    logger.info('Save n-d array in file "%s"' % ('%s.npy'%ofname))
+    logger.info('Save file "%s"' % ('%s.npy'%ofname))
 
     save_txt('%s.txt'%ofname, nda, fmt=ofmt)
-    logger.info('Save n-d array in file "%s"' % ('%s.txt'%ofname))
+    logger.info('Save file "%s"' % ('%s.txt'%ofname))
 
 #------------------------------
 #------------------------------
