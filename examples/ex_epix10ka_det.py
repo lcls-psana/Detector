@@ -17,7 +17,7 @@ def dsname_source(tname) :
         sys.exit(0)
 
     
-def test_jungfrau_methods(tname) :
+def test_epix10ka_methods(tname) :
 
     dsname, src = dsname_source(tname)
 
@@ -199,7 +199,7 @@ def test_jungfrau_methods(tname) :
 if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     print '%s\nTest %s' % (80*'_', tname)
-    if tname in ('1', '2', '3') : test_jungfrau_methods(tname)
+    if tname in ('1', '2', '3') : test_epix10ka_methods(tname)
     else : sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit ('End of %s' % sys.argv[0])
 

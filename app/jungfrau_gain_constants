@@ -32,6 +32,8 @@ def usage():
 #------------------------------
 
 def log_file_name(lfpath, dsname) :
+    """Returns log file name
+    """
     # Returns str like /reg/g/psdm/logs/calibman/jungfrau_gain/2018/05/20180503-104619-dubrovin-22122.txt
     t0_sec = time()
     tstamp = gu.str_tstamp('%Y%m%dT%H%M%S', t0_sec) 
@@ -44,7 +46,8 @@ def log_file_name(lfpath, dsname) :
 #------------------------------
 
 def config_logger_v0(log_fname, llev) :
-
+    """logger.basicConfig
+    """
     logging.basicConfig(format='%(levelname)s: %(message)s', level=llev)
     #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
     #logging.basicConfig(format='%(levelname)s: %(message)s',\
@@ -55,31 +58,30 @@ def config_logger_v0(log_fname, llev) :
 #------------------------------
 
 def config_logger(log_fname, loglev) :
-
+    """Configure logger for stream and file handlers
+    """
     llev = logging._levelNames.get(loglev, logging.DEBUG)
-    #print(logging._levelNames)
-
     fmt = '%(levelname)s: %(name)s %(message)s' if llev == logging.DEBUG else\
           '%(message)s'
-
     formatter = logging.Formatter(fmt)
 
-    fhandler = logging.FileHandler(log_fname, 'w')
-    fhandler.setFormatter(formatter)
-    #fhandler.setLevel(logging.INFO) # llev
+    # Create logfile for any logging level excluding DEBUG
+    if llev != logging.DEBUG : 
+        fhandler = logging.FileHandler(log_fname, 'w')
+        fhandler.setFormatter(formatter)
+        logger.addHandler(fhandler)
 
     shandler = logging.StreamHandler()
     shandler.setFormatter(formatter)
-    #shandler.setLevel(llev)
-
-    logger.addHandler(fhandler)
     logger.addHandler(shandler)
+
     logger.setLevel(llev)
 
 #------------------------------
 
 def jungfrau_gain_constants() :    
-
+    """Main script for CL
+    """
     print(80*'_')
 
     parser = option_parser()
@@ -96,9 +98,10 @@ def jungfrau_gain_constants() :
     TSTAMP = pargs[2] if nargs>2 else popts.tstamp 
     clbdir = popts.clbdir 
     deploy = popts.deploy 
-    reposi = popts.reposi 
+    upload = popts.upload 
     loglev = popts.loglev 
     lfpath = popts.lfpath
+    repdir = popts.repdir
 
     defs = vars(parser.get_default_values())
     DSNAME_DEF  = defs['dsname']
@@ -126,7 +129,7 @@ def jungfrau_gain_constants() :
     strsrc  = ssource.replace(':','-')
     npanels = ju.number_of_modules_in_jungfrau(env, source)
     logger.info('Dataset "%s", name pattern "%s"' % (DSNAME, DETNAME)\
-               +'\n      found source "%s" with number of panels: %s' %(strsrc, str(npanels)))
+               +'\n      found source "%s" with number of panels: %s' %(ssource, str(npanels)))
     jfid = ju.id_jungfrau(env, source)
 
     co = ju.jungfrau_config_object(env, source) 
@@ -183,10 +186,19 @@ def jungfrau_gain_constants() :
         logger.warning('Add option -D to deploy calib files under directory %s' % ctypedir)
 
     #----------
-    #if reposi : 
-    #    logger.info('TODO: Insert calibration file in repository')
-    #else :
-    #    logger.warning('Add option -R to insert calibration file in repository')
+    if upload : 
+        #dcs add <fname>.h5 -t pixel_gain -f <ifname>.txt -T 0 -m "comment"
+        msg = 'Commands to upload calibration constants in repository %s:' % repdir
+        #cmt = 'Id found in %s for %s' % (DSNAME, ssource)
+        cmt = 'See command: jungfrau_gain_constants -d %s -U' % (DSNAME)
+        fmt = 'dcs add %s/jungfrau-%s.h5 -t %s -f %s.txt -T 1500000000 -m "%s" -e %s -r %s -d %s'
+        msg += '\n==== upload command for %s:\n' % ctype_gain
+        msg += fmt % (repdir, jfid, ctype_gain,   fprefix_g, cmt, exp, runnum, ssource)
+        msg += '\n==== upload command for %s:\n' % ctype_offset
+        msg += fmt % (repdir, jfid, ctype_offset, fprefix_o, cmt, exp, runnum, ssource)
+        logger.info(msg)
+    else :
+        logger.warning('Add option -R to learn about uploading constants in repository %s' % repdir)
 
     logger.info('Log file: %s' % log_fname)
     #fhandler.close()
@@ -200,29 +212,32 @@ def option_parser() :
     d_source = 'Jungfrau'
     d_tstamp = '20150101000000' # gu.str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=None)
     d_deploy = False
-    d_reposi = False
+    d_upload = False
     d_clbdir = None
     d_loglev = 'INFO'
     d_lfpath = '/reg/g/psdm/logs/calibman/jungfrau_gain' # '/#YYYY-MM/fname.txt'
+    d_repdir = '/reg/g/psdm/detector/calib/jungfrau'
 
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
     h_tstamp='time stamp for beginning of the validity range in format YYYYMMDDHHMMSS, default (now) = %s' % d_tstamp
     h_deploy='deploy files in experiment calib directory, default = %s' % d_deploy
-    h_reposi='add files to reposi repository calibration hdf5 file for this jungfrau detector, default = %s' % d_reposi
+    h_upload='add files to reposi uploadtory calibration hdf5 file for this jungfrau detector, default = %s' % d_upload
     h_clbdir='non-default calib directory for deployment of calibration files, default = %s' % d_clbdir
     h_loglev='dataset name, default = %s' % d_loglev
     h_lfpath='path to log file, default = %s' % d_lfpath
+    h_repdir='repository of hdf5 files, default = %s' % d_repdir
 
     parser = OptionParser(description='Generator of gain correction constants for Jungfrau', usage = usage())
     parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
     parser.add_option('-s', '--source', dest='source', default=d_source, action='store', type='string', help=h_source)
     parser.add_option('-t', '--tstamp', dest='tstamp', default=d_tstamp, action='store', type='string', help=h_tstamp)
     parser.add_option('-D', '--deploy', dest='deploy', default=d_deploy, action='store_true',           help=h_deploy)
-    parser.add_option('-R', '--reposi', dest='reposi', default=d_reposi, action='store_true',           help=h_reposi)
+    parser.add_option('-U', '--upload', dest='upload', default=d_upload, action='store_true',           help=h_upload)
     parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
     parser.add_option('-L', '--loglev', dest='loglev', default=d_loglev, action='store', type='string', help=h_loglev)
     parser.add_option('-P', '--lfpath', dest='lfpath', default=d_lfpath, action='store', type='string', help=h_lfpath)
+    parser.add_option('-R', '--repdir', dest='repdir', default=d_repdir, action='store', type='string', help=h_repdir)
 
     return parser
  

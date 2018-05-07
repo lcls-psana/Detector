@@ -9,9 +9,9 @@ import PSCalib.GlobalUtils as gu
 #------------------------------
 
 def dsname_source(tname) :
-    if   tname=='1': return 'exp=cxi11216:run=9', 'CxiEndstation.0:Jungfrau.0' ## 9,11,12 - dark for gain modes
-    elif tname=='2': return 'exp=xcsx22015:run=508', 'XcsEndstation.0:Jungfrau.0' # dark: 503, 504, 505; 508, 509, 510; 516, 517, 518
-    elif tname=='3': return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0' # 513 data with variable gain
+    if   tname=='1': return 'exp=mecls3216:run=2',   'MecTargetChamber.0:Jungfrau.0' # 170505-149520170815-3d00b0_170505-149520170815-3d00f7 -> M068, M088
+    elif tname=='2': return 'exp=mfxls0816:run=193', 'MfxEndstation.0:Jungfrau.1' # 171113-154920171025-3d00fb                            -> M044
+    elif tname=='3': return 'exp=mfxlr1716:run=1',   'MfxEndstation.0:Jungfrau.0' # 171113-154920171025-3d00b0_171113-154920171025-3d00f7
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -21,6 +21,7 @@ def test_jungfrau_methods(tname) :
 
     dsname, src = dsname_source(tname)
 
+    psana.setOption('psana.calib-dir', './calib')
     ds  = psana.DataSource(dsname)
     evt = ds.events().next()
     env = ds.env()
@@ -34,14 +35,16 @@ def test_jungfrau_methods(tname) :
     for key in evt.keys() : print key
 
     ##-----------------------------
-
     par = nrun # evt or nrun
     par = evt
     det = psana.Detector(src, env)
     
     ins = det.instrument()
     print 80*'_', '\nInstrument: ', ins
-    
+    print 'src:', src    
+
+    det.set_print_bits(0)
+
     #det.set_print_bits(511)
     #det.set_def_value(-5.)
     #det.set_mode(1)
@@ -55,15 +58,15 @@ def test_jungfrau_methods(tname) :
     print 'size of ndarray: %d' % det.size(par)
     print 'ndim of ndarray: %d' % det.ndim(par)
     
-    peds = det.pedestals(par)
-    print_ndarr(peds, 'pedestals')
+    #peds = det.pedestals(par)
+    #print_ndarr(peds, 'pedestals')
     
-    rms = det.rms(par)
-    print_ndarr(rms, 'rms')
+    #rms = det.rms(par)
+    #print_ndarr(rms, 'rms')
     
-    mask = det.mask(par, calib=False, status=True,\
-           edges=False, central=False, unbond=False, unbondnbrs=False)
-    print_ndarr(mask, 'mask')
+    #mask = det.mask(par, calib=False, status=True,\
+    #       edges=False, central=False, unbond=False, unbondnbrs=False)
+    #print_ndarr(mask, 'mask')
     
     gain = det.gain(par)
     print_ndarr(gain, 'gain')
@@ -71,6 +74,10 @@ def test_jungfrau_methods(tname) :
     offset = det.offset(par)
     print_ndarr(offset, 'offset')
     
+    ######################
+    sys.exit ('TEST EXIT')
+    ######################
+
     bkgd = det.bkgd(par)
     print_ndarr(bkgd, 'bkgd')
     
@@ -116,6 +123,8 @@ def test_jungfrau_methods(tname) :
     if nda_raw is None :
         print 'Detector data IS NOT FOUND in %d events' % i
         sys.exit('FURTHER TEST IS TERMINATED')
+
+    nda_cdata = nda_raw
         
     ##-----------------------------
     #sys.exit('TEST EXIT')
@@ -125,13 +134,13 @@ def test_jungfrau_methods(tname) :
     #data_sub_peds = nda_raw - peds if peds is not None else nda_raw
     #print_ndarr(data_sub_peds, 'data - peds')
     
-    nda_cdata = det.calib(evt)
-    print_ndarr(nda_cdata, 'calibrated data')
+#    nda_cdata = det.calib(evt)
+#    print_ndarr(nda_cdata, 'calibrated data')
     
-    mask_geo = det.mask_geo(par, mbits=3, width=1)
-    print_ndarr(mask_geo, 'mask_geo')
+#    mask_geo = det.mask_geo(par, mbits=3, width=1)
+#    print_ndarr(mask_geo, 'mask_geo')
 
-    nda_cdata*=mask_geo
+#    nda_cdata*=mask_geo
     
     #mask_geo.shape = (32,185,388)
     #print mask_geo
@@ -139,8 +148,8 @@ def test_jungfrau_methods(tname) :
     pixel_size = det.pixel_size(par)
     print '%s\npixel size: %s' % (80*'_', str(pixel_size))
     
-    ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-    print 'Detector origin indexes: ix, iy:', ipx, ipy
+#    ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
+#    print 'Detector origin indexes: ix, iy:', ipx, ipy
     ##-----------------------------
     
     #img_arr = data_sub_peds
@@ -172,7 +181,7 @@ def test_jungfrau_methods(tname) :
     import pyimgalgos.GlobalGraphics as gg
     
     ave, rms = img.mean(), img.std()
-    gg.plotImageLarge(img, amp_range=(-20,20), figsize=(13,12)) # amp_range=(ave-1*rms, ave+2*rms))
+    gg.plotImageLarge(img, amp_range=None, figsize=(13,12)) # amp_range=(ave-1*rms, ave+2*rms))
     
     ##-----------------------------
     hnda = nda_raw 

@@ -254,13 +254,14 @@ def id_jungfrau_from_config(co, iseg=None) :
 #------------------------------
 
 def psana_source(env, src) :
-    """Returns psana.Source from string detector name or alias or psana.Source."""
+    """Returns psana.Source from string detector name or alias or psana.Source or psana.DetInfo."""
 
     import psana
 
     source = None
-    if   isinstance(src, psana.Source) : source = src
-    elif isinstance(src, str)          : 
+    if   isinstance(src, psana.Source)  : source = src
+    elif isinstance(src, psana.DetInfo) : source = psana.Source(src) # complete_detname_from_detinfo(src)
+    elif isinstance(src, str) : 
         detname = complete_detname(env, src)
         if detname is None : return None
         source = psana.Source(detname)
@@ -272,6 +273,7 @@ def psana_source(env, src) :
 
 def id_jungfrau(env, src, iseg=None) :
     """Returns (str) Id for jungfrau detector using env and psana.Source (or str) objects"""
+    #print 'XXX: id_jungfrau src:', type(src)
     source = psana_source(env, src)
     co = get_jungfrau_config_object(env, source)
     jfid = id_jungfrau_from_config(co, iseg)
