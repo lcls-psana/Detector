@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+
+#------------------------------
+
+import os
+import sys
+import psana
+from time import time # , localtime, strftime
+from Detector.PyDataAccess import time_pars_evt # get_jungfrau_data_object, get_jungfrau_config_object, get_jungfrau_gain_mode_object
+import PSCalib.GlobalUtils as gu
+from pyimgalgos.GlobalUtils import print_ndarr, divide_protected, print_command_line_parameters, reshape_to_2d
+
+#import numpy as np
+#from Detector.GlobalUtils import print_ndarr, divide_protected
+
+#------------------------------
+
+def dump_detector_data() :
+    parser = option_parser()
+    (popts, pargs) = parser.parse_args()
+    print_command_line_parameters(parser)
+
+    if popts.dsname is None : raise IOError('WARNING: option "-d <dataset>" MUST be specified.')
+    if popts.source is None : raise IOError('WARNING: option "-s <source>" MUST be specified.')
+
+    dsname = popts.dsname
+    src    = popts.source
+    ofname = popts.ofname
+    format = popts.format
+    events = popts.events
+    evskip = popts.evskip
+    clbdir = popts.clbdir
+    dosave = popts.dosave
+    verbos = popts.verbos
+
+    if clbdir is not None : psana.setOption('psana.calib-dir', clbdir)
+
+    ds  = psana.DataSource(dsname)
+    #evt = ds.events().next()
+    env = ds.env()
+    exp = env.experiment()
+ 
+    det = psana.Detector(src, env)
+
+    t0_sec = time()
+    tdt = t0_sec
+    SKIP   = evskip
+    EVENTS = events + SKIP
+
+    for i, evt in enumerate(ds.events()) :        
+        if i<SKIP    : continue
+        if not i<EVENTS : break
+        if evt is None : continue
+
+	#nda = det.raw(evt)
+	nda = det.calib(evt)
+
+        if verbos & 2 :
+          if (i < 6) \
+          or (i < 51 and not i%10) \
+          or (i < 1001 and not i%100) \
+          or (not i%1000) :
+            tsec = time()
+            dt   = tsec - tdt
+            tdt  = tsec
+            print 'Event: %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
+            print_ndarr(nda,'  nda')
+
+        cmts = ['DATASET %s' % dsname,
+                'EVENT   %d' % i]
+        tsec, tnsec, fid, tsdate, tstime = time_pars_evt(evt)
+        runnum = evt.run()
+        template = gu.calib_fname_template(exp, runnum, tsec, tnsec, fid, tsdate, tstime, src, i, ofname)
+        template = template.rstrip('-%s').replace(':','_')
+	#print('XXX  fname: %s' % template)
+        addmetad = True
+        if dosave : det.save_asdaq(template, nda, cmts+['ARR_TYPE  data'], format, verbos, addmetad)
+ 
+#------------------------------
+
+def usage() :
+    proc_name = os.path.basename(sys.argv[0])
+    return '\n%s -d <dataset> [-s <source>] [-f <file-name-template>] [-F <format>]' % proc_name\
+          +'\n       [-n <events-collect>] [-m <events-skip>] [-v <verbosity-bitword>] [-C <clbdir>] [-S]'\
+          +'\n\nE.g.: %s -d exp=xpptut15:run=260 -s XcsEndstation.0:Epix100a.1 -n 20' % proc_name
+
+#------------------------------
+
+def option_parser() :
+    from optparse import OptionParser
+
+    #d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
+    d_ofname = 'work/nda-#exp-#run-#src-#evts.txt'
+    d_dsname = 'exp=xpptut15:run=260'
+    d_source = 'XcsEndstation.0:Epix100a.1'
+    d_format = '%6.2f'
+    d_events = 10
+    d_evskip = 0
+    d_verbos = 0377
+    d_clbdir = None
+    d_dosave = True
+
+    h_dsname='dataset name, default = %s' % d_dsname
+    h_source='input ndarray source name, default = %s' % d_source
+    h_ofname='output file name template, default = %s' % d_ofname
+    h_format='output file name template, default = %s' % d_format
+    h_events='number of events to collect, default = %s' % d_events
+    h_evskip='number of events to skip, default = %s' % d_evskip
+    h_verbos='control bit-word for verbosity, default = (oct) %s' % oct(d_verbos)
+    h_clbdir='calib directory for deployment of calibration files, default = %s' % d_clbdir
+    h_dosave='do save data file per event, default = %s' % d_dosave
+
+    parser = OptionParser(description=usage(), usage='Dump detector data array in files')
+    parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
+    parser.add_option('-s', '--source', dest='source', default=d_source, action='store', type='string', help=h_source)
+    parser.add_option('-f', '--ofname', dest='ofname', default=d_ofname, action='store', type='string', help=h_ofname)
+    parser.add_option('-F', '--format', dest='format', default=d_format, action='store', type='string', help=h_format)
+    parser.add_option('-n', '--events', dest='events', default=d_events, action='store', type='int',    help=h_events)
+    parser.add_option('-m', '--evskip', dest='evskip', default=d_evskip, action='store', type='int',    help=h_evskip)
+    parser.add_option('-v', '--verbos', dest='verbos', default=d_verbos, action='store', type='int',    help=h_verbos)
+    parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
+    parser.add_option('-S', '--dosave', dest='dosave', default=d_dosave, action='store_false',          help=h_dosave)
+
+    return parser
+ 
+#------------------------------
+
+if __name__ == "__main__" :
+    if len(sys.argv)==1 : print '\n%s' % usage()
+    dump_detector_data()
+    sys.exit(0)
+
+#------------------------------

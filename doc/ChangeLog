@@ -7,6 +7,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-44
+2018-06-05 Mikhail S. Dubrovin
+- add app/dump_detector_data to save area detector data in files - tmp for lcls2
+- add old test examples as examples/test-YYYY-MM-DD-*.py
+
 Tag: V01-00-43
 2018-05-07 Mikhail S. Dubrovin
 - update examples for jungfrau
