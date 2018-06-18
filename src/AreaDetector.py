@@ -370,6 +370,20 @@ class AreaDetector(object):
 
 ##-----------------------------
 
+    def is_epix10k(self) :
+        """Returns (bool) True/False for epix10k/other detector type
+        """
+        return self.dettype == gu.EPIX10K
+
+##-----------------------------
+
+    def is_epix100a(self) :
+        """Returns (bool) True/False for epix100a/other detector type
+        """
+        return self.dettype == gu.EPIX100A
+
+##-----------------------------
+
     def ndim(self, par) : # par = evt or runnum(int)
         """Returns number of dimensions of current detector pixel numpy array.
 
@@ -886,20 +900,26 @@ class AreaDetector(object):
 
            - par    : int or psana.Event() - integer run number or psana event object.
            - nda    : np.array - input: raw data with subtracted pedestals, output: cm corrected data.
-           - cmpars : list - common mode parameters, ex.: (1,50,50,100).
+           - cmpars : list - common mode parameters, ex.: (1,50,50,100). cmpars=0 - common mode is not applied.
                     By default uses parameters from calib directory. 
 
            Returns
 
            - I/O parameter nda : np.array - per-pixel corrected intensities.
         """
+
+        # turn off common mode correction
+        if cmpars==0 : return
+
         rnum = self.runnum(par)
         shape0 = nda.shape
         nda.shape = (nda.size,)
 
-        if cmpars is not None and cmpars[0] in [6,8] :
+        _cmpars = self.common_mode(rnum) if cmpars is None else cmpars
+
+        if _cmpars is not None and _cmpars[0] in [6,8] :
             # go into python
-            self.pyda.common_mode_apply(cmpars, nda, **kwargs)
+            self.pyda.common_mode_apply(_cmpars, nda, **kwargs)
         else:
             # go into cpp
             if cmpars is not None:
@@ -972,6 +992,7 @@ class AreaDetector(object):
            - evt    : psana.Event() - psana event object.
            - cmpars : list - common mode parameters, ex.: (1,50,50,100)
                     By default uses parameters from calib directory. 
+                    0 - common mode is not applied. 
            - mbits  : int - mask control bit-word.  optional.
                  defaults to 1.  Bit definitions:
 

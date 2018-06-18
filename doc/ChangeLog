@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-45
+2018-06-18 Mikhail S. Dubrovin
+- common_mode_apply - add option to use default calib file parameters for cm algorithms 6(epix) and 8(pnccd)
+
 Tag: V01-00-44
 2018-06-05 Mikhail S. Dubrovin
 - add app/dump_detector_data to save area detector data in files - tmp for lcls2

@@ -22,7 +22,7 @@ from Detector.UtilsPNCCD import common_mode_pnccd
 
 #------------------------------
 
-EVENTS  = 10
+EVENTS  = 5
 
 DSNAME  = 'exp=sxrx22915:run=104'
 DETNAME = 'Camp.0:pnCCD.1' # 'pnccd'
@@ -54,7 +54,9 @@ def test_pnccd() :
 
 #------------------------------
 
-def test_pnccd_graph() :
+def test_pnccd_graph(tname) :
+
+    test_description(tname)
 
     from pyimgalgos.GlobalGraphics import fig_axes, plot_imgcb, show #, hist1d
     from pyimgalgos.Graphics import figure, add_axes, hist
@@ -80,46 +82,52 @@ def test_pnccd_graph() :
 
         if evt is None : continue
 
-        #--------------------
-        # Default corrections
-        #nda = d.calib(evt) # cmpars=(3.  348.  348.  128.) - def
-
-        #--------------------
-        # DIY corrections
-        if peds is None : peds = d.pedestals(evt)
+        nda = None
         if mask is None : mask = d.mask(evt, calib=True, status=True)
-        #if mask is None : mask = d.mask_calib(evt)
-        #if mask is None : mask = d.status_as_mask(evt)
-        if gain is None : gain = d.gain(evt)
+        print_ndarr(d.common_mode(evt), name='common_mode parameters')
 
-        raw = d.raw(evt)
-        if raw is None : continue
-        nda = np.array(raw, dtype=np.float32)
+        #--------------------
+        # Default correction
+        if   tname=='2' : nda = d.calib(evt) # cmpars=(8,5,500) - def
+        elif tname=='3' : nda = d.calib(evt, cmpars=0) # - NO cm correction
+        elif tname=='4' : nda = d.calib(evt, cmpars=(8,5,500), mask=mask) # explicit new cmpars
+        elif tname=='5' : nda = d.calib(evt, cmpars=(3,348,348,128), mask=mask) # explicit old
+        elif tname=='10' :
+            #--------------------
+            # DIY corrections
+            if peds is None : peds = d.pedestals(evt)
+            if mask is None : mask = d.mask(evt, calib=True, status=True)
+            #if mask is None : mask = d.mask_calib(evt)
+            #if mask is None : mask = d.status_as_mask(evt)
+            if gain is None : gain = d.gain(evt)
+            
+            raw = d.raw(evt)
+            if raw is None : continue
+            nda = np.array(raw, dtype=np.float32)
+            
+            if peds is not None : nda -= peds
+            
+            #nda = np.multiply(nda, mask)
+            if gain is not None : nda *= gain
 
-        if peds is not None : nda -= peds
+            #common_mode_pnccd(nda, None, cmp=(8,1,500))  # median in rows 128                  (0.24 s/evt)
+            #common_mode_pnccd(nda, mask, cmp=(8,1,500))  # median in rows 128 - main cm corr   (0.36 s/evt)
+            #common_mode_pnccd(nda, mask, cmp=(8,2,500))  # median in rows 512                  (0.11 s/evt)
+            #common_mode_pnccd(nda, None, cmp=(8,2,500))  # median in rows 512                  (0.08 s/evt)
+            #common_mode_pnccd(nda, mask, cmp=(8,4,500))  # median in columns 512               (0.12 s/evt)
+            #common_mode_pnccd(nda, None, cmp=(8,4,500))  # median in columns 512               (0.09 s/evt)
+            #common_mode_pnccd(nda, mask, cmp=(8,8,500))  # median in banks_512x128             (0.16 s/evt)
+            #common_mode_pnccd(nda, None, cmp=(8,8,500))  # median in banks_512x128             (0.25 s/evt) 
+            common_mode_pnccd(nda, mask, cmp=(8,5,500))   # median in rows 128 and columns 512  (0.40 s/evt) THE BEST
+            #common_mode_pnccd(nda, mask, cmp=(8,7,500))  # median combined                     (0.65 s/evt)
+            #common_mode_pnccd(nda, mask, cmp=(8,13,500)) # median combined                     (0.43 s/evt)
 
-        #nda = np.multiply(nda, mask)
-        if gain is not None : nda *= gain
+            # Implementation through Detector interface:
+            #d.common_mode_apply(evt, nda, (3, 348, 348, 128))   # old C++ correction            (0.11 s/evt)
+            #d.common_mode_apply(evt, nda, (8,5,500), mask=mask) # new py                        (0.41 s/evt)
 
         #--------------------
         t0_sec = time()
-
-        #common_mode_pnccd(nda, None, cmp=(8,1,500))  # median in rows 128                  (0.24 s/evt)
-        #common_mode_pnccd(nda, mask, cmp=(8,1,500))  # median in rows 128 - main cm corr   (0.36 s/evt)
-        #common_mode_pnccd(nda, mask, cmp=(8,2,500))  # median in rows 512                  (0.11 s/evt)
-        #common_mode_pnccd(nda, None, cmp=(8,2,500))  # median in rows 512                  (0.08 s/evt)
-        #common_mode_pnccd(nda, mask, cmp=(8,4,500))  # median in columns 512               (0.12 s/evt)
-        #common_mode_pnccd(nda, None, cmp=(8,4,500))  # median in columns 512               (0.09 s/evt)
-        #common_mode_pnccd(nda, mask, cmp=(8,8,500))  # median in banks_512x128             (0.16 s/evt)
-        #common_mode_pnccd(nda, None, cmp=(8,8,500))  # median in banks_512x128             (0.25 s/evt) 
-        common_mode_pnccd(nda, mask, cmp=(8,5,500))   # median in rows 128 and columns 512  (0.40 s/evt) THE BEST
-        #common_mode_pnccd(nda, mask, cmp=(8,7,500))  # median combined                     (0.65 s/evt)
-        #common_mode_pnccd(nda, mask, cmp=(8,13,500)) # median combined                     (0.43 s/evt)
-
-        # Implementation through Detector interface:
-        #d.common_mode_apply(evt, nda, (3, 348, 348, 128))   # old C++ correction            (0.11 s/evt)
-        #d.common_mode_apply(evt, nda, (8,5,500), mask=mask) # new py                        (0.41 s/evt)
-        #nda = d.calib(evt, (8,5,500), mask=mask) # generic calib method with mask parameter (0.45 s/evt)
 
         print 'ex_pnccd_plot_in_evloop: CM consumed time (sec) =', time()-t0_sec
         #--------------------
@@ -175,12 +183,27 @@ def test_pnccd_graph() :
 
 #------------------------------
 
+def test_description(tname=None) :
+    msg = '%s\nAdditional parameter:' % (80*'_')
+    df = tname==None
+    if df or tname == '1' : msg += '\n 1 - print raw data and calibration constants'
+    if df or tname == '2' : msg += '\n 2 - image for d.calib(evt) - default'
+    if df or tname == '3' : msg += '\n 3 - image for d.calib(evt, cmpars=0) - NO common mode correction'
+    if df or tname == '4' : msg += '\n 4 - image for d.calib(evt, cmpars=(8,5,500), mask=mask) - explicit new cmpars' 
+    if df or tname == '5' : msg += '\n 5 - image for d.calib(evt, cmpars=(3,348,348,128), mask=mask) - explicit old'
+    if df or tname =='10' : msg += '\n10 - image for DIY correction'
+    print(msg)
+
+#------------------------------
+
 if __name__ == "__main__" :
     print 80*'_'
-    tname = sys.argv[1] if len(sys.argv)>1 else '2'
+    tname = sys.argv[1] if len(sys.argv)>1 else None
     if   tname == '1' : test_pnccd()
-    elif tname == '2' : test_pnccd_graph()
-    else : sys.exit ('Not recognized test name: "%s"' % tname)
+    elif tname in ('2','3','4','5','10') : test_pnccd_graph(tname)
+    else :
+        test_description(tname=None)
+        sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit ('End of %s' % sys.argv[0])
 
 #------------------------------
