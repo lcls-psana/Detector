@@ -4,7 +4,7 @@ import os
 import sys
 import psana
 import numpy as np
-import Image
+from PIL import Image
 from time import time
 from Detector.GlobalUtils import print_ndarr
 from PSCalib.GeometryAccess import img_from_pixel_arrays

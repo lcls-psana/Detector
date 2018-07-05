@@ -34,8 +34,12 @@ DETNAME = 'Camp.0:pnCCD.1' # 'pnccd'
 #------------------------------
 
 def test_pnccd() :
+
+    #psana.setOption('psana.calib-dir', './calib')
+
     ds = psana.DataSource(DSNAME)
     d  = psana.Detector(DETNAME)
+    #d.set_print_bits(0177777)
     img = None
     for nev,evt in enumerate(ds.events()):
     

@@ -7,6 +7,21 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-46
+2018-07-05 Mikhail S. Dubrovin
+- add support for epix10ka constants, det.calib etc.
+	modified:   doc/ChangeLog
+	modified:   examples/ex_epix10ka_config.py
+	modified:   examples/ex_epix10ka_det.py
+	modified:   examples/ex_epix10ka_images.py
+	new file:   examples/ex_epix10ka_merge_constants.py
+	modified:   examples/ex_pnccd_plot_in_evloop.py
+	modified:   examples/ex_save_mec_cspad2x2_imges_in_tiff.py
+	modified:   examples/ex_save_mec_cspad_quad_imges_in_tiff.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDataAccess.py
+	modified:   src/UtilsEpix.py
+
 Tag: V01-00-45
 2018-06-18 Mikhail S. Dubrovin
 - common_mode_apply - add option to use default calib file parameters for cm algorithms 6(epix) and 8(pnccd)

@@ -194,6 +194,7 @@ from   Detector.PyDetectorAccess import PyDetectorAccess
 #from   Detector.GlobalUtils import print_ndarr
 
 from Detector.UtilsJungfrau import calib_jungfrau
+from Detector.UtilsEpix import calib_epix10ka
 
 ##-----------------------------
 
@@ -370,10 +371,10 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def is_epix10k(self) :
-        """Returns (bool) True/False for epix10k/other detector type
+    def is_epix10ka(self) :
+        """Returns (bool) True/False for epix10ka/other detector type
         """
-        return self.dettype == gu.EPIX10K
+        return self.dettype == gu.EPIX10KA
 
 ##-----------------------------
 
@@ -508,7 +509,8 @@ class AreaDetector(object):
             #      (arr.shape, arr.size, self._shape_daq_(rnum), self.size(rnum))
             #print msg
             #raise IOError(msg)
-            return arr # return array as is
+            return arr # return array as is, works for Jungfrau
+        if self.dettype == gu.EPIX10KA : return arr # as is
 
         shape = self._shape_daq_(rnum)
 
@@ -1010,6 +1012,7 @@ class AreaDetector(object):
            - np.array - per-pixel array of calibrated intensities from data.
         """
         if self.is_jungfrau() : return calib_jungfrau(self, evt, self.source, cmpars)
+        if self.is_epix10ka() : return calib_epix10ka(self, evt, self.source)
 
         rnum = self.runnum(evt)
 
@@ -1487,7 +1490,7 @@ class AreaDetector(object):
         shape = nda.shape
         if self.reshape_to_3d and len(shape)==3 and shape[0]==1: nda.shape = shape[1:]
 
-        if len(nda.shape)==2 and not(self.dettype in (gu.EPIX100A, gu.JUNGFRAU)) :
+        if len(nda.shape)==2 and not(self.dettype in (gu.EPIX100A, gu.EPIX10KA, gu.JUNGFRAU)) :
             return nda
 
         if self.is_cspad2x2() : nda = two2x1ToData2x2(nda) # convert to DAQ shape for cspad2x2

@@ -1,4 +1,4 @@
-####!/usr/bin/env python
+#!/usr/bin/env python
 
 import sys
 import numpy as np
@@ -9,14 +9,17 @@ from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
 
 import pyimgalgos.GlobalGraphics as gg
+import Detector.UtilsEpix as ue
 #import pyimgalgos.Graphics as gr
 
 #------------------------------
 
 def test_epix10ka_config(tname) :
     run = tname
+
     dsname =  'exp=mfxx32516:run=%s' % run
     s_src = 'MfxEndstation.0:Epix10ka.0'
+    #s_src = 'MfxEndstation.0:Epix10ka.1'
     src = psana.Source(s_src)
     runnum = int(run)
 
@@ -36,7 +39,6 @@ def test_epix10ka_config(tname) :
     print 'asicAcqWidth           10000:', co.asicAcqWidth()
     print 'asicGR                 0:', co.asicGR()
     print 'asicGRControl          0:', co.asicGRControl()
-    print_ndarr(co.asicPixelConfigArray(), 'asicPixelConfigArray   ')
     print 'asicPpbe               0:', co.asicPpbe()
     print 'asicPpbeControl        0:', co.asicPpbeControl()
     print 'asicPpmat              1:', co.asicPpmat()
@@ -61,11 +63,35 @@ def test_epix10ka_config(tname) :
     print 'scopeArmMode 2:', co.scopeArmMode()
     print 'usePgpEvr    1:', co.usePgpEvr()
 
+    print 'carrierId0    :', co.carrierId0()
+    print 'carrierId1    :', co.carrierId1()
+    print 'digitalCardId0:', co.digitalCardId0()
+    print 'digitalCardId1:', co.digitalCardId1()
+    print 'analogCardId0 :', co.analogCardId0()
+    print 'analogCardId1 :', co.analogCardId1()
+    print 'version       :', co.version()
+    print 'id_epix       :', ue.id_epix(co)
+
+    a    = co.asicPixelConfigArray()
+    arr1 = np.ones(a.shape, dtype=np.int32)
+    print 'asicPixelConfigArray:'
+
+    cbits = np.bitwise_and(a,12)
+
+    print 'number of non-zero-status pixels', np.sum(np.select((a!=0,), (arr1,), default=0))
+    print 'number of pixels cbits = 0 AUTO ', np.sum(np.select((cbits==0,), (arr1,), default=0))
+    print 'number of pixels cbits = 4 FORCE', np.sum(np.select((cbits==4,), (arr1,), default=0))
+    print 'number of pixels cbits = 8 LOW  ', np.sum(np.select((cbits==8,), (arr1,), default=0))
+    print 'number of pixels cbits =12 HIGH ', np.sum(np.select((cbits==12,), (arr1,), default=0))
+
+    print_ndarr(a, 'asicPixelConfigArray')
+    print 'numberOfAsics :', co.numberOfAsics()
+
     for iasic in range(co.numberOfAsics()) :
         asic = co.asics(iasic)
-        print 'ASIC:%d' % iasic,
-        print '  trbit: ',  asic.trbit()
-        print '  chipID: ',  asic.chipID()
+        print '  ASIC:%d'%iasic,\
+              '  trbit:',  asic.trbit(),\
+              '  chipID:', asic.chipID()
 
 
 
@@ -113,6 +139,7 @@ if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '377'
     print '%s\nTest %s' % (80*'_', tname)
     test_epix10ka_config(tname)
+    print('try mfxx32516 runs: 336-AUTO, 337-AUTO&LOW, 340-HIGH, 363-HIGH, 365-LOW, 367-HIGH, 368-HIGH, 377-AUTO')
     sys.exit ('End of %s' % sys.argv[0])
 
 #------------------------------

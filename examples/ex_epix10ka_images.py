@@ -5,6 +5,7 @@ import numpy as np
 from time import time
 
 import psana
+from Detector.UtilsEpix import calib_epix10ka
 from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
 
@@ -37,7 +38,8 @@ def test_epix10ka_methods(tname) :
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
-    
+    pssrc = psana.Source(src)
+
     print 'experiment %s' % env.experiment()
     print 'run        %d' % runnum
     print 'dataset    %s' % (dsname) 
@@ -64,7 +66,7 @@ def test_epix10ka_methods(tname) :
     print 'shape of ndarray: %s' % str(det.shape(par))
     print 'size of ndarray : %d' % det.size(par)
     print 'ndim of ndarray : %d' % det.ndim(par)
-    
+
     peds = det.pedestals(par)
     print_ndarr(peds, 'pedestals')
     
@@ -131,12 +133,19 @@ def test_epix10ka_methods(tname) :
 
         t0_sec = time()
         nda_raw = det.raw(evt)
-        #nda = det.calib(evt, cmpars=(7,0,100)) # cmpars=(7,1,100)
-        nda = nda_raw
+
+        #if nda_raw is None : continue
+        #====================================
+        #nda = nda_raw
+        nda = calib_epix10ka(det, evt, pssrc)
+        #====================================
 
         if nda is None : continue
         print '    Consumed time for det.raw/calib(evt) = %7.3f sec' % (time()-t0_sec)
         print_ndarr(nda, 'data nda')
+
+        sh = nda.shape
+        nda.shape = (sh[-2], sh[-1])
 
         if PLOT_IMG :
             ndarr = np.array(nda)
@@ -166,7 +175,8 @@ def test_epix10ka_methods(tname) :
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
 
         if PLOT_SPE :
-            arrhi = nda_raw
+            #arrhi = nda_raw
+            arrhi = nda
             axhi.clear()
             range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
             hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=True)
@@ -189,6 +199,11 @@ def test_epix10ka_methods(tname) :
 #------------------------------
 
 if __name__ == "__main__" :
+
+    import logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     print '%s\nTest %s' % (80*'_', tname)
     test_epix10ka_methods(tname)

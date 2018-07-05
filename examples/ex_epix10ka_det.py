@@ -127,8 +127,8 @@ def test_epix10ka_methods(tname) :
     #data_sub_peds = nda_raw - peds if peds is not None else nda_raw
     #print_ndarr(data_sub_peds, 'data - peds')
     
-#    nda_cdata = det.calib(evt)
-#    print_ndarr(nda_cdata, 'calibrated data')
+    nda_cdata = det.calib(evt)
+    print_ndarr(nda_cdata, 'calibrated data')
     
 #    mask_geo = det.mask_geo(par, mbits=3, width=1)
 #    print_ndarr(mask_geo, 'mask_geo')

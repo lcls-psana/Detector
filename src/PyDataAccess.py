@@ -281,6 +281,17 @@ def get_epix_config_object(env, src) :
     if o is not None : return o
 
     return None
+
+##-----------------------------
+
+def get_epix10ka_config_object(env, src) :
+    """get epix10ka config object faster than from get_epix_config_object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Epix.Config10kaV1, src)
+    if o is not None : return o
+
+    return None
     
 ##-----------------------------
 
