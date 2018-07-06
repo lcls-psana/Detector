@@ -182,4 +182,5 @@ bld_info = {
     "MFX-DG2-BMMON"    : DdlDetector,
     "MFX-AIN-01"       : DdlDetector,
     "MEC-AIN-01"       : DdlDetector,
+    "FEE-AIN-01"       : DdlDetector,
 }
