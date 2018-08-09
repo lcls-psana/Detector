@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+#------------------------------
+"""
+  Find and list all detector names in the DB
+
+  Created on 2018-08-09 by Mikhail Dubrovin
+"""
+#------------------------------
+
+import sys
+from CalibManager.RegDBUtils import unique_detector_names
+
+#INSTRS = ('AMO','SXR','XPP','XCS','CXI','MEC','MFX','DIA','DET','MOB') # /reg/d/psdm/
+#INSTR = sys.argv[1] if len(sys.argv) > 1 else None
+
+#DETS = ('jungfrau', 'cspad.', 'cspad2x2', 'opal', 'pnccd', 'etc...')
+#DET = sys.argv[2] if len(sys.argv) > 2 else 'jungfrau'
+
+#------------------------------
+
+def usage():
+    return  'Usage: find_detector_names\n'# <INS> <DET>\n'\
+#           +'       where <INS> instrument from the list %s\n' % ', '.join(INSTRS)\
+#           +'             <DET> is like one of the list %s' % ', '.join(DETS)
+
+#------------------------------
+
+def find_detector_names(name_pattern=None) :    
+    print '%s\nList of detector names in DB' % (80*'_')
+
+    #pattern = det_name.lower() + '-'
+    #lst = [src.replace("|",":").replace("-",".") for src in experiment_info.unique_detector_names() if src.lower().find(pattern) != -1]
+    lst = [src.replace("|",":").replace("-",".") for src in unique_detector_names()]
+
+
+    dict_type_names = {}
+
+    for i, s in enumerate(lst) :
+        fields = s.split(':')
+        if len(fields)<2 :
+            print(' skip bad name %s' % s)
+            continue
+        dtype = fields[1].split('.')[0].lower()
+        print '%04d %20s %s' % (i,dtype,s)
+
+        det_names = dict_type_names.get(dtype,None)
+        if det_names is None : dict_type_names[dtype] = [s,]
+        else : det_names.append(s)
+
+    print '%s\n' % (80*'_')
+
+    print(dict_type_names)
+
+    print '%s\n' % (80*'_')
+
+    dtypes = dict_type_names.keys()
+    print(dtypes)
+    print '%s\n' % (80*'_')
+
+    for i,dt in enumerate(dtypes) :
+        dnames = dict_type_names.get(dt,None)
+        if dnames is None : continue
+        #print('')
+        print('#== type %04d %s'%(i,dt))
+        for j,name in enumerate(dnames) :
+            print('    %32s: %s,\\' % ("'%s'"%name, "'%s_%04d'"%(dt,j)))
+
+    print('Total number of detector types: %d' % (i+1))
+
+
+    print '%s\n' % (80*'_')
+    print '%s\n' % (80*'_')
+    print '%s\n' % (80*'_')
+
+#------------------------------
+
+find_detector_names()
+
+#------------------------------
