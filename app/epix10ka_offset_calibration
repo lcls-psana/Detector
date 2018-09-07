@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+#------------------------------
+import os
+import sys
+from time import time
+
+from pyimgalgos.GlobalUtils import print_command_line_parameters
+from Detector.UtilsEpix10ka import offset_calibration, CALIB_REPO_EPIX10KA
+
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+
+#------------------------------
+
+def epix10ka_offset_calibration():
+
+    t0_sec = time()
+
+    parser = option_parser()
+    (popts, pargs) = parser.parse_args()
+    args = pargs
+    opts = vars(popts)
+    defs = vars(parser.get_default_values())
+
+    if popts.exp is None : raise IOError('WARNING: option "-e <experiment>" MUST be specified.') # sys.exit()
+    if popts.det is None : raise IOError('WARNING: option "-d <detector-name>" MUST be specified.')
+    if popts.run is None : raise IOError('WARNING: option "-r <run-number>" MUST be specified.')
+
+    logger.debug('%s\nIn epix10ka_offset_calibration' % (50*'_'))
+    print_command_line_parameters(parser)
+
+    offset_calibration(*args, **opts)
+
+    logger.info('Consumed time %.3f sec' % (time() - t0_sec))
+
+#------------------------------
+
+def usage(mode=0) :
+    proc_name = os.path.basename(sys.argv[0])
+    if   mode == 1 : return 'Proceses offset run xtc data for epix10ka.'
+    elif mode == 2 : return 'Try: %s -h' % proc_name
+    else : return\
+           '\n%prog -e <experiment> [-d <detector>] [-r <run-number>]'\
+           '\n       [-n <nspace>] [-x <xtc-directory>] [-o <output-result-directory>] [-p]'\
+           '\nTEST COMMAND:'\
+           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -n 2 -x /reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined -o ./work'\
+           '\nREGULAR COMMAND:'\
+           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021' 
+
+#------------------------------
+
+def option_parser() :
+    from optparse import OptionParser
+
+    d_exp     = None # 'mfxx32516'
+    d_det     = None # 'NoDetector.0:Epix10ka.3'
+    d_run     = None # 1021
+    d_nbs     = 4600 # number of frames
+    d_nspace  = 7    # 2
+    d_dirxtc  = None # '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    d_dirrepo = CALIB_REPO_EPIX10KA # './work' 
+    d_display = True
+
+    h_exp     = 'experiment name, default = %s' % d_exp
+    h_det     = 'detector name, default = %s' % d_det
+    h_run     = 'run number, default = %s' % str(d_run)
+    h_nbs     = 'number of frames to calibrate offsets, default = %s' % str(d_nbs)
+    h_nspace  = 'space between calibrated pixels, default = %s' % str(d_nspace)
+    h_dirxtc  = 'non-default xtc directory, default = %s' % d_dirxtc
+    h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
+    h_display = 'turn off graphical display, default = %s' % d_display
+
+    parser = OptionParser(description=usage(1), usage = usage())
+    parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
+    parser.add_option('-d', '--det',     default=d_det,     action='store', type='string', help=h_det)
+    parser.add_option('-r', '--run',     default=d_run,     action='store', type='int',    help=h_run)
+    parser.add_option('-b', '--nbs',     default=d_nbs,     action='store', type='int',    help=h_nbs)
+    parser.add_option('-n', '--nspace',  default=d_nspace,  action='store', type='int',    help=h_nspace)
+    parser.add_option('-x', '--dirxtc',  default=d_dirxtc,  action='store', type='string', help=h_dirxtc)
+    parser.add_option('-o', '--dirrepo', default=d_dirrepo, action='store', type='string', help=h_dirrepo)
+    parser.add_option('-p', '--display', default=d_display, action='store_false',          help=h_display)
+
+    return parser
+
+#------------------------------
+
+if __name__ == "__main__" :
+    if len(sys.argv)==1 : print '\n%s\n' % usage(2)
+    else : epix10ka_offset_calibration()
+    sys.exit(0)
+
+#------------------------------
