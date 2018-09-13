@@ -65,7 +65,7 @@ def create_directory(dir, mode=0777) :
 
 #------------------------------
 
-def alias_for_id(panel_id, fname='%s/aliases.txt'%CALIB_REPO_EPIX10KA) :
+def alias_for_id(panel_id, fname='%s/.aliases.txt'%CALIB_REPO_EPIX10KA) :
     """Returns Epix100a/10ka panel short alias for long panel_id, 
        e.g., for panel_id = 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
        returns 0001

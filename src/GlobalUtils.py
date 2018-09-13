@@ -12,6 +12,7 @@ Author Mikhail Dubrovin
 
 #------------------------------
 
+import sys
 import numpy as np
 
 #------------------------------
@@ -47,5 +48,23 @@ def divide_protected(num, den, vsub_zero=0) :
     pro_den = np.select((den!=0,), (den,), default=1)
     return pro_num / pro_den
 
+#------------------------------
+
+def info_command_line_parameters(parser) :
+    """Prints input arguments and optional parameters"""
+    (popts, pargs) = parser.parse_args()
+    args = pargs                             # list of positional arguments
+    opts = vars(popts)                       # dict of options
+    defs = vars(parser.get_default_values()) # dict of default options
+
+    s = 'Command: ' + ' '.join(sys.argv)+\
+        '\n  Argument list: %s\n  Optional parameters:\n' % str(args)+\
+        '    <key>      <value>              <default>\n'
+    for k,v in opts.items() :
+        s += '    %s %s %s\n' % (k.ljust(10), str(v).ljust(20), str(defs[k]).ljust(20))
+    return s
+
+#------------------------------
+#------------------------------
 #------------------------------
 

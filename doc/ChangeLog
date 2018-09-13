@@ -7,6 +7,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-50
+2018-09-12 Mikhail S. Dubrovin
+- update epix10ka calibration scripts
+	new file:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_offset_calibration
+	modified:   app/epix10ka_pedestals_calibration
+	modified:   src/GlobalUtils.py
+	modified:   src/UtilsEpix.py
+	modified:   src/UtilsEpix10ka.py
+
 Tag: V01-00-49
 2018-09-07 Mikhail S. Dubrovin
 - add epix10ka calibration scripts

@@ -18,7 +18,8 @@ import numpy as np
 from PSCalib.DCUtils import env_time, str_tstamp
 from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, alias_for_id, create_directory
 from Detector.PyDataAccess import get_epix10ka_config_object
-#from Detector.GlobalUtils import print_ndarr, divide_protected
+from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile # str_tstamp, deploy_file, log_rec_on_start, replace
+from Detector.GlobalUtils import info_ndarr, print_ndarr #, divide_protected
 
 import matplotlib.pyplot as plt
 #from numba import jit
@@ -120,15 +121,15 @@ def find_file_for_timestamp(dirname, pattern, tstamp) :
 
     # find the nearest to requested timestamp
     for its in itstamps :
-        if its <= int(tstamp) : break
+        if its <= int(tstamp) :
+            # find and return the full file name for selected timestamp
+            ts = str(its)
 
-    # find and return the full file name for selected timestamp
-    ts = str(its)
-    for name in fnames :
-        if ts in name : 
-             fname = '%s/%s' % (dirname, name)
-             logger.debug('File %s\n  is selected for pattern %s and timestamp %s' % (fname,pattern,tstamp))
-             return fname
+            for name in fnames :
+                if ts in name : 
+                     fname = '%s/%s' % (dirname, name)
+                     logger.debug('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
+                     return fname
 
     logger.warning('Directory %s\n DOES NOT CONTAIN the file for pattern %s and timestamp %s' % (dirname,pattern,tstamp))
     return None
@@ -156,15 +157,127 @@ def print_config_info(c) :
 
 #--------------------
 
+B14 = 040000 # 16384 or 1<<14 (14-th bit starting from 0)
+B04 =    020 #    16 or 1<<4
+B05 =    040 #    32 or 1<<5
+M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
+
+#--------------------
+
+def find_gain_mode(det, data=None) :
+    """Returns str gain mode from the list GAIN_MODES or None.
+       if data=None : distinguish 5-modes w/o data
+    """
+    cob = get_epix10ka_config_object(det.env, det.source)
+    if cob is None : return None
+
+    first = 10000
+    last  = first+5
+
+    # get 4-bit pixel config array with bit assignment]
+    #   0001 = 1<<0 = 1 - T test bit
+    #   0010 = 1<<1 = 2 - M mask bit
+    #   0100 = 1<<2 = 4 - g  gain bit
+    #   1000 = 1<<3 = 8 - ga gain bit
+
+    pca = cob.asicPixelConfigArray()
+
+    # begin to create array of control bits 
+    # array of control bits 2 and 3 M mask bits 0, 1 
+    #                                 do not override them just in case if they can be useful later.
+    cbits = np.bitwise_and(pca,12) # 014 (bin:1100)
+    logger.debug(info_ndarr(cbits, 'cbits', first, last))
+
+    trbit = cob.asics(0).trbit()
+
+    # add bits
+    # 010000 = 1<<4 = 16 - trbit
+    # 100000 = 1<<5 = 32 - data bit 14
+    if trbit : cbits = np.bitwise_or(cbits, B05)
+
+    logger.debug(info_ndarr(cbits, 'cbits+trbit', first, last))
+
+    # Add data bit 14 to cbits as a bit 5 (counting from 0)
+    if data is not None :
+        logger.debug(info_ndarr(data, 'data', first, last))
+        # get array of bit 14 and not bit14
+        databit14 = np.bitwise_and(data, B14)
+        databit05 = np.right_shift(databit14,9) # 040000 -> 040
+        cbits = np.bitwise_or(cbits, databit05) # 109us
+        #cbits[databit14>0] += 040              # 138us
+
+    #--------------------------------
+    # cbits - pixel control bit array
+    #--------------------------------
+    #   data bit 14
+    #  / trbit
+    # V / bit3
+    #  V / bit2
+    #   V / M
+    #    V / T             gain range index
+    #     V /             /  in calib files
+    #      V             V 
+    # x111xx =28 -  FH_H 0 
+    # x011xx =12 -  FM_M 1 
+    # xx10xx = 8 -  FL_L 2  
+    # 1100xx =48 - AHL_H 3 
+    # 1000xx =32 - AML_M 4 
+    # 0100xx =16 - AHL_L 5 
+    # 0000xx = 0 - AML_L 6 
+    #--------------------------------
+
+    cbitsMCB = cbits & 28 # control bits masked by configuration 3-bit-mask
+    logger.debug(info_ndarr(cbitsMCB, 'cbitsMCB', first, last))
+
+    gr0 = (cbitsMCB == 28)
+    gr1 = (cbitsMCB == 12)
+    gr2 = (cbitsMCB ==  8)
+    gr3 = (cbitsMCB == 16)
+    gr4 = (cbitsMCB ==  0)
+    gr5 = (cbits    == 16)
+    gr6 = (cbits    ==  0)
+
+    #logger.debug(info_ndarr(gr0, 'gr0', first, last))
+    #logger.debug(info_ndarr(gr1, 'gr1', first, last))
+    #logger.debug(info_ndarr(gr2, 'gr2', first, last))
+    #logger.debug(info_ndarr(gr3, 'gr3', first, last))
+    #logger.debug(info_ndarr(gr4, 'gr4', first, last))
+    #logger.debug(info_ndarr(gr5, 'gr5', first, last))
+    #logger.debug(info_ndarr(gr6, 'gr6', first, last))
+
+    arr1 = np.ones_like(gr0)
+    npix = arr1.size
+    pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
+                np.select((gr1,), (arr1,), 0).sum(),\
+                np.select((gr2,), (arr1,), 0).sum(),\
+                np.select((gr3,), (arr1,), 0).sum(),\
+                np.select((gr4,), (arr1,), 0).sum(),\
+                np.select((gr5,), (arr1,), 0).sum(),\
+                np.select((gr6,), (arr1,), 0).sum())
+
+    logger.debug('Statistics in gain groups: %s' % str(pix_stat))
+
+    f = 1.0/arr1.size
+    grp_prob = [npix*f for npix in pix_stat]
+    logger.debug('grp_prob: %s' % str(grp_prob))
+
+    ind = next(i for i,fr in enumerate(grp_prob) if fr>0.5)
+    gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None 
+    logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
+
+    return gain_mode
+
+#--------------------
+
 def get_config_info(det) :
     env = det.env
     c = get_epix10ka_config_object(env, det.source)
-    if c is None : return None, None
+    if c is None : return None, None, None
 
     print_config_info(c)
     
     panel_id = id_epix(c)
-    panel_alias = alias_for_id(panel_id, fname='%s/aliases.txt'%CALIB_REPO_EPIX10KA)
+    panel_alias = alias_for_id(panel_id, fname='%s/.aliases.txt'%CALIB_REPO_EPIX10KA)
     time_run = env_time(env)
     tstamp_run = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=time_run)
     tstamp_now = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=None)
@@ -182,15 +295,37 @@ def get_config_info(det) :
 def get_config_info_for_dataset_detname(dsname, detname) :
     ds = DataSource(dsname)
     det = Detector(detname)
-    expnum = ds.env().expNum()
-    shape = shape_from_config(det)
+    env = ds.env()
+    cpdic = {}
+    cpdic['expnum'] = env.expNum()
+    cpdic['calibdir'] = env.calibDir()
+    cpdic['strsrc'] = det.pyda.str_src
+    cpdic['shape'] = shape_from_config(det)
+    cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
     for nevt,evt in enumerate(ds.events()):
-        if det.raw(evt) is not None: 
+        raw = det.raw(evt)
+        if raw is not None: 
             tstamp, panel_id, panel_alias = get_config_info(det)
+            cpdic['tstamp'] = tstamp
+            cpdic['panel_id'] = panel_id
+            cpdic['panel_alias'] = panel_alias
             del ds
             del det
-            return tstamp, panel_id, panel_alias, expnum, shape
-    return None, None, None, expnum, shape
+            return cpdic
+    return cpdic
+
+#--------------------
+
+def save_log_record_on_start(dirrepo, fname) :
+    """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
+    """
+    rec = log_rec_on_start()
+    year = str_tstamp(fmt='%Y')
+    dirlog = '%s/logs' % dirrepo
+    create_directory(dirlog, mode=0777)
+    logfname = '%s/log-%s-%s.txt' % (dirlog, fname, year)
+    save_textfile(rec, logfname, mode='a')
+    logger.info('record on start: %s\n saved in log: %s' % (rec, logfname))
 
 #--------------------
 
@@ -213,15 +348,16 @@ def file_name_prefix(panel_alias, tstamp, exp, irun) :
 #--------------------
 
 def file_name_npz(dir_work, fname_prefix, expnum, nspace) :
-    return '%s/%s_e%04d_spacing%02d-df.npz' % (dir_work, fname_prefix, expnum, nspace)
+    return '%s/%s_sp%02d-df.npz' % (dir_work, fname_prefix, nspace)
 
 #--------------------
 
-def path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots) :
+def path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain) :
     prefix_offset= '%s/%s' % (dir_offset, fname_prefix)
     prefix_peds  = '%s/%s' % (dir_peds,  fname_prefix)
     prefix_plots = '%s/%s' % (dir_plots, fname_prefix)
-    return prefix_offset, prefix_peds, prefix_plots
+    prefix_gain  = '%s/%s' % (dir_gain,  fname_prefix)
+    return prefix_offset, prefix_peds, prefix_plots, prefix_gain
 
 #--------------------
 
@@ -240,6 +376,8 @@ def offset_calibration(*args, **opts) :
 
     logger.debug('In offset_calibration for exp:%s det:%s run:%d'%(exp, detname, irun))
 
+    save_log_record_on_start(dirrepo, sys._getframe().f_code.co_name)
+
     #dirxtc='/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     #path_in='/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/res/'
     #path_out='/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/res/out/'
@@ -248,12 +386,18 @@ def offset_calibration(*args, **opts) :
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     logger.info('Calibration dataset %s' % dsname)
  
-    tstamp, panel_id, panel_alias, expnum, shape = get_config_info_for_dataset_detname(dsname, detname)
+    #tstamp, panel_id, panel_alias, expnum, shape = get_config_info_for_dataset_detname(dsname, detname)
+    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    tstamp      = cpdic.get('tstamp', None)
+    panel_id    = cpdic.get('panel_id', None)
+    panel_alias = cpdic.get('panel_alias', None)
+    expnum      = cpdic.get('expnum', None)
+    shape       = cpdic.get('shape', None)
     ny,nx = shape
  
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
     fname_prefix = file_name_prefix(panel_alias, tstamp, exp, irun)
-    prefix_offset, prefix_peds, prefix_plots = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots)
+    prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
     create_directory(dir_offset, mode=0777)
@@ -402,14 +546,14 @@ def offset_calibration(*args, **opts) :
             #fnameped='pedestals/pedestal_AML_L_R%04d.dat'%irun    
             #np.savetxt(path_out+fnameped, darks[:,:,i]-offset_aml)
             
-    #Save all darks in one file in Mikhail's format
-    darks_m=np.zeros((7,1,352,384))
-    lut=[2,1,0,6,4,5,3]    #look-up table from Jack scripts' format to Mikhail's format
-    for i in range(7):
-        darks_m[lut[i],0]=darks[:,:,i]
-    np.savetxt('%s_pedestals.dat' % prefix_peds, darks[:,:,i]-offset_aml, fmt=fmt_peds)
-    #fnameped='pedestals/pedestals_R%04d.dat'%irun
-    #np.savetxt(path_out+fnameped, darks[:,:,i]-offset_aml)
+    ###Save all darks in one file in Mikhail's format
+    #darks_m=np.zeros((7,1,352,384))
+    #lut=[2,1,0,6,4,5,3]    #look-up table from Jack scripts' format to Mikhail's format
+    #for i in range(7):
+    #    darks_m[lut[i],0]=darks[:,:,i]
+    #np.savetxt('%s_pedestals.dat' % prefix_peds, darks[:,:,i]-offset_aml, fmt=fmt_peds)
+    ###fnameped='pedestals/pedestals_R%04d.dat'%irun
+    ###np.savetxt(path_out+fnameped, darks[:,:,i]-offset_aml)
         
     if display:
         plt.close("all")
@@ -443,8 +587,6 @@ def offset_calibration(*args, **opts) :
         logger.info('Saved:  %s' % fnameout)
         plt.pause(5)
 
-    logger.info('DONE')
-
 #--------------------
 
 def pedestals_calibration(*args, **opts) :
@@ -457,9 +599,11 @@ def pedestals_calibration(*args, **opts) :
     dirxtc     = opts.get('dirxtc', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
-    mode       = opts.get('mode', 'AML-M')    
+    mode       = opts.get('mode', None)    
 
     logger.debug('In pedestals_calibration for exp:%s det:%s run:%d'%(exp, detname, irun))
+
+    save_log_record_on_start(dirrepo, sys._getframe().f_code.co_name)
 
     #dirxtc='/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     #path_in='/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/res/'
@@ -469,15 +613,30 @@ def pedestals_calibration(*args, **opts) :
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     logger.info('Calibration dataset %s' % dsname)
  
-    tstamp, panel_id, panel_alias, expnum, shape = get_config_info_for_dataset_detname(dsname, detname)
+    #tstamp, panel_id, panel_alias, expnum, shape = get_config_info_for_dataset_detname(dsname, detname)
+    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    tstamp      = cpdic.get('tstamp', None)
+    panel_id    = cpdic.get('panel_id', None)
+    panel_alias = cpdic.get('panel_alias', None)
+    gain_mode   = cpdic.get('gain_mode', None)
+    expnum      = cpdic.get('expnum', None)
+    shape       = cpdic.get('shape', None)
     ny,nx = shape
+
+    if mode is None : mode = gain_mode 
+    logger.info('Process dark run for gain mode %s' % mode)
+    
+    if mode is None : 
+        msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
+        logger.warning(msg)
+        sys.exit(msg)
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
     fname_prefix = file_name_prefix(panel_alias, tstamp, exp, irun)
-    prefix_offset, prefix_peds, prefix_plots = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots)
+    prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
     fname_work   = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
-    logger.info('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
+    logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
     assert os.path.exists(fname_work), 'File "%s" DOES NOT EXIST' % fname_work
     assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
     assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds
@@ -527,7 +686,7 @@ def pedestals_calibration(*args, **opts) :
         if nstep>=0:    #only process the first CalibCycle (stop after 0)
             break
 
-    logger.info(msg)
+    logger.debug(msg)
 
     dark=block.mean(0)  #Calculate mean 
     
@@ -564,7 +723,105 @@ def pedestals_calibration(*args, **opts) :
         #np.savetxt(fnameout,dark-offset);
         #print 'SAVED AHL_L PEDESTALS.',
 
-    logger.info('DONE')
+#--------------------
+
+def merge_panel_constants(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f') :
+
+    from PSCalib.NDArrIO import save_txt
+
+    logger.debug('In merge_panel_constants for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
+                 (dirrepo, panel_id, ctype, str(tstamp), str(shape)))
+
+    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+
+    dir_ctype = dir_peds      if ctype == 'pedestals' else dir_gain
+    nda_def = np.zeros(shape) if ctype == 'pedestals' else np.ones(shape)
+    
+    logger.debug('dir_ctype: %s' % dir_ctype)
+
+    lstnda = []
+    for gm in GAIN_MODES :
+       fname = find_file_for_timestamp(dir_ctype, '%s_%s' % (ctype,gm), tstamp)
+       nda = nda_def if fname is None else\
+             np.loadtxt(fname, dtype=np.float32)
+       lstnda.append(nda if nda is not None else nda_def)
+       #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
+       #logger.info('%5s : %s' % (gm,fname))
+
+    nda = np.stack(tuple(lstnda))
+    #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
+    logger.debug('merge_panel_constants - merged with shape %s' % str(nda.shape))
+
+    nda.shape = (7, 1, 352, 384)
+    #nda = nda.astype(dtype=np.float32)
+    logger.warning('SINGLE PANEL %s ARRAY RE-SHAPED TO %s' % (ctype, str(nda.shape)))
+
+    logger.debug(info_ndarr(nda, 'merged %s'%ctype))
+
+    save_txt(ofname, nda, fmt=fmt)
+    logger.debug('Merged saved: %s' % ofname)
+
+#--------------------
+
+def deploy_constants(*args, **opts) :
+    exp        = opts.get('exp', None)     
+    detname    = opts.get('det', None)   
+    irun       = opts.get('run', None)    
+    tstamp     = opts.get('tstamp', None)    
+    dirxtc     = opts.get('dirxtc', None) 
+    dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
+    dircalib   = opts.get('dircalib', None)
+    deploy     = opts.get('deploy', False)
+    fmt_peds   = opts.get('fmt_peds', '%.3f')
+    fmt_gain   = opts.get('fmt_gain', '%.6f')
+
+    logger.debug('In deploy_constants for exp:%s det:%s run:%d'%(exp, detname, irun))
+
+    save_log_record_on_start(dirrepo, sys._getframe().f_code.co_name)
+
+    dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    logger.info('Calibration dataset %s' % dsname)
+ 
+    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    tstamp_run  = cpdic.get('tstamp', None)
+    panel_id    = cpdic.get('panel_id', None)
+    panel_alias = cpdic.get('panel_alias', None)
+    expnum      = cpdic.get('expnum', None)
+    shape       = cpdic.get('shape', None)
+    calibdir    = cpdic.get('calibdir', None)
+    strsrc      = cpdic.get('strsrc', None)
+
+    tstamp = tstamp_run if tstamp is None else tstamp
+
+    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+    fname_prefix = file_name_prefix(panel_alias, tstamp, exp, irun)
+    prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+
+    mpars = (('pedestals', 'pedestals', prefix_peds, fmt_peds),\
+             ('gain',     'pixel_gain', prefix_gain, fmt_gain))
+
+    for (ctype, octype, prefix, fmt) in mpars :
+
+        logger.info('Begin merging for ctype:%s, octype:%s, prefix:%s, fmt:%s' % (ctype, octype, prefix, fmt))
+        
+        fname = '%s_%s.txt' % (prefix, ctype)
+        merge_panel_constants(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt)
+        
+        #----------
+        if deploy :
+            if dircalib is not None : calibdir = dircalib
+            #ctypedir = /reg/d/psdm/mfx/mfxx32516/calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
+            ctypedir = '%s/Epix10ka::CalibV1/%s' % (calibdir, strsrc)
+            ofname   = '%d-end.data' % irun
+            lfname   = None
+            verbos   = True
+            logger.info('Deploy calib files under %s' % ctypedir)
+            deploy_file(fname, ctypedir, octype, ofname, lfname, verbos)
+        else :
+            logger.warning('Add option -D to deploy files under calib directory')
+        #----------
+
+    logger.info('deploy_constants IS COMPLETED')
 
 #--------------------
 
@@ -594,6 +851,21 @@ if __name__ == "__main__" :
 
 #--------------------
 
+if __name__ == "__main__" :
+    def test_deploy_constants(tname) :
+        deploy_constants(  exp     = 'mfxx32516',\
+                           det     = 'NoDetector.0:Epix10ka.3',\
+                           run     = 1021,\
+                           #tstamp  = None,\
+                           #tstamp  = 20180314120622,\
+                           tstamp  = 20180914120622,\
+                           dirxtc  = '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined',\
+                           #dirrepo = './work',\
+                           dircalib= './calib',\
+                           deploy  = True)
+
+#--------------------
+
 #runs=[#[1020,4],
 #      [1021,2],
 #      [1022,6],
@@ -613,6 +885,7 @@ if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     if tname == '1' : test_offset_calibration(tname)
     if tname == '2' : test_pedestals_calibration(tname)
+    if tname == '3' : test_deploy_constants(tname)
     else : sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit('End of %s' % sys.argv[0])
 
