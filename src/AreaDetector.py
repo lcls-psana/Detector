@@ -1012,7 +1012,7 @@ class AreaDetector(object):
            - np.array - per-pixel array of calibrated intensities from data.
         """
         if self.is_jungfrau() : return calib_jungfrau(self, evt, self.source, cmpars)
-        if self.is_epix10ka() : return calib_epix10ka(self, evt, self.source)
+        if self.is_epix10ka() : return calib_epix10ka(self, evt, cmpars)
 
         rnum = self.runnum(evt)
 

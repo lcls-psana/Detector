@@ -7,6 +7,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-51
+2018-09-14 Mikhail S. Dubrovin
+- update epix10ka calibration scripts - 1st production version
+	modified:   src/AreaDetector.py
+	modified:   src/UtilsEpix.py
+	modified:   src/UtilsEpix10ka.py
+
 Tag: V01-00-50
 2018-09-12 Mikhail S. Dubrovin
 - update epix10ka calibration scripts
