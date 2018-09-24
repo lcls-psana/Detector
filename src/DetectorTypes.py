@@ -87,6 +87,8 @@ detectors = {
     "Archon"      : AreaDetector,
     "Jungfrau"    : AreaDetector,
     "Zyla"        : AreaDetector,
+    "Pixis"       : AreaDetector,
+    "Uxi"         : DdlDetector,
 }
 
 

@@ -125,6 +125,9 @@ def get_princeton_data_object(evt, src) :
     o = evt.get(_psana.Pimax.FrameV1, src)
     if o is not None : return o
 
+    o = evt.get(_psana.Pixis.FrameV1, src)
+    if o is not None : return o
+
     return None
 
 ##-----------------------------
@@ -149,6 +152,9 @@ def get_princeton_config_object(env, src) :
     if o is not None : return o
 
     o = cfg.get(_psana.Pimax.ConfigV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Pixis.ConfigV1, src)
     if o is not None : return o
 
     return None
@@ -419,6 +425,28 @@ def get_pimax_config_object(env, src) :
     cfg = env.configStore()
 
     o = cfg.get(_psana.Pimax.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_pixis_data_object(evt, src) :
+    """get pixis data object
+    """
+    o = evt.get(_psana.Pixis.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_pixis_config_object(env, src) :
+    """get pixis config object
+    """
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Pixis.ConfigV1, src)
     if o is not None : return o
 
     return None

@@ -658,6 +658,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.TIMEPIX    : return self.raw_data_timepix(evt, env)
         elif self.dettype == gu.FLI        : return self.raw_data_fli(evt, env)
         elif self.dettype == gu.PIMAX      : return self.raw_data_pimax(evt, env)
+        elif self.dettype == gu.PIXIS      : return self.raw_data_pixis(evt, env)
         elif self.dettype == gu.ZYLA       : return self.raw_data_zyla(evt, env)
         elif self.dettype == gu.EPICSCAM   : return self.raw_data_camera(evt, env)
         else                               : return None
@@ -932,6 +933,21 @@ class PyDetectorAccess :
 
         # configuration object
         #c = pda.get_pimax_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_pixis(self, evt, env) :
+        # data object
+        d = pda.get_pixis_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_pixis_config_object(env, self.source)
         #if c is None : return None
         #print 'config: width: %d, height: %d' % (c.width(), c.height())
 
@@ -1315,6 +1331,14 @@ class PyDetectorAccess :
     def shape_config_pimax(self, env) :
         # configuration from data file
         c = pda.get_pimax_config_object(env, self.source)
+        if c is None : return None
+        return (c.numPixelsY(), c.numPixelsX())
+        #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
+
+
+    def shape_config_pixis(self, env) :
+        # configuration from data file
+        c = pda.get_pixis_config_object(env, self.source)
         if c is None : return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)

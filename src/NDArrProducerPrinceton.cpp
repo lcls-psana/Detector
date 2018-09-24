@@ -43,7 +43,7 @@ NDArrProducerPrinceton::print_warning(const char* msg)
 {
   m_count_msg++;
   if (m_count_msg < 11 && m_pbits) {
-    MsgLog(name(), warning, "Princeton::FramesV1,2, Pimax::FrameV1 object"
+    MsgLog(name(), warning, "Princeton::FramesV1,2, Pimax::FrameV1, Pixis::FrameV1 object"
            << " is not available in this run/event for source:" << m_source);
     if (m_count_msg == 10) MsgLog(name(), warning, "STOP PRINT WARNINGS for source:" << m_source);
   }
@@ -62,6 +62,9 @@ NDArrProducerPrinceton::data_nda_uint16_2(PSEvt::Event& evt, PSEnv::Env& env)
 
   ndarray<const data_t, 2> nda3 = getNDArrForType<Psana::Pimax::FrameV1, data_t>(evt, env);
   if ( ! nda3.empty()) return nda3; 
+
+  ndarray<const data_t, 2> nda4 = getNDArrForType<Psana::Pixis::FrameV1, data_t>(evt, env);
+  if ( ! nda4.empty()) return nda4;
 
   print_warning();
   ndarray<data_t, 2> nda;
@@ -220,6 +223,36 @@ NDArrProducerPrinceton::print_config(PSEvt::Event& evt, PSEnv::Env& env)
         str << "\n  numPixelsY = " << config1_pimax->numPixelsY();
         str << "\n  numPixels = " << config1_pimax->numPixels();
       }    
+      return;
+    }
+
+    boost::shared_ptr<Psana::Pixis::ConfigV1> config1_pixis = env.configStore().get(m_source);
+    if (config1_pixis) {
+      WithMsgLog(name(), info, str) {
+        str << "Pixis::ConfigV1:";
+        str << "\n  width = " << config1_pixis->width();
+        str << "\n  height = " << config1_pixis->height();
+        str << "\n  orgX = " << config1_pixis->orgX();
+        str << "\n  orgY = " << config1_pixis->orgY();
+        str << "\n  binX = " << config1_pixis->binX();
+        str << "\n  binY = " << config1_pixis->binY();
+        str << "\n  exposureTime = " << config1_pixis->exposureTime();
+        str << "\n  coolingTemp = " << config1_pixis->coolingTemp();
+        str << "\n  readoutSpeed = " << config1_pixis->readoutSpeed();
+        str << "\n  gainMode = " << config1_pixis->gainMode();
+        str << "\n  adcMode = " << config1_pixis->adcMode();
+        str << "\n  triggerMode = " << config1_pixis->triggerMode();
+        str << "\n  maskedHeight = " << config1_pixis->maskedHeight();
+        str << "\n  kineticHeight = " << config1_pixis->kineticHeight();
+        str << "\n  vsSpeed = " << config1_pixis->vsSpeed();
+        str << "\n  infoReportInterval = " << config1_pixis->infoReportInterval();
+        str << "\n  exposureEventCode = " << config1_pixis->exposureEventCode();
+        str << "\n  numIntegrationShots = " << config1_pixis->numIntegrationShots();
+        str << "\n  frameSize = " << config1_pixis->frameSize();
+        str << "\n  numPixelsX = " << config1_pixis->numPixelsX();
+        str << "\n  numPixelsY = " << config1_pixis->numPixelsY();
+        str << "\n  numPixels = " << config1_pixis->numPixels();
+      }
       return;
     }
   

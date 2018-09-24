@@ -531,7 +531,8 @@ class AreaDetector(object):
                             gu.FCCD,\
                             gu.TIMEPIX,\
                             gu.FLI,\
-                            gu.PIMAX) :
+                            gu.PIMAX,\
+                            gu.PIXIS) :
 
             #if self.reshape_to_3d and len(shape)==2 :
             if self.reshape_to_3d :

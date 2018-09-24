@@ -29,6 +29,7 @@
 //#include "Detector/GlobalMethods.h"
 #include "psddl_psana/princeton.ddl.h"
 #include "psddl_psana/pimax.ddl.h"
+#include "psddl_psana/pixis.ddl.h"
 
 //-----------------------------
 
