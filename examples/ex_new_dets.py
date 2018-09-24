@@ -40,6 +40,10 @@ elif tname=='6' :
     dsname = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc'
     src = 'XppEndstation.0:Zyla.0' # 'zyla'
 
+elif tname=='7' :
+    dsname = '/reg/g/psdm/detector/data_test/types/0026-MecTargetChamber.0-Pixis.1.xtc'
+    src = 'MecTargetChamber.0:Pixis.1'
+
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)

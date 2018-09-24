@@ -88,6 +88,9 @@ def ex_source_dsname(ntest) :
     elif ntest == 33: # psana.Jungfrau.ConfigV3
         src, dsn = 'XcsEndstation.0:Jungfrau.0', 'exp=xcsls3716:run=631'
 
+    elif ntest == 34:
+        src, dsn = ':Pixis.0', '/reg/g/psdm/detector/data_test/types/0026-MecTargetChamber.0-Pixis.1.xtc'
+
     else :
         sys.exit('Non-implemented sample for test number # %d' % ntest)
 
