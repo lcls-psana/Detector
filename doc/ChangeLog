@@ -7,7 +7,7 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag: V01-00-52
+Tag: V01-00-53
 2018-09-25 Mikhail S. Dubrovin
 - add uxi and pixis
 	new file:   app/epix10ka_id
@@ -19,6 +19,9 @@ Tag: V01-00-52
 	modified:   src/DetectorTypes.py
 	modified:   src/PyDataAccess.py
 	modified:   src/PyDetectorAccess.py
+
+Tag: V01-00-52
+2018-09-25 Dan ???
 
 Tag: V01-00-51
 2018-09-14 Mikhail S. Dubrovin
