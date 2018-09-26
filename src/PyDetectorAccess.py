@@ -629,6 +629,8 @@ class PyDetectorAccess :
 
     def raw_data(self, evt, env) :
 
+        #print('XXXX dettype', dettype)
+
         #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
         #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
 
@@ -661,6 +663,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.PIXIS      : return self.raw_data_pixis(evt, env)
         elif self.dettype == gu.ZYLA       : return self.raw_data_zyla(evt, env)
         elif self.dettype == gu.EPICSCAM   : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.UXI        : return self.raw_data_uxi(evt, env)
         else                               : return None
 
 ##-----------------------------
@@ -967,6 +970,21 @@ class PyDetectorAccess :
         #print 'config: width: %d, height: %d' % (c.width(), c.height())
 
         nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_uxi(self, evt, env) :
+        # data object
+        d = pda.get_uxi_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_uxi_config_object(env, self.source)
+        #if c is None : return None
+        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+
+        nda = d.frames()
         return nda if nda is not None else None
 
 ##-----------------------------
@@ -1351,6 +1369,18 @@ class PyDetectorAccess :
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
+##-----------------------------
+
+    def shape_config_uxi(self, env) :
+        c = pda.get_uxi_config_object(env, self.source)
+        if c is None : return None
+        #return (c.numSubmodules(), c.numSubmoduleRows(), c.numSubmoduleChannels())
+        #print('XXXXXXXXXXXXX: TBD shape_config_uxi')
+        return (c.numberOfFrames(), c.height(), c.width())
+        #c.numRows(), c.numChannels(), c.numLinks()
+        #return (4, 512, 512) # no other choice
+
+##-----------------------------
 
     #def shape_config_imp(self, env) :
     #    #Waveform detector
@@ -1425,6 +1455,8 @@ class PyDetectorAccess :
         elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
         elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
         elif self.dettype == gu.ZYLA       : return self.shape_config_zyla(env)
+        elif self.dettype == gu.UXI        : return self.shape_config_uxi(env)
+        elif self.dettype == gu.PIXIS      : return self.shape_config_pixis(env)
 
         # waveform detectors:
         #elif self.dettype == gu.ACQIRIS    : return self.shape_config_acqiris(env)

@@ -579,6 +579,27 @@ def get_imp_config_object(env, src) :
     return None
     
 ##-----------------------------
+
+def get_uxi_data_object(evt, src) :
+    """get uxi data object
+    """
+    o = evt.get(_psana.Uxi.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_uxi_config_object(env, src) :
+    """get uxi config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Uxi.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
 ##-----------------------------
 ##----- Other data objects ----
 ##-----------------------------

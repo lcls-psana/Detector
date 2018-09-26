@@ -7,6 +7,19 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-52
+2018-09-25 Mikhail S. Dubrovin
+- add uxi and pixis
+	new file:   app/epix10ka_id
+	modified:   examples/ex_jungfrau_get_id.py
+	new file:   examples/ex_pixis.py
+	new file:   examples/ex_pixis_ipython.py
+	new file:   examples/ex_uxi.py
+	new file:   examples/ex_uxi_ipython.py
+	modified:   src/DetectorTypes.py
+	modified:   src/PyDataAccess.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V01-00-51
 2018-09-14 Mikhail S. Dubrovin
 - update epix10ka calibration scripts - 1st production version
