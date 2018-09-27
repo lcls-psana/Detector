@@ -31,8 +31,8 @@ elif tname=='4' :
     src = 'AmoEndstation.0:Pimax.0' # Pimax.ConfigV1, Pimax.FrameV1
 
 elif tname=='5' :
-    dsname = 'exp=cxi11216:run=40' # (1, 512, 1024)
-    #dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
+    #dsname = 'exp=cxi11216:run=40' # (1, 512, 1024)
+    dsname = '/reg/g/psdm/detector/data_test/types/0024-CxiEndstation.0-Jungfrau.0.xtc'
     src = 'CxiEndstation.0:Jungfrau.0'
 
 elif tname=='6' :
@@ -43,6 +43,12 @@ elif tname=='6' :
 elif tname=='7' :
     dsname = '/reg/g/psdm/detector/data_test/types/0026-MecTargetChamber.0-Pixis.1.xtc'
     src = 'MecTargetChamber.0:Pixis.1'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/') # '/reg/d/psdm/det/mecdaq115/calib'
+
+elif tname=='8' :
+    dsname = '/reg/g/psdm/detector/data_test/types/0027-DetLab.0-Uxi.0.xtc'
+    src = 'DetLab.0:Uxi.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/') # '/reg/d/psdm/det/detdaq17/calib'
 
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
@@ -50,6 +56,7 @@ print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
 
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')
+#psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
 ds  = psana.DataSource(dsname)
 evt = ds.events().next()
@@ -169,6 +176,12 @@ if len(nda_raw.shape) > 2 :
         img = nda_raw
         sh = nda_raw.shape
         img.shape = (sh[-2],sh[-1])
+
+    if 'Uxi' in src : # 3-d like (<n-frames>, 1024, 512)
+        img = nda_raw # det.calib(evt)
+        sh = img.shape # (2, 1024, 512)
+        img.shape = (img.size/sh[-1],sh[-1])
+
     else :
         img = det.image(evt)
         #img = det(evt) # alias for det.image(evt) implemented in __call__

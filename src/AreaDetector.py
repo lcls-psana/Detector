@@ -911,14 +911,17 @@ class AreaDetector(object):
            - I/O parameter nda : np.array - per-pixel corrected intensities.
         """
 
-        # turn off common mode correction
+        # TURN OFF common mode correction using input parameter cmpars=0
         if cmpars==0 : return
 
         rnum = self.runnum(par)
+        _cmpars = self.common_mode(rnum) if cmpars is None else cmpars
+
+        # TURN OFF common mode correction in default object PSCalib.CalibParsBase*
+        if _cmpars[0]==0 : return
+
         shape0 = nda.shape
         nda.shape = (nda.size,)
-
-        _cmpars = self.common_mode(rnum) if cmpars is None else cmpars
 
         if _cmpars is not None and _cmpars[0] in [6,8] :
             # go into python

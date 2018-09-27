@@ -7,6 +7,17 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-54
+2018-09-26 Mikhail S. Dubrovin
+- AreaDetector.common_mode_apply
+  - turn off common mode correction for algorithm #0
+- update examples for uxi and pixis
+	modified:   examples/ex_new_dets.py
+	modified:   examples/ex_pixis.py
+	modified:   examples/ex_source_dsname.py
+	modified:   examples/ex_uxi.py
+	modified:   src/AreaDetector.py
+
 Tag: V01-00-53
 2018-09-25 Mikhail S. Dubrovin
 - add uxi and pixis
