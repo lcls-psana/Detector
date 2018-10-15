@@ -114,6 +114,10 @@ elif ntest==25 : #dsname, src = 'exp=cxi11216:run=40',  'CxiEndstation.0:Jungfra
     #dsname, src = '/reg/g/psdm/detector/data_test/types/0025-XppEndstation.0-Zyla.0.xtc', 'CxiEndstation.0:Jungfrau.0'
     dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
 
+elif ntest==26 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0'
+    dsname, src = 'exp=mfxlt3017:run=3', 'MfxEndstation.0:Rayonix.0'
+    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/rayonix/calib')
+
 else :
     print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
     sys.exit(0)

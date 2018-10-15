@@ -12,8 +12,8 @@ import pyimgalgos.GlobalGraphics as gg
 import pyimgalgos.Graphics as gr
 
 #------------------------------
-EVSKIP  = 10
-EVENTS  = EVSKIP + 10
+EVSKIP  = 0
+EVENTS  = EVSKIP + 105
 PLOT_IMG = True #False #True #False
 PLOT_SPE = True #False #True #False
 
@@ -29,6 +29,7 @@ def dsname_source(tname) :
     elif tname=='4' : return 'exp=xcsx22015:run=552', 'XcsEndstation.0:Jungfrau.0' # Silver behenate, attenuation 1.2e-2
     elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0'
     elif tname=='6' : return 'exp=mfx11116:run=689',  'MfxEndstation.0:Jungfrau.1' # Philip test 0.5M constants
+    elif tname=='30': return 'exp=mfxls1016:run=369', 'MfxEndstation.0:Jungfrau.1' # dark:369 test for clemens
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -142,7 +143,7 @@ def test_jungfrau_methods(tname) :
 
         print_ndarr(nda_raw, 'nda_raw')
 
-        nda = det.calib(evt, cmpars=(7,0,100)) # cmpars=(7,1,100)
+        nda = det.calib(evt, cmpars=(7,3,100)) # cmpars=(7,1,100)
 
         if nda is None : continue
         print '    Consumed time for det.raw/calib(evt) = %7.3f sec' % (time()-t0_sec)
@@ -166,17 +167,23 @@ def test_jungfrau_methods(tname) :
             imsh = None
 
             ave, rms = ndarr.mean(), ndarr.std()
+
+            print 'ave, rms=', ave, rms
             amin, amax = (-1, 10) if tname=='4' else\
                          (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
+                         (-1, 1) if tname=='30' else\
                          (ave-2*rms, ave+6*rms)
-            gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno')
+            gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='jet') # , cmap='inferno'
             #figim.canvas.draw()
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
 
         if PLOT_SPE :
-            arrhi = nda_raw
+            #arrhi = ndarr # nda_raw
+            #arrhi, range_x = nda_raw,(0,(1<<16)-1)
+            arrhi, range_x = ndarr, (-2,2) 
+            #range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
+
             axhi.clear()
-            range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
             hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=True)
             gr.add_title_labels_to_axes(axhi, title='Event %d'%i, xlabel='Raw data, ADU',\
                                                                   ylabel='Entries', color='k')

@@ -7,6 +7,17 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-55
+2018-10-15 Mikhail S. Dubrovin
+- add patch in returning shape for Rayonix detector, begin add stuff for epix10ka2m
+	modified:   examples/ex_all_dets.py
+	new file:   examples/ex_epix10ka2m_ipython.py
+	new file:   examples/ex_epix10ka2m_keys.py
+	modified:   examples/ex_jungfrau_images.py
+	modified:   examples/ex_pnccd_plot_in_evloop.py
+	modified:   src/PyDataAccess.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V01-00-54
 2018-09-26 Mikhail S. Dubrovin
 - AreaDetector.common_mode_apply

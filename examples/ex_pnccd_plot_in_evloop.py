@@ -21,11 +21,14 @@ from pyimgalgos.GlobalUtils import print_ndarr
 from Detector.UtilsPNCCD import common_mode_pnccd
 
 #------------------------------
+EVSKIP  = 10
+EVENTS  = EVSKIP + 10
 
-EVENTS  = 5
-
-DSNAME  = 'exp=sxrx22915:run=104'
+DSNAME  = 'exp=amolu4617:run=8'
 DETNAME = 'Camp.0:pnCCD.1' # 'pnccd'
+
+#DSNAME  = 'exp=sxrx22915:run=104'
+#DETNAME = 'Camp.0:pnCCD.1' # 'pnccd'
 
 #DSNAME  = 'exp=xpptut15:run=340'
 #DETNAME = 'Camp.0:pnCCD.0' # 'pnccdFront'
@@ -42,7 +45,7 @@ def test_pnccd() :
     #d.set_print_bits(0177777)
     img = None
     for nev,evt in enumerate(ds.events()):
-    
+        if nev < EVSKIP : continue
         if nev > EVENTS : break
     
         print '%s\nEvent %4d' % (50*'_', nev)
@@ -90,12 +93,16 @@ def test_pnccd_graph(tname) :
         if mask is None : mask = d.mask(evt, calib=True, status=True)
         print_ndarr(d.common_mode(evt), name='common_mode parameters')
 
+        raw = d.raw(evt)
+        if raw is None : continue
+
         #--------------------
         # Default correction
         if   tname=='2' : nda = d.calib(evt) # cmpars=(8,5,500) - def
         elif tname=='3' : nda = d.calib(evt, cmpars=0) # - NO cm correction
         elif tname=='4' : nda = d.calib(evt, cmpars=(8,5,500), mask=mask) # explicit new cmpars
         elif tname=='5' : nda = d.calib(evt, cmpars=(3,348,348,128), mask=mask) # explicit old
+        elif tname=='6' : nda = raw
         elif tname=='10' :
             #--------------------
             # DIY corrections
@@ -105,8 +112,6 @@ def test_pnccd_graph(tname) :
             #if mask is None : mask = d.status_as_mask(evt)
             if gain is None : gain = d.gain(evt)
             
-            raw = d.raw(evt)
-            if raw is None : continue
             nda = np.array(raw, dtype=np.float32)
             
             if peds is not None : nda -= peds
@@ -137,6 +142,10 @@ def test_pnccd_graph(tname) :
         #--------------------
 
         mask_badpix = d.status_as_mask(evt)
+        print_ndarr(mask_badpix, name='mask_badpix', first=0, last=5)
+        print_ndarr(nda, name='nda', first=0, last=5)
+        
+
         if mask_badpix is not None : nda *= mask_badpix
 
         #nda = mask
@@ -195,6 +204,7 @@ def test_description(tname=None) :
     if df or tname == '3' : msg += '\n 3 - image for d.calib(evt, cmpars=0) - NO common mode correction'
     if df or tname == '4' : msg += '\n 4 - image for d.calib(evt, cmpars=(8,5,500), mask=mask) - explicit new cmpars' 
     if df or tname == '5' : msg += '\n 5 - image for d.calib(evt, cmpars=(3,348,348,128), mask=mask) - explicit old'
+    if df or tname == '6' : msg += '\n 6 - image for d.raw(evt)'
     if df or tname =='10' : msg += '\n10 - image for DIY correction'
     print(msg)
 
@@ -204,7 +214,7 @@ if __name__ == "__main__" :
     print 80*'_'
     tname = sys.argv[1] if len(sys.argv)>1 else None
     if   tname == '1' : test_pnccd()
-    elif tname in ('2','3','4','5','10') : test_pnccd_graph(tname)
+    elif tname in ('2','3','4','5','6','10') : test_pnccd_graph(tname)
     else :
         test_description(tname=None)
         sys.exit ('Not recognized test name: "%s"' % tname)

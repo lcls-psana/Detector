@@ -645,6 +645,7 @@ class PyDetectorAccess :
         elif self.dettype == gu.EPIX100A   : return self.raw_data_epix(evt, env)      # 0.3 ms
         elif self.dettype == gu.EPIX10K    : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.EPIX10KA   : return self.raw_data_epix(evt, env)
+        elif self.dettype == gu.EPIX10KA2M : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.EPIX       : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
         elif self.dettype == gu.OPAL1000   : return self.raw_data_camera(evt, env)    # 1 ms
@@ -1287,15 +1288,37 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def print_config_rayonix(self, c) :
+        print 'XXX:shape_config_rayonix', dir(c)
+        print 'DeviceIDMax() :', c.DeviceIDMax
+        print 'ReadoutMode() :', c.ReadoutMode
+        print 'TypeId()      :', c.TypeId
+        print 'Version()     :', c.Version
+        print 'deviceID()    :', c.deviceID()   # MX340-HS:125
+        print 'binning_f()   :', c.binning_f()  # 4
+        print 'binning_s()   :', c.binning_s()  # 4
+        print 'darkFlag()    :', c.darkFlag()
+        print 'exposure()    :', c.exposure()
+        print 'rawMode()     :', c.rawMode()
+        print 'readoutMode() :', c.readoutMode()
+        print 'testPattern() :', c.testPattern()
+        print 'trigger()     :', c.trigger()     
+
+##-----------------------------
+
     def shape_config_rayonix(self, env) :
         # configuration from data file
         # config object for rayonix has a number of pixel in the bin for both dimansions
-        # maximal detector size is 3840x3840, pixel size is 44.5um 
+        # maximal detector size is 3840x3840, pixel size is 44.5um for old models
+        # maximal detector size is 7680x7680 for MX340-HS:125
         c = pda.get_rayonix_config_object(env, self.source)
+        #self.print_config_rayonix(c)
+        npix_row_max, npix_col_max = (7680,7680) if 'MX340' in c.deviceID() else (3840,3840)
         if c is None : return None
         npix_in_colbin = c.binning_f()
         npix_in_rowbin = c.binning_s()
-        if npix_in_rowbin>0 and npix_in_colbin>0 : return (3840/npix_in_rowbin, 3840/npix_in_colbin)
+        if npix_in_rowbin>0 and npix_in_colbin>0 : 
+            return (npix_row_max/npix_in_rowbin, npix_col_max/npix_in_colbin)
         return None
 
 ##-----------------------------

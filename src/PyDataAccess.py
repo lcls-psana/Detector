@@ -263,6 +263,9 @@ def get_epix_data_object(evt, src) :
     o = evt.get(_psana.Epix.ElementV1, src)
     if o is not None : return o
 
+    o = evt.get(_psana.Epix.ArrayV1, src)
+    if o is not None : return o
+
     return None
 
 ##-----------------------------
@@ -278,6 +281,9 @@ def get_epix_config_object(env, src) :
     if o is not None : return o
 
     o = cfg.get(_psana.Epix.Config10kaV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Epix.Config10ka2MV1, src)
     if o is not None : return o
 
     o = cfg.get(_psana.Epix.Config10KV1, src)
@@ -299,6 +305,27 @@ def get_epix10ka_config_object(env, src) :
 
     return None
     
+##-----------------------------
+
+def get_epix10ka2m_config_object(env, src) :
+    """get epix10ka2m config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Epix.Config10ka2MV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+
+def get_epix10ka2m_data_object(evt, src) :
+    """get epix10ka2m data object
+    """
+    o = evt.get(_psana.Epix.ArrayV1, src)
+    if o is not None : return o
+
+    return None
+
 ##-----------------------------
 
 def get_tm6740_config_object(env, src) :
