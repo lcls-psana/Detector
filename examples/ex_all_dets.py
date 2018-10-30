@@ -6,6 +6,11 @@ from time import time
 from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
 
+
+# supress matplotlib deprication warnings
+import warnings
+warnings.filterwarnings("ignore",".*GUI is implemented.*")
+
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
@@ -115,8 +120,9 @@ elif ntest==25 : #dsname, src = 'exp=cxi11216:run=40',  'CxiEndstation.0:Jungfra
     dsname, src = 'exp=cxi11216:run=40', 'CxiEndstation.0:Jungfrau.0'
 
 elif ntest==26 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix.0'
-    dsname, src = 'exp=mfxlt3017:run=3', 'MfxEndstation.0:Rayonix.0'
-    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/rayonix/calib')
+    #dsname, src = 'exp=mfxlt3017:run=3','MfxEndstation.0:Rayonix.0'
+    dsname, src =  '/reg/g/psdm/detector/data_test/types/0031-MfxEndstation.0-Rayonix.0.xtc', 'MfxEndstation.0:Rayonix.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/rayonix/calib')
 
 else :
     print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)

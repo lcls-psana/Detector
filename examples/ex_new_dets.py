@@ -5,6 +5,10 @@ import psana
 from time import time
 from Detector.GlobalUtils import print_ndarr
 
+# supress matplotlib deprication warnings
+import warnings
+warnings.filterwarnings("ignore",".*GUI is implemented.*")
+
 ##-----------------------------
 
 tname = sys.argv[1] if len(sys.argv)>1 else '1'
@@ -12,8 +16,11 @@ print 'Test "%s"' % tname
 
 ##-----------------------------
 
-dsname = '/reg/g/psdm/data_test/types/FCCD_FccdConfigV2.xtc' # sxr61612-r0332
-src = 'SxrEndstation.0:Fccd.0' # Camera.FrameV1. Fccd.ConfigV2
+dsname, src = None, None
+
+if tname=='1' :
+    dsname = '/reg/g/psdm/data_test/types/FCCD_FccdConfigV2.xtc' # sxr61612-r0332
+    src = 'SxrEndstation.0:Fccd.0' # Camera.FrameV1. Fccd.ConfigV2
 
 if tname=='2' :
     #dsname = '/reg/g/psdm/data_test/types/Timepix_ConfigV3.xtc' # xcsi0113-r0030
@@ -49,6 +56,24 @@ elif tname=='8' :
     dsname = '/reg/g/psdm/detector/data_test/types/0027-DetLab.0-Uxi.0.xtc'
     src = 'DetLab.0:Uxi.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/') # '/reg/d/psdm/det/detdaq17/calib'
+
+elif tname=='9' :
+    #dsname = 'exp=detdaq17:run=121'
+    dsname = '/reg/g/psdm/detector/data_test/types/0030-DetLab.0-StreakC7700.0.xtc' # (1024, 1344)
+    src = 'DetLab.0:StreakC7700.0'
+    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/') # '/reg/d/psdm/det/detdaq17/calib'
+    #/reg/d/psdm/DET/detdaq17/calib/Camera::CalibV1/DetLab.0:StreakC7700.0/pedestals/121-end.data
+
+elif tname=='10' :
+    #dsname = 'exp=sxrx35317:run=1'
+    dsname = '/reg/g/psdm/detector/data_test/types/0029-SxrEndstation.0-Archon.0.xtc' # (300, 4800)
+    src = 'SxrEndstation.0:Archon.0'
+    psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib/') # '/reg/d/psdm/det/detdaq17/calib'
+
+elif tname=='11' :
+    dsname = '/reg/g/psdm/detector/data_test/types/0028-NoDetector.0-Epix10ka2M.0.xtc' # (16, 352, 384)
+    src = 'NoDetector.0:Epix10ka2M.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
@@ -94,8 +119,8 @@ print 80*'_', '\nInstrument: ', ins
 #print 'size of ndarray: %d' % det.size(par)
 #print 'ndim of ndarray: %d' % det.ndim(par)
 
-#peds = det.pedestals(par)
-#print_ndarr(peds, 'pedestals')
+peds = det.pedestals(par)
+print_ndarr(peds, 'pedestals')
 
 #rms = det.rms(par)
 #print_ndarr(rms, 'rms')
@@ -199,6 +224,7 @@ print 80*'_'
 if img is None :
     print 'Image is not available'
     sys.exit('FURTHER TEST IS TERMINATED')
+
 
 import pyimgalgos.GlobalGraphics as gg
 

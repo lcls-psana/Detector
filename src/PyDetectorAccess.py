@@ -480,7 +480,17 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def pixel_size_rayonix(self) :
+        """Dan can't guarantee that pixel size in the rayonix_config_object is sufficiently precise.
+        """
+        c = pda.get_rayonix_config_object(self.env, self.source)
+        if c is None : return None
+        return c.pixelWidth() #  ? c.pixelHeight() # available in confic since 2018-10-29 ana-1.3.73
+
+##-----------------------------
+
     def pixel_size(self, par) :
+        #if self.dettype == gu.RAYONIX : return self.pixel_size_rayonix()
         if self.geoaccess(par) is None : return None
         else :
             if  self.pixel_size_val is None : 
@@ -648,22 +658,16 @@ class PyDetectorAccess :
         elif self.dettype == gu.EPIX10KA2M : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.EPIX       : return self.raw_data_epix(evt, env)
         elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
-        elif self.dettype == gu.OPAL1000   : return self.raw_data_camera(evt, env)    # 1 ms
-        elif self.dettype == gu.OPAL2000   : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.OPAL4000   : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.OPAL8000   : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.ORCAFL40   : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.TM6740     : return self.raw_data_camera(evt, env)    # 0.24 ms
-        elif self.dettype == gu.QUARTZ4A150: return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.RAYONIX    : return self.raw_data_camera(evt, env)
+        elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
+                              gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150, gu.RAYONIX,
+                              gu.FCCD, gu.EPICSCAM, gu.STREAK, gu.ARCHON)\
+                                           : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.IMP        : return self.raw_data_imp(evt, env)
-        elif self.dettype == gu.FCCD       : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.TIMEPIX    : return self.raw_data_timepix(evt, env)
         elif self.dettype == gu.FLI        : return self.raw_data_fli(evt, env)
         elif self.dettype == gu.PIMAX      : return self.raw_data_pimax(evt, env)
         elif self.dettype == gu.PIXIS      : return self.raw_data_pixis(evt, env)
         elif self.dettype == gu.ZYLA       : return self.raw_data_zyla(evt, env)
-        elif self.dettype == gu.EPICSCAM   : return self.raw_data_camera(evt, env)
         elif self.dettype == gu.UXI        : return self.raw_data_uxi(evt, env)
         else                               : return None
 
@@ -1303,6 +1307,13 @@ class PyDetectorAccess :
         print 'readoutMode() :', c.readoutMode()
         print 'testPattern() :', c.testPattern()
         print 'trigger()     :', c.trigger()     
+        print 'NEW STUFF IN Rayonix.ConfigV2 since 2018-10-29 ana-1.3.73'
+        print 'width()       :', c.width()
+        print 'height()      :', c.height()
+        print 'maxWidth()    :', c.maxWidth()
+        print 'maxHeight()   :', c.maxHeight()
+        print 'pixelWidth()  :', c.pixelWidth()
+        print 'pixelHeight() :', c.pixelHeight()
 
 ##-----------------------------
 
@@ -1312,14 +1323,18 @@ class PyDetectorAccess :
         # maximal detector size is 3840x3840, pixel size is 44.5um for old models
         # maximal detector size is 7680x7680 for MX340-HS:125
         c = pda.get_rayonix_config_object(env, self.source)
-        #self.print_config_rayonix(c)
-        npix_row_max, npix_col_max = (7680,7680) if 'MX340' in c.deviceID() else (3840,3840)
         if c is None : return None
-        npix_in_colbin = c.binning_f()
-        npix_in_rowbin = c.binning_s()
-        if npix_in_rowbin>0 and npix_in_colbin>0 : 
-            return (npix_row_max/npix_in_rowbin, npix_col_max/npix_in_colbin)
-        return None
+
+        return (c.height(), c.width()) # available in confic since 2018-10-29 ana-1.3.73
+
+        # DEPRICATED on 2018-10-29
+        #self.print_config_rayonix(c)
+        #npix_row_max, npix_col_max = (7680,7680) if 'MX340' in c.deviceID() else (3840,3840)
+        #npix_in_colbin = c.binning_f()
+        #npix_in_rowbin = c.binning_s()
+        #if npix_in_rowbin>0 and npix_in_colbin>0 : 
+        #    return (npix_row_max/npix_in_rowbin, npix_col_max/npix_in_colbin)
+        #return None
 
 ##-----------------------------
 
@@ -1394,6 +1409,12 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def shape_config_epicscam(self, env) :
+        c = pda.get_epicscam_config_object(env, self.source)
+        return (c.height(), c.width())
+
+##-----------------------------
+
     def shape_config_uxi(self, env) :
         c = pda.get_uxi_config_object(env, self.source)
         if c is None : return None
@@ -1402,6 +1423,14 @@ class PyDetectorAccess :
         return (c.numberOfFrames(), c.height(), c.width())
         #c.numRows(), c.numChannels(), c.numLinks()
         #return (4, 512, 512) # no other choice
+
+##-----------------------------
+
+    def shape_config_archon(self, env) :
+        # configuration from data file
+        c = pda.get_archon_config_object(env, self.source)
+        if c is None : return None
+        return (c.numPixelsY(), c.numPixelsX()) # 300, 4800
 
 ##-----------------------------
 
@@ -1422,15 +1451,12 @@ class PyDetectorAccess :
 
         elif self.dettype == gu.FCCD :
             c = pda.get_fccd_config_object(env, self.source)     
-            #return (c.height(), c.width())
 
         elif self.dettype == gu.FCCD960 :
             c = pda.get_fccd_config_object(env, self.source)
-            #return (c.height(), c.width())
 
         elif self.dettype == gu.ORCAFL40 :
             c = pda.get_orca_config_object(env, self.source)
-            #return (c.height(), c.width())
 
         elif self.dettype == gu.TM6740 :
             c = pda.get_tm6740_config_object(env, self.source)
@@ -1438,14 +1464,12 @@ class PyDetectorAccess :
         elif self.dettype == gu.QUARTZ4A150 :
             c = pda.get_quartz_config_object(env, self.source)
 
-        elif self.dettype == gu.EPICSCAM :
-            c = pda.get_epicscam_config_object(env, self.source)
-            return (c.height(), c.width())
+        elif self.dettype == gu.STREAK :
+            c = pda.get_streak_config_object(env, self.source)
 
         #print c
         if c is None : return None
         return (c.Row_Pixels, c.Column_Pixels)
-
 
 ##-----------------------------
 
@@ -1459,9 +1483,6 @@ class PyDetectorAccess :
 
     def shape_config(self, env) :
 
-        #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
-        #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
-
         if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
         elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
         elif self.dettype == gu.EPIX100A   : return self.shape_config_epix100(env)
@@ -1472,14 +1493,17 @@ class PyDetectorAccess :
         elif self.dettype == gu.JUNGFRAU   : return self.shape_config_jungfrau(env)
         elif self.dettype == gu.RAYONIX    : return self.shape_config_rayonix(env)
         elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
-                              gu.FCCD, gu.FCCD960, gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150, gu.EPICSCAM) \
+                              gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150,
+                              gu.FCCD, gu.FCCD960, gu.STREAK)\
                                            : return self.shape_config_camera(env)       
         elif self.dettype == gu.TIMEPIX    : return self.shape_config_timepix(env)
         elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
         elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
         elif self.dettype == gu.ZYLA       : return self.shape_config_zyla(env)
+        elif self.dettype == gu.EPICSCAM   : return self.shape_config_epicscam(env)
         elif self.dettype == gu.UXI        : return self.shape_config_uxi(env)
         elif self.dettype == gu.PIXIS      : return self.shape_config_pixis(env)
+        elif self.dettype == gu.ARCHON     : return self.shape_config_archon(env)
 
         # waveform detectors:
         #elif self.dettype == gu.ACQIRIS    : return self.shape_config_acqiris(env)

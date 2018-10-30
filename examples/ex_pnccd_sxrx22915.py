@@ -6,7 +6,7 @@ from pylab import *
 import h5py
 import psana
 
-run = 104 #change run number here
+run = 104
 myDataSource = psana.DataSource("exp=sxrx22915:run="+str(run))# reads in the data file
 
 pnccd = psana.Detector('Camp.0:pnCCD.1') #picks out the pnccd data

@@ -94,21 +94,42 @@ def ex_source_dsname(ntest) :
     elif ntest == 35:
         src, dsn = 'DetLab.0:Uxi.0', '/reg/g/psdm/detector/data_test/types/0027-DetLab.0-Uxi.0.xtc'
 
+    elif ntest == 36:
+        src, dsn = 'DetLab.0:Uxi.0', '/reg/g/psdm/detector/data_test/types/0027-DetLab.0-Uxi.0.xtc'
+
+    elif ntest == 37:
+        src, dsn = 'NoDetector.0:Epix10ka2M.0', '/reg/g/psdm/detector/data_test/types/0028-NoDetector.0-Epix10ka2M.0.xtc'
+
+    elif ntest == 38:
+        src, dsn = 'SxrEndstation.0:Archon.0', '/reg/g/psdm/detector/data_test/types/0029-SxrEndstation.0-Archon.0.xtc'
+
+    elif ntest == 39:
+        src, dsn = 'DetLab.0:StreakC7700.0', '/reg/g/psdm/detector/data_test/types/0030-DetLab.0-StreakC7700.0.xtc'
+
     else :
         sys.exit('Non-implemented sample for test number # %d' % ntest)
 
     return src, dsn
 
+
 ##-----------------------------
 
 if __name__ == "__main__" :
-
-    ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print '%s\nExample # %d' % (80*'_', ntest)
-
+  def test_dataset(ntest) :
+    import psana
     src, dsn = ex_source_dsname(ntest)
     print 'src=%s, dsname=%s' % (src, dsn)
+    ds = psana.DataSource(dsn)
+    for nevt,evt in enumerate(ds.events()):
+        print evt.keys()
+        break
 
+##-----------------------------
+
+if __name__ == "__main__" :
+    ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
+    print '%s\nExample # %d' % (80*'_', ntest)
+    test_dataset(ntest)    
     sys.exit(0)
 
 ##-----------------------------

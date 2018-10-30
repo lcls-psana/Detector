@@ -1,10 +1,14 @@
 
 # Example of code for ipython
 
+from pyimgalgos.GlobalUtils import print_ndarr
 import psana
-#ds = psana.DataSource('exp=mfxx32516:run=377')
-ds = psana.DataSource('/reg/g/psdm/detector/data_test/xtc/e0-r0003-s00-c00.xtc')
+#ds = psana.DataSource('/reg/g/psdm/detector/data_test/xtc/e0-r0003-s00-c00.xtc')
+ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0028-NoDetector.0-Epix10ka2M.0.xtc')
 det = psana.Detector('NoDetector.0:Epix10ka2M.0') # 'Epix10ka2M'
+#psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad2x2/calib-cspad2x2-01-2013-02-13/calib')
+
+evt=None
 for i, evt in enumerate(ds.events()) :
     if i>100 : break
     raw = det.raw(evt)
@@ -12,24 +16,26 @@ for i, evt in enumerate(ds.events()) :
         print i, 'none'
         continue
     else:
-        print i, raw.shape
+        print_ndarr(raw, name='raw ', first=0, last=5)
+
+runnum = 10
+print_ndarr(det.pedestals(runnum), name='pedestals', first=0, last=5)
+
+evt=ds.events().next()
 
 #------------------------------
 
 import psana
-dsname = '/reg/g/psdm/detector/data_test/xtc/e0-r0003-s00-c00.xtc'
-s_src = 'NoDetector.0:Epix10ka2M.0'
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, s_src)
-
-src = psana.Source(s_src)
-ds  = psana.DataSource(dsname)
+src = psana.Source('NoDetector.0:Epix10ka2M.0')
+#ds  = psana.DataSource('/reg/g/psdm/detector/data_test/xtc/e0-r0003-s00-c00.xtc')
+ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/0028-NoDetector.0-Epix10ka2M.0.xtc')
 env = ds.env()
 
 r = ds.runs().next()
 #evt = ds.events().next()
 
 evt=None
-for i, evt in enumerate(ds.events()) :    
+for i, evt in enumerate(ds.events()) :
     if evt is None : print 'Event %4d is None' % i
     else :  
         print 'Event %4d is NOT None' % i 
@@ -63,22 +69,28 @@ for n in range(co.numberOfElements()) :
         if name[:2]=='__' : continue
         print '    ', name
 
+#------------------------------
+
     print '    len(asicPixelConfigArray): ', len(elem.asicPixelConfigArray())
+
+#------------------------------
 
 for n in range(4) :
     print 'Element # %2d' % n
     q = co.quad(n)
     print '  quad:', q
+    for name in dir(q) :
+        if name[:2]=='__' : continue
+        print '    ', name
 
 #------------------------------
 
-#det = psana.Detector(s_src, env)
-#raw = det.raw(evt)
-#raw.shape #Out[8]: ((352, 384)
-#raw.dtype #Out[9]: dtype('uint16')
+asic00 = co.elemCfg(0).asics(0)
+for name in dir(asic00) :
+    if name[:2]=='__' : continue
+    print '    ', name
 
-#evt = ds.events().next()
-#dato = evt.get(psana.Epix.ElementV3, src)
+print '    ASIC chipID', asic00.chipID()
+print '    ASIC trbit', asic00.trbit()
 
 #------------------------------
-

@@ -627,6 +627,42 @@ def get_uxi_config_object(env, src) :
     return None
     
 ##-----------------------------
+
+def get_streak_data_object(evt, src) :
+    """get streak data object
+    """
+    return get_camera_data_object(evt, src)
+
+##-----------------------------
+
+def get_streak_config_object(env, src) :
+    """get streak config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Streak.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
+
+def get_archon_data_object(evt, src) :
+    """get archon data object
+    """
+    return get_camera_data_object(evt, src)
+
+##-----------------------------
+
+def get_archon_config_object(env, src) :
+    """get streak config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Archon.ConfigV3, src)
+    if o is not None : return o
+
+    return None
+    
+##-----------------------------
 ##-----------------------------
 ##----- Other data objects ----
 ##-----------------------------

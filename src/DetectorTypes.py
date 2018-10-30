@@ -78,6 +78,7 @@ detectors = {
     "Fccd960"     : AreaDetector,
     "Epix10k"     : AreaDetector,
     "Epix10ka"    : AreaDetector,
+    "Epix10ka2M"  : AreaDetector,
     "Epix100a"    : AreaDetector,
     "EpixS"       : AreaDetector,
     "Gotthard"    : AreaDetector,
@@ -89,6 +90,8 @@ detectors = {
     "Zyla"        : AreaDetector,
     "Pixis"       : AreaDetector,
     "Uxi"         : AreaDetector,
+    "StreakC7700" : AreaDetector,
+    "Archon"      : AreaDetector,
 }
 
 
