@@ -640,7 +640,6 @@ class PyDetectorAccess :
     def raw_data(self, evt, env) :
 
         #print('XXXX dettype', dettype)
-
         #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
         #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
 
@@ -651,17 +650,15 @@ class PyDetectorAccess :
         elif self.dettype == gu.ANDOR      : return self.raw_data_andor(evt, env)     # 0.1 ms
         elif self.dettype == gu.ANDOR3D    : return self.raw_data_andor(evt, env)
         elif self.dettype == gu.JUNGFRAU   : return self.raw_data_jungfrau(evt, env)
-        elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
-        elif self.dettype == gu.EPIX100A   : return self.raw_data_epix(evt, env)      # 0.3 ms
-        elif self.dettype == gu.EPIX10K    : return self.raw_data_epix(evt, env)
-        elif self.dettype == gu.EPIX10KA   : return self.raw_data_epix(evt, env)
-        elif self.dettype == gu.EPIX10KA2M : return self.raw_data_epix(evt, env)
-        elif self.dettype == gu.EPIX       : return self.raw_data_epix(evt, env)
-        elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
+        elif self.dettype in (gu.EPIX100A, gu.EPIX10K, gu.EPIX10KA,
+                              gu.EPIX10KA2M, gu.EPIX10KAQUAD, gu.EPIX)\
+                                           : return self.raw_data_epix(evt, env)
         elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
                               gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150, gu.RAYONIX,
                               gu.FCCD, gu.EPICSCAM, gu.STREAK, gu.ARCHON)\
                                            : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
+        elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
         elif self.dettype == gu.IMP        : return self.raw_data_imp(evt, env)
         elif self.dettype == gu.TIMEPIX    : return self.raw_data_timepix(evt, env)
         elif self.dettype == gu.FLI        : return self.raw_data_fli(evt, env)

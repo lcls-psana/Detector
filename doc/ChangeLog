@@ -7,6 +7,28 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-57
+2018-11-14 Mikhail S. Dubrovin
+- implement calib_epix10ka supporting composite detectors epix10ka2m and epix10kaquad
+	modified:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_offset_calibration
+	modified:   app/epix10ka_pedestals_calibration
+	new file:   app/epix10kaquad_produce_fake_constants
+	new file:   examples/ex_epix10ka2m_config.py
+	modified:   examples/ex_epix10ka2m_keys.py
+	new file:   examples/ex_epix10kaquad_config.py
+	new file:   examples/ex_epix10kaquad_ipython.py
+	modified:   examples/ex_new_dets.py
+	new file:   examples/test_epix10kaquad_config.py
+	modified:   src/AreaDetector.py
+	modified:   src/DetectorTypes.py
+	modified:   src/PyDataAccess.py
+	modified:   src/PyDetectorAccess.py
+	modified:   src/UtilsEpix.py
+	renamed:    src/UtilsEpix.py -> src/UtilsEpix10ka.py
+	new file:   src/UtilsEpix10ka2M.py
+	renamed:    src/UtilsEpix10ka.py -> src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-56
 2018-10-30 Mikhail S. Dubrovin
 - PyDetectorAccess:

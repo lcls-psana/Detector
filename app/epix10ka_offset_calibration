@@ -5,7 +5,7 @@ import sys
 from time import time
 
 from Detector.GlobalUtils import info_command_line_parameters
-from Detector.UtilsEpix10ka import offset_calibration, CALIB_REPO_EPIX10KA
+from Detector.UtilsEpix10kaCalib import offset_calibration, CALIB_REPO_EPIX10KA
 
 import logging
 logger = logging.getLogger(__name__)

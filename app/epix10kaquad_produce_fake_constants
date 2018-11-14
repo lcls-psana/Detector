@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+
+""" Generates fake constants for epix10ka2m and/or epix10kaquad for pixel_gain and pedestals
+"""
+
+#--------------------
+
+import numpy as np
+from PSCalib.NDArrIO import save_txt, load_txt
+from Detector.GlobalUtils import print_ndarr # , info_ndarr
+
+#--------------------
+
+def stack_fake_constants(nda1, npanels=4) :
+    sh1 = nda1.shape
+    lstnda = []
+    for gm in range(7) :  # loop over gain modes
+      for i in range(npanels) : # loop over panels (replicate the same panel)
+        lstnda.append(nda1[gm,:,:])
+    ndaout = np.stack(tuple(lstnda))
+    ndaout.shape = (sh1[0], npanels, sh1[2], sh1[3])
+    return ndaout  
+
+#--------------------
+
+def do_work() :
+    #ctypedir = '/reg/g/psdm/detector/data_test/calib/Epix10kaQuad::CalibV1/NoDetector.0:Epix10kaQuad.0/'
+    #ctypedir = '/reg/d/psdm/mec/mecx32917/calib/Epix10kaQuad::CalibV1/MecTargetChamber.0:Epix10kaQuad.1/'
+    #ctypedir = '/reg/g/psdm/detector/data_test/calib/Epix10kaQuad::CalibV1/MecTargetChamber.0:Epix10kaQuad.3/'
+    ctypedir = '/reg/g/psdm/detector/data_test/calib/Epix10ka2M::CalibV1/NoDetector.0:Epix10ka2M.0/'
+
+    # targeted shape = (7, 4, 352, 384)
+    # panel shape      (7, 1, 352, 384)
+
+    dir_panel = '/reg/g/psdm/detector/gains/epix10k/panels/'\
+                '3791847426-0170080513-1879048214-0191557724-0003673288-2996154369-0218103833'
+
+    #fname_gain1 = dir_panel + '/gain/epix10ka_0001_20180514120622_mfxx32516_r1021_gain.txt'
+    fname_gain1 = dir_panel + '/gain/epix10ka_0001_20180910111049_mfxx32516_r1021_gain.txt'
+
+    #fname_peds1 = dir_panel + '/pedestals/epix10ka_0001_20180514120622_mfxx32516_r1021_pedestals.txt'
+    fname_peds1 = dir_panel + '/pedestals/epix10ka_0001_20180910111049_mfxx32516_r1021_pedestals.txt'
+
+    ifnames = (fname_gain1, fname_peds1)
+    ofnames = (ctypedir+'pixel_gain/0-end.data',\
+               ctypedir+'pedestals/0-end.data')
+    #ofnames = ('pixel_gain-0-end.data',\
+    #           'pedestals-0-end.data')
+
+    npanels = 16             
+
+    for ifname, ofname in zip(ifnames, ofnames) :
+        print 'Load constants from file: %s' % ifname
+        nda1 = load_txt(ifname)
+        print_ndarr(nda1, 'nda1')
+
+	ndao = stack_fake_constants(nda1, npanels)
+        print_ndarr(ndao, 'ndao')
+
+	#ofname = fname.rsplit('_',1)[-1]
+	print 'Save: %s' % ofname
+        save_txt(ofname, ndao, fmt='%.3f')
+
+#--------------------
+
+if __name__ == "__main__" :
+    print(80*'_')
+    do_work()
+
+#--------------------
+

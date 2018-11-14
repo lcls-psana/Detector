@@ -5,7 +5,7 @@ import sys
 from time import time
 
 from Detector.GlobalUtils import info_command_line_parameters
-from Detector.UtilsEpix10ka import deploy_constants, CALIB_REPO_EPIX10KA, GAIN_MODES_IN
+from Detector.UtilsEpix10kaCalib import deploy_constants, CALIB_REPO_EPIX10KA, GAIN_MODES_IN
 
 import logging
 logger = logging.getLogger(__name__)

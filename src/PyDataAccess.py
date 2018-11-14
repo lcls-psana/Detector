@@ -213,10 +213,7 @@ def get_andor_config_object(env, src) :
 
 ##-----------------------------
 
-def get_fccd_data_object(env, src) :
-    """get fccd data object
-    """
-    return get_camera_data_object(evt, src)
+get_fccd_data_object = get_camera_data_object
 
 ##-----------------------------
 
@@ -237,17 +234,8 @@ def get_fccd_config_object(env, src) :
     
 ##-----------------------------
 
-def get_fccd960_data_object(env, src) :
-    """get fccd960 data object
-    """
-    return get_camera_data_object(evt, src)
-
-##-----------------------------
-
-def get_fccd960_config_object(env, src) :
-    """get fccd960 config object
-    """
-    return get_fccd_config_object(env, src)
+get_fccd960_data_object = get_camera_data_object
+get_fccd960_config_object = get_fccd_config_object
     
 ##-----------------------------
 
@@ -286,6 +274,9 @@ def get_epix_config_object(env, src) :
     o = cfg.get(_psana.Epix.Config10ka2MV1, src)
     if o is not None : return o
 
+    o = cfg.get(_psana.Epix.Config10kaQuadV1, src)
+    if o is not None : return o
+
     o = cfg.get(_psana.Epix.Config10KV1, src)
     if o is not None : return o
 
@@ -294,6 +285,23 @@ def get_epix_config_object(env, src) :
 
     return None
 
+##-----------------------------
+
+def get_epix10ka_any_config_object(env, src) :
+    """get epix10ka2m config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Epix.Config10kaV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Epix.Config10ka2MV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Epix.Config10kaQuadV1, src)
+    if o is not None : return o
+
+    return None
+    
 ##-----------------------------
 
 def get_epix10ka_config_object(env, src) :
@@ -328,6 +336,22 @@ def get_epix10ka2m_data_object(evt, src) :
 
 ##-----------------------------
 
+def get_epix10kaquad_config_object(env, src) :
+    """get epix10kaquad config object
+    """
+    cfg = env.configStore()
+
+    o = cfg.get(_psana.Epix.Config10kaQuadV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+get_epix10kaquad_data_object = get_epix10ka2m_data_object
+
+##-----------------------------
+
 def get_tm6740_config_object(env, src) :
     """get pulnix tm6740 config object
     """
@@ -342,10 +366,7 @@ def get_tm6740_config_object(env, src) :
     
 ##-----------------------------
 
-def get_quartz_data_object(evt, src) :
-    """get quartz data object
-    """
-    return get_camera_data_object(evt, src)
+get_quartz_data_object = get_camera_data_object
 
 ##-----------------------------
 
@@ -363,10 +384,7 @@ def get_quartz_config_object(env, src) :
     
 ##-----------------------------
 
-def get_rayonix_data_object(evt, src) :
-    """get rayonix data object
-    """
-    return get_camera_data_object(evt, src)
+get_rayonix_data_object = get_camera_data_object
 
 ##-----------------------------
 
@@ -628,10 +646,7 @@ def get_uxi_config_object(env, src) :
     
 ##-----------------------------
 
-def get_streak_data_object(evt, src) :
-    """get streak data object
-    """
-    return get_camera_data_object(evt, src)
+get_streak_data_object = get_camera_data_object
 
 ##-----------------------------
 
@@ -646,10 +661,7 @@ def get_streak_config_object(env, src) :
     
 ##-----------------------------
 
-def get_archon_data_object(evt, src) :
-    """get archon data object
-    """
-    return get_camera_data_object(evt, src)
+get_archon_data_object = get_camera_data_object
 
 ##-----------------------------
 

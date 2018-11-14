@@ -1,5 +1,6 @@
 
 from psana import DataSource
+#ds = DataSource('/reg/g/psdm/detector/data_test/types/0032-NoDetector.0-Epix10kaQuad.0.xtc')
 ds = DataSource('/reg/g/psdm/detector/data_test/xtc/e0-r0003-s00-c00.xtc')
 print '\n\nevt.keys():'
 for nev, evt in enumerate(ds.events()): 

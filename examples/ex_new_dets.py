@@ -11,6 +11,13 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 ##-----------------------------
 
+import logging
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO) #DEBUG) # INFO
+
+##-----------------------------
+
 tname = sys.argv[1] if len(sys.argv)>1 else '1'
 print 'Test "%s"' % tname
 
@@ -75,6 +82,16 @@ elif tname=='11' :
     src = 'NoDetector.0:Epix10ka2M.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
+elif tname=='12' :
+    dsname = '/reg/g/psdm/detector/data_test/types/0032-NoDetector.0-Epix10kaQuad.0.xtc' # (4, 352, 384)
+    src = 'NoDetector.0:Epix10kaQuad.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
+
+elif tname=='101' :
+    dsname = 'exp=meclu5717:run=3'
+    src = 'MecTargetChamber.0:Jungfrau.0'
+    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
+
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
 print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
@@ -104,9 +121,11 @@ from Detector.AreaDetector import AreaDetector
 par = nrun # evt or nrun
 det = AreaDetector(src, env, pbits=0)
 
+#det.set_print_bits(511);
+
 ins = det.instrument()
 print 80*'_', '\nInstrument: ', ins
-#det.set_print_bits(511);
+
 #det.set_def_value(-5.);
 #det.set_mode(1);
 #det.set_do_offset(True); # works for ex. Opal1000
@@ -121,6 +140,9 @@ print 80*'_', '\nInstrument: ', ins
 
 peds = det.pedestals(par)
 print_ndarr(peds, 'pedestals')
+
+gain = det.gain(par)
+print_ndarr(gain, 'pixel_gain')
 
 #rms = det.rms(par)
 #print_ndarr(rms, 'rms')
@@ -143,9 +165,14 @@ print_ndarr(peds, 'pedestals')
 #cmod = det.common_mode(par)
 #print_ndarr(cmod, 'common_mod')
 
+calib = det.calib(evt)
+print_ndarr(calib, 'calib')
+
 t0_sec = time()
 nda_raw = det.raw(evt)
 print_ndarr(nda_raw, 'nda_raw')
+
+##-----------------------------
 
 i=0
 if nda_raw is None :
@@ -174,8 +201,12 @@ if nda_raw is None :
 #nda_cdata_ub = det.calib(evt, cmpars=(5,50))
 #print_ndarr(nda_cdata_ub, 'calibrated data for cspad unbond pixels')
 
-#coords_x = det.coords_x(par)
-#print_ndarr(coords_x, 'coords_x')
+coords_x = det.coords_x(par)
+print_ndarr(coords_x, 'coords_x')
+
+##-----------------------------
+#sys.exit('TEST EXIT')
+##-----------------------------
 
 #areas = det.areas(par)
 #print_ndarr(areas, 'area')
@@ -193,16 +224,19 @@ if nda_raw is None :
 img_arr = nda_raw
 #img_arr = data_sub_peds
 #img_arr = nda_cdata if nda_cdata is not None else nda_raw
-img = None
+
+img = det.image(evt)
+print_ndarr(img, 'img')
 
 # Image producer is different for 3-d and 2-d arrays 
-if len(nda_raw.shape) > 2 :
+if img is None :
+  if len(nda_raw.shape) > 2 :
     if 'Jungfrau' in src : 
         img = nda_raw
         sh = nda_raw.shape
-        img.shape = (sh[-2],sh[-1])
+        img.shape = (img.size/sh[-1],sh[-1])
 
-    if 'Uxi' in src : # 3-d like (<n-frames>, 1024, 512)
+    elif 'Uxi' in src : # 3-d like (<n-frames>, 1024, 512)
         img = nda_raw # det.calib(evt)
         sh = img.shape # (2, 1024, 512)
         img.shape = (img.size/sh[-1],sh[-1])
@@ -211,7 +245,7 @@ if len(nda_raw.shape) > 2 :
         img = det.image(evt)
         #img = det(evt) # alias for det.image(evt) implemented in __call__
         #img = det.image(evt, img_arr)
-else :
+  else :
     img = img_arr
     img.shape = nda_raw.shape
 
