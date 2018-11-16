@@ -22,6 +22,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from Detector.GlobalUtils import print_ndarr #, info_ndarr
+from PSCalib.GlobalUtils import load_textfile, save_textfile
 
 CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
 

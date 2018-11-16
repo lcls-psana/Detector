@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 from Detector.PyDataAccess import get_epix_data_object, get_epix10ka_config_object,\
                                   get_epix10kaquad_config_object, get_epix10ka2m_config_object
 from Detector.GlobalUtils import print_ndarr, info_ndarr, divide_protected
-from PSCalib.GlobalUtils import load_textfile, save_textfile
+#from PSCalib.GlobalUtils import load_textfile, save_textfile
 
 # o = get_epix_data_object(evt, src)
 # co = get_epix_config_object(env, src)

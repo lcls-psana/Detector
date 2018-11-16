@@ -438,9 +438,15 @@ def offset_calibration(*args, **opts) :
             if nstep<=4:
                 msg = 'DARK %d ' % nstep
                 #dark
+                nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):
                     raw = det.raw(evt)
+                    if nrec<5\
+                    or (nrec<50 and not nrec%10)\
+                    or (nrec<500 and not nrec%100)\
+                    or (not nrec%1000) :
+                        logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
                     if raw is None:
                         msg += 'none'
                         continue
@@ -448,12 +454,21 @@ def offset_calibration(*args, **opts) :
                         break
                     else:
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
-                        block[nevt]=raw
+                        block[nrec]=raw
+                        nrec += 1
                         if nevt%128==0:
                             msg += '.%s' % find_gain_mode(det, raw) 
 
-                darks[:,:,nstep]=block.mean(0)
+                darks[:,:,nstep]=block[:nrec,:].mean(0)
                 logger.debug(msg)
+
+            ####################
+            #elif True:
+            #    print('XXXXXXX darks:\n', darks)
+            #    if nstep>4 : break
+            #    continue
+            ####################
+
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto Medium-to-Low    
             elif nstep<5+nspace**2:
@@ -523,6 +538,10 @@ def offset_calibration(*args, **opts) :
         #save fitting results
         np.savez_compressed(fname_work, darks=darks, fits_hl=fits_hl, fits_ml=fits_ml, nsp_hl=nsp_hl, nsp_ml=nsp_ml) 
         logger.info('Saved:  %s' % fname_work)
+
+    #--------------------
+    #sys.exit('TEST EXIT')
+    #--------------------
 
     #Calculate and save offsets:
     offset_ahl=fits_hl[:,:,1,1]
@@ -658,19 +677,23 @@ def pedestals_calibration(*args, **opts) :
     msg='READING RAW FRAMES (200 per ".") assuming %s mode '%(mode)
     for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
         block=np.zeros((nbs,ny,nx),dtype=np.int16)
-        ievt=0;
+        nrec=0;
         for nevt,evt in enumerate(step.events()):
             raw = det.raw(evt)
-            #print_ndarr(raw, 'Ev:%03d raw' % nevt)
+            if nrec<5\
+            or (nrec<50 and not nrec%10)\
+            or (nrec<500 and not nrec%100)\
+            or (not nrec%1000) :
+                logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
             if raw is None:     #skip empty frames
                 msg+='none'
                 continue
-            if ievt>=nbs:       #stop after collecting sufficient frames
+            if nrec>=nbs:       #stop after collecting sufficient frames
                 break
             else:
                 #block=insert_subframe(block,raw,nevt,nspace,nevt-5);
-                block[ievt]=raw;
-                ievt+=1;
+                block[nrec]=raw;
+                nrec+=1;
                 if nevt%200==0: # simple progress bar
                     msg+='.'
                     
@@ -679,7 +702,7 @@ def pedestals_calibration(*args, **opts) :
 
     logger.debug(msg)
 
-    dark=block.mean(0)  #Calculate mean 
+    dark=block[:nrec,:].mean(0)  #Calculate mean 
     
     #save dark in proper place
     #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%(mode,irun);

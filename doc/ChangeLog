@@ -7,6 +7,17 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-58
+2018-11-16 Mikhail S. Dubrovin
+- restore removed import
+- fix pedestals averaging in UtilsEpix10kaCalib.py
+	new file:   examples/ex_epix10ka_plot_in_evloop.py
+	modified:   examples/ex_new_dets.py
+	modified:   examples/ex_source_dsname.py
+	modified:   src/UtilsEpix.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-57
 2018-11-14 Mikhail S. Dubrovin
 - implement calib_epix10ka supporting composite detectors epix10ka2m and epix10kaquad

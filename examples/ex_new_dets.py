@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 import logging
 logger = logging.getLogger(__name__)
 
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO) #DEBUG) # INFO
+logging.basicConfig(format='%(levelname)s: %(name)s %(message)s', level=logging.INFO) # INFO) #DEBUG)
 
 ##-----------------------------
 
@@ -83,9 +83,34 @@ elif tname=='11' :
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
 elif tname=='12' :
+    # fgeo = '/reg/g/psdm/detector/data_test/calib/Epix10kaQuad::CalibV1/NoDetector.0:Epix10kaQuad.0/geometry/0-end.data'
     dsname = '/reg/g/psdm/detector/data_test/types/0032-NoDetector.0-Epix10kaQuad.0.xtc' # (4, 352, 384)
     src = 'NoDetector.0:Epix10kaQuad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
+
+elif tname=='13' : # exp=mecx32917:run=0076 'MecTargetChamber.0-Epix10ka.1' # alias='Epix10kTender_1'
+    #dsname = 'exp=mecx32917:run=0076'
+    dsname = '/reg/g/psdm/detector/data_test/types/0033-MecTargetChamber.0-Epix10ka.1.xtc'
+    src = 'MecTargetChamber.0:Epix10ka.1' # alias='Epix10kTender_1'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
+
+elif tname=='14' : #dsname, src = 'exp=mfxn8316:run=11',  'MfxEndstation.0:Epix100a.0'
+    # fgeo = '/reg/g/psdm/detector/data_test/calib/Epix10ka::CalibV1/MecTargetChamber.0:Epix10ka.1/geometry/0-end.data'
+    dsname = '/reg/g/psdm/detector/data_test/types/0021-MfxEndstation.0-Epix100a.0.xtc'
+    src = 'MfxEndstation.0:Epix100a.0'
+    psana.setOption('psana.calib-dir', './calib') # dark exp=mfxn8316:run=9
+
+elif tname=='15' :
+#    # fgeo = '/reg/g/psdm/detector/data_test/calib/Epix10kaQuad::CalibV1/NoDetector.0:Epix10kaQuad.0/geometry/0-end.data'
+    dsname = 'exp=mecx32917:run=106' # (4, 352, 384)
+    src = 'MecTargetChamber.0:Epix10kaQuad.2'
+#    #src = 'MecTargetChamber.0:Epix10kaQuad.3'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
+
+elif tname=='16' :
+    dsname = '/reg/g/psdm/detector/data_test/types/0034-NoDetector.0-Epix10ka2M.0.xtc' # (16, 352, 384)
+    src = 'NoDetector.0:Epix10ka2M.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
 elif tname=='101' :
     dsname = 'exp=meclu5717:run=3'
@@ -174,9 +199,13 @@ print_ndarr(nda_raw, 'nda_raw')
 
 ##-----------------------------
 
+EVSKIP = 20000
 i=0
-if nda_raw is None :
+#if nda_raw is None :
+if True :
     for i, evt in enumerate(ds.events()) :
+        if i<EVSKIP: continue
+        print 'Event %d' % i
         nda_raw = det.raw(evt)
         if nda_raw is not None :
             print 'Detector data found in event %d' % i
