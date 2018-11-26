@@ -107,8 +107,9 @@ def ex_source_dsname(ntest) :
         src, dsn = 'DetLab.0:StreakC7700.0', '/reg/g/psdm/detector/data_test/types/0030-DetLab.0-StreakC7700.0.xtc'
 
     elif ntest == 40:
-        src, dsn = 'MecTargetChamber.0-Epix10ka.1', '/reg/g/psdm/detector/data_test/types/0033-MecTargetChamber.0-Epix10ka.1.xtc'
-
+        src, dsn = 'MecTargetChamber.0:Epix10ka.1', '/reg/g/psdm/detector/data_test/types/0033-MecTargetChamber.0-Epix10ka.1.xtc'
+    elif ntest == 41: 
+        src, dsn = 'NoDetector.0:Epix10kaQuad.0', '/reg/g/psdm/detector/data_test/types/0032-NoDetector.0-Epix10kaQuad.0.xtc' 
     else :
         sys.exit('Non-implemented sample for test number # %d' % ntest)
 

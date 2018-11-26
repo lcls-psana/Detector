@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 import sys
 from Detector.AreaDetector import AreaDetector
 from psana import DataSource #, Detector
-from Detector.UtilsEpix import id_epix, get_epix10ka_config_object
-from PSCalib.GlobalUtils import string_from_source
+#from PSCalib.GlobalUtils import string_from_source
 
 #------------------------------
 
@@ -29,11 +28,18 @@ DETNAME = sys.argv[2] if len(sys.argv) > 2 else DETNAME_DEF
 
 def usage():
     return 'Usage: epix10ka_id <DSNAME> [<DETNAME>]'\
-          +'\n  e.g. epix10ka_id exp=detdaq17:run=110 DetLab.0:Epix10ka.0'
+          +'\n  e.g. epix10ka_id exp=detdaq17:run=110 DetLab.0:Epix10ka.0'\
+          +'\n       epix10ka_id exp=detdaq17:run=129 DetLab.0:Epix10ka2M.0'\
+          +'\n       epix10ka_id exp=mecx32917:run=106 MecTargetChamber.0:Epix10kaQuad.2'
 
 #------------------------------
 
-def jungfrau_id() :    
+def dump_epix10ka_id() :
+    """Dumps Id for single-pannel epix10ka.
+    """
+    from Detector.UtilsEpix import id_epix
+    from Detector.UtilsEpix10ka import get_epix10ka_config_object
+
     logger.info('%s\nFinding epix10ka Id in dataset "%s" using name pattern %s' % (80*'_', DSNAME, DETNAME))
     if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
 
@@ -42,14 +48,37 @@ def jungfrau_id() :
     env = ds.env()
     det = AreaDetector(DETNAME, env)
     c = get_epix10ka_config_object(env, det.source)
-    panel_id = id_epix(c) 
+    panel_id = id_epix(c)
     logger.info('epix10ka name: %s\nid: %s' % (det.pyda.str_src, panel_id))
+
+#------------------------------
+
+def dump_epix10ka_ids() :
+    """Dumps Id(s) for mutli or single-pannel epix10ka/2m/quad.
+    """
+    from Detector.UtilsEpix10ka2M import ids_epix10ka2m, get_epix10ka_any_config_object
+    #from Detector.PyDataAccess import get_epix10ka_any_config_object #, get_epix10ka2m_data_object, get_epix_data_object
+
+    logger.info('%s\nFinding epix10ka/2m/quad Ids in dataset "%s" using name pattern %s'%\
+                 (80*'_', DSNAME, DETNAME))
+    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
+
+    ds = DataSource(DSNAME)
+    #det = Detector(DETNAME)
+    env = ds.env()
+    det = AreaDetector(DETNAME, env)
+    co = get_epix10ka_any_config_object(env, det.source)
+    ids = ids_epix10ka2m(co)
+    msg = 'Config object: %s' % str(co)
+    for i,id in enumerate(ids) : msg += '\nelem %2d: %s' % (i,id)
+    logger.info(msg)
 
 #------------------------------
 
 if __name__ == "__main__" :
     #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
     logging.basicConfig(format='%(message)s', level=logging.DEBUG)
-    jungfrau_id()
+    dump_epix10ka_ids()
+    #dump_epix10ka_id()
 
 #------------------------------

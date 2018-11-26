@@ -5,7 +5,7 @@ import numpy as np
 from time import time
 
 import psana
-from Detector.UtilsEpix import calib_epix10ka
+from Detector.UtilsEpix10ka import calib_epix10ka_any
 from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
 
@@ -13,21 +13,39 @@ import pyimgalgos.GlobalGraphics as gg
 import pyimgalgos.Graphics as gr
 
 #------------------------------
-EVSKIP  = 10
-EVENTS  = EVSKIP + 10
-PLOT_IMG = True #False #True #False
-PLOT_SPE = True #False #True #False
 
+EVSKIP  = 20
+EVENTS  = 10 + EVSKIP
+PLOT_IMG = True #False #True
+PLOT_SPE = True
+
+#------------------------------
+# /reg/d/psdm/det/detdaq17/e968-r0131   - source unmasked (up to ~ event 10000), then masked vertically after ~ event 15000 
+# /reg/d/psdm/det/detdaq17/e968-r0132   - source masked horizontally at bottom after ~ event 15000.
 #------------------------------
 
 def dsname_source(tname) :
+
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
+
     if   tname=='1' : return 'exp=mfxx32516:run=377', 'MfxEndstation.0:Epix10ka.0' # Dark. Auto H to L, filter dac 1E, integration 50
     elif tname=='2' : return 'exp=mfxx32516:run=368', 'MfxEndstation.0:Epix10ka.0' # Dark. fixed high, filter dac 11, integration 100
     elif tname=='3' : return 'exp=mfxx32516:run=365', 'MfxEndstation.0:Epix10ka.0' # fixed low
     elif tname=='4' : return 'exp=mfxx32516:run=363', 'MfxEndstation.0:Epix10ka.0' # fixed high
+    elif tname=='5' : return 'exp=detdaq17:run=131',  'DetLab.0:Epix10ka2M.0' # fixed high
+    elif tname=='6' : return 'exp=xcsx35617:run=6',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
+    elif tname=='7' : return 'exp=xcsx35617:run=12',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
+
+#------------------------------
+
+def selected_record(nrec) :
+    return nrec<5\
+       or (nrec<50 and not nrec%10)\
+       or (not nrec%100)
+       #or (nrec<500 and not nrec%100)\
 
 #------------------------------
     
@@ -52,7 +70,7 @@ def test_epix10ka_methods(tname) :
     if figim is not None : gg.move_fig(figim, 300, 0)
 
     fighi, axhi = None, None
-    if PLOT_IMG :
+    if PLOT_SPE : 
         fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
         axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
 
@@ -92,9 +110,9 @@ def test_epix10ka_methods(tname) :
     status = det.status(par)
     print_ndarr(status, 'status')
 
-    statmask = det.status_as_mask(par)
-    print_ndarr(statmask, 'statmask')
-    print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+    #statmask = det.status_as_mask(par)
+    #print_ndarr(statmask, 'statmask')
+    #print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
 
     status_mask = det.status_as_mask(par)
     print_ndarr(status_mask, 'status_mask')
@@ -114,8 +132,8 @@ def test_epix10ka_methods(tname) :
     pixel_size = det.pixel_size(par)
     print '%s\npixel size: %s' % (80*'_', str(pixel_size))
     
-    mask_geo = det.mask_geo(par, mbits=3, width=1)
-    print_ndarr(mask_geo, 'mask_geo')
+    #mask_geo = det.mask_geo(par, mbits=3, width=1)
+    #print_ndarr(mask_geo, 'mask_geo')
 
     ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
     print 'Detector origin indexes: ix, iy:', ipx, ipy
@@ -126,7 +144,8 @@ def test_epix10ka_methods(tname) :
     t0_sec_tot = time()
 
     for i, evt in enumerate(ds.events()) :
-        print '%s\nEvent %4d' % (50*'_', i)
+
+        if selected_record(i) : print '%s\nEvent %4d' % (50*'_', i)
 
         if i <EVSKIP: continue
         if i>=EVENTS: break
@@ -134,26 +153,26 @@ def test_epix10ka_methods(tname) :
         t0_sec = time()
         nda_raw = det.raw(evt)
 
-        #if nda_raw is None : continue
+        if nda_raw is None : continue
         #====================================
         #nda = nda_raw
-        nda = calib_epix10ka(det, evt, pssrc)
+        nda = calib_epix10ka_any(det, evt)
         #====================================
 
         if nda is None : continue
-        print '    Consumed time for det.raw/calib(evt) = %7.3f sec' % (time()-t0_sec)
-        print_ndarr(nda, 'data nda')
+        print_ndarr(nda, '%s\nEvent %4d, consumed %7.3f sec' % (50*'_', i, time()-t0_sec))
 
-        sh = nda.shape
-        nda.shape = (sh[-2], sh[-1])
+        #sh = nda.shape
+        #nda.shape = (nda.size/sh[-1], sh[-1])
+
+        ndarr = np.array(nda, dtype=np.float32)
+        #ndarr *= mask_geo
 
         if PLOT_IMG :
-            ndarr = np.array(nda)
-            #ndarr *= mask_geo
     
-            #img = det.image(evt, ndarr)
-            img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
-        
+            img = det.image(evt, ndarr)
+            #img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
+
             if img is None :
                 print 'Image is not available.'
                 continue
@@ -176,9 +195,14 @@ def test_epix10ka_methods(tname) :
 
         if PLOT_SPE :
             #arrhi = nda_raw
-            arrhi = nda
+            arrhi = ndarr
             axhi.clear()
-            range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
+            #range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
+            range_x=(arrhi.min(), arrhi.max())
+
+            print 'range_x:', range_x
+            print_ndarr(arrhi, 'arrhi')
+
             hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=True)
             gr.add_title_labels_to_axes(axhi, title='Event %d'%i, xlabel='Raw data, ADU',\
                                                                   ylabel='Entries', color='k')

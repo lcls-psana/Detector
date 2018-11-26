@@ -21,8 +21,13 @@ def print_object_dir(o) :
 
 def test_epix10ka2m_config(tname) :
     #run = tname
-    src = psana.Source('NoDetector.0:Epix10ka2M.0')
-    ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/0028-NoDetector.0-Epix10ka2M.0.xtc')
+    #src = psana.Source('NoDetector.0:Epix10ka2M.0')
+    #ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/0028-NoDetector.0-Epix10ka2M.0.xtc')
+    src = psana.Source('DetLab.0:Epix10ka2M.0')
+    ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0035-DetLab.0-Epix10ka2M.0.xtc') # (16, 352, 384)
+
+    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
+
     env = ds.env()
     co = env.configStore().get(psana.Epix.Config10ka2MV1, src)
 

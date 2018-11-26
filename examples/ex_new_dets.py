@@ -6,6 +6,7 @@ from time import time
 from Detector.GlobalUtils import print_ndarr
 
 # supress matplotlib deprication warnings
+import numpy as np
 import warnings
 warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
@@ -88,12 +89,6 @@ elif tname=='12' :
     src = 'NoDetector.0:Epix10kaQuad.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
 
-elif tname=='13' : # exp=mecx32917:run=0076 'MecTargetChamber.0-Epix10ka.1' # alias='Epix10kTender_1'
-    #dsname = 'exp=mecx32917:run=0076'
-    dsname = '/reg/g/psdm/detector/data_test/types/0033-MecTargetChamber.0-Epix10ka.1.xtc'
-    src = 'MecTargetChamber.0:Epix10ka.1' # alias='Epix10kTender_1'
-    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
-
 elif tname=='14' : #dsname, src = 'exp=mfxn8316:run=11',  'MfxEndstation.0:Epix100a.0'
     # fgeo = '/reg/g/psdm/detector/data_test/calib/Epix10ka::CalibV1/MecTargetChamber.0:Epix10ka.1/geometry/0-end.data'
     dsname = '/reg/g/psdm/detector/data_test/types/0021-MfxEndstation.0-Epix100a.0.xtc'
@@ -108,9 +103,21 @@ elif tname=='15' :
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
 
 elif tname=='16' :
-    dsname = '/reg/g/psdm/detector/data_test/types/0034-NoDetector.0-Epix10ka2M.0.xtc' # (16, 352, 384)
-    src = 'NoDetector.0:Epix10ka2M.0'
+    #dsname = '/reg/g/psdm/detector/data_test/types/0034-NoDetector.0-Epix10ka2M.0.xtc' # (16, 352, 384)
+    #src = 'NoDetector.0:Epix10ka2M.0'
+    dsname = '/reg/g/psdm/detector/data_test/types/0035-DetLab.0-Epix10ka2M.0.xtc' # (16, 352, 384)
+    src = 'DetLab.0:Epix10ka2M.0'
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
+
+elif tname=='17' : # exp=mecx32917:run=0076 'MecTargetChamber.0-Epix10ka.1' # alias='Epix10kTender_1'
+    dsname = 'exp=detdaq17:run=89' # 69-126
+    src = 'DetLab.0:Epix10ka.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
+
+elif tname=='18' :
+    dsname = 'exp=xcsx35617:run=6' # 69-126
+    src = 'XcsEndstation.0:Epix10ka2M.0'
+    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
 
 elif tname=='101' :
     dsname = 'exp=meclu5717:run=3'
@@ -190,7 +197,8 @@ print_ndarr(gain, 'pixel_gain')
 #cmod = det.common_mode(par)
 #print_ndarr(cmod, 'common_mod')
 
-calib = det.calib(evt)
+#calib = det.calib(evt)
+calib = np.array(det.calib(evt), dtype=np.float32)
 print_ndarr(calib, 'calib')
 
 t0_sec = time()
@@ -199,7 +207,7 @@ print_ndarr(nda_raw, 'nda_raw')
 
 ##-----------------------------
 
-EVSKIP = 20000
+EVSKIP = 0
 i=0
 #if nda_raw is None :
 if True :
@@ -254,7 +262,7 @@ img_arr = nda_raw
 #img_arr = data_sub_peds
 #img_arr = nda_cdata if nda_cdata is not None else nda_raw
 
-img = det.image(evt)
+img = det.image(evt, img_arr)
 print_ndarr(img, 'img')
 
 # Image producer is different for 3-d and 2-d arrays 
@@ -271,7 +279,8 @@ if img is None :
         img.shape = (img.size/sh[-1],sh[-1])
 
     else :
-        img = det.image(evt)
+        calib = np.array(det.calib(evt), dtype=np.float32)
+        img = det.image(evt, calib)
         #img = det(evt) # alias for det.image(evt) implemented in __call__
         #img = det.image(evt, img_arr)
   else :

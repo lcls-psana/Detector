@@ -16,9 +16,17 @@ from psana import DataSource, Detector
 import numpy as np
 
 from PSCalib.DCUtils import env_time, str_tstamp
-from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, alias_for_id, create_directory
-from Detector.PyDataAccess import get_epix10ka_config_object
-from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile # str_tstamp, deploy_file, log_rec_on_start, replace
+from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES, alias_for_id, create_directory
+from Detector.UtilsEpix10ka import config_objects, get_epix10ka_any_config_object,\
+                            gain_maps_epix10ka_any # cbits_total_epix10ka_any
+
+from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix10ka, print_object_dir
+
+#from Detector.PyDataAccess import get_epix_data_object, get_epix10ka_config_object,\
+#                                  get_epix10kaquad_config_object, get_epix10ka2m_config_object,\
+#                                  get_epix10ka_any_config_object
+
+from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile # str_tstamp, replace
 from Detector.GlobalUtils import info_ndarr, print_ndarr #, divide_protected
 
 import matplotlib.pyplot as plt
@@ -32,6 +40,8 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
+
+M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #--------------------
 
@@ -52,10 +62,16 @@ def init_plot(x,xx,itrim):
 
 def update_plot(handle,trace,xx,pf0,pf1):
     f0,ax0,line0,line1,line2=handle
-    line0.set_ydata(trace%16384)
+    line0.set_ydata(trace & M14) # (trace%16384)
     line1.set_ydata(np.polyval(pf0,xx))
     line2.set_ydata(np.polyval(pf1,xx))
     plt.pause(0.1)    
+
+
+
+
+
+
 
 #--------------------
 
@@ -108,6 +124,75 @@ def fit(block, itrim, ny=352, nx=384, display=True):
     return fits,nsp,msg
 
 #--------------------
+#--------------------
+#--------------------
+#--------------------
+#--------------------
+
+#@jit
+def fit_new(block, itrim, display=True):
+
+    mf,my,mx=block.shape
+
+    print info_ndarr(block, 'XXXX block')
+
+    fits=np.zeros((my,mx,2,2))
+    nsp=np.zeros((my,mx),dtype=np.int16)
+    
+    x=np.arange(3*1024)%1024
+    xx=np.linspace(1024,0,100)
+
+    if display:
+        handle=init_plot(x,xx,itrim)
+    msg = ' fit '
+    for iy in range(my):
+        for ix in range(mx):
+            trace=block[:,iy,ix] & M14
+            ixoff=np.argmin(np.diff(trace[:1025],axis=0),axis=0)+1 #find pulser value 0
+            trace=trace[ixoff:ixoff+3*1024]                        #select the first 3 complete pulser cycles (0 to 1023)
+            #trace=trace[ixoff:]                        #select the first 3 complete pulser cycles (0 to 1023)
+            try:
+                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%1024))  #estimate median position of switching point
+                nsp[iy,ix]=isp
+            except ValueError:
+                testval=np.median(trace) # %16384)
+                ixoff=1024 if testval<0.5 else 0
+
+            idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
+
+            #print 'XXXX ixoff:', ixoff
+            #print info_ndarr(trace, 'XXXX trace')
+            #print 'XXXX isp:', isp
+            #print info_ndarr(idx0, 'XXXX idx0')
+            #print info_ndarr(idx1, 'XXXX idx1')
+            #print 'XXXX idx0.sum():', idx0.sum()
+
+            if idx0.sum()>10:
+                pf0=np.polyfit(x[idx0],trace[idx0],1) # %16384,1)        #fit high/medium gain trace
+            else:
+                pf0=np.array([0,0])                                #or set to 0 if not enough data points
+
+
+            if idx1.sum()>10:
+                #pf1=np.polyfit(x[idx1],trace[idx1]%16384,1)       #this doesn't work!
+                gl=pf0[0]/(100.0 if itrim else 33.33)               #Medium to Low
+                ol=np.mean(trace[idx1]-gl*x[idx1])       #trace[idx1]%16384    #calculate offset
+                pf1=np.array([gl,ol])
+            else:
+                pf1=np.array([0,0])                                #ore st to zero if not enough data points
+
+            fits[iy,ix,0]=pf0
+            fits[iy,ix,1]=pf1
+            
+            i=iy*mx+ix
+            if i%256==255:  #display a subset of plots
+                #print '\b.',
+                msg+='.'
+                if display:
+                    update_plot(handle,trace,xx,pf0,pf1)
+    return fits,nsp,msg
+
+#--------------------
 
 def find_file_for_timestamp(dirname, pattern, tstamp) :
     # list of file names in directory, dirname, containing pattern
@@ -137,15 +222,28 @@ def find_file_for_timestamp(dirname, pattern, tstamp) :
 
 #--------------------
 
-def shape_from_config(det) :
-    c = get_epix10ka_config_object(det.env, det.source)
-    shape = (c.numberOfRows(), c.numberOfColumns())
-    #logger.debug('shape_from_config: %s' % str(shape))
-    return shape
+#def shape_from_config(det) :
+#    """DEPRICATED single-panel version
+#    """
+#    c = get_epix10ka_config_object(det.env, det.source)
+#    shape = (c.numberOfRows(), c.numberOfColumns())
+#    #logger.debug('shape_from_config: %s' % str(shape))
+#    return shape
+
+#--------------------
+
+def shape_from_config_epix10ka(eco) :
+    """Returns element/panel/sensor shape (352,384) from element configuration object
+       psana.Epix.Config10ka or psana.Epix.Config10kaV1
+    """
+    #print_object_dir(eco)
+    return (eco.numberOfRows(), eco.numberOfColumns())
 
 #--------------------
 
 def print_config_info(c) :
+    """Prints config infor for single panel objectpsana.Epix.Config10kaV1
+    """
     if c is not None :
         nasics = c.numberOfAsics()
         msg = 'Config object info:'\
@@ -160,10 +258,12 @@ def print_config_info(c) :
 
 #--------------------
 
-B14 = 040000 # 16384 or 1<<14 (14-th bit starting from 0)
-B04 =    020 #    16 or 1<<4
-B05 =    040 #    32 or 1<<5
-M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
+def get_panel_id(panel_ids, idx=0) :
+    panel_id = panel_ids[idx] if panel_ids is not None else None
+    if panel_id is None :
+        logger.error('get_panel_id: panel_idis None, idx=%d' % idx)
+        sys.exit('ERROR EXIT')
+    return panel_id
 
 #--------------------
 
@@ -171,87 +271,9 @@ def find_gain_mode(det, data=None) :
     """Returns str gain mode from the list GAIN_MODES or None.
        if data=None : distinguish 5-modes w/o data
     """
-    cob = get_epix10ka_config_object(det.env, det.source)
-    if cob is None : return None
-
-    first = 10000
-    last  = first+5
-
-    # get 4-bit pixel config array with bit assignment]
-    #   0001 = 1<<0 = 1 - T test bit
-    #   0010 = 1<<1 = 2 - M mask bit
-    #   0100 = 1<<2 = 4 - g  gain bit
-    #   1000 = 1<<3 = 8 - ga gain bit
-
-    pca = cob.asicPixelConfigArray()
-
-    # begin to create array of control bits 
-    # array of control bits 2 and 3 M mask bits 0, 1 
-    #                                 do not override them just in case if they can be useful later.
-    cbits = np.bitwise_and(pca,12) # 014 (bin:1100)
-    #logger.debug(info_ndarr(cbits, 'cbits', first, last))
-
-    # add bits
-    # 010000 = 1<<4 = 16 - trbit
-    # 100000 = 1<<5 = 32 - data bit 14
-
-    trbit = cob.asics(0).trbit()
-    if trbit : cbits = np.bitwise_or(cbits, B04)
-
-    #logger.debug(info_ndarr(cbits, 'cbits+trbit', first, last))
-
-    # Add data bit 14 to cbits as a bit 5 (counting from 0)
-    if data is not None :
-        #logger.debug(info_ndarr(data, 'data', first, last))
-        # get array of data bit 14 and add it as a bit 5 to cbits
-        databit14 = np.bitwise_and(data, B14)
-        databit05 = np.right_shift(databit14,9) # 040000 -> 040
-        cbits = np.bitwise_or(cbits, databit05) # 109us
-        #cbits[databit14>0] += 040              # 138us
-
-    #--------------------------------
-    # cbits - pixel control bit array
-    #--------------------------------
-    #   data bit 14
-    #  / trbit
-    # V / bit3
-    #  V / bit2
-    #   V / M
-    #    V / T             gain range index
-    #     V /             /  in calib files
-    #      V             V 
-    # x111xx =28 -  FH_H 0 
-    # x011xx =12 -  FM_M 1 
-    # xx10xx = 8 -  FL_L 2  
-    # 1100xx =48 - AHL_H 3 
-    # 1000xx =32 - AML_M 4 
-    # 0100xx =16 - AHL_L 5 
-    # 0000xx = 0 - AML_L 6 
-    #--------------------------------
-    # 111100 =60 - cbitsM60 - mask 
-    # 011100 =28 - cbitsM28 - mask 
-    # 001100 =12 - cbitsM12 - mask 
-    #--------------------------------
-
-    cbitsM28 = cbits & 28 # control bits masked by configuration 3-bit-mask
-    cbitsM12 = cbits & 12 # control bits masked by configuration 2-bit-mask
-    #logger.debug(info_ndarr(cbitsMCB, 'cbitsMCB', first, last))
-
-    gr0 = (cbitsM28 == 28)
-    gr1 = (cbitsM28 == 12)
-    gr2 = (cbitsM12 ==  8)
-    gr3 = (cbitsM28 == 16)
-    gr4 = (cbitsM28 ==  0)
-    gr5 = (cbits    == 16)
-    gr6 = (cbits    ==  0)
-
-    #logger.debug(info_ndarr(gr0, 'gr0', first, last))
-    #logger.debug(info_ndarr(gr1, 'gr1', first, last))
-    #logger.debug(info_ndarr(gr2, 'gr2', first, last))
-    #logger.debug(info_ndarr(gr3, 'gr3', first, last))
-    #logger.debug(info_ndarr(gr4, 'gr4', first, last))
-    #logger.debug(info_ndarr(gr5, 'gr5', first, last))
-    #logger.debug(info_ndarr(gr6, 'gr6', first, last))
+    gmaps = gain_maps_epix10ka_any(det, data)
+    if gmaps is None : return None
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
     arr1 = np.ones_like(gr0)
     npix = arr1.size
@@ -277,46 +299,55 @@ def find_gain_mode(det, data=None) :
 
 #--------------------
 
-def get_config_info(det) :
-    env = det.env
-    c = get_epix10ka_config_object(env, det.source)
-    if c is None : return None, None, None
-
-    print_config_info(c)
-    
-    panel_id = id_epix(c)
-    panel_alias = alias_for_id(panel_id, fname='%s/.aliases.txt'%CALIB_REPO_EPIX10KA)
+def tstamps_run_and_now(env) :
+    """Returns tstamp_run, tstamp_now
+    """
     time_run = env_time(env)
-    tstamp_run = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=time_run)
-    tstamp_now = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=None)
+    ts_run = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=time_run)
+    ts_now = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=None)
 
-    logger.debug('get_config_info parameters:'
-                 + ('\n  epix10ka panel id   : %s' % panel_id)\
-                 + ('\n  panel alias         : %s' % panel_alias)\
-                 + ('\n  run time stamp      : %s' % tstamp_run)\
-                 + ('\n  current time stamp  : %s' % tstamp_now))
-
-    return tstamp_run, panel_id, panel_alias
+    logger.debug('tstamps_run_and_now:'
+                 + ('\n  run time stamp      : %s' % ts_run)\
+                 + ('\n  current time stamp  : %s' % ts_now))
+    return ts_run, ts_now
 
 #--------------------
 
-def get_config_info_for_dataset_detname(dsname, detname) :
+def ids_epix10ka_any_for_dataset_detname(dsname, detname) :
     ds = DataSource(dsname)
     det = Detector(detname)
     env = ds.env()
+    co = get_epix10ka_any_config_object(env, det.source)
+    return ids_epix10ka2m(co)
+
+#--------------------
+
+def get_config_info_for_dataset_detname(dsname, detname, idx=0) :
+    ds = DataSource(dsname)
+    det = Detector(detname)
+    env = ds.env()
+    dco,qco,eco = config_objects(env, det.source, idx)
+    co = next(o for o in (dco,qco,eco) if o is not None)
+
+    #print_object_dir(dco)
+    #print('dco', dco)
+    #print('qco', qco)
+    #print('eco', eco)
+    print('XXXX highest co', co)
+
     cpdic = {}
     cpdic['expnum'] = env.expNum()
     cpdic['calibdir'] = env.calibDir()
     cpdic['strsrc'] = det.pyda.str_src
-    cpdic['shape'] = shape_from_config(det)
+    cpdic['shape'] = shape_from_config_epix10ka(eco)
     cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
+    cpdic['panel_ids'] = ids_epix10ka2m(co)
+
     for nevt,evt in enumerate(ds.events()):
         raw = det.raw(evt)
         if raw is not None: 
-            tstamp, panel_id, panel_alias = get_config_info(det)
+            tstamp, tstamp_now = tstamps_run_and_now(env)
             cpdic['tstamp'] = tstamp
-            cpdic['panel_id'] = panel_id
-            cpdic['panel_alias'] = panel_alias
             del ds
             del det
             return cpdic
@@ -351,7 +382,8 @@ def dir_names(dirrepo, panel_id) :
     
 #--------------------
 
-def file_name_prefix(panel_alias, tstamp, exp, irun) :
+def file_name_prefix(panel_id, tstamp, exp, irun) :
+    panel_alias = alias_for_id(panel_id, fname=FNAME_PANEL_ID_ALIASES)
     return 'epix10ka_%s_%s_%s_r%04d' % (panel_alias, tstamp, exp, irun)
 
 #--------------------
@@ -367,6 +399,13 @@ def path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain) :
     prefix_plots = '%s/%s' % (dir_plots, fname_prefix)
     prefix_gain  = '%s/%s' % (dir_gain,  fname_prefix)
     return prefix_offset, prefix_peds, prefix_plots, prefix_gain
+#--------------------
+
+def selected_record(nrec) :
+    return nrec<5\
+       or (nrec<50 and not nrec%10)\
+       or (nrec<500 and not nrec%100)\
+       or (not nrec%1000)
 
 #--------------------
 
@@ -375,6 +414,7 @@ def offset_calibration(*args, **opts) :
     exp        = opts.get('exp', None)     
     detname    = opts.get('det', None)   
     irun       = opts.get('run', None)    
+    idx        = opts.get('idx', 0)    
     nbs        = opts.get('nbs', 4600)    
     nspace     = opts.get('nspace', 7)    
     dirxtc     = opts.get('dirxtc', None) 
@@ -390,16 +430,17 @@ def offset_calibration(*args, **opts) :
  
     save_log_record_on_start(dirrepo, _name)
 
-    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
     tstamp      = cpdic.get('tstamp', None)
-    panel_id    = cpdic.get('panel_id', None)
-    panel_alias = cpdic.get('panel_alias', None)
+    panel_ids   = cpdic.get('panel_ids', None)
     expnum      = cpdic.get('expnum', None)
     shape       = cpdic.get('shape', None)
     ny,nx = shape
- 
+
+    panel_id = get_panel_id(panel_ids, idx)
+
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix = file_name_prefix(panel_alias, tstamp, exp, irun)
+    fname_prefix = file_name_prefix(panel_id, tstamp, exp, irun)
     prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
@@ -410,7 +451,7 @@ def offset_calibration(*args, **opts) :
     create_directory(dir_gain,   mode=0777)
 
     #--------------------
-    # sys.exit('TEST EXIT')
+    #sys.exit('TEST EXIT')
     #--------------------
 
     try:
@@ -432,20 +473,20 @@ def offset_calibration(*args, **opts) :
         ds = DataSource(dsname)
         det = Detector(detname)
 
+        #print 'XXXXXX number of steps', len(steps)
+        #print_object_dir(ds)
+
         for nstep, step in enumerate(ds.steps()):
             
             #First 5 Calib Cycles correspond to darks:
-            if nstep<=4:
-                msg = 'DARK %d ' % nstep
+            if nstep<5:
                 #dark
+                msg = 'DARK %d ' % nstep
                 nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):
                     raw = det.raw(evt)
-                    if nrec<5\
-                    or (nrec<50 and not nrec%10)\
-                    or (nrec<500 and not nrec%100)\
-                    or (not nrec%1000) :
+                    if selected_record(nrec) :
                         logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
                     if raw is None:
                         msg += 'none'
@@ -454,6 +495,7 @@ def offset_calibration(*args, **opts) :
                         break
                     else:
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
+                        if raw.ndim > 2 : raw=raw[idx,:]
                         block[nrec]=raw
                         nrec += 1
                         if nevt%128==0:
@@ -463,20 +505,22 @@ def offset_calibration(*args, **opts) :
                 logger.debug(msg)
 
             ####################
-            #elif True:
-            #    print('XXXXXXX darks:\n', darks)
-            #    if nstep>4 : break
-            #    continue
+            elif False: # True - terminates further loops over calib cycles
+                logger.debug(info_ndarr(darks, 'XXXXXXX darks'))
+                if nstep>4 : break
+                continue
             ####################
-
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto Medium-to-Low    
             elif nstep<5+nspace**2:
-                msg = ' AML %2d/%2d '%(nstep-5+1,nspace**2)
                 #data
+                msg = ' AML %2d/%2d '%(nstep-5+1,nspace**2)
+                nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
                     raw = det.raw(evt)
+                    if selected_record(nrec) :
+                        logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d AM_L' % (nevt,nrec)))
                     if raw is None:
                         msg += 'none'
                         continue
@@ -484,14 +528,19 @@ def offset_calibration(*args, **opts) :
                         break
                     else:
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
-                        block[nevt]=raw
+                        if raw.ndim > 2 : raw=raw[idx,:]
+                        block[nrec]=raw
+                        nrec += 1
                         if nevt%200==0:
                             msg+='.'
-        
+                nrec -= 1
+                print 'XXXX nevt:%d nrec:%d' % (nevt, nrec)
+
                 istep=nstep-5
                 jy=istep//nspace
                 jx=istep%nspace                    
                 block=block[:,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
+                #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
                 fits0,nsp0,msgf=fit(block,0,display=display)    #fit offset, gain
                 fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0   #collect results
                 nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0
@@ -504,9 +553,12 @@ def offset_calibration(*args, **opts) :
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto High-to-Low    
             elif nstep<5+2*nspace**2:
                 msg = ' AHL %2d/%2d '%(nstep-5-nspace**2+1,nspace**2)
+                nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
                     raw = det.raw(evt)
+                    if selected_record(nrec) :
+                        logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d AH_L' % (nevt,nrec)))
                     if raw is None:
                         msg+='none'
                         continue
@@ -514,14 +566,19 @@ def offset_calibration(*args, **opts) :
                         break
                     else:
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
-                        block[nevt]=raw
+                        if raw.ndim > 2 : raw=raw[idx,:]
+                        block[nrec]=raw
+                        nrec += 1
                         if nevt%200==0:
                             msg+='.'
+                nrec -= 1
+                print 'XXXX nevt:%d nrec:%d' % (nevt, nrec)
 
                 istep=nstep-5-nspace**2
                 jy=istep//nspace
                 jx=istep%nspace                    
                 block=block[:,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
+                #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
                 fits0,nsp0,msgf=fit(block,1,display=display)    #fit offset, gain
                 fits_hl[jy:ny:nspace,jx:nx:nspace]=fits0   #collect results
                 nsp_hl[jy:ny:nspace,jx:nx:nspace]=nsp0
@@ -550,8 +607,6 @@ def offset_calibration(*args, **opts) :
     fname_offset_AML = '%s_offset_AML.dat' % prefix_offset
     np.savetxt(fname_offset_AHL, offset_ahl, fmt=fmt_offset)
     np.savetxt(fname_offset_AML, offset_aml, fmt=fmt_offset)
-    #np.savetxt(path_out+'offset/offset_AHL_R%04d.dat'%irun,offset_ahl)
-    #np.savetxt(path_out+'offset/offset_AML_R%04d.dat'%irun,offset_aml)
     logger.info('Saved:  %s' % fname_offset_AHL)
     logger.info('Saved:  %s' % fname_offset_AML)
 
@@ -560,34 +615,18 @@ def offset_calibration(*args, **opts) :
         fnameped = '%s_pedestals_%s.dat' % (prefix_peds, GAIN_MODES[i])
         np.savetxt(fnameped, darks[:,:,i], fmt=fmt_peds)
         logger.info('Saved:  %s' % fnameped)
-        #fnameped='pedestals/pedestal_%s_R%04d.dat'%(GAIN_MODES[i],irun)
-        #np.savetxt(path_out+fnameped, darks[:,:,i])
         if i==3:    #if AHL_H, we can calculate AHL_L
             fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
             np.savetxt(fnameped, darks[:,:,i]-offset_ahl, fmt=fmt_peds)
             logger.info('Saved:  %s' % fnameped)
-            #fnameped='pedestals/pedestal_AHL_L_R%04d.dat'%irun    
-            #np.savetxt(path_out+fnameped, darks[:,:,i]-offset_ahl)
-        elif i==4:    #if AML_M, we can calculate AML_L
+        elif i==4:  #if AML_M, we can calculate AML_L
             fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
             np.savetxt(fnameped, darks[:,:,i]-offset_aml, fmt=fmt_peds)
             logger.info('Saved:  %s' % fnameped)
-            #fnameped='pedestals/pedestal_AML_L_R%04d.dat'%irun    
-            #np.savetxt(path_out+fnameped, darks[:,:,i]-offset_aml)
-            
-    ###Save all darks in one file in Mikhail's format
-    #darks_m=np.zeros((7,1,352,384))
-    #lut=[2,1,0,6,4,5,3]    #look-up table from Jack scripts' format to Mikhail's format
-    #for i in range(7):
-    #    darks_m[lut[i],0]=darks[:,:,i]
-    #np.savetxt('%s_pedestals.dat' % prefix_peds, darks[:,:,i]-offset_aml, fmt=fmt_peds)
-    ###fnameped='pedestals/pedestals_R%04d.dat'%irun
-    ###np.savetxt(path_out+fnameped, darks[:,:,i]-offset_aml)
         
     if display:
         plt.close("all")
         fnameout='%s_plot_AML.pdf' % prefix_plots
-        #fnameout='pdf/pdf_AML_R%04d.pdf'%irun
         gm='AML'; titles=['M Gain','M Pedestal', 'L Gain', 'M-L Offset']
         plt.figure(1,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
         plt.suptitle(gm)
@@ -602,7 +641,6 @@ def offset_calibration(*args, **opts) :
         logger.info('Saved:  %s' % fnameout)
 
         fnameout='%s_plot_AHL.pdf' % prefix_plots
-        #fnameout='pdf/pdf_AHL_R%04d.pdf'%irun    
         gm='AHL'; titles=['H Gain','H Pedestal', 'L Gain', 'H-L Offset']
         plt.figure(2,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
         for i in range(4):
@@ -623,6 +661,7 @@ def pedestals_calibration(*args, **opts) :
     exp        = opts.get('exp', None)
     detname    = opts.get('det', None)
     irun       = opts.get('run', None)
+    idx        = opts.get('idx', 0)    
     nbs        = opts.get('nbs', 1024)
     nspace     = opts.get('nspace', 7)    
     dirxtc     = opts.get('dirxtc', None)
@@ -637,14 +676,14 @@ def pedestals_calibration(*args, **opts) :
 
     save_log_record_on_start(dirrepo, _name)
 
-    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
     tstamp      = cpdic.get('tstamp', None)
-    panel_id    = cpdic.get('panel_id', None)
-    panel_alias = cpdic.get('panel_alias', None)
+    panel_ids   = cpdic.get('panel_ids', None)
     gain_mode   = cpdic.get('gain_mode', None)
     expnum      = cpdic.get('expnum', None)
     shape       = cpdic.get('shape', None)
     ny,nx = shape
+    panel_id = get_panel_id(panel_ids, idx)
 
     if mode is None : mode = gain_mode 
     logger.info('Process dark run for gain mode %s' % mode)
@@ -655,7 +694,7 @@ def pedestals_calibration(*args, **opts) :
         sys.exit(msg)
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix = file_name_prefix(panel_alias, tstamp, exp, irun)
+    fname_prefix = file_name_prefix(panel_id, tstamp, exp, irun)
     prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
 
     logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
@@ -680,10 +719,7 @@ def pedestals_calibration(*args, **opts) :
         nrec=0;
         for nevt,evt in enumerate(step.events()):
             raw = det.raw(evt)
-            if nrec<5\
-            or (nrec<50 and not nrec%10)\
-            or (nrec<500 and not nrec%100)\
-            or (not nrec%1000) :
+            if selected_record(nrec) :
                 logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
             if raw is None:     #skip empty frames
                 msg+='none'
@@ -692,6 +728,7 @@ def pedestals_calibration(*args, **opts) :
                 break
             else:
                 #block=insert_subframe(block,raw,nevt,nspace,nevt-5);
+                if raw.ndim > 2 : raw=raw[idx,:]
                 block[nrec]=raw;
                 nrec+=1;
                 if nevt%200==0: # simple progress bar
@@ -799,17 +836,22 @@ def deploy_constants(*args, **opts) :
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp_run  = cpdic.get('tstamp', None)
-    panel_id    = cpdic.get('panel_id', None)
-    panel_alias = cpdic.get('panel_alias', None)
     expnum      = cpdic.get('expnum', None)
     shape       = cpdic.get('shape', None)
     calibdir    = cpdic.get('calibdir', None)
     strsrc      = cpdic.get('strsrc', None)
+    panel_ids   = cpdic.get('panel_ids', None)
+
+    print 'XXX ids:\n', '\n'.join(panel_ids)
 
     tstamp = tstamp_run if tstamp is None else tstamp
 
+    #########
+    sys.exit('TEST EXIT')
+    #########
+
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix = file_name_prefix(panel_alias, tstamp, exp, irun)
+    fname_prefix = file_name_prefix(panel_id, tstamp, exp, irun)
     prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
 
     mpars = (('pedestals', 'pedestals', prefix_peds, fmt_peds),\
@@ -842,7 +884,7 @@ if __name__ == "__main__" :
 
     DIR_XTC_TEST = '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
 
-    def test_offset_calibration(tname) :
+    def test_offset_calibration_epix10ka(tname) :
         offset_calibration(exp     = 'mfxx32516',\
                            det     = 'NoDetector.0:Epix10ka.3',\
                            run     = 1021,\
@@ -854,7 +896,7 @@ if __name__ == "__main__" :
 
 #--------------------
 
-    def test_pedestals_calibration(tname) :
+    def test_pedestals_calibration_epix10ka(tname) :
         pedestals_calibration(exp  = 'mfxx32516',\
                            det     = 'NoDetector.0:Epix10ka.3',\
                            run     = 1021,\
@@ -866,7 +908,7 @@ if __name__ == "__main__" :
 
 #--------------------
 
-    def test_deploy_constants(tname) :
+    def test_deploy_constants_epix10ka(tname) :
         deploy_constants(  exp     = 'mfxx32516',\
                            det     = 'NoDetector.0:Epix10ka.3',\
                            run     = 1021,\
@@ -877,6 +919,21 @@ if __name__ == "__main__" :
                            #dirrepo = './work',\
                            dircalib= './calib',\
                            deploy  = True)
+
+#--------------------
+
+    def test_offset_calibration_epix10ka2m(tname) :
+        #offset_calibration(exp     = 'detdaq17',\
+        #                   det     = 'DetLab.0:Epix10ka2M.0',\
+        offset_calibration(exp     = 'xcsx35617',\
+                           det     = 'XcsEndstation.0:Epix10ka2M.0',\
+                           run     = 6,\
+                           idx     = 1,\
+                           nbs     = 4600,\
+                           nspace  = 4,\
+                           #dirxtc  = DIR_XTC_TEST,\
+                           dirrepo = './work',\
+                           display = True)
 
 #--------------------
 
@@ -897,9 +954,12 @@ if __name__ == "__main__" :
     print(80*'_')
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
-    if tname == '1' : test_offset_calibration(tname)
-    if tname == '2' : test_pedestals_calibration(tname)
-    if tname == '3' : test_deploy_constants(tname)
+    if   tname == '1' : test_offset_calibration_epix10ka(tname)
+    elif tname == '2' : test_pedestals_calibration_epix10ka(tname)
+    elif tname == '3' : test_deploy_constants_epix10ka(tname)
+    elif tname == '4' : test_offset_calibration_epix10ka2m(tname)
+    elif tname == '5' : test_pedestals_calibration_epix10ka2m(tname)
+    elif tname == '6' : test_deploy_constants_epix10ka2m(tname)
     else : sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit('End of %s' % sys.argv[0])
 

@@ -25,6 +25,7 @@ from Detector.GlobalUtils import print_ndarr #, info_ndarr
 from PSCalib.GlobalUtils import load_textfile, save_textfile
 
 CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
+FNAME_PANEL_ID_ALIASES = '%s/.aliases.txt'%CALIB_REPO_EPIX10KA
 
 #------------------------------
 
@@ -40,7 +41,7 @@ def create_directory(dir, mode=0777) :
 
 #------------------------------
 
-def alias_for_id(panel_id, fname='%s/.aliases.txt'%CALIB_REPO_EPIX10KA) :
+def alias_for_id(panel_id, fname=FNAME_PANEL_ID_ALIASES) :
     """Returns Epix100a/10ka panel short alias for long panel_id, 
        e.g., for panel_id = 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
        returns 0001
@@ -50,6 +51,7 @@ def alias_for_id(panel_id, fname='%s/.aliases.txt'%CALIB_REPO_EPIX10KA) :
       logger.debug('search alias for panel id: %s\n  in file %s' % (panel_id, fname))
       recs = load_textfile(fname).strip('\n').split('\n')
       for r in recs :
+        if not r : continue # skip empty records
         fields = r.strip('\n').split(' ')
         if fields[1] == panel_id : 
             logger.debug('found alias %s' % (fields[0]))
@@ -58,14 +60,14 @@ def alias_for_id(panel_id, fname='%s/.aliases.txt'%CALIB_REPO_EPIX10KA) :
         if ialias>alias_max : alias_max = ialias
         #print(fields)
     # if record for panel_id is not found yet, add it to the file and return its alias
-    rec = '%04d %s' % (alias_max+1, panel_id)
+    rec = '%04d %s\n' % (alias_max+1, panel_id)
     logger.debug('file "%s" is appended with record:\n%s' % (fname, rec))
     save_textfile(rec, fname, mode='a')
     return '%04d' % (alias_max+1)
 
 #------------------------------
 
-def id_for_alias(alias, fname='%s/aliases.txt'%CALIB_REPO_EPIX10KA) :
+def id_for_alias(alias, fname=FNAME_PANEL_ID_ALIASES) :
     """Returns Epix100a/10ka panel panel_id for specified alias, 
        e.g., for alias = 0001
        returns 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
@@ -82,7 +84,6 @@ def id_for_alias(alias, fname='%s/aliases.txt'%CALIB_REPO_EPIX10KA) :
 
 def id_epix(config_obj) :
     """Returns Epix100 Id as a string, e.g., 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719"""
-
     o = config_obj
     fmt2 = '%010d-%010d'
     zeros = fmt2 % (0,0)
@@ -120,16 +121,22 @@ def print_object_dir(o) :
 #------------------------------
 
 if __name__ == "__main__" :
-  def test_xxx(tname) :
-     sys.exit('TEST IS NOT IMPLEMENTED for %s' % sys.argv[0])
+  def test_alias_for_id(tname) :
+     import random
+     ranlst = ['%010d'%random.randint(0,1000000) for i in range(5)]
+     #panel_id = 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
+     panel_id = '-'.join(ranlst)
+     alias = alias_for_id(panel_id, fname='./aliases-test.txt')
+     print 'alias:', alias
 
 #------------------------------
 
 if __name__ == "__main__" :
+    import sys
     print 80*'_'
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
-    if tname == '1' : test_xxx(tname)
+    if tname == '1' : test_alias_for_id(tname)
     else : sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit('End of %s' % sys.argv[0])
 

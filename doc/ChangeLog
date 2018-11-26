@@ -7,6 +7,22 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Committed w/o tag to let Chris work on problem with fitting.
+2018-11-26 Mikhail S. Dubrovin
+- work on epix10ka2m calibration in progress
+ 	modified:   app/epix10ka_deploy_constants
+ 	modified:   app/epix10ka_id
+ 	modified:   app/epix10ka_offset_calibration
+ 	modified:   examples/ex_epix10ka2m_config.py
+ 	modified:   examples/ex_epix10ka2m_ipython.py
+ 	modified:   examples/ex_epix10ka_images.py
+ 	modified:   examples/ex_new_dets.py
+ 	modified:   examples/ex_source_dsname.py
+ 	modified:   src/UtilsEpix.py
+ 	modified:   src/UtilsEpix10ka.py
+ 	modified:   src/UtilsEpix10ka2M.py
+ 	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-58
 2018-11-16 Mikhail S. Dubrovin
 - restore removed import
