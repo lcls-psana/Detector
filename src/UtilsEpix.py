@@ -32,7 +32,7 @@ FNAME_PANEL_ID_ALIASES = '%s/.aliases.txt'%CALIB_REPO_EPIX10KA
 def create_directory(dir, mode=0777) :
     """Creates directory and sets its mode"""
     if os.path.exists(dir) :
-        logger.debug('Exists: %s' % dir)
+        #logger.debug('Exists: %s' % dir)
         os.chmod(dir, mode)
     else :
         os.makedirs(dir)

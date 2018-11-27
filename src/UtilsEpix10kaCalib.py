@@ -26,7 +26,8 @@ from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix1
 #                                  get_epix10kaquad_config_object, get_epix10ka2m_config_object,\
 #                                  get_epix10ka_any_config_object
 
-from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile # str_tstamp, replace
+from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile,\
+                         EPIX10KA2M, EPIX10KAQUAD, EPIX10KA, dic_det_type_to_calib_group # str_tstamp, replace
 from Detector.GlobalUtils import info_ndarr, print_ndarr #, divide_protected
 
 import matplotlib.pyplot as plt
@@ -40,6 +41,10 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
+
+CALIBGROUP = {1 : dic_det_type_to_calib_group[EPIX10KA],\
+              4 : dic_det_type_to_calib_group[EPIX10KAQUAD],\
+              16: dic_det_type_to_calib_group[EPIX10KA2M]}
 
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
@@ -134,7 +139,7 @@ def fit_new(block, itrim, display=True):
 
     mf,my,mx=block.shape
 
-    print info_ndarr(block, 'XXXX block')
+    print info_ndarr(block, 'fit_new block') 
 
     fits=np.zeros((my,mx,2,2))
     nsp=np.zeros((my,mx),dtype=np.int16)
@@ -214,10 +219,11 @@ def find_file_for_timestamp(dirname, pattern, tstamp) :
             for name in fnames :
                 if ts in name : 
                      fname = '%s/%s' % (dirname, name)
-                     logger.debug('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
+                     logger.info('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
                      return fname
 
-    logger.warning('Directory %s\n DOES NOT CONTAIN file for pattern %s and timestamp %s' % (dirname,pattern,tstamp))
+    logger.warning('directory %s\n         DOES NOT CONTAIN file for pattern %s and timestamp <= %s'%\
+                   (dirname,pattern,tstamp))
     return None
 
 #--------------------
@@ -333,7 +339,7 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0) :
     #print('dco', dco)
     #print('qco', qco)
     #print('eco', eco)
-    print('XXXX highest co', co)
+    logger.debug('Top config. object: %s' % str(co))
 
     cpdic = {}
     cpdic['expnum'] = env.expNum()
@@ -379,12 +385,22 @@ def dir_names(dirrepo, panel_id) :
     dir_work   = '%s/work'      % dir_panel
     dir_gain   = '%s/gain'      % dir_panel
     return dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain
-    
+
+#--------------------
+
+def dir_merge(dirrepo) :
+    return '%s/merge_tmp' % dirrepo
+
+#--------------------
+
+def fname_prefix_merge(dmerge, detname, tstamp, exp, irun) :
+    return '%s/%s-%s-%s-r%04d' % (dmerge, detname, tstamp, exp, irun)
+
 #--------------------
 
 def file_name_prefix(panel_id, tstamp, exp, irun) :
     panel_alias = alias_for_id(panel_id, fname=FNAME_PANEL_ID_ALIASES)
-    return 'epix10ka_%s_%s_%s_r%04d' % (panel_alias, tstamp, exp, irun)
+    return 'epix10ka_%s_%s_%s_r%04d' % (panel_alias, tstamp, exp, irun), panel_alias
 
 #--------------------
 
@@ -440,7 +456,7 @@ def offset_calibration(*args, **opts) :
     panel_id = get_panel_id(panel_ids, idx)
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix = file_name_prefix(panel_id, tstamp, exp, irun)
+    fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
     prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
@@ -506,7 +522,7 @@ def offset_calibration(*args, **opts) :
 
             ####################
             elif False: # True - terminates further loops over calib cycles
-                logger.debug(info_ndarr(darks, 'XXXXXXX darks'))
+                logger.debug(info_ndarr(darks, 'darks'))
                 if nstep>4 : break
                 continue
             ####################
@@ -534,7 +550,7 @@ def offset_calibration(*args, **opts) :
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
-                print 'XXXX nevt:%d nrec:%d' % (nevt, nrec)
+                logger.debug('    nevt:%d nrec:%d' % (nevt, nrec))
 
                 istep=nstep-5
                 jy=istep//nspace
@@ -572,7 +588,7 @@ def offset_calibration(*args, **opts) :
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
-                print 'XXXX nevt:%d nrec:%d' % (nevt, nrec)
+                logger.debug('    nevt:%d nrec:%d' % (nevt, nrec))
 
                 istep=nstep-5-nspace**2
                 jy=istep//nspace
@@ -694,7 +710,7 @@ def pedestals_calibration(*args, **opts) :
         sys.exit(msg)
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix = file_name_prefix(panel_id, tstamp, exp, irun)
+    fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
     prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
 
     logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
@@ -776,11 +792,9 @@ def pedestals_calibration(*args, **opts) :
 
 #--------------------
 
-def merge_panel_constants(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f') :
+def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f') :
 
-    from PSCalib.NDArrIO import save_txt
-
-    logger.debug('In merge_panel_constants for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
+    logger.debug('In merge_panel_gain_ranges for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dirrepo, panel_id, ctype, str(tstamp), str(shape)))
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
@@ -801,20 +815,44 @@ def merge_panel_constants(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='
 
     nda = np.stack(tuple(lstnda))
     #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
-    logger.debug('merge_panel_constants - merged with shape %s' % str(nda.shape))
+    logger.debug('merge_panel_gain_ranges - merged with shape %s' % str(nda.shape))
 
     nda.shape = (7, 1, 352, 384)
     #nda = nda.astype(dtype=np.float32)
-    logger.warning('SINGLE PANEL %s ARRAY RE-SHAPED TO %s' % (ctype, str(nda.shape)))
+    #logger.warning('SINGLE PANEL %s ARRAY RE-SHAPED TO %s' % (ctype, str(nda.shape)))
 
     logger.debug(info_ndarr(nda, 'merged %s'%ctype))
 
     save_txt(ofname, nda, fmt=fmt)
-    logger.debug('Merged saved: %s' % ofname)
+    logger.debug('saved file: %s' % ofname)
+
+    nda.shape = (7, 1, 352, 384)
+    return nda
+
+#--------------------
+
+def merge_panels(lst) :
+    """ stack of 16 (or 4 or 1) arrays from list shaped as (7, 1, 352, 384) to (7, 16, 352, 384)
+    """
+    npanels = len(lst)   # 16 or 4 or 1
+    shape = lst[0].shape # (7, 1, 352, 384)
+    ngmods = shape[0]    # 7
+
+    logger.debug('In merge_panels: number of panels %d number of gain modes %d' % (npanels,ngmods))
+
+    # make list for merging of (352,384) blocks in right order
+    mrg_lst = []
+    for igm in range(ngmods) :
+        nda1gm = np.stack([lst[ind][igm,0,:] for ind in range(npanels)])
+        mrg_lst.append(nda1gm)
+    return np.stack(mrg_lst)
 
 #--------------------
 
 def deploy_constants(*args, **opts) :
+
+    from PSCalib.NDArrIO import save_txt; global save_txt
+
     exp        = opts.get('exp', None)     
     detname    = opts.get('det', None)   
     irun       = opts.get('run', None)    
@@ -842,38 +880,59 @@ def deploy_constants(*args, **opts) :
     strsrc      = cpdic.get('strsrc', None)
     panel_ids   = cpdic.get('panel_ids', None)
 
-    print 'XXX ids:\n', '\n'.join(panel_ids)
+    CTYPE_FMT = {'pedestals' : fmt_peds,
+                 'pixel_gain': fmt_gain}
+
+    logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
 
     tstamp = tstamp_run if tstamp is None else tstamp
 
-    #########
-    sys.exit('TEST EXIT')
-    #########
+    # dict_consts for constants octype: 'pixel_gain', 'pedestals', etc.
+    dic_consts = {} 
+    for ind, panel_id in enumerate(panel_ids) :
+        logger.info('merge constants for panel:%02d id: %s' % (ind, panel_id))
 
-    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix = file_name_prefix(panel_id, tstamp, exp, irun)
-    prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
-
-    mpars = (('pedestals', 'pedestals', prefix_peds, fmt_peds),\
-             ('gain',     'pixel_gain', prefix_gain, fmt_gain))
-
-    for (ctype, octype, prefix, fmt) in mpars :
-
-        logger.info('Begin merging for ctype:%s, octype:%s, prefix:%s, fmt:%s' % (ctype, octype, prefix, fmt))
+        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
+        prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
         
-        fname = '%s_%s.txt' % (prefix, ctype)
-        merge_panel_constants(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt)
+        mpars = (('pedestals', 'pedestals', prefix_peds),\
+                 ('gain',     'pixel_gain', prefix_gain))
         
+        for (ctype, octype, prefix) in mpars :
+            fmt = CTYPE_FMT.get(octype,'%.5f')
+            logger.debug('begin merging for ctype:%s, octype:%s, fmt:%s,\n  prefix:%s' % (ctype, octype, fmt, prefix))
+            fname = '%s_%s.txt' % (prefix, ctype)
+            nda = merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt)
+            if octype in dic_consts : dic_consts[octype].append(nda) # append for panel per ctype
+            else :                    dic_consts[octype] = [nda,]
+
+    logger.info('\n%s\nmerge panel constants and deploy them' % (80*'_'))
+
+    dmerge = dir_merge(dirrepo)
+    create_directory(dmerge, mode=0777)
+    fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
+
+    for octype, lst in dic_consts.iteritems() :
+        mrg_nda = merge_panels(lst)
+        logger.info(info_ndarr(mrg_nda, 'merged constants for %s' % octype))
+        fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
+        fmt = CTYPE_FMT.get(octype,'%.5f')
+        save_txt(fmerge, mrg_nda, fmt=fmt)
+        logger.debug('saved tmp file: %s' % fmerge)
+
         #----------
         if deploy :
             if dircalib is not None : calibdir = dircalib
             #ctypedir = /reg/d/psdm/mfx/mfxx32516/calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
-            ctypedir = '%s/Epix10ka::CalibV1/%s' % (calibdir, strsrc)
+            npanels = mrg_nda.shape[1]
+            cversion = CALIBGROUP[npanels] # 'Epix10ka::CalibV1' # CALIBGROUP[npanels]
+            ctypedir = '%s/%s/%s' % (calibdir, cversion, strsrc)
             ofname   = '%d-end.data' % irun
             lfname   = None
             verbos   = True
-            logger.info('Deploy calib files under %s' % ctypedir)
-            deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
+            logger.info('deploy calib files under %s' % ctypedir)
+            deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
         else :
             logger.warning('Add option -D to deploy files under calib directory')
         #----------

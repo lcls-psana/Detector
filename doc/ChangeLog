@@ -7,6 +7,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Committed w/o tag
+2018-11-27 Mikhail S. Dubrovin
+- update for app/epix10ka_deploy_constants
+	modified:   app/epix10ka_deploy_constants
+	modified:   src/UtilsEpix.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Committed w/o tag to let Chris work on problem with fitting.
 2018-11-26 Mikhail S. Dubrovin
 - work on epix10ka2m calibration in progress
