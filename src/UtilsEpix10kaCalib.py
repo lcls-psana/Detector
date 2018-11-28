@@ -42,10 +42,6 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
 
-CALIBGROUP = {1 : dic_det_type_to_calib_group[EPIX10KA],\
-              4 : dic_det_type_to_calib_group[EPIX10KAQUAD],\
-              16: dic_det_type_to_calib_group[EPIX10KA2M]}
-
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #--------------------
@@ -348,7 +344,7 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0) :
     cpdic['shape'] = shape_from_config_epix10ka(eco)
     cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
     cpdic['panel_ids'] = ids_epix10ka2m(co)
-
+    cpdic['dettype'] = det.dettype
     for nevt,evt in enumerate(ds.events()):
         raw = det.raw(evt)
         if raw is not None: 
@@ -415,6 +411,16 @@ def path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain) :
     prefix_plots = '%s/%s' % (dir_plots, fname_prefix)
     prefix_gain  = '%s/%s' % (dir_gain,  fname_prefix)
     return prefix_offset, prefix_peds, prefix_plots, prefix_gain
+
+#--------------------
+
+def calib_group(dettype):
+    """Returns subdirecrory name under calib/<subdir>/... for 
+       dettype, which is one of EPIX10KA2M, EPIX10KAQUAD, EPIX10KA, 
+       i.g. 'Epix10ka::CalibV1'
+    """
+    return dic_det_type_to_calib_group.get(dettype, None)
+
 #--------------------
 
 def selected_record(nrec) :
@@ -677,13 +683,13 @@ def pedestals_calibration(*args, **opts) :
     exp        = opts.get('exp', None)
     detname    = opts.get('det', None)
     irun       = opts.get('run', None)
-    idx        = opts.get('idx', 0)    
     nbs        = opts.get('nbs', 1024)
-    nspace     = opts.get('nspace', 7)    
     dirxtc     = opts.get('dirxtc', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     mode       = opts.get('mode', None)    
+    #idx        = opts.get('idx', 0)    
+    #nspace     = opts.get('nspace', 7)    
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
@@ -692,103 +698,108 @@ def pedestals_calibration(*args, **opts) :
 
     save_log_record_on_start(dirrepo, _name)
 
-    cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
+    cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp      = cpdic.get('tstamp', None)
     panel_ids   = cpdic.get('panel_ids', None)
     gain_mode   = cpdic.get('gain_mode', None)
     expnum      = cpdic.get('expnum', None)
+    dettype     = cpdic.get('dettype', None)
     shape       = cpdic.get('shape', None)
     ny,nx = shape
-    panel_id = get_panel_id(panel_ids, idx)
 
-    if mode is None : mode = gain_mode 
-    logger.info('Process dark run for gain mode %s' % mode)
-    
-    if mode is None : 
-        msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
-        logger.warning(msg)
-        sys.exit(msg)
+    #panel_id = get_panel_id(panel_ids, idx)
 
-    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
-    fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
-    prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
-
-    logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
-    assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
-    assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds
-
-    mode=mode.upper()
-
-    if not (mode in GAIN_MODES_IN) :
-        logger.warning('UNRECOGNIZED GAIN MODE: %s, DARKS NOT UPDATED.'%mode)
-        return
-
-    #read input xtc file and calculate pedestal
-    #(currently misusing the first calib cycle of an existing file)
-
-    ds = DataSource(dsname)
-    det = Detector(detname)
-
-    msg='READING RAW FRAMES (200 per ".") assuming %s mode '%(mode)
-    for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
-        block=np.zeros((nbs,ny,nx),dtype=np.int16)
-        nrec=0;
-        for nevt,evt in enumerate(step.events()):
-            raw = det.raw(evt)
-            if selected_record(nrec) :
-                logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
-            if raw is None:     #skip empty frames
-                msg+='none'
-                continue
-            if nrec>=nbs:       #stop after collecting sufficient frames
+    for idx, panel_id in enumerate(panel_ids) :
+        if mode is None : mode = gain_mode
+        msg = '\n%s\n%02d panel id:%s' % (100*'=', idx, panel_id)\
+            + '\n   dark run processing for gain mode %s' % mode
+        logger.info(msg)
+        
+        if mode is None : 
+            msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
+            logger.warning(msg)
+            sys.exit(msg)
+        
+        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
+        prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+        
+        logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
+        assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
+        assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds
+        
+        mode=mode.upper()
+        
+        if not (mode in GAIN_MODES_IN) :
+            logger.warning('UNRECOGNIZED GAIN MODE: %s, DARKS NOT UPDATED.'%mode)
+            return
+        
+        #read input xtc file and calculate pedestal
+        #(currently misusing the first calib cycle of an existing file)
+        
+        ds = DataSource(dsname)
+        det = Detector(detname)
+        
+        msg='READING RAW FRAMES (200 per ".") assuming %s mode '%(mode)
+        for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
+            block=np.zeros((nbs,ny,nx),dtype=np.int16)
+            nrec=0;
+            for nevt,evt in enumerate(step.events()):
+                raw = det.raw(evt)
+                if selected_record(nrec) :
+                    logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
+                if raw is None:     #skip empty frames
+                    msg+='none'
+                    continue
+                if nrec>=nbs:       #stop after collecting sufficient frames
+                    break
+                else:
+                    #block=insert_subframe(block,raw,nevt,nspace,nevt-5);
+                    if raw.ndim > 2 : raw=raw[idx,:]
+                    block[nrec]=raw;
+                    nrec+=1;
+                    if nevt%200==0: # simple progress bar
+                        msg+='.'
+                        
+            if nstep>=0:    #only process the first CalibCycle (stop after 0)
                 break
-            else:
-                #block=insert_subframe(block,raw,nevt,nspace,nevt-5);
-                if raw.ndim > 2 : raw=raw[idx,:]
-                block[nrec]=raw;
-                nrec+=1;
-                if nevt%200==0: # simple progress bar
-                    msg+='.'
-                    
-        if nstep>=0:    #only process the first CalibCycle (stop after 0)
-            break
-
-    logger.debug(msg)
-
-    dark=block[:nrec,:].mean(0)  #Calculate mean 
-    
-    #save dark in proper place
-    #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%(mode,irun);
-    #np.savetxt(fnameout,dark);
-    #print 'SAVED %s PEDESTALS.'%mode,
-    fnameped = '%s_pedestals_%s.dat' % (prefix_peds, mode)
-    np.savetxt(fnameped, dark, fmt=fmt_peds)
-    logger.info('Saved:  %s' % fnameped)
-
-    #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
-    if mode=='AML-M':
-        fname_offset_AML = find_file_for_timestamp(dir_offset, 'offset_AML', tstamp)
-        offset=np.loadtxt(fname_offset_AML);
-        logger.info('Loaded: %s' % fname_offset_AML) 
-        fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
-        np.savetxt(fnameped, dark-offset, fmt=fmt_peds)
-        logger.info('Saved:  %s' % fnameped) 
-
-        #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%('AML_L',irun);
-        #np.savetxt(fnameout,dark-offset);
-        #print 'SAVED AML_L PEDESTALS.',
-
-    elif mode=='AHL-H':
-        fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
-        offset=np.loadtxt(fname_offset_AHL);
-        logger.info('Loaded: %s' % fname_offset_AHL) 
-        fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
-        np.savetxt(fnameped, dark-offset, fmt=fmt_peds)
+        
+        logger.debug(msg)
+        
+        dark=block[:nrec,:].mean(0)  #Calculate mean 
+        
+        #save dark in proper place
+        #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%(mode,irun);
+        #np.savetxt(fnameout,dark);
+        #print 'SAVED %s PEDESTALS.'%mode,
+        fnameped = '%s_pedestals_%s.dat' % (prefix_peds, mode)
+        np.savetxt(fnameped, dark, fmt=fmt_peds)
         logger.info('Saved:  %s' % fnameped)
-
-        #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%('AHL_L',irun);
-        #np.savetxt(fnameout,dark-offset);
-        #print 'SAVED AHL_L PEDESTALS.',
+        
+        #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
+        if mode=='AML-M':
+            fname_offset_AML = find_file_for_timestamp(dir_offset, 'offset_AML', tstamp)
+            offset=np.loadtxt(fname_offset_AML);
+            logger.info('Loaded: %s' % fname_offset_AML) 
+            fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
+            np.savetxt(fnameped, dark-offset, fmt=fmt_peds)
+            logger.info('Saved:  %s' % fnameped) 
+        
+            #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%('AML_L',irun);
+            #np.savetxt(fnameout,dark-offset);
+            #print 'SAVED AML_L PEDESTALS.',
+        
+        elif mode=='AHL-H':
+            fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
+            offset=np.loadtxt(fname_offset_AHL);
+            logger.info('Loaded: %s' % fname_offset_AHL) 
+            fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
+            np.savetxt(fnameped, dark-offset, fmt=fmt_peds)
+            logger.info('Saved:  %s' % fnameped)
+        
+            #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%('AHL_L',irun);
+            #np.savetxt(fnameout,dark-offset);
+            #print 'SAVED AHL_L PEDESTALS.',
 
 #--------------------
 
@@ -879,6 +890,7 @@ def deploy_constants(*args, **opts) :
     calibdir    = cpdic.get('calibdir', None)
     strsrc      = cpdic.get('strsrc', None)
     panel_ids   = cpdic.get('panel_ids', None)
+    dettype     = cpdic.get('dettype', None)
 
     CTYPE_FMT = {'pedestals' : fmt_peds,
                  'pixel_gain': fmt_gain}
@@ -921,20 +933,19 @@ def deploy_constants(*args, **opts) :
         save_txt(fmerge, mrg_nda, fmt=fmt)
         logger.debug('saved tmp file: %s' % fmerge)
 
+        if dircalib is not None : calibdir = dircalib
+        #ctypedir = .../calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
+        calibgrp = calib_group(dettype) # 'Epix10ka::CalibV1'
+        ctypedir = '%s/%s/%s' % (calibdir, calibgrp, strsrc)
         #----------
         if deploy :
-            if dircalib is not None : calibdir = dircalib
-            #ctypedir = /reg/d/psdm/mfx/mfxx32516/calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
-            npanels = mrg_nda.shape[1]
-            cversion = CALIBGROUP[npanels] # 'Epix10ka::CalibV1' # CALIBGROUP[npanels]
-            ctypedir = '%s/%s/%s' % (calibdir, cversion, strsrc)
             ofname   = '%d-end.data' % irun
             lfname   = None
             verbos   = True
             logger.info('deploy calib files under %s' % ctypedir)
             deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
         else :
-            logger.warning('Add option -D to deploy files under calib directory')
+            logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
         #----------
 
 #--------------------
@@ -960,7 +971,7 @@ if __name__ == "__main__" :
                            det     = 'NoDetector.0:Epix10ka.3',\
                            run     = 1021,\
                            nbs     = 1024,\
-                           nspace  = 2,\
+                           #nspace  = 2,\
                            mode    = 'AML-M',\
                            dirxtc  = DIR_XTC_TEST,\
                            dirrepo = './work')

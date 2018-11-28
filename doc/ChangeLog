@@ -9,6 +9,13 @@ reverse time order.
 
 Committed w/o tag
 2018-11-27 Mikhail S. Dubrovin
+- update for app/epix10ka_pedestals_calibration - multipanel version
+	modified:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_pedestals_calibration
+	modified:   src/UtilsEpix10kaCalib.py
+
+Committed w/o tag
+2018-11-27 Mikhail S. Dubrovin
 - update for app/epix10ka_deploy_constants
 	modified:   app/epix10ka_deploy_constants
 	modified:   src/UtilsEpix.py
