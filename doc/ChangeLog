@@ -7,6 +7,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-59
+2018-11-28 Mikhail S. Dubrovin
+- update for app/epix10ka_offset_calibration - fix problem in fit
+	modified:   app/epix10ka_offset_calibration
+	modified:   examples/ex_epix10ka2m_ipython.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Committed w/o tag
 2018-11-27 Mikhail S. Dubrovin
 - update for app/epix10ka_pedestals_calibration - multipanel version

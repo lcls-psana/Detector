@@ -120,3 +120,29 @@ for ie in range(co.numberOfElements()) :
     print '  qco.digitalCardId0/1():', qco.digitalCardId0(), qco.digitalCardId1()   
 
 #------------------------------
+
+import psana
+src = psana.Source('XcsEndstation.0:Epix10ka2M.0')
+ds = psana.DataSource('exp=xcsx35617:run=6:smd')
+#steps = ds.steps()
+for i,step in enumerate(steps) : print i, str(step)
+# 37 steps total and it takes ~1min
+
+env = ds.env()
+co = env.configStore().get(psana.Epix.Config10ka2MV1, src)
+
+co.numberOfElements() # 16
+co.numberOfAsics() # 64
+
+eco0=co.elemCfg(0)
+eco0.numberOfAsics() # 4
+
+
+as0 = eco0.asics(0)
+
+print as0.ColumnStart() #   0
+print as0.ColumnStop()  #  47
+print as0.RowStart()    #   0
+print as0.RowStop()     # 177
+
+#------------------------------

@@ -70,14 +70,79 @@ def update_plot(handle,trace,xx,pf0,pf1):
 
 
 
-
-
-
-
+#--------------------
+#--------------------
+#--------------------
 #--------------------
 
-#@jit
-def fit(block, itrim, ny=352, nx=384, display=True):
+def fit(block, evnum, itrim, display=True):
+
+    mf,my,mx=block.shape
+    fits=np.zeros((my,mx,2,2))
+    nsp=np.zeros((my,mx),dtype=np.int16)
+    nsaw = 2
+    x=np.arange(nsaw*1024)%1024
+    #x=evnum%1024
+    xx=np.linspace(1024,0,100)
+    
+    if display:
+        handle=init_plot(x,xx,itrim)
+    msg = ' fit '
+    for iy in range(my):
+        for ix in range(mx):
+            trace=block[:,iy,ix]
+            ixoff=np.argmin(np.diff(trace[:1025],axis=0),axis=0)+1 #find pulser value 0
+            trace=trace[ixoff:ixoff+nsaw*1024]
+            tracem = trace & M14
+            #x = x[ixoff:ixoff+nsaw*1024] # NEW
+            try:
+                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%1024))  #estimate median position of switching point
+                nsp[iy,ix]=isp
+            except ValueError:
+                testval=np.median(tracem) # %16384
+                ixoff=1024 if testval<0.5 else 0
+            
+            #logger.debug('XXXX iy:%03d iy:%03d ixoff:%d isp:%d'%(iy,ix,ixoff,isp))
+
+            idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
+            #idx0: [ True  True  True ..., False False False]
+            #idx1: [False False False ...,  True  True  True]
+
+            #print_ndarr(idx0,  'XXXX idx0')
+            #print_ndarr(idx1,  'XXXX idx1')
+            #print_ndarr(x,     'XXXX x')
+            #print_ndarr(tracem,'XXXX tracem')
+
+            if idx0.sum()>10:
+                pf0=np.polyfit(x[idx0],tracem[idx0],1) # %16384    #fit high/medium gain trace
+            else:
+                pf0=np.array([0,0])                                #or set to 0 if not enough data points
+            if idx1.sum()>10:
+                #pf1=np.polyfit(x[idx1],trace[idx1]%16384,1)       #this doesn't work!
+                gl=pf0[0]/(100.0 if itrim else 33.33)              #Medium to Low
+                ol=np.mean(tracem[idx1]-gl*x[idx1]) # %16384       #calculate offset
+                pf1=np.array([gl,ol])
+            else:
+                pf1=np.array([0,0])                                #ore st to zero if not enough data points
+            fits[iy,ix,0]=pf0
+            fits[iy,ix,1]=pf1
+            
+            i=iy*mx+ix
+            if i%256==255:  #display a subset of plots
+                #print '\b.',
+                msg+='.'
+                if display:
+                    update_plot(handle,trace,xx,pf0,pf1)
+    return fits,nsp,msg
+
+#--------------------
+#--------------------
+#--------------------
+#--------------------
+#--------------------
+#--------------------
+
+def fit_orig(block, itrim, ny=352, nx=384, display=True):
 
     mf,my,mx=block.shape
     fits=np.zeros((my,mx,2,2))
@@ -124,75 +189,11 @@ def fit(block, itrim, ny=352, nx=384, display=True):
                     update_plot(handle,trace,xx,pf0,pf1)
     return fits,nsp,msg
 
+
 #--------------------
 #--------------------
 #--------------------
 #--------------------
-#--------------------
-
-#@jit
-def fit_new(block, itrim, display=True):
-
-    mf,my,mx=block.shape
-
-    print info_ndarr(block, 'fit_new block') 
-
-    fits=np.zeros((my,mx,2,2))
-    nsp=np.zeros((my,mx),dtype=np.int16)
-    
-    x=np.arange(3*1024)%1024
-    xx=np.linspace(1024,0,100)
-
-    if display:
-        handle=init_plot(x,xx,itrim)
-    msg = ' fit '
-    for iy in range(my):
-        for ix in range(mx):
-            trace=block[:,iy,ix] & M14
-            ixoff=np.argmin(np.diff(trace[:1025],axis=0),axis=0)+1 #find pulser value 0
-            trace=trace[ixoff:ixoff+3*1024]                        #select the first 3 complete pulser cycles (0 to 1023)
-            #trace=trace[ixoff:]                        #select the first 3 complete pulser cycles (0 to 1023)
-            try:
-                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%1024))  #estimate median position of switching point
-                nsp[iy,ix]=isp
-            except ValueError:
-                testval=np.median(trace) # %16384)
-                ixoff=1024 if testval<0.5 else 0
-
-            idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
-
-            #print 'XXXX ixoff:', ixoff
-            #print info_ndarr(trace, 'XXXX trace')
-            #print 'XXXX isp:', isp
-            #print info_ndarr(idx0, 'XXXX idx0')
-            #print info_ndarr(idx1, 'XXXX idx1')
-            #print 'XXXX idx0.sum():', idx0.sum()
-
-            if idx0.sum()>10:
-                pf0=np.polyfit(x[idx0],trace[idx0],1) # %16384,1)        #fit high/medium gain trace
-            else:
-                pf0=np.array([0,0])                                #or set to 0 if not enough data points
-
-
-            if idx1.sum()>10:
-                #pf1=np.polyfit(x[idx1],trace[idx1]%16384,1)       #this doesn't work!
-                gl=pf0[0]/(100.0 if itrim else 33.33)               #Medium to Low
-                ol=np.mean(trace[idx1]-gl*x[idx1])       #trace[idx1]%16384    #calculate offset
-                pf1=np.array([gl,ol])
-            else:
-                pf1=np.array([0,0])                                #ore st to zero if not enough data points
-
-            fits[iy,ix,0]=pf0
-            fits[iy,ix,1]=pf1
-            
-            i=iy*mx+ix
-            if i%256==255:  #display a subset of plots
-                #print '\b.',
-                msg+='.'
-                if display:
-                    update_plot(handle,trace,xx,pf0,pf1)
-    return fits,nsp,msg
-
 #--------------------
 
 def find_file_for_timestamp(dirname, pattern, tstamp) :
@@ -444,8 +445,12 @@ def offset_calibration(*args, **opts) :
     display    = opts.get('display', True)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_offset = opts.get('fmt_offset', '%.6f')
+    dopeds     = opts.get('dopeds', True)
+    dooffs     = opts.get('dooffs', True)
+    usesmd     = opts.get('usesmd', False)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    if usesmd : dsname += ':smd'
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
@@ -499,9 +504,11 @@ def offset_calibration(*args, **opts) :
         #print_object_dir(ds)
 
         for nstep, step in enumerate(ds.steps()):
-            
+
+            logger.debug('=============== calibcycle %02d ===============' % nstep)
+
             #First 5 Calib Cycles correspond to darks:
-            if nstep<5:
+            if dopeds and nstep<5:
                 #dark
                 msg = 'DARK %d ' % nstep
                 nrec = 0
@@ -527,7 +534,7 @@ def offset_calibration(*args, **opts) :
                 logger.debug(msg)
 
             ####################
-            elif False: # True - terminates further loops over calib cycles
+            elif not dooffs: 
                 logger.debug(info_ndarr(darks, 'darks'))
                 if nstep>4 : break
                 continue
@@ -539,6 +546,7 @@ def offset_calibration(*args, **opts) :
                 msg = ' AML %2d/%2d '%(nstep-5+1,nspace**2)
                 nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
+                evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
                     raw = det.raw(evt)
                     if selected_record(nrec) :
@@ -552,31 +560,32 @@ def offset_calibration(*args, **opts) :
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2 : raw=raw[idx,:]
                         block[nrec]=raw
+                        evnum[nrec]=nevt
                         nrec += 1
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
-                logger.debug('    nevt:%d nrec:%d' % (nevt, nrec))
+                logger.debug('    nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
                 istep=nstep-5
                 jy=istep//nspace
                 jx=istep%nspace                    
-                block=block[:,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
-                #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
-                fits0,nsp0,msgf=fit(block,0,display=display)    #fit offset, gain
-                fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0   #collect results
+                block=block[:,jy:ny:nspace,jx:nx:nspace]        # select only pulsed pixels
+                #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   # select only pulsed pixels
+                evnum=evnum[:nrec]
+                fits0,nsp0,msgf=fit(block,evnum,0,display=display)    # fit offset, gain
+                fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0        # collect results
                 nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0
                 #print 'NEVT='+str(nevt)
-                darks[:,:,6]=darks[:,:,4]-fits_ml[:,:,1,1]
-
+                #darks[:,:,6]=darks[:,:,4]-fits_ml[:,:,1,1]      # !!!! THIS IS WRONG - moved outside loop over steps 
                 logger.debug(msg + msgf)
-                
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto High-to-Low    
             elif nstep<5+2*nspace**2:
                 msg = ' AHL %2d/%2d '%(nstep-5-nspace**2+1,nspace**2)
                 nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
+                evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
                     raw = det.raw(evt)
                     if selected_record(nrec) :
@@ -590,29 +599,37 @@ def offset_calibration(*args, **opts) :
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2 : raw=raw[idx,:]
                         block[nrec]=raw
+                        evnum[nrec]=nevt
                         nrec += 1
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
-                logger.debug('    nevt:%d nrec:%d' % (nevt, nrec))
+                logger.debug('    nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
                 istep=nstep-5-nspace**2
                 jy=istep//nspace
                 jx=istep%nspace                    
-                block=block[:,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
-                #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   #select only pulsed pixels
-                fits0,nsp0,msgf=fit(block,1,display=display)    #fit offset, gain
-                fits_hl[jy:ny:nspace,jx:nx:nspace]=fits0   #collect results
+                block=block[:,jy:ny:nspace,jx:nx:nspace]        # select only pulsed pixels
+                #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   # select only pulsed pixels
+                evnum=evnum[:nrec]
+                fits0,nsp0,msgf=fit(block,evnum,1,display=display)    # fit offset, gain
+                fits_hl[jy:ny:nspace,jx:nx:nspace]=fits0        # collect results
                 nsp_hl[jy:ny:nspace,jx:nx:nspace]=nsp0
                 #print 'NEVT='+str(nevt)
-                darks[:,:,5]=darks[:,:,3]-fits_hl[:,:,1,1]
-                
+                #darks[:,:,5]=darks[:,:,3]-fits_hl[:,:,1,1]     # !!!! THIS IS WRONG - moved outside loop over steps
                 logger.debug(msg + msgf)
-
                 #test=update_test(test,block,nspace,nstep-5)
 
             if nstep>=5+2*nspace**2:
                 break
+
+        logger.debug(info_ndarr(fits_ml, 'XXXX: fits_ml')) # shape:(352, 384, 2, 2)
+        logger.debug(info_ndarr(fits_hl, 'XXXX: fits_hl')) # shape:(352, 384, 2, 2)
+        logger.debug(info_ndarr(darks, 'XXXX: darks'))     # shape:(352, 384, 7)
+
+        darks[:,:,6]=darks[:,:,4]-fits_ml[:,:,1,1]      # FIXED: subtract once for all pixels
+        darks[:,:,5]=darks[:,:,3]-fits_hl[:,:,1,1]      # FIXED: subtract once for all pixels
+
         #Save diagnostics data, can be commented out:
         #save fitting results
         np.savez_compressed(fname_work, darks=darks, fits_hl=fits_hl, fits_ml=fits_ml, nsp_hl=nsp_hl, nsp_ml=nsp_ml) 
