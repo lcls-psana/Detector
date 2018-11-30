@@ -361,6 +361,12 @@ class PyDetectorAccess :
     def _shaped_geo_array(self, arr) :
         if arr is None : return None
         if self.dettype == gu.EPIX100A : arr.shape = (704, 768)
+        elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD) : 
+            sh = arr.shape
+            arr.shape = (arr.size/sh[-2]/sh[-1], sh[-2],sh[-1]) # 3d : (16/4,352,384)
+        elif self.dettype == gu.EPIX10KA :
+            sh = arr.shape
+            arr.shape = (sh[-2],sh[-1]) # 2d : (352,384)
         #if self.dettype == gu.CSPAD    : arr.shape = (32, 185, 388)
         return arr
 

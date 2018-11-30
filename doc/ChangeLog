@@ -7,6 +7,22 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-60
+2018-11-29 Mikhail S. Dubrovin
+- fix multiple issues for intensity calibration of epix10ka2m
+  - apply mask 0x3ff to raw at pedestals evaluation
+  - return det.calib dtype=np.float32() it was dtype=object
+  - return det.pedestals and det.gain shape = (7,16,352,384) was (112,352,384)
+  - return det.coords_x shape = (16,352,384) was (1,4,4,352,384)
+  - set directory mode to 0777, file mode 0666
+  - fix numerous cosmetic issues
+	modified:   examples/ex_new_dets.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+	modified:   src/UtilsEpix.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-59
 2018-11-28 Mikhail S. Dubrovin
 - update for app/epix10ka_offset_calibration - fix problem in fit

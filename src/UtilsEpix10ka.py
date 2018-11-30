@@ -213,16 +213,18 @@ def gain_maps_epix10ka_any(det, data=None) :
     gr5 = (cbits    == 16)
     gr6 = (cbits    ==  0)
 
-    #first = 10000
-    #last  = first+5
-    #logger.debug(info_ndarr(gr0, 'gr0', first, last))
-    #logger.debug(info_ndarr(gr1, 'gr1', first, last))
-    #logger.debug(info_ndarr(gr2, 'gr2', first, last))
-    #logger.debug(info_ndarr(gr3, 'gr3', first, last))
-    #logger.debug(info_ndarr(gr4, 'gr4', first, last))
-    #logger.debug(info_ndarr(gr5, 'gr5', first, last))
-    #logger.debug(info_ndarr(gr6, 'gr6', first, last))
 
+    if True :
+        first = 10000
+        last  = first+5
+        logger.debug(info_ndarr(gr0, 'gr0', first, last))
+        logger.debug(info_ndarr(gr1, 'gr1', first, last))
+        logger.debug(info_ndarr(gr2, 'gr2', first, last))
+        logger.debug(info_ndarr(gr3, 'gr3', first, last))
+        logger.debug(info_ndarr(gr4, 'gr4', first, last))
+        logger.debug(info_ndarr(gr5, 'gr5', first, last))
+        logger.debug(info_ndarr(gr6, 'gr6', first, last))
+        
     return gr0, gr1, gr2, gr3, gr4, gr5, gr6
 
 #--------------------
@@ -248,8 +250,8 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
 
     t0_sec_tot = time()
 
-    arr = det.raw(evt) # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
-    if arr is None : return None
+    raw = det.raw(evt) # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
+    if raw is None : return None
 
     gain = det.gain(evt)      # - 4d gains  (7, <nsegs>, 352, 384)
     peds = det.pedestals(evt) # - 4d pedestals
@@ -259,28 +261,34 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
     #gfac = gain 
     gfac = store.gfac
     arr1 = store.arr1 
-    if store.gfac is None :
-        logger.debug(info_ndarr(arr,  '\n  raw ')\
+
+    if store.gfac is None : 
+        # do ONCE this initialization 
+        logger.debug(info_ndarr(raw,  '\n  raw ')\
                     +info_ndarr(gain, '\n  gain')\
                     +info_ndarr(peds, '\n  peds'))
 
-        store.gfac = gfac = divide_protected(np.ones_like(gfac), gain)
-        store.arr1 = arr1 = np.ones_like(arr)
+        store.gfac = gfac = divide_protected(np.ones_like(gain), gain)
+        store.arr1 = arr1 = np.ones_like(raw, dtype=np.int32) # for counting
 
-    gmaps = gain_maps_epix10ka_any(det, arr)
+        logger.debug(info_ndarr(gfac,  '\n  gfac ')\
+                    +info_ndarr(arr1, '\n  arr1'))
+
+    gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None : return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
-    #t0_sec = time()
-    #logger.debug('gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
-    # (np.sum(np.select((gr0,), (arr1,), default=0)),\
-    #  np.sum(np.select((gr1,), (arr1,), default=0)),\
-    #  np.sum(np.select((gr2,), (arr1,), default=0)),\
-    #  np.sum(np.select((gr3,), (arr1,), default=0)),\
-    #  np.sum(np.select((gr4,), (arr1,), default=0)),\
-    #  np.sum(np.select((gr5,), (arr1,), default=0)),\
-    #  np.sum(np.select((gr6,), (arr1,), default=0)))) # 3ms !!!
-    #dt = time()-t0_sec; print('debug statistics consumed time (sec) = %.6f' % dt)
+    if True :
+        t0_sec = time()
+        logger.debug('gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
+         (np.sum(np.select((gr0,), (arr1,), default=0)),\
+          np.sum(np.select((gr1,), (arr1,), default=0)),\
+          np.sum(np.select((gr2,), (arr1,), default=0)),\
+          np.sum(np.select((gr3,), (arr1,), default=0)),\
+          np.sum(np.select((gr4,), (arr1,), default=0)),\
+          np.sum(np.select((gr5,), (arr1,), default=0)),\
+          np.sum(np.select((gr6,), (arr1,), default=0)))) # 3ms !!!
+        dt = time()-t0_sec; print('debug statistics consumed time (sec) = %.6f' % dt)
 
     factor = np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
                        (gfac[0,:], gfac[1,:], gfac[2,:], gfac[3,:],\
@@ -294,7 +302,9 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
     logger.debug(info_ndarr(factor, 'calib_epix10ka factor'))
     logger.debug(info_ndarr(pedest, 'calib_epix10ka pedest'))
 
-    arrf = np.array(arr & M14, dtype=np.float32) - pedest
+    #arr = np.array(raw, dtype=np.float32) # otherwice det.calib returns np.object....
+
+    arrf = np.array(raw & M14, dtype=np.float32) - pedest
     return arrf * factor
 
     #====================

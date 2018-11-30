@@ -16,7 +16,8 @@ from psana import DataSource, Detector
 import numpy as np
 
 from PSCalib.DCUtils import env_time, str_tstamp
-from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES, alias_for_id, create_directory
+from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES,\
+                               alias_for_id, create_directory, set_file_access_mode
 from Detector.UtilsEpix10ka import config_objects, get_epix10ka_any_config_object,\
                             gain_maps_epix10ka_any # cbits_total_epix10ka_any
 
@@ -358,15 +359,18 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0) :
 
 #--------------------
 
-def save_log_record_on_start(dirrepo, fname) :
+def save_log_record_on_start(dirrepo, fname, fac_mode=0777) :
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     rec = log_rec_on_start()
     year = str_tstamp(fmt='%Y')
+    create_directory(dirrepo, fac_mode)
     dirlog = '%s/logs' % dirrepo
-    create_directory(dirlog, mode=0777)
+    create_directory(dirlog, fac_mode)
     logfname = '%s/log_%s_%s.txt' % (dirlog, fname, year)
     save_textfile(rec, logfname, mode='a')
+    set_file_access_mode(logfname, fac_mode)
+
     logger.debug('Record on start: %s' % rec)
     logger.info('Saved:  %s' % logfname)
 
@@ -448,6 +452,8 @@ def offset_calibration(*args, **opts) :
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
+    dirmode    = opts.get('dirmode', 0777)
+    filemode   = opts.get('filemode', 0666)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     if usesmd : dsname += ':smd'
@@ -455,7 +461,7 @@ def offset_calibration(*args, **opts) :
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
  
-    save_log_record_on_start(dirrepo, _name)
+    save_log_record_on_start(dirrepo, _name, dirmode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
     tstamp      = cpdic.get('tstamp', None)
@@ -471,11 +477,12 @@ def offset_calibration(*args, **opts) :
     prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
-    create_directory(dir_offset, mode=0777)
-    create_directory(dir_peds,   mode=0777)
-    create_directory(dir_plots,  mode=0777)
-    create_directory(dir_work,   mode=0777)
-    create_directory(dir_gain,   mode=0777)
+    create_directory(dir_panel,  mode=dirmode)
+    create_directory(dir_offset, mode=dirmode)
+    create_directory(dir_peds,   mode=dirmode)
+    create_directory(dir_plots,  mode=dirmode)
+    create_directory(dir_work,   mode=dirmode)
+    create_directory(dir_gain,   mode=dirmode)
 
     #--------------------
     #sys.exit('TEST EXIT')
@@ -510,24 +517,24 @@ def offset_calibration(*args, **opts) :
             #First 5 Calib Cycles correspond to darks:
             if dopeds and nstep<5:
                 #dark
-                msg = 'DARK %d ' % nstep
-                nrec = 0
+                msg = 'DARK Calib Cycle %d ' % nstep
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
+                nrec = 0
                 for nevt,evt in enumerate(step.events()):
                     raw = det.raw(evt)
-                    if selected_record(nrec) :
-                        logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
-                    if raw is None:
+                    do_print = selected_record(nrec)
+                    if raw is None: #skip empty frames
+                        if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
                         msg += 'none'
                         continue
                     if nevt>=nbs:
                         break
                     else:
-                        #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2 : raw=raw[idx,:]
-                        block[nrec]=raw
+                        if do_print : logger.debug(info_ndarr(raw & M14, 'Ev:%04d rec:%04d panel:%02d raw & M14' % (nevt,nrec,idx)))
+                        block[nrec]=raw & M14
                         nrec += 1
-                        if nevt%128==0:
+                        if nrec%200==0:
                             msg += '.%s' % find_gain_mode(det, raw) 
 
                 darks[:,:,nstep]=block[:nrec,:].mean(0)
@@ -549,9 +556,9 @@ def offset_calibration(*args, **opts) :
                 evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
                     raw = det.raw(evt)
-                    if selected_record(nrec) :
-                        logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d AM_L' % (nevt,nrec)))
+                    do_print = selected_record(nrec)
                     if raw is None:
+                        if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d AML raw=None' % (nevt,nrec,idx))
                         msg += 'none'
                         continue
                     if nevt>=nbs:
@@ -559,6 +566,7 @@ def offset_calibration(*args, **opts) :
                     else:
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2 : raw=raw[idx,:]
+                        if do_print : logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AML raw' % (nevt,nrec,idx)))
                         block[nrec]=raw
                         evnum[nrec]=nevt
                         nrec += 1
@@ -588,9 +596,9 @@ def offset_calibration(*args, **opts) :
                 evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
                     raw = det.raw(evt)
-                    if selected_record(nrec) :
-                        logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d AH_L' % (nevt,nrec)))
+                    do_print = selected_record(nrec)
                     if raw is None:
+                        if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d AHL raw=None' % (nevt,nrec,idx))
                         msg+='none'
                         continue
                     if nevt>=nbs:
@@ -598,6 +606,7 @@ def offset_calibration(*args, **opts) :
                     else:
                         #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2 : raw=raw[idx,:]
+                        if do_print : logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AHL raw' % (nevt,nrec,idx)))
                         block[nrec]=raw
                         evnum[nrec]=nevt
                         nrec += 1
@@ -632,7 +641,8 @@ def offset_calibration(*args, **opts) :
 
         #Save diagnostics data, can be commented out:
         #save fitting results
-        np.savez_compressed(fname_work, darks=darks, fits_hl=fits_hl, fits_ml=fits_ml, nsp_hl=nsp_hl, nsp_ml=nsp_ml) 
+        np.savez_compressed(fname_work, darks=darks, fits_hl=fits_hl, fits_ml=fits_ml, nsp_hl=nsp_hl, nsp_ml=nsp_ml)
+        set_file_access_mode(fname_work, filemode)
         logger.info('Saved:  %s' % fname_work)
 
     #--------------------
@@ -646,6 +656,8 @@ def offset_calibration(*args, **opts) :
     fname_offset_AML = '%s_offset_AML.dat' % prefix_offset
     np.savetxt(fname_offset_AHL, offset_ahl, fmt=fmt_offset)
     np.savetxt(fname_offset_AML, offset_aml, fmt=fmt_offset)
+    set_file_access_mode(fname_offset_AHL, filemode)
+    set_file_access_mode(fname_offset_AML, filemode)
     logger.info('Saved:  %s' % fname_offset_AHL)
     logger.info('Saved:  %s' % fname_offset_AML)
 
@@ -653,6 +665,8 @@ def offset_calibration(*args, **opts) :
     for i in range(5):  #looping through darks measured in Jack's order
         fnameped = '%s_pedestals_%s.dat' % (prefix_peds, GAIN_MODES[i])
         np.savetxt(fnameped, darks[:,:,i], fmt=fmt_peds)
+        set_file_access_mode(fnameped, filemode)
+
         logger.info('Saved:  %s' % fnameped)
         if i==3:    #if AHL_H, we can calculate AHL_L
             fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
@@ -662,6 +676,7 @@ def offset_calibration(*args, **opts) :
             fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
             np.savetxt(fnameped, darks[:,:,i]-offset_aml, fmt=fmt_peds)
             logger.info('Saved:  %s' % fnameped)
+        set_file_access_mode(fnameped, filemode)
         
     if display:
         plt.close("all")
@@ -677,6 +692,8 @@ def offset_calibration(*args, **opts) :
             plt.title(gm+': '+titles[i])
         plt.pause(0.1)
         plt.savefig(fnameout)
+        set_file_access_mode(fnameout, filemode)
+
         logger.info('Saved:  %s' % fnameout)
 
         fnameout='%s_plot_AHL.pdf' % prefix_plots
@@ -690,6 +707,7 @@ def offset_calibration(*args, **opts) :
             plt.title(gm +': '+titles[i])
         plt.pause(0.1)
         plt.savefig(fnameout)
+        set_file_access_mode(fnameout, filemode)
         logger.info('Saved:  %s' % fnameout)
         plt.pause(5)
 
@@ -707,13 +725,15 @@ def pedestals_calibration(*args, **opts) :
     mode       = opts.get('mode', None)    
     #idx        = opts.get('idx', 0)    
     #nspace     = opts.get('nspace', 7)    
+    dirmode    = opts.get('dirmode', 0777)
+    filemode   = opts.get('filemode', 0666)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_on_start(dirrepo, _name)
+    save_log_record_on_start(dirrepo, _name, dirmode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp      = cpdic.get('tstamp', None)
@@ -725,6 +745,7 @@ def pedestals_calibration(*args, **opts) :
     ny,nx = shape
 
     #panel_id = get_panel_id(panel_ids, idx)
+    logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
 
     for idx, panel_id in enumerate(panel_ids) :
         if mode is None : mode = gain_mode
@@ -741,10 +762,13 @@ def pedestals_calibration(*args, **opts) :
         fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
         prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
         
-        logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after offset_calibration' % dir_panel)
-        assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
-        assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds
-        
+        logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after charge-injection offset_calibration' % dir_panel)
+        #assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
+        #assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds        
+
+        create_directory(dir_panel, mode=dirmode)
+        create_directory(dir_peds, mode=dirmode)
+
         mode=mode.upper()
         
         if not (mode in GAIN_MODES_IN) :
@@ -763,19 +787,19 @@ def pedestals_calibration(*args, **opts) :
             nrec=0;
             for nevt,evt in enumerate(step.events()):
                 raw = det.raw(evt)
-                if selected_record(nrec) :
-                    logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d raw' % (nevt,nrec)))
-                if raw is None:     #skip empty frames
+                do_print = selected_record(nrec)
+                if raw is None: #skip empty frames
+                    if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
                     msg+='none'
                     continue
-                if nrec>=nbs:       #stop after collecting sufficient frames
+                if nrec>=nbs:       # stop after collecting sufficient frames
                     break
                 else:
-                    #block=insert_subframe(block,raw,nevt,nspace,nevt-5);
                     if raw.ndim > 2 : raw=raw[idx,:]
-                    block[nrec]=raw;
+                    if do_print : logger.debug(info_ndarr(raw & M14, 'Ev:%04d rec:%04d panel:%02d raw & M14' % (nevt,nrec,idx)))
+                    block[nrec]=raw & M14
                     nrec+=1;
-                    if nevt%200==0: # simple progress bar
+                    if nrec%200==0: # simple progress bar
                         msg+='.'
                         
             if nstep>=0:    #only process the first CalibCycle (stop after 0)
@@ -785,42 +809,47 @@ def pedestals_calibration(*args, **opts) :
         
         dark=block[:nrec,:].mean(0)  #Calculate mean 
         
-        #save dark in proper place
-        #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%(mode,irun);
-        #np.savetxt(fnameout,dark);
-        #print 'SAVED %s PEDESTALS.'%mode,
         fnameped = '%s_pedestals_%s.dat' % (prefix_peds, mode)
         np.savetxt(fnameped, dark, fmt=fmt_peds)
+        set_file_access_mode(fnameped, filemode)
         logger.info('Saved:  %s' % fnameped)
         
         #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
         if mode=='AML-M':
             fname_offset_AML = find_file_for_timestamp(dir_offset, 'offset_AML', tstamp)
-            offset=np.loadtxt(fname_offset_AML);
-            logger.info('Loaded: %s' % fname_offset_AML) 
-            fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
-            np.savetxt(fnameped, dark-offset, fmt=fmt_peds)
-            logger.info('Saved:  %s' % fnameped) 
-        
-            #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%('AML_L',irun);
-            #np.savetxt(fnameout,dark-offset);
-            #print 'SAVED AML_L PEDESTALS.',
+            offset=None
+            if os.path.exists(fname_offset_AML) :
+                offset=np.loadtxt(fname_offset_AML)
+                logger.info('Loaded: %s' % fname_offset_AML) 
+            else :
+                logger.warning('file with offsets DOES NOT EXIST: %s' % fname_offset_AML) 
+                logger.warning('DO NOT save AML-L pedestals w/o offsets') 
+
+            if offset is not None :
+                fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
+                np.savetxt(fnameped, dark if offset is None else (dark-offset), fmt=fmt_peds)
+                set_file_access_mode(fnameped, filemode)
+                logger.info('Saved:  %s' % fnameped) 
         
         elif mode=='AHL-H':
             fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
-            offset=np.loadtxt(fname_offset_AHL);
-            logger.info('Loaded: %s' % fname_offset_AHL) 
-            fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
-            np.savetxt(fnameped, dark-offset, fmt=fmt_peds)
-            logger.info('Saved:  %s' % fnameped)
-        
-            #fnameout=path_pedestal+'pedestal_%s_R%04d.dat'%('AHL_L',irun);
-            #np.savetxt(fnameout,dark-offset);
-            #print 'SAVED AHL_L PEDESTALS.',
+            offset=None
+            if os.path.exists(fname_offset_AHL) :
+                offset=np.loadtxt(fname_offset_AHL)
+                logger.info('Loaded: %s' % fname_offset_AHL) 
+            else :
+                logger.warning('file with offsets DOES NOT EXIST: %s' % fname_offset_AHL) 
+                logger.warning('DO NOT save AHL-L pedestals w/o offsets') 
 
+            if offset is not None :
+                fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
+                np.savetxt(fnameped, dark if offset is None else (dark-offset), fmt=fmt_peds)
+                set_file_access_mode(fnameped, filemode)
+                logger.info('Saved:  %s' % fnameped)
+        
 #--------------------
 
-def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f') :
+def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0777) :
 
     logger.debug('In merge_panel_gain_ranges for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dirrepo, panel_id, ctype, str(tstamp), str(shape)))
@@ -852,6 +881,7 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
     logger.debug(info_ndarr(nda, 'merged %s'%ctype))
 
     save_txt(ofname, nda, fmt=fmt)
+    set_file_access_mode(ofname, fac_mode)
     logger.debug('saved file: %s' % ofname)
 
     nda.shape = (7, 1, 352, 384)
@@ -892,13 +922,15 @@ def deploy_constants(*args, **opts) :
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_gain   = opts.get('fmt_gain', '%.6f')
     logmode    = opts.get('logmode', 'DEBUG')
+    dirmode    = opts.get('dirmode', 0777)
+    filemode   = opts.get('filemode', 0666)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
  
-    save_log_record_on_start(dirrepo, _name)
+    save_log_record_on_start(dirrepo, _name, dirmode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp_run  = cpdic.get('tstamp', None)
@@ -932,14 +964,14 @@ def deploy_constants(*args, **opts) :
             fmt = CTYPE_FMT.get(octype,'%.5f')
             logger.debug('begin merging for ctype:%s, octype:%s, fmt:%s,\n  prefix:%s' % (ctype, octype, fmt, prefix))
             fname = '%s_%s.txt' % (prefix, ctype)
-            nda = merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt)
+            nda = merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt, filemode)
             if octype in dic_consts : dic_consts[octype].append(nda) # append for panel per ctype
             else :                    dic_consts[octype] = [nda,]
 
     logger.info('\n%s\nmerge panel constants and deploy them' % (80*'_'))
 
     dmerge = dir_merge(dirrepo)
-    create_directory(dmerge, mode=0777)
+    create_directory(dmerge, mode=dirmode)
     fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
 
     for octype, lst in dic_consts.iteritems() :
@@ -948,6 +980,7 @@ def deploy_constants(*args, **opts) :
         fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
         fmt = CTYPE_FMT.get(octype,'%.5f')
         save_txt(fmerge, mrg_nda, fmt=fmt)
+        set_file_access_mode(fmerge, filemode)
         logger.debug('saved tmp file: %s' % fmerge)
 
         if dircalib is not None : calibdir = dircalib

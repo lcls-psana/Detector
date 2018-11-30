@@ -373,7 +373,7 @@ class AreaDetector(object):
     def is_epix10ka_any(self) :
         """Returns (bool) True/False for epix10ka or its composites/other detector type
         """
-        return self.dettype in (gu.EPIX10KA, gu.EPIX10KA2M, gu.EPIX10KAQUAD)
+        return self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD, gu.EPIX10KA)
 
 ##-----------------------------
 
@@ -530,7 +530,7 @@ class AreaDetector(object):
             #print msg
             #raise IOError(msg)
             return arr # return array as is, works for Jungfrau
-        if self.dettype == gu.EPIX10KA : return arr # as is
+        if self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD, gu.EPIX10KA) : return arr # as is
 
         shape = self._shape_daq_(rnum)
 

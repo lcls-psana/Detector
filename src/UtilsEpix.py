@@ -22,18 +22,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 from Detector.GlobalUtils import print_ndarr #, info_ndarr
-from PSCalib.GlobalUtils import load_textfile, save_textfile
+from PSCalib.GlobalUtils import load_textfile, save_textfile, file_mode#, create_path, create_directory
 
 CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
 FNAME_PANEL_ID_ALIASES = '%s/.aliases.txt'%CALIB_REPO_EPIX10KA
 
 #------------------------------
 
+def set_file_access_mode(fname, mode=0777) :
+    os.chmod(fname, mode)
+
+#------------------------------
+
 def create_directory(dir, mode=0777) :
     """Creates directory and sets its mode"""
     if os.path.exists(dir) :
-        #logger.debug('Exists: %s' % dir)
-        os.chmod(dir, mode)
+        logger.debug('Exists: %s mode(oct): %s' % (dir, oct(file_mode(dir))))
     else :
         os.makedirs(dir)
         os.chmod(dir, mode)

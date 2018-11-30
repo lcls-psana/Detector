@@ -14,8 +14,7 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 import logging
 logger = logging.getLogger(__name__)
-
-logging.basicConfig(format='%(levelname)s: %(name)s %(message)s', level=logging.INFO) # INFO) #DEBUG)
+logging.basicConfig(format='%(levelname)s: %(name)s %(message)s', level=logging.DEBUG) # INFO #DEBUG
 
 ##-----------------------------
 
@@ -115,9 +114,9 @@ elif tname=='17' : # exp=mecx32917:run=0076 'MecTargetChamber.0-Epix10ka.1' # al
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
 
 elif tname=='18' :
-    dsname = 'exp=xcsx35617:run=6' # 69-126
+    dsname = 'exp=xcsx35617:run=396' # 6, 69-126
     src = 'XcsEndstation.0:Epix10ka2M.0'
-    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
+    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib')
 
 elif tname=='101' :
     dsname = 'exp=meclu5717:run=3'
@@ -170,11 +169,12 @@ print 80*'_', '\nInstrument: ', ins
 #print 'size of ndarray: %d' % det.size(par)
 #print 'ndim of ndarray: %d' % det.ndim(par)
 
-peds = det.pedestals(par)
-print_ndarr(peds, 'pedestals')
+if False :
+  peds = det.pedestals(par)
+  print_ndarr(peds, 'pedestals')
 
-gain = det.gain(par)
-print_ndarr(gain, 'pixel_gain')
+  gain = det.gain(par)
+  print_ndarr(gain, 'pixel_gain')
 
 #rms = det.rms(par)
 #print_ndarr(rms, 'rms')
@@ -197,9 +197,12 @@ print_ndarr(gain, 'pixel_gain')
 #cmod = det.common_mode(par)
 #print_ndarr(cmod, 'common_mod')
 
-#calib = det.calib(evt)
-calib = np.array(det.calib(evt), dtype=np.float32)
+calib = det.calib(evt)
 print_ndarr(calib, 'calib')
+
+calib = np.array(calib, dtype=np.float32) # oterwice np.object....
+print_ndarr(calib, 'calib <np.float32>')
+
 
 t0_sec = time()
 nda_raw = det.raw(evt)
