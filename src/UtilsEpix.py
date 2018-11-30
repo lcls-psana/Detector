@@ -52,13 +52,13 @@ def alias_for_id(panel_id, fname=FNAME_PANEL_ID_ALIASES) :
     """
     alias_max = 0
     if os.path.exists(fname) :
-      logger.debug('search alias for panel id: %s\n  in file %s' % (panel_id, fname))
+      #logger.debug('search alias for panel id: %s\n  in file %s' % (panel_id, fname))
       recs = load_textfile(fname).strip('\n').split('\n')
       for r in recs :
         if not r : continue # skip empty records
         fields = r.strip('\n').split(' ')
         if fields[1] == panel_id : 
-            logger.debug('found alias %s' % (fields[0]))
+            logger.debug('found alias %s for panel_id %s\n  in file %s' % (fields[0], panel_id, fname))
             return fields[0]
         ialias = int(fields[0])
         if ialias>alias_max : alias_max = ialias

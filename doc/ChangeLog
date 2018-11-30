@@ -7,6 +7,21 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-61
+2018-11-30 Mikhail S. Dubrovin
+- fix multiple issues for intensity calibration of epix10ka2m
+  - fix log on start record crash for missing SIT_RELEASE
+  - in epix10ka_deploy_constants extend -t parameter for run number
+  - use default gain factors 1/3/100 H/M/L gain modes, respectively
+  - cosmetic improvements of output in debug mode
+	modified:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_offset_calibration
+	modified:   app/epix10ka_pedestals_calibration
+	modified:   doc/ChangeLog
+	modified:   src/UtilsEpix.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-60
 2018-11-29 Mikhail S. Dubrovin
 - fix multiple issues for intensity calibration of epix10ka2m

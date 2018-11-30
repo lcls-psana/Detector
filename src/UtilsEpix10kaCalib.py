@@ -15,7 +15,7 @@ from time import sleep
 from psana import DataSource, Detector
 import numpy as np
 
-from PSCalib.DCUtils import env_time, str_tstamp
+from PSCalib.DCUtils import env_time, dataset_time, str_tstamp
 from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES,\
                                alias_for_id, create_directory, set_file_access_mode
 from Detector.UtilsEpix10ka import config_objects, get_epix10ka_any_config_object,\
@@ -40,8 +40,9 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 #--------------------
 
-GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
-GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
+GAIN_MODES      = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
+GAIN_MODES_IN   = ['FH','FM','FL','AHL-H','AML-M']
+GAIN_FACTOR_DEF = [  1.,  3.,100.,     1.,     3.,   100.,   100.]
 
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
@@ -68,8 +69,6 @@ def update_plot(handle,trace,xx,pf0,pf1):
     line1.set_ydata(np.polyval(pf0,xx))
     line2.set_ydata(np.polyval(pf1,xx))
     plt.pause(0.1)    
-
-
 
 #--------------------
 #--------------------
@@ -314,6 +313,13 @@ def tstamps_run_and_now(env) :
                  + ('\n  run time stamp      : %s' % ts_run)\
                  + ('\n  current time stamp  : %s' % ts_now))
     return ts_run, ts_now
+#--------------------
+
+def tstamp_for_dataset(dsname) :
+    """Returns tstamp_run for dataset dsname, e.g. "exp=xcsx35617:run=6".
+    """
+    tsec = dataset_time(dsname)
+    return str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=tsec)
 
 #--------------------
 
@@ -513,7 +519,7 @@ def offset_calibration(*args, **opts) :
         for nstep, step in enumerate(ds.steps()):
 
             logger.debug('=============== calibcycle %02d ===============' % nstep)
-
+            nrec,nevt = 0,0
             #First 5 Calib Cycles correspond to darks:
             if dopeds and nstep<5:
                 #dark
@@ -573,7 +579,6 @@ def offset_calibration(*args, **opts) :
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
-                logger.debug('    nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
                 istep=nstep-5
                 jy=istep//nspace
@@ -599,7 +604,7 @@ def offset_calibration(*args, **opts) :
                     do_print = selected_record(nrec)
                     if raw is None:
                         if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d AHL raw=None' % (nevt,nrec,idx))
-                        msg+='none'
+                        msg+='None'
                         continue
                     if nevt>=nbs:
                         break
@@ -613,7 +618,6 @@ def offset_calibration(*args, **opts) :
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
-                logger.debug('    nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
                 istep=nstep-5-nspace**2
                 jy=istep//nspace
@@ -629,8 +633,10 @@ def offset_calibration(*args, **opts) :
                 logger.debug(msg + msgf)
                 #test=update_test(test,block,nspace,nstep-5)
 
-            if nstep>=5+2*nspace**2:
+            elif nstep>=5+2*nspace**2:
                 break
+
+            logger.debug('statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
         logger.debug(info_ndarr(fits_ml, 'XXXX: fits_ml')) # shape:(352, 384, 2, 2)
         logger.debug(info_ndarr(fits_hl, 'XXXX: fits_hl')) # shape:(352, 384, 2, 2)
@@ -749,8 +755,8 @@ def pedestals_calibration(*args, **opts) :
 
     for idx, panel_id in enumerate(panel_ids) :
         if mode is None : mode = gain_mode
-        msg = '\n%s\n%02d panel id:%s' % (100*'=', idx, panel_id)\
-            + '\n   dark run processing for gain mode %s' % mode
+        msg = '\n%s\npanel:%02d id:%s' % (100*'=', idx, panel_id)\
+            + '\n  dark run processing for gain mode %s' % mode
         logger.info(msg)
         
         if mode is None : 
@@ -762,12 +768,14 @@ def pedestals_calibration(*args, **opts) :
         fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
         prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
         
-        logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after charge-injection offset_calibration' % dir_panel)
+        #logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after charge-injection offset_calibration' % dir_panel)
         #assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
         #assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds        
 
-        create_directory(dir_panel, mode=dirmode)
-        create_directory(dir_peds, mode=dirmode)
+        create_directory(dir_panel,  mode=dirmode)
+        create_directory(dir_peds,   mode=dirmode)
+        create_directory(dir_offset, mode=dirmode)
+        create_directory(dir_gain,   mode=dirmode)
 
         mode=mode.upper()
         
@@ -781,16 +789,17 @@ def pedestals_calibration(*args, **opts) :
         ds = DataSource(dsname)
         det = Detector(detname)
         
+        nrec,nevt = 0,0
         msg='READING RAW FRAMES (200 per ".") assuming %s mode '%(mode)
         for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
             block=np.zeros((nbs,ny,nx),dtype=np.int16)
-            nrec=0;
+            nrec = 0
             for nevt,evt in enumerate(step.events()):
                 raw = det.raw(evt)
                 do_print = selected_record(nrec)
                 if raw is None: #skip empty frames
                     if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
-                    msg+='none'
+                    msg+='None'
                     continue
                 if nrec>=nbs:       # stop after collecting sufficient frames
                     break
@@ -798,15 +807,15 @@ def pedestals_calibration(*args, **opts) :
                     if raw.ndim > 2 : raw=raw[idx,:]
                     if do_print : logger.debug(info_ndarr(raw & M14, 'Ev:%04d rec:%04d panel:%02d raw & M14' % (nevt,nrec,idx)))
                     block[nrec]=raw & M14
-                    nrec+=1;
+                    nrec+=1
                     if nrec%200==0: # simple progress bar
                         msg+='.'
                         
-            if nstep>=0:    #only process the first CalibCycle (stop after 0)
+            if nstep>=0:    #only process the first CalibCycle
                 break
         
-        logger.debug(msg)
-        
+        logger.debug(msg+'\n       statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
+
         dark=block[:nrec,:].mean(0)  #Calculate mean 
         
         fnameped = '%s_pedestals_%s.dat' % (prefix_peds, mode)
@@ -818,7 +827,7 @@ def pedestals_calibration(*args, **opts) :
         if mode=='AML-M':
             fname_offset_AML = find_file_for_timestamp(dir_offset, 'offset_AML', tstamp)
             offset=None
-            if os.path.exists(fname_offset_AML) :
+            if fname_offset_AML is not None and os.path.exists(fname_offset_AML) :
                 offset=np.loadtxt(fname_offset_AML)
                 logger.info('Loaded: %s' % fname_offset_AML) 
             else :
@@ -834,7 +843,7 @@ def pedestals_calibration(*args, **opts) :
         elif mode=='AHL-H':
             fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
             offset=None
-            if os.path.exists(fname_offset_AHL) :
+            if fname_offset_AHL is not None and os.path.exists(fname_offset_AHL) :
                 offset=np.loadtxt(fname_offset_AHL)
                 logger.info('Loaded: %s' % fname_offset_AHL) 
             else :
@@ -856,16 +865,29 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
 
-    dir_ctype = dir_peds      if ctype == 'pedestals' else dir_gain
-    nda_def = np.zeros(shape) if ctype == 'pedestals' else np.ones(shape)
+    dir_ctype = None
+    nda_def = None
+
+    if ctype == 'pedestals' :
+        dir_ctype = dir_peds
+        nda_def = np.zeros(shape)
+    elif ctype == 'gain' :
+        dir_ctype = dir_gain
+        nda_def = np.ones(shape)
+    else :
+        dir_ctype = dir_peds
+        nda_def = np.zeros(shape)
+        logger.warning('NON-DEFINED DEFAULT CONSTANTS AND DIRECTORY FOR ctype:%s' % ctype)
     
-    logger.debug('dir_ctype: %s' % dir_ctype)
+    logger.debug(info_ndarr(nda_def, 'dir_ctype: %s nda_def' % dir_ctype))
 
     lstnda = []
-    for gm in GAIN_MODES :
+    for igm,gm in enumerate(GAIN_MODES) :
        fname = find_file_for_timestamp(dir_ctype, '%s_%s' % (ctype,gm), tstamp)
-       nda = nda_def if fname is None else\
-             np.loadtxt(fname, dtype=np.float32)
+       nda = np.loadtxt(fname, dtype=np.float32) if fname is not None else\
+             nda_def*GAIN_FACTOR_DEF[igm] if ctype == 'gain' else\
+             nda_def 
+
        lstnda.append(nda if nda is not None else nda_def)
        #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
        #logger.info('%5s : %s' % (gm,fname))
@@ -946,7 +968,11 @@ def deploy_constants(*args, **opts) :
 
     logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
 
-    tstamp = tstamp_run if tstamp is None else tstamp
+    tstamp = tstamp_run if tstamp is None else\
+             tstamp if int(tstamp)>9999 else\
+             tstamp_for_dataset('exp=%s:run=%d'%(exp,tstamp))
+
+    logger.debug('search for calibration files with tstamp <= %s' % tstamp)
 
     # dict_consts for constants octype: 'pixel_gain', 'pedestals', etc.
     dic_consts = {} 

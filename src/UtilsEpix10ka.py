@@ -214,7 +214,7 @@ def gain_maps_epix10ka_any(det, data=None) :
     gr6 = (cbits    ==  0)
 
 
-    if True :
+    if False :
         first = 10000
         last  = first+5
         logger.debug(info_ndarr(gr0, 'gr0', first, last))
@@ -278,7 +278,7 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
     if gmaps is None : return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
-    if True :
+    if False :
         t0_sec = time()
         logger.debug('gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
          (np.sum(np.select((gr0,), (arr1,), default=0)),\
