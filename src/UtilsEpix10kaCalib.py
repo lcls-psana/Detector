@@ -42,7 +42,7 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 GAIN_MODES      = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN   = ['FH','FM','FL','AHL-H','AML-M']
-GAIN_FACTOR_DEF = [  1.,  3.,100.,     1.,     3.,   100.,   100.]
+GAIN_FACTOR_DEF = [  1.,1./3,0.01,     1.,   1./3,   0.01,   0.01]
 
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
@@ -542,7 +542,7 @@ def offset_calibration(*args, **opts) :
                         nrec += 1
                         if nrec%200==0:
                             msg += '.%s' % find_gain_mode(det, raw) 
-
+                nrec -= 1
                 darks[:,:,nstep]=block[:nrec,:].mean(0)
                 logger.debug(msg)
 
@@ -814,6 +814,7 @@ def pedestals_calibration(*args, **opts) :
             if nstep>=0:    #only process the first CalibCycle
                 break
         
+            nrec -= 1
         logger.debug(msg+'\n       statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
         dark=block[:nrec,:].mean(0)  #Calculate mean 

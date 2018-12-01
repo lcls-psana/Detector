@@ -6,6 +6,9 @@ Package author: Mikhail S. Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+Committed w/o tag
+2018-11-30 Mikhail S. Dubrovin
+- src/UtilsEpix10kaCalib.py fix nrec -= 1 at the end of two cycles, invert GAIN_FACTOR_DEF
 
 Tag: V01-00-61
 2018-11-30 Mikhail S. Dubrovin
