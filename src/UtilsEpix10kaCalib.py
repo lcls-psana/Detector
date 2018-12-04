@@ -8,6 +8,7 @@ CALIBRATION - TEST PULSES
 #--------------------
 import os
 import sys
+from time import time
 import logging
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix1
 
 from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile,\
                          EPIX10KA2M, EPIX10KAQUAD, EPIX10KA, dic_det_type_to_calib_group # str_tstamp, replace
-from Detector.GlobalUtils import info_ndarr, print_ndarr #, divide_protected
+from Detector.GlobalUtils import info_ndarr, print_ndarr, divide_protected
 
 import matplotlib.pyplot as plt
 #from numba import jit
@@ -42,7 +43,6 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 GAIN_MODES      = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN   = ['FH','FM','FL','AHL-H','AML-M']
-GAIN_FACTOR_DEF = [  1.,1./3,0.01,     1.,   1./3,   0.01,   0.01]
 
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
@@ -189,7 +189,6 @@ def fit_orig(block, itrim, ny=352, nx=384, display=True):
                     update_plot(handle,trace,xx,pf0,pf1)
     return fits,nsp,msg
 
-
 #--------------------
 #--------------------
 #--------------------
@@ -301,6 +300,185 @@ def find_gain_mode(det, data=None) :
     return gain_mode
 
 #--------------------
+#--------------------
+#--------------------
+#--------------------
+
+def mean_constrained(arr, lo, hi) :
+    """Evaluates mean value of the input array for values between low and high limits
+    """
+    condlist = (np.logical_not(np.logical_or(arr<lo, arr>hi)),)
+    arr1 = np.ones(arr.shape, dtype=np.int32)
+    arr_of1 = np.select(condlist, (arr1,), 0)
+    arr_ofv = np.select(condlist, (arr,), 0)
+    ngood = arr_of1.sum()
+    return arr_ofv.sum()/ngood if ngood else None
+
+#--------------------
+
+def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
+    """Evaluates low and high limit of the array, which are used to find bad pixels.
+    """
+    ave, std = (arr.mean(), arr.std()) if (nneg>0 or npos>0) else (None,None)
+    lo = ave-nneg*std if nneg>0 else lim_lo
+    hi = ave+npos*std if npos>0 else lim_hi
+    lo, hi = max(lo, lim_lo), min(hi, lim_hi)
+
+    logger.debug('  %s: %s ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
+                 (sys._getframe().f_code.co_name, cmt, ave, std, lo, hi))
+
+    return lo, hi
+
+#--------------------
+
+def proc_dark_block(block, **opts) :
+    """Returns per-panel (352, 384) arrays of mean, rms, ...
+       block.shape = (nrecs, 352, 384), where nrecs <= 1024
+    """
+    exp        = opts.get('exp', None)
+    detname    = opts.get('det', None)
+
+    int_lo     = opts.get('int_lo', 1)       # lowest  intensity accepted for dark evaluation
+    int_hi     = opts.get('int_hi', 16000)   # highest intensity accepted for dark evaluation
+    intnlo     = opts.get('intnlo', 6.0)     # intensity ditribution number-of-sigmas low
+    intnhi     = opts.get('intnhi', 6.0)     # intensity ditribution number-of-sigmas high
+                                 
+    rms_lo     = opts.get('rms_lo', 0.001)   # rms ditribution low
+    rms_hi     = opts.get('rms_hi', 16000)   # rms ditribution high
+    rmsnlo     = opts.get('rmsnlo', 6.0)     # rms ditribution number-of-sigmas low
+    rmsnhi     = opts.get('rmsnhi', 6.0)     # rms ditribution number-of-sigmas high
+
+    fraclm     = opts.get('fraclm', 0.1)     # allowed fraction limit
+    nsigma     = opts.get('nsigma', 6.0)     # number of sigmas for gated eveluation
+
+    blockdbl = np.array(block, dtype=np.double)
+
+    logger.debug('in proc_dark_block for exp=%s det=%s, block.shape=%s' % (exp, detname, str(block.shape)))
+    nrecs, ny, nx = block.shape
+    shape = (ny, nx)
+
+    arr0       = np.zeros(shape, dtype=np.int64)
+    arr1       = np.ones (shape, dtype=np.int64)
+
+    arr_sum0   = np.zeros(shape, dtype=np.int64)
+    arr_sum1   = np.zeros(shape, dtype=np.double)
+    arr_sum2   = np.zeros(shape, dtype=np.double)
+
+    gate_lo    = arr1 * int_lo
+    gate_hi    = arr1 * int_hi
+
+    t0_sec = time()
+
+    # 1st loop over recs(non-empty events) in block
+    for nrec in range(min(nrecs,500)) :
+        raw    = block[nrec,:]
+        rawdbl = blockdbl[nrec,:]
+
+        cond_lo = raw<gate_lo
+        cond_hi = raw>gate_hi
+        condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
+
+        arr_sum0 += np.select(condlist, (arr1,), 0)
+        arr_sum1 += np.select(condlist, (rawdbl,), 0)
+        arr_sum2 += np.select(condlist, (np.square(rawdbl),), 0)
+
+    arr_av1 = divide_protected(arr_sum1, arr_sum0)
+    arr_av2 = divide_protected(arr_sum2, arr_sum0)
+
+    arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+
+    #rms_ave = arr_rms.mean()
+    rms_ave = mean_constrained(arr_rms, rms_lo, rms_hi)
+
+    logger.debug(info_ndarr(arr_av1, '1st loop proc time = %.3f sec arr_av1' % (time()-t0_sec)))
+    gate_half = nsigma*rms_ave
+    logger.debug('set gate_half=%.3f for intensity gated average, which is %.3f * sigma' % (gate_half,nsigma))
+
+    # 2nd loop over recs in block to evaluate gated parameters
+
+    sta_int_lo = np.zeros(shape, dtype=np.int64)
+    sta_int_hi = np.zeros(shape, dtype=np.int64)
+
+    arr_max = np.zeros(shape, dtype=block.dtype)
+    arr_min = np.ones (shape, dtype=block.dtype) * 0x3ffff
+
+    gate_hi = np.minimum(arr_av1 + gate_half, gate_hi).astype(dtype=raw.dtype)
+    gate_lo = np.maximum(arr_av1 - gate_half, gate_lo).astype(dtype=raw.dtype)
+
+    arr_sum0 = np.zeros(shape, dtype=np.int64)
+    arr_sum1 = np.zeros(shape, dtype=np.double)
+    arr_sum2 = np.zeros(shape, dtype=np.double)
+
+    for nrec in range(nrecs) :
+        raw    = block[nrec,:]
+        rawdbl = blockdbl[nrec,:]
+
+        cond_lo = raw<gate_lo
+        cond_hi = raw>gate_hi
+        condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
+
+        arr_sum0 += np.select(condlist, (arr1,), 0)
+        arr_sum1 += np.select(condlist, (rawdbl,), 0)
+        arr_sum2 += np.select(condlist, (np.square(rawdbl),), 0)
+
+        sta_int_lo += np.select((raw<int_lo,), (arr1,), 0)
+        sta_int_hi += np.select((raw>int_hi,), (arr1,), 0)
+
+        arr_max = np.maximum(arr_max, raw)
+        arr_min = np.minimum(arr_min, raw)
+
+    arr_av1 = divide_protected(arr_sum1, arr_sum0)
+    arr_av2 = divide_protected(arr_sum2, arr_sum0)
+
+    frac_int_lo = np.array(sta_int_lo/nrecs, dtype=np.float32)
+    frac_int_hi = np.array(sta_int_hi/nrecs, dtype=np.float32)
+
+    arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
+    #rms_ave = arr_rms.mean()
+    rms_ave = mean_constrained(arr_rms, rms_lo, rms_hi)
+ 
+    rms_min, rms_max = evaluate_limits(arr_rms, rmsnlo, rmsnhi, rms_lo, rms_hi, cmt='RMS')
+    ave_min, ave_max = evaluate_limits(arr_av1, intnlo, intnhi, int_lo, int_hi, cmt='AVE')
+
+    arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (arr1,), 0)
+    arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (arr1,), 0)
+    arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (arr1,), 0)
+    arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (arr1,), 0)
+    arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (arr1,), 0)
+    arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (arr1,), 0)
+
+    logger.info ('Bad pixel status:'\
+                +'\n  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)\
+                +'\n  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
+                +'\n  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
+                +'\n  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)\
+                +'\n  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)\
+                +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
+                )
+
+    #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
+    arr_sta = np.zeros(shape, dtype=np.int64)
+    arr_sta += arr_sta_rms_hi    # hot rms
+    arr_sta += arr_sta_rms_lo*8  # cold rms
+    arr_sta += arr_sta_int_hi*2  # satturated
+    arr_sta += arr_sta_int_lo*4  # cold
+    arr_sta += arr_sta_ave_hi*16 # too large average
+    arr_sta += arr_sta_ave_lo*32 # too small average
+    
+    #arr_msk  = np.select((arr_sta>0,), (arr0,), 1)
+
+    logger.debug(info_ndarr(arr_av1, 'proc time = %.3f sec arr_av1' % (time()-t0_sec)))
+    logger.debug(info_ndarr(arr_rms, 'pixel_rms'))
+    logger.debug(info_ndarr(arr_sta, 'pixel_status'))
+
+    #return block.mean(0)
+    return arr_av1, arr_rms, arr_sta
+
+#--------------------
+#--------------------
+#--------------------
+#--------------------
+#--------------------
 
 def tstamps_run_and_now(env) :
     """Returns tstamp_run, tstamp_now
@@ -391,7 +569,9 @@ def dir_names(dirrepo, panel_id) :
     dir_plots  = '%s/plots'     % dir_panel
     dir_work   = '%s/work'      % dir_panel
     dir_gain   = '%s/gain'      % dir_panel
-    return dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain
+    dir_rms    = '%s/rms'       % dir_panel
+    dir_status = '%s/status'    % dir_panel
+    return dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status
 
 #--------------------
 
@@ -416,12 +596,14 @@ def file_name_npz(dir_work, fname_prefix, expnum, nspace) :
 
 #--------------------
 
-def path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain) :
+def path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status) :
     prefix_offset= '%s/%s' % (dir_offset, fname_prefix)
-    prefix_peds  = '%s/%s' % (dir_peds,  fname_prefix)
-    prefix_plots = '%s/%s' % (dir_plots, fname_prefix)
-    prefix_gain  = '%s/%s' % (dir_gain,  fname_prefix)
-    return prefix_offset, prefix_peds, prefix_plots, prefix_gain
+    prefix_peds  = '%s/%s' % (dir_peds,   fname_prefix)
+    prefix_plots = '%s/%s' % (dir_plots,  fname_prefix)
+    prefix_gain  = '%s/%s' % (dir_gain,   fname_prefix)
+    prefix_rms   = '%s/%s' % (dir_rms,    fname_prefix)
+    prefix_status= '%s/%s' % (dir_status, fname_prefix)
+    return prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status
 
 #--------------------
 
@@ -442,6 +624,20 @@ def selected_record(nrec) :
 
 #--------------------
 
+def save_ndarray_in_textfile(nda, fname, fmode, fmt) :
+    save_txt(fname, nda, fmt=fmt)
+    set_file_access_mode(fname, fmode)
+    logger.debug('saved: %s' % fname)
+
+#--------------------
+
+def save_2darray_in_textfile(nda, fname, fmode, fmt) :
+    np.savetxt(fname, nda, fmt=fmt)
+    set_file_access_mode(fname, fmode)
+    logger.info('saved:  %s' % fname)
+        
+#--------------------
+
 def offset_calibration(*args, **opts) :
 
     exp        = opts.get('exp', None)     
@@ -453,8 +649,11 @@ def offset_calibration(*args, **opts) :
     dirxtc     = opts.get('dirxtc', None) 
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     display    = opts.get('display', True)
-    fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_offset = opts.get('fmt_offset', '%.6f')
+    fmt_peds   = opts.get('fmt_peds',   '%.3f')
+    fmt_rms    = opts.get('fmt_rms',    '%.3f')
+    fmt_status = opts.get('fmt_status', '%4i')
+    fmt_gain   = opts.get('fmt_gain',   '%.6f')
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
@@ -478,9 +677,10 @@ def offset_calibration(*args, **opts) :
 
     panel_id = get_panel_id(panel_ids, idx)
 
-    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
     fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
-    prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+    prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
+            path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
     create_directory(dir_panel,  mode=dirmode)
@@ -489,6 +689,8 @@ def offset_calibration(*args, **opts) :
     create_directory(dir_plots,  mode=dirmode)
     create_directory(dir_work,   mode=dirmode)
     create_directory(dir_gain,   mode=dirmode)
+    create_directory(dir_rms,    mode=dirmode)
+    create_directory(dir_status, mode=dirmode)
 
     #--------------------
     #sys.exit('TEST EXIT')
@@ -503,7 +705,7 @@ def offset_calibration(*args, **opts) :
         fits_hl=npz['fits_hl']
 
     except IOError:
-        darks=np.zeros((ny,nx,7))
+        darks=np.zeros((7,ny,nx))
         fits_ml=np.zeros((ny,nx,2,2))
         fits_hl=np.zeros((ny,nx,2,2))
         nsp_ml=np.zeros((ny,nx),dtype=np.int16)
@@ -543,8 +745,15 @@ def offset_calibration(*args, **opts) :
                         if nrec%200==0:
                             msg += '.%s' % find_gain_mode(det, raw) 
                 nrec -= 1
-                darks[:,:,nstep]=block[:nrec,:].mean(0)
+                #darks[:,:,nstep]=block[:nrec,:].mean(0)
+                darks[nstep,:,:], nda_rms, nda_status = proc_dark_block(block[:nrec,:,:], **opts)
                 logger.debug(msg)
+
+                fname = '%s_rms_%s.dat' % (prefix_rms, GAIN_MODES[nstep])
+                save_2darray_in_textfile(nda_rms, fname, filemode, fmt_rms)
+
+                fname = '%s_status_%s.dat' % (prefix_status, GAIN_MODES[nstep])
+                save_2darray_in_textfile(nda_status, fname, filemode, fmt_status)
 
             ####################
             elif not dooffs: 
@@ -586,9 +795,9 @@ def offset_calibration(*args, **opts) :
                 block=block[:,jy:ny:nspace,jx:nx:nspace]        # select only pulsed pixels
                 #block=block[:nrec,jy:ny:nspace,jx:nx:nspace]   # select only pulsed pixels
                 evnum=evnum[:nrec]
-                fits0,nsp0,msgf=fit(block,evnum,0,display=display)    # fit offset, gain
-                fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0        # collect results
-                nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0
+                fits0,nsp0,msgf=fit(block,evnum,0,display=display) # fit offset, gain
+                fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0           # collect results
+                nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0             # collect switching points
                 #print 'NEVT='+str(nevt)
                 #darks[:,:,6]=darks[:,:,4]-fits_ml[:,:,1,1]      # !!!! THIS IS WRONG - moved outside loop over steps 
                 logger.debug(msg + msgf)
@@ -642,8 +851,8 @@ def offset_calibration(*args, **opts) :
         logger.debug(info_ndarr(fits_hl, 'XXXX: fits_hl')) # shape:(352, 384, 2, 2)
         logger.debug(info_ndarr(darks, 'XXXX: darks'))     # shape:(352, 384, 7)
 
-        darks[:,:,6]=darks[:,:,4]-fits_ml[:,:,1,1]      # FIXED: subtract once for all pixels
-        darks[:,:,5]=darks[:,:,3]-fits_hl[:,:,1,1]      # FIXED: subtract once for all pixels
+        darks[6,:,:]=darks[4,:,:]-fits_ml[:,:,1,1]      # FIXED: subtract once for all pixels
+        darks[5,:,:]=darks[3,:,:]-fits_hl[:,:,1,1]      # FIXED: subtract once for all pixels
 
         #Save diagnostics data, can be commented out:
         #save fitting results
@@ -655,67 +864,67 @@ def offset_calibration(*args, **opts) :
     #sys.exit('TEST EXIT')
     #--------------------
 
-    #Calculate and save offsets:
+    #Save gains:
+    gain_ml_m = fits_ml[:,:,0,0]
+    gain_ml_l = fits_ml[:,:,1,0]
+    gain_hl_h = fits_hl[:,:,0,0]
+    gain_hl_l = fits_hl[:,:,1,0]
+    fname_gain_AML_M = '%s_gainci_AML-M.dat' % prefix_gain
+    fname_gain_AML_L = '%s_gainci_AML-L.dat' % prefix_gain
+    fname_gain_AHL_H = '%s_gainci_AHL-H.dat' % prefix_gain
+    fname_gain_AHL_L = '%s_gainci_AHL-L.dat' % prefix_gain
+    save_2darray_in_textfile(gain_ml_m, fname_gain_AML_M, filemode, fmt_gain)
+    save_2darray_in_textfile(gain_ml_l, fname_gain_AML_L, filemode, fmt_gain)
+    save_2darray_in_textfile(gain_hl_h, fname_gain_AHL_H, filemode, fmt_gain)
+    save_2darray_in_textfile(gain_hl_l, fname_gain_AHL_L, filemode, fmt_gain)
+
+    #Save offsets:
     offset_ahl=fits_hl[:,:,1,1]
     offset_aml=fits_ml[:,:,1,1]
     fname_offset_AHL = '%s_offset_AHL.dat' % prefix_offset
     fname_offset_AML = '%s_offset_AML.dat' % prefix_offset
-    np.savetxt(fname_offset_AHL, offset_ahl, fmt=fmt_offset)
-    np.savetxt(fname_offset_AML, offset_aml, fmt=fmt_offset)
-    set_file_access_mode(fname_offset_AHL, filemode)
-    set_file_access_mode(fname_offset_AML, filemode)
-    logger.info('Saved:  %s' % fname_offset_AHL)
-    logger.info('Saved:  %s' % fname_offset_AML)
+    save_2darray_in_textfile(offset_ahl, fname_offset_AHL, filemode, fmt_offset)
+    save_2darray_in_textfile(offset_aml, fname_offset_AML, filemode, fmt_offset)
 
-    #Save darks in separate files:
+    #Save darks accounting offset whenever appropriate:
     for i in range(5):  #looping through darks measured in Jack's order
-        fnameped = '%s_pedestals_%s.dat' % (prefix_peds, GAIN_MODES[i])
-        np.savetxt(fnameped, darks[:,:,i], fmt=fmt_peds)
-        set_file_access_mode(fnameped, filemode)
+        fname = '%s_pedestals_%s.dat' % (prefix_peds, GAIN_MODES[i])
+        save_2darray_in_textfile(darks[i,:,:], fname, filemode, fmt_peds)
 
-        logger.info('Saved:  %s' % fnameped)
         if i==3:    #if AHL_H, we can calculate AHL_L
-            fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
-            np.savetxt(fnameped, darks[:,:,i]-offset_ahl, fmt=fmt_peds)
-            logger.info('Saved:  %s' % fnameped)
+            fname = '%s_pedestals_AHL-L.dat' % prefix_peds
+            save_2darray_in_textfile(darks[i,:,:]-offset_ahl, fname, filemode, fmt_peds)
+
         elif i==4:  #if AML_M, we can calculate AML_L
-            fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
-            np.savetxt(fnameped, darks[:,:,i]-offset_aml, fmt=fmt_peds)
-            logger.info('Saved:  %s' % fnameped)
-        set_file_access_mode(fnameped, filemode)
+            fname = '%s_pedestals_AML-L.dat' % prefix_peds
+            save_2darray_in_textfile(darks[i,:,:]-offset_aml, fname, filemode, fmt_peds)
         
     if display:
         plt.close("all")
         fnameout='%s_plot_AML.pdf' % prefix_plots
         gm='AML'; titles=['M Gain','M Pedestal', 'L Gain', 'M-L Offset']
-        plt.figure(1,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
+        plot_fit_results(0, fits_ml, fnameout, filemode, gm, titles)
+
+        fnameout='%s_plot_AHL.pdf' % prefix_plots
+        gm='AHL'; titles=['H Gain','H Pedestal', 'L Gain', 'H-L Offset']
+        plot_fit_results(1, fits_hl, fnameout, filemode, gm, titles)
+
+        plt.pause(5)
+
+#--------------------
+
+def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles): 
+        plt.figure(ifig,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
         plt.suptitle(gm)
         for i in range(4):
             plt.subplot(2,2,i+1)
-            test=fits_ml[:,:,i//2,i%2]; testm=np.median(test); tests=3*np.std(test)
+            test=fitres[:,:,i//2,i%2]; testm=np.median(test); tests=3*np.std(test)
             plt.imshow(test,interpolation='nearest',cmap='Spectral',vmin=testm-tests,vmax=testm+tests)
             plt.colorbar()
             plt.title(gm+': '+titles[i])
         plt.pause(0.1)
         plt.savefig(fnameout)
         set_file_access_mode(fnameout, filemode)
-
-        logger.info('Saved:  %s' % fnameout)
-
-        fnameout='%s_plot_AHL.pdf' % prefix_plots
-        gm='AHL'; titles=['H Gain','H Pedestal', 'L Gain', 'H-L Offset']
-        plt.figure(2,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
-        for i in range(4):
-            plt.subplot(2,2,i+1)
-            test=fits_hl[:,:,i//2,i%2]; testm=np.median(test); tests=3*np.std(test)
-            plt.imshow(test,interpolation='nearest',cmap='Spectral',vmin=testm-tests,vmax=testm+tests)
-            plt.colorbar()
-            plt.title(gm +': '+titles[i])
-        plt.pause(0.1)
-        plt.savefig(fnameout)
-        set_file_access_mode(fnameout, filemode)
-        logger.info('Saved:  %s' % fnameout)
-        plt.pause(5)
 
 #--------------------
 
@@ -728,6 +937,8 @@ def pedestals_calibration(*args, **opts) :
     dirxtc     = opts.get('dirxtc', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
+    fmt_rms    = opts.get('fmt_rms',  '%.3f')
+    fmt_status = opts.get('fmt_status', '%4i')
     mode       = opts.get('mode', None)    
     #idx        = opts.get('idx', 0)    
     #nspace     = opts.get('nspace', 7)    
@@ -764,9 +975,11 @@ def pedestals_calibration(*args, **opts) :
             logger.warning(msg)
             sys.exit(msg)
         
-        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
         fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
-        prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+        #prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+        prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
+            path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
         
         #logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after charge-injection offset_calibration' % dir_panel)
         #assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
@@ -776,6 +989,8 @@ def pedestals_calibration(*args, **opts) :
         create_directory(dir_peds,   mode=dirmode)
         create_directory(dir_offset, mode=dirmode)
         create_directory(dir_gain,   mode=dirmode)
+        create_directory(dir_rms,    mode=dirmode)
+        create_directory(dir_status, mode=dirmode)
 
         mode=mode.upper()
         
@@ -788,11 +1003,11 @@ def pedestals_calibration(*args, **opts) :
         
         ds = DataSource(dsname)
         det = Detector(detname)
-        
+
+        block=np.zeros((nbs,ny,nx),dtype=np.int16)
         nrec,nevt = 0,0
         msg='READING RAW FRAMES (200 per ".") assuming %s mode '%(mode)
         for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
-            block=np.zeros((nbs,ny,nx),dtype=np.int16)
             nrec = 0
             for nevt,evt in enumerate(step.events()):
                 raw = det.raw(evt)
@@ -817,12 +1032,17 @@ def pedestals_calibration(*args, **opts) :
             nrec -= 1
         logger.debug(msg+'\n       statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
-        dark=block[:nrec,:].mean(0)  #Calculate mean 
+        #dark=block[:nrec,:].mean(0)  #Calculate mean 
+        dark, rms, status = proc_dark_block(block[:nrec,:], **opts)
         
-        fnameped = '%s_pedestals_%s.dat' % (prefix_peds, mode)
-        np.savetxt(fnameped, dark, fmt=fmt_peds)
-        set_file_access_mode(fnameped, filemode)
-        logger.info('Saved:  %s' % fnameped)
+        fname = '%s_pedestals_%s.dat' % (prefix_peds, mode)
+        save_2darray_in_textfile(dark, fname, filemode, fmt_peds)
+
+        fname = '%s_rms_%s.dat' % (prefix_rms, mode)
+        save_2darray_in_textfile(rms, fname, filemode, fmt_rms)
+
+        fname = '%s_status_%s.dat' % (prefix_status, mode)
+        save_2darray_in_textfile(status, fname, filemode, fmt_status)
         
         #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
         if mode=='AML-M':
@@ -836,10 +1056,8 @@ def pedestals_calibration(*args, **opts) :
                 logger.warning('DO NOT save AML-L pedestals w/o offsets') 
 
             if offset is not None :
-                fnameped = '%s_pedestals_AML-L.dat' % prefix_peds
-                np.savetxt(fnameped, dark if offset is None else (dark-offset), fmt=fmt_peds)
-                set_file_access_mode(fnameped, filemode)
-                logger.info('Saved:  %s' % fnameped) 
+                fname = '%s_pedestals_AML-L.dat' % prefix_peds
+                save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
         
         elif mode=='AHL-H':
             fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
@@ -852,10 +1070,8 @@ def pedestals_calibration(*args, **opts) :
                 logger.warning('DO NOT save AHL-L pedestals w/o offsets') 
 
             if offset is not None :
-                fnameped = '%s_pedestals_AHL-L.dat' % prefix_peds
-                np.savetxt(fnameped, dark if offset is None else (dark-offset), fmt=fmt_peds)
-                set_file_access_mode(fnameped, filemode)
-                logger.info('Saved:  %s' % fnameped)
+                fname = '%s_pedestals_AHL-L.dat' % prefix_peds
+                save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
         
 #--------------------
 
@@ -864,20 +1080,16 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
     logger.debug('In merge_panel_gain_ranges for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dirrepo, panel_id, ctype, str(tstamp), str(shape)))
 
-    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
 
+    nda_def = np.ones(shape, dtype=np.float64) if ctype in ('gain', 'rms') else np.zeros(shape)
     dir_ctype = None
-    nda_def = None
-
-    if ctype == 'pedestals' :
-        dir_ctype = dir_peds
-        nda_def = np.zeros(shape)
-    elif ctype == 'gain' :
-        dir_ctype = dir_gain
-        nda_def = np.ones(shape)
+    if   ctype == 'pedestals' : dir_ctype = dir_peds
+    elif ctype == 'gain'      : dir_ctype = dir_gain
+    elif ctype == 'rms'       : dir_ctype = dir_rms
+    elif ctype == 'status'    : dir_ctype = dir_status
     else :
         dir_ctype = dir_peds
-        nda_def = np.zeros(shape)
         logger.warning('NON-DEFINED DEFAULT CONSTANTS AND DIRECTORY FOR ctype:%s' % ctype)
     
     logger.debug(info_ndarr(nda_def, 'dir_ctype: %s nda_def' % dir_ctype))
@@ -902,10 +1114,7 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
     #logger.warning('SINGLE PANEL %s ARRAY RE-SHAPED TO %s' % (ctype, str(nda.shape)))
 
     logger.debug(info_ndarr(nda, 'merged %s'%ctype))
-
-    save_txt(ofname, nda, fmt=fmt)
-    set_file_access_mode(ofname, fac_mode)
-    logger.debug('saved file: %s' % ofname)
+    save_ndarray_in_textfile(nda, ofname, fac_mode, fmt)
 
     nda.shape = (7, 1, 352, 384)
     return nda
@@ -944,9 +1153,14 @@ def deploy_constants(*args, **opts) :
     deploy     = opts.get('deploy', False)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_gain   = opts.get('fmt_gain', '%.6f')
+    fmt_rms    = opts.get('fmt_rms',  '%.3f')
+    fmt_status = opts.get('fmt_status', '%4i')
     logmode    = opts.get('logmode', 'DEBUG')
-    dirmode    = opts.get('dirmode', 0777)
+    dirmode    = opts.get('dirmode',  0777)
     filemode   = opts.get('filemode', 0666)
+    high       = opts.get('high',   1.)
+    medium     = opts.get('medium', 0.33333) 
+    low        = opts.get('low',    0.01)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
@@ -956,16 +1170,22 @@ def deploy_constants(*args, **opts) :
     save_log_record_on_start(dirrepo, _name, dirmode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
-    tstamp_run  = cpdic.get('tstamp', None)
-    expnum      = cpdic.get('expnum', None)
-    shape       = cpdic.get('shape', None)
-    calibdir    = cpdic.get('calibdir', None)
-    strsrc      = cpdic.get('strsrc', None)
+    tstamp_run  = cpdic.get('tstamp',    None)
+    expnum      = cpdic.get('expnum',    None)
+    shape       = cpdic.get('shape',     None)
+    calibdir    = cpdic.get('calibdir',  None)
+    strsrc      = cpdic.get('strsrc',    None)
     panel_ids   = cpdic.get('panel_ids', None)
-    dettype     = cpdic.get('dettype', None)
+    dettype     = cpdic.get('dettype',   None)
 
-    CTYPE_FMT = {'pedestals' : fmt_peds,
-                 'pixel_gain': fmt_gain}
+    global GAIN_FACTOR_DEF
+    #GAIN_MODES     = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
+    GAIN_FACTOR_DEF = [high,medium,low,  high, medium,    low,    low]
+
+    CTYPE_FMT = {'pedestals'    : fmt_peds,
+                 'pixel_gain'   : fmt_gain,
+                 'pixel_rms'    : fmt_rms,
+                 'pixel_status' : fmt_status}
 
     logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
 
@@ -980,12 +1200,16 @@ def deploy_constants(*args, **opts) :
     for ind, panel_id in enumerate(panel_ids) :
         logger.info('merge constants for panel:%02d id: %s' % (ind, panel_id))
 
-        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain = dir_names(dirrepo, panel_id)
+        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
         fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
-        prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+        #prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+        prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
+            path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
         
-        mpars = (('pedestals', 'pedestals', prefix_peds),\
-                 ('gain',     'pixel_gain', prefix_gain))
+        mpars = (('pedestals', 'pedestals',    prefix_peds),\
+                 ('gain',      'pixel_gain',   prefix_gain),\
+                 ('rms',       'pixel_rms',    prefix_rms),\
+                 ('status',    'pixel_status', prefix_status))
         
         for (ctype, octype, prefix) in mpars :
             fmt = CTYPE_FMT.get(octype,'%.5f')
@@ -1006,9 +1230,7 @@ def deploy_constants(*args, **opts) :
         logger.info(info_ndarr(mrg_nda, 'merged constants for %s' % octype))
         fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
         fmt = CTYPE_FMT.get(octype,'%.5f')
-        save_txt(fmerge, mrg_nda, fmt=fmt)
-        set_file_access_mode(fmerge, filemode)
-        logger.debug('saved tmp file: %s' % fmerge)
+        save_ndarray_in_textfile(mrg_nda, fmerge, filemode, fmt)
 
         if dircalib is not None : calibdir = dircalib
         #ctypedir = .../calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'

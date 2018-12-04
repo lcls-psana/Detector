@@ -3,7 +3,8 @@ from pyimgalgos.GlobalUtils import print_ndarr
 
 #ds = psana.DataSource('exp=mfxlt3017:run=3')  #Chuck's
 #ds = psana.DataSource('exp=mfxls4916:run=22') #Asmit
-ds = psana.DataSource('exp=mfxx33117:run=1')   #Dan
+#ds = psana.DataSource('exp=mfxx33117:run=1')  #Dan
+ds = psana.DataSource('exp=mfxlu3417:run=526') #Alex Batyuk
 det = psana.Detector('Rayonix')
 #det = psana.Detector('MfxEndstation.0:Rayonix.0')
 
