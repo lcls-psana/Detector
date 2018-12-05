@@ -19,7 +19,7 @@ import numpy as np
 from PSCalib.DCUtils import env_time, dataset_time, str_tstamp
 from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES,\
                                alias_for_id, create_directory, set_file_access_mode
-from Detector.UtilsEpix10ka import config_objects, get_epix10ka_any_config_object,\
+from Detector.UtilsEpix10ka import store, config_objects, get_epix10ka_any_config_object,\
                             gain_maps_epix10ka_any # cbits_total_epix10ka_any
 
 from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix10ka, print_object_dir
@@ -81,37 +81,39 @@ def fit(block, evnum, itrim, display=True):
     fits=np.zeros((my,mx,2,2))
     nsp=np.zeros((my,mx),dtype=np.int16)
     nsaw = 2
-    x=np.arange(nsaw*1024)%1024
-    #x=evnum%1024
-    xx=np.linspace(1024,0,100)
-    
-    if display:
-        handle=init_plot(x,xx,itrim)
+    xx=np.linspace(0, 1024, 100)
     msg = ' fit '
+
     for iy in range(my):
         for ix in range(mx):
             trace=block[:,iy,ix]
             ixoff=np.argmin(np.diff(trace[:1025],axis=0),axis=0)+1 #find pulser value 0
-            trace=trace[ixoff:ixoff+nsaw*1024]
+            ixoff2=np.argmin(np.abs(evnum-(evnum[ixoff]+nsaw*1024)))
+            #trace=trace[ixoff:ixoff+nsaw*1024]
+            x=evnum[ixoff:ixoff2]
+            x=(x-x[0])%1024
+
+            trace=trace[ixoff:ixoff2]
             tracem = trace & M14
             #x = x[ixoff:ixoff+nsaw*1024] # NEW
             try:
-                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%1024))  #estimate median position of switching point
+                isp=int(np.median(np.where(np.abs(np.diff(trace))>1000)[0]%1024))  #estimate median position of switching point
                 nsp[iy,ix]=isp
-            except ValueError:
+            except ValueError as e:
+                #pixel without pulses?
+                isp=1024
+                #rint 'XXXXXX', e, iy, ix, ixoff, ixoff2, trace, np.median(np.where(np.abs(np.diff(trace))>1000)[0]%1024)
                 testval=np.median(tracem) # %16384
                 ixoff=1024 if testval<0.5 else 0
             
             #logger.debug('XXXX iy:%03d iy:%03d ixoff:%d isp:%d'%(iy,ix,ixoff,isp))
 
             idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
+
             #idx0: [ True  True  True ..., False False False]
             #idx1: [False False False ...,  True  True  True]
-
             #print_ndarr(idx0,  'XXXX idx0')
             #print_ndarr(idx1,  'XXXX idx1')
-            #print_ndarr(x,     'XXXX x')
-            #print_ndarr(tracem,'XXXX tracem')
 
             if idx0.sum()>10:
                 pf0=np.polyfit(x[idx0],tracem[idx0],1) # %16384    #fit high/medium gain trace
@@ -127,68 +129,15 @@ def fit(block, evnum, itrim, display=True):
             fits[iy,ix,0]=pf0
             fits[iy,ix,1]=pf1
             
-            i=iy*mx+ix
-            if i%256==255:  #display a subset of plots
-                #print '\b.',
-                msg+='.'
-                if display:
-                    update_plot(handle,trace,xx,pf0,pf1)
+            if display :
+                if not (iy*mx+ix)%256 :  #display a subset of plots
+                    #print '\b.',
+                    #msg+='.'
+                    if store.handle is None : store.handle=init_plot(x,xx,itrim)
+                    update_plot(store.handle,trace,xx,pf0,pf1)
     return fits,nsp,msg
 
 #--------------------
-#--------------------
-#--------------------
-#--------------------
-#--------------------
-#--------------------
-
-def fit_orig(block, itrim, ny=352, nx=384, display=True):
-
-    mf,my,mx=block.shape
-    fits=np.zeros((my,mx,2,2))
-    nsp=np.zeros((my,mx),dtype=np.int16)
-    
-    x=np.arange(3*1024)%1024
-    xx=np.linspace(1024,0,100)
-    
-    if display:
-        handle=init_plot(x,xx,itrim)
-    msg = ' fit '
-    for iy in range(my):
-        for ix in range(mx):
-            trace=block[:,iy,ix]
-            ixoff=np.argmin(np.diff(trace[:1025],axis=0),axis=0)+1 #find pulser value 0
-            trace=trace[ixoff:ixoff+3*1024]                        #select the first 3 complete pulser cycles (0 to 1023)
-            try:
-                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%1024))  #estimate median position of switching point
-                nsp[iy,ix]=isp
-            except ValueError:
-                testval=np.median(trace%16384)
-                ixoff=1024 if testval<0.5 else 0
-            
-            idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
-            if idx0.sum()>10:
-                pf0=np.polyfit(x[idx0],trace[idx0]%16384,1)        #fit high/medium gain trace
-            else:
-                pf0=np.array([0,0])                                #or set to 0 if not enough data points
-            if idx1.sum()>10:
-                #pf1=np.polyfit(x[idx1],trace[idx1]%16384,1)       #this doesn't work!
-                gl=pf0[0]/(100.0 if itrim else 33.33)               #Medium to Low
-                ol=np.mean(trace[idx1]%16384-gl*x[idx1])           #calculate offset
-                pf1=np.array([gl,ol])
-            else:
-                pf1=np.array([0,0])                                #ore st to zero if not enough data points
-            fits[iy,ix,0]=pf0
-            fits[iy,ix,1]=pf1
-            
-            i=iy*mx+ix
-            if i%256==255:  #display a subset of plots
-                #print '\b.',
-                msg+='.'
-                if display:
-                    update_plot(handle,trace,xx,pf0,pf1)
-    return fits,nsp,msg
-
 #--------------------
 #--------------------
 #--------------------
@@ -675,6 +624,8 @@ def offset_calibration(*args, **opts) :
     shape       = cpdic.get('shape', None)
     ny,nx = shape
 
+    if display : store.handle = None # is used in fit
+
     panel_id = get_panel_id(panel_ids, idx)
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
@@ -763,7 +714,7 @@ def offset_calibration(*args, **opts) :
             ####################
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto Medium-to-Low    
-            elif nstep<5+nspace**2:
+            elif nstep>4 and nstep<5+nspace**2:
                 #data
                 msg = ' AML %2d/%2d '%(nstep-5+1,nspace**2)
                 nrec = 0
@@ -803,7 +754,7 @@ def offset_calibration(*args, **opts) :
                 logger.debug(msg + msgf)
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto High-to-Low    
-            elif nstep<5+2*nspace**2:
+            elif nstep>4+nspace**2 and nstep<5+2*nspace**2:
                 msg = ' AHL %2d/%2d '%(nstep-5-nspace**2+1,nspace**2)
                 nrec = 0
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)

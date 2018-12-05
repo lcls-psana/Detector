@@ -7,6 +7,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Committed w/o tag
+2018-12-04 Mikhail S. Dubrovin
+- Gabriel fixes fit
+#	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-62
 2018-12-04 Mikhail S. Dubrovin
 - apply gated algorithm to pedestals, add rms and status, save charge injected gains per panel
