@@ -73,9 +73,76 @@ def update_plot(handle,trace,xx,pf0,pf1):
 #--------------------
 #--------------------
 #--------------------
-#--------------------
 
 def fit(block, evnum, itrim, display=True):
+
+    mf,my,mx=block.shape
+    fits=np.zeros((my,mx,2,2))
+    nsp=np.zeros((my,mx),dtype=np.int16)
+    nsaw = 2
+    x=np.arange(nsaw*1024)%1024
+    #x=evnum%1024
+    xx=np.linspace(1024,0,100)
+    
+    if display:
+        handle=init_plot(x,xx,itrim)
+    msg = ' fit '
+    for iy in range(my):
+        for ix in range(mx):
+            trace=block[:,iy,ix]
+            ixoff=np.argmin(np.diff(trace[:1025],axis=0),axis=0)+1 #find pulser value 0
+            trace=trace[ixoff:ixoff+nsaw*1024]
+            tracem = trace & M14
+            #x = x[ixoff:ixoff+nsaw*1024] # NEW
+            try:
+                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%1024))  #estimate median position of switching point
+                nsp[iy,ix]=isp
+            except ValueError:
+                testval=np.median(tracem) # %16384
+                ixoff=1024 if testval<0.5 else 0
+            
+            #logger.debug('XXXX iy:%03d iy:%03d ixoff:%d isp:%d'%(iy,ix,ixoff,isp))
+
+            idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
+            #idx0: [ True  True  True ..., False False False]
+            #idx1: [False False False ...,  True  True  True]
+            #print_ndarr(idx0,  'XXXX idx0')
+            #print_ndarr(idx1,  'XXXX idx1')
+            #print_ndarr(x,     'XXXX x')
+            #print_ndarr(tracem,'XXXX tracem')
+
+            if idx0.sum()>10:
+                pf0=np.polyfit(x[idx0],tracem[idx0],1) # %16384    #fit high/medium gain trace
+            else:
+                pf0=np.array([0,0])                                #or set to 0 if not enough data points
+            if idx1.sum()>10:
+                #pf1=np.polyfit(x[idx1],trace[idx1]%16384,1)       #this doesn't work!
+                gl=pf0[0]/(100.0 if itrim else 33.33)              #Medium to Low
+                ol=np.mean(tracem[idx1]-gl*x[idx1]) # %16384       #calculate offset
+                pf1=np.array([gl,ol])
+            else:
+                pf1=np.array([0,0])                                #ore st to zero if not enough data points
+            fits[iy,ix,0]=pf0
+            fits[iy,ix,1]=pf1
+            
+            i=iy*mx+ix
+            if i%256==255:  #display a subset of plots
+                #print '\b.',
+                msg+='.'
+                if display:
+                    update_plot(handle,trace,xx,pf0,pf1)
+    return fits,nsp,msg
+
+#--------------------
+#--------------------
+#--------------------
+
+def fit_with_bug(block, evnum, itrim, display=True):
+    """On 2018-12-04 Gabriel modified this fit in attempt to skip empty frames/events,
+       but it does not work for all charge injection points as explained in 
+       https://confluence.slac.stanford.edu/display/PSDM/EPIX10KA2M+Charge+injection+fit+issue
+       Currently use old version which is not entirely correct.
+    """
 
     mf,my,mx=block.shape
     fits=np.zeros((my,mx,2,2))
@@ -137,9 +204,6 @@ def fit(block, evnum, itrim, display=True):
                     update_plot(store.handle,trace,xx,pf0,pf1)
     return fits,nsp,msg
 
-#--------------------
-#--------------------
-#--------------------
 #--------------------
 #--------------------
 #--------------------
@@ -587,6 +651,11 @@ def save_2darray_in_textfile(nda, fname, fmode, fmt) :
         
 #--------------------
 
+def print_statistics(nevt, nrec) :
+    logger.debug('statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
+
+#--------------------
+
 def offset_calibration(*args, **opts) :
 
     exp        = opts.get('exp', None)     
@@ -696,6 +765,8 @@ def offset_calibration(*args, **opts) :
                         if nrec%200==0:
                             msg += '.%s' % find_gain_mode(det, raw) 
                 nrec -= 1
+                print_statistics(nevt, nrec)
+
                 #darks[:,:,nstep]=block[:nrec,:].mean(0)
                 darks[nstep,:,:], nda_rms, nda_status = proc_dark_block(block[:nrec,:,:], **opts)
                 logger.debug(msg)
@@ -739,6 +810,7 @@ def offset_calibration(*args, **opts) :
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
+                print_statistics(nevt, nrec)
 
                 istep=nstep-5
                 jy=istep//nspace
@@ -778,6 +850,7 @@ def offset_calibration(*args, **opts) :
                         if nevt%200==0:
                             msg+='.'
                 nrec -= 1
+                print_statistics(nevt, nrec)
 
                 istep=nstep-5-nspace**2
                 jy=istep//nspace
@@ -795,8 +868,6 @@ def offset_calibration(*args, **opts) :
 
             elif nstep>=5+2*nspace**2:
                 break
-
-            logger.debug('statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
 
         logger.debug(info_ndarr(fits_ml, 'XXXX: fits_ml')) # shape:(352, 384, 2, 2)
         logger.debug(info_ndarr(fits_hl, 'XXXX: fits_hl')) # shape:(352, 384, 2, 2)
@@ -885,18 +956,21 @@ def pedestals_calibration(*args, **opts) :
     detname    = opts.get('det', None)
     irun       = opts.get('run', None)
     nbs        = opts.get('nbs', 1024)
+    ccnum      = opts.get('ccnum', 0)
     dirxtc     = opts.get('dirxtc', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
-    mode       = opts.get('mode', None)    
+    #mode       = opts.get('mode', None)    
     #idx        = opts.get('idx', 0)    
     #nspace     = opts.get('nspace', 7)    
     dirmode    = opts.get('dirmode', 0777)
     filemode   = opts.get('filemode', 0666)
+    usesmd     = opts.get('usesmd', False)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    if usesmd : dsname += ':smd'
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
@@ -906,7 +980,7 @@ def pedestals_calibration(*args, **opts) :
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp      = cpdic.get('tstamp', None)
     panel_ids   = cpdic.get('panel_ids', None)
-    gain_mode   = cpdic.get('gain_mode', None)
+    #gain_mode   = cpdic.get('gain_mode', None)
     expnum      = cpdic.get('expnum', None)
     dettype     = cpdic.get('dettype', None)
     shape       = cpdic.get('shape', None)
@@ -916,15 +990,12 @@ def pedestals_calibration(*args, **opts) :
     logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
 
     for idx, panel_id in enumerate(panel_ids) :
-        if mode is None : mode = gain_mode
-        msg = '\n%s\npanel:%02d id:%s' % (100*'=', idx, panel_id)\
-            + '\n  dark run processing for gain mode %s' % mode
-        logger.info(msg)
-        
-        if mode is None : 
-            msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
-            logger.warning(msg)
-            sys.exit(msg)
+        logger.info('\n%s\npanel:%02d id:%s' % (100*'=', idx, panel_id))
+
+        #if mode is None : 
+        #    msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
+        #    logger.warning(msg)
+        #    sys.exit(msg)
         
         dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
         fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
@@ -943,12 +1014,6 @@ def pedestals_calibration(*args, **opts) :
         create_directory(dir_rms,    mode=dirmode)
         create_directory(dir_status, mode=dirmode)
 
-        mode=mode.upper()
-        
-        if not (mode in GAIN_MODES_IN) :
-            logger.warning('UNRECOGNIZED GAIN MODE: %s, DARKS NOT UPDATED.'%mode)
-            return
-        
         #read input xtc file and calculate pedestal
         #(currently misusing the first calib cycle of an existing file)
         
@@ -957,31 +1022,48 @@ def pedestals_calibration(*args, **opts) :
 
         block=np.zeros((nbs,ny,nx),dtype=np.int16)
         nrec,nevt = 0,0
-        msg='READING RAW FRAMES (200 per ".") assuming %s mode '%(mode)
+        #msg='READING RAW FRAMES (200 per ".")'
+
+        mode = None # gain_mode
+
         for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
+            if   nstep < ccnum : continue
+            elif nstep > ccnum : break
+            # process calibcycle ccnum ONLY !!!
+
+            mode = find_gain_mode(det, data=None).upper()
+        
+            if mode in GAIN_MODES_IN :
+                logger.info('========== calibcycle %d: dark run processing for gain mode %s ==========' % (nstep, mode))        
+            else :
+                logger.warning('UNRECOGNIZED GAIN MODE: %s, DARKS NOT UPDATED...'%mode)
+                sys.exit()
+                #return
+
             nrec = 0
             for nevt,evt in enumerate(step.events()):
                 raw = det.raw(evt)
                 do_print = selected_record(nrec)
                 if raw is None: #skip empty frames
                     if do_print : logger.debug('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
-                    msg+='None'
+                    #msg+='None'
                     continue
                 if nrec>=nbs:       # stop after collecting sufficient frames
+                    nrec += 1
                     break
                 else:
                     if raw.ndim > 2 : raw=raw[idx,:]
                     if do_print : logger.debug(info_ndarr(raw & M14, 'Ev:%04d rec:%04d panel:%02d raw & M14' % (nevt,nrec,idx)))
                     block[nrec]=raw & M14
-                    nrec+=1
-                    if nrec%200==0: # simple progress bar
-                        msg+='.'
+                    nrec += 1
+                    #if nrec%200==0: msg+='.'
                         
-            if nstep>=0:    #only process the first CalibCycle
-                break
-        
             nrec -= 1
-        logger.debug(msg+'\n       statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
+            #if nstep>=0:    #only process the first CalibCycle
+            #    break
+        
+            #logger.debug('       statistics nevt:%d nrec:%d lost frames:%d' % (nevt, nrec, nevt-nrec))
+            print_statistics(nevt, nrec)
 
         #dark=block[:nrec,:].mean(0)  #Calculate mean 
         dark, rms, status = proc_dark_block(block[:nrec,:], **opts)
@@ -1090,6 +1172,28 @@ def merge_panels(lst) :
 
 #--------------------
 
+def add_links_for_gainci_fixed_modes(dir_gain, fname_prefix, verbose=True) :
+    """FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L"""
+    logger.debug('in add_links_for_gainci_fixed_modes, prefix: %s' % (fname_prefix))
+    list_of_files = '\n    '.join([name for name in os.listdir(dir_gain)])
+    logger.debug('list_of_files in %s:\n    %s' %(dir_gain, list_of_files))
+
+    dic_links = {'FH' : 'AHL-H',
+                 'FM' : 'AML-M',
+                 'FL' : 'AML-L'} # 'AHL-L'
+
+    for k,v in dic_links.iteritems() :
+        fname_auto  = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, v)
+        fname_fixed = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, k)
+        #print 'file %s existx %s' % (fname_auto, os.path.exists(fname_auto))
+        if os.path.exists(fname_auto) and not os.path.lexists(fname_fixed) : 
+            
+            os.symlink(os.path.abspath(fname_auto), fname_fixed)
+
+    return
+
+#--------------------
+
 def deploy_constants(*args, **opts) :
 
     from PSCalib.NDArrIO import save_txt; global save_txt
@@ -1149,18 +1253,23 @@ def deploy_constants(*args, **opts) :
     # dict_consts for constants octype: 'pixel_gain', 'pedestals', etc.
     dic_consts = {} 
     for ind, panel_id in enumerate(panel_ids) :
-        logger.info('merge constants for panel:%02d id: %s' % (ind, panel_id))
+        logger.info('%s\nmerge constants for panel:%02d id: %s' % (110*'_', ind, panel_id))
 
         dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
         fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
         #prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
-        
-        mpars = (('pedestals', 'pedestals',    prefix_peds),\
-                 ('gain',      'pixel_gain',   prefix_gain),\
-                 ('rms',       'pixel_rms',    prefix_rms),\
-                 ('status',    'pixel_status', prefix_status))
+
+        if True :
+            mpars = (('pedestals', 'pedestals',    prefix_peds),\
+                     ('gain',      'pixel_gain',   prefix_gain),\
+                     ('rms',       'pixel_rms',    prefix_rms),\
+                     ('status',    'pixel_status', prefix_status))
+        else : # use charge ijection gains
+            add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
+            mpars = (('gain',      'pixel_gain',   prefix_gain),\
+                    )
         
         for (ctype, octype, prefix) in mpars :
             fmt = CTYPE_FMT.get(octype,'%.5f')
@@ -1169,6 +1278,10 @@ def deploy_constants(*args, **opts) :
             nda = merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt, filemode)
             if octype in dic_consts : dic_consts[octype].append(nda) # append for panel per ctype
             else :                    dic_consts[octype] = [nda,]
+
+    #--------------------
+    #sys.exit('TEST EXIT')
+    #--------------------
 
     logger.info('\n%s\nmerge panel constants and deploy them' % (80*'_'))
 

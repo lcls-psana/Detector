@@ -47,10 +47,11 @@ def usage(mode=0) :
            '\n%prog -e <experiment> [-d <detector>] [-r <run-number>]'\
            '\n     [-x <xtc-directory>] [-o <output-result-directory>] [-L <logging-mode>]'\
            '\nTEST COMMAND:'\
-           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -n 2 -x /reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined -o ./myrepo -m AHL-H'\
+           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -n 2 -x /reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined -o ./myrepo'\
            '\nREGULAR COMMAND:'\
-           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021      -L INFO'\
-           '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r394    -o ./work -L INFO'
+           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021  -L INFO'\
+           '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r394 -o ./work'\
+           '\n  %prog -e xcslt5117 -d XcsEndstation.0:Epix10ka2M.0 -r19 -c1 -o ./work'
 
 #------------------------------
 
@@ -61,30 +62,36 @@ def option_parser() :
     d_det     = None # 'NoDetector.0:Epix10ka.3'
     d_run     = None # 1021
     d_nbs     = 1024 # number of frames
+    d_ccnum   = 0
     d_dirxtc  = None # '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo' 
-    d_mode    = None
+    #d_mode    = None
     d_logmode = 'DEBUG'
+    d_usesmd  = True
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
     h_run     = 'run number, default = %s' % str(d_run)
     h_nbs     = 'number of frames to calibrate offsets, default = %s' % str(d_nbs)
+    h_ccnum   = 'calibcycle number [0,4], default = %s' % str(d_ccnum)
     h_dirxtc  = 'non-default xtc directory, default = %s' % d_dirxtc
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
-    h_mode    = 'gain mode from the list %s, default = %s' % (str(GAIN_MODES_IN), d_mode)
+    #h_mode    = 'gain mode from the list %s, default = %s' % (str(GAIN_MODES_IN), d_mode)
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    h_usesmd  = 'add "smd" in dataset string, default = %s' % d_usesmd
 
     parser = OptionParser(description=usage(1), usage = usage())
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
     parser.add_option('-d', '--det',     default=d_det,     action='store', type='string', help=h_det)
     parser.add_option('-r', '--run',     default=d_run,     action='store', type='int',    help=h_run)
     parser.add_option('-b', '--nbs',     default=d_nbs,     action='store', type='int',    help=h_nbs)
+    parser.add_option('-c', '--ccnum',   default=d_ccnum,   action='store', type='int',    help=h_ccnum)
     parser.add_option('-x', '--dirxtc',  default=d_dirxtc,  action='store', type='string', help=h_dirxtc)
     parser.add_option('-o', '--dirrepo', default=d_dirrepo, action='store', type='string', help=h_dirrepo)
-    parser.add_option('-m', '--mode',    default=d_mode,    action='store', type='string', help=h_mode)
+    #parser.add_option('-m', '--mode',    default=d_mode,    action='store', type='string', help=h_mode)
     parser.add_option('-L', '--logmode', default=d_logmode, action='store', type='string', help=h_logmode)
     #parser.add_option('-p', '--display', default=d_display, action='store_false',          help=h_display)
+    parser.add_option('-S', '--usesmd',  default=d_usesmd,  action='store_false',          help=h_usesmd)
 
     return parser
 
