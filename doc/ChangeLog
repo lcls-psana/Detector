@@ -7,6 +7,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-64
+2018-12-11 Mikhail S. Dubrovin
+- add epix10ka in mask_geo, status_as_mask and mask_geo, UtilsEpix10kaCalib.deploy_constants add deployment for gainci
+modified:   app/epix10ka_deploy_constants
+	    examples/ex_epix10ka_images.py
+	    src/AreaDetector.py
+	    src/PyDataAccess.py
+	    src/PyDetectorAccess.py
+	    src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-63
 2018-12-06 Mikhail S. Dubrovin
 - old version of the fit is restored, in epix10ka_pedestals_calibration add parameters ccnum for calybcycle selection

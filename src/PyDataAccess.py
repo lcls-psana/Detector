@@ -268,13 +268,13 @@ def get_epix_config_object(env, src) :
     o = cfg.get(_psana.Epix.Config100aV1, src)
     if o is not None : return o
 
-    o = cfg.get(_psana.Epix.Config10kaV1, src)
-    if o is not None : return o
-
     o = cfg.get(_psana.Epix.Config10ka2MV1, src)
     if o is not None : return o
 
     o = cfg.get(_psana.Epix.Config10kaQuadV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Epix.Config10kaV1, src)
     if o is not None : return o
 
     o = cfg.get(_psana.Epix.Config10KV1, src)
@@ -291,13 +291,13 @@ def get_epix10ka_any_config_object(env, src) :
     """get epix10ka2m config object
     """
     cfg = env.configStore()
-    o = cfg.get(_psana.Epix.Config10kaV1, src)
-    if o is not None : return o
-
     o = cfg.get(_psana.Epix.Config10ka2MV1, src)
     if o is not None : return o
 
     o = cfg.get(_psana.Epix.Config10kaQuadV1, src)
+    if o is not None : return o
+
+    o = cfg.get(_psana.Epix.Config10kaV1, src)
     if o is not None : return o
 
     return None

@@ -14,8 +14,8 @@ import pyimgalgos.Graphics as gr
 
 #------------------------------
 
-EVSKIP  = 20
-EVENTS  = 10 + EVSKIP
+EVSKIP  = 0
+EVENTS  = 2 + EVSKIP
 PLOT_IMG = True #False #True
 PLOT_SPE = True
 
@@ -35,6 +35,9 @@ def dsname_source(tname) :
     elif tname=='5' : return 'exp=detdaq17:run=131',  'DetLab.0:Epix10ka2M.0' # fixed high
     elif tname=='6' : return 'exp=xcsx35617:run=6',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
     elif tname=='7' : return 'exp=xcsx35617:run=12',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
+    elif tname=='8' : 
+        psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib/')
+        return 'exp=xcsx35617:run=528',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -91,21 +94,24 @@ def test_epix10ka_methods(tname) :
     rms = det.rms(par)
     print_ndarr(rms, 'rms')
     
-    mask = det.mask(par, calib=False, status=True,\
-           edges=False, central=False, unbond=False, unbondnbrs=False)
+    #mask = det.mask(par, calib=False, status=True,\
+    #       edges=False, central=False, unbond=False, unbondnbrs=False)
+
+    # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
+    mask = det.mask(par, calib=False, status=True, edges=True, central=True, width=1, wcentral=1, mode=0)
     print_ndarr(mask, 'mask')
     
     gain = det.gain(par)
     print_ndarr(gain, 'gain')
     
-    offset = det.offset(par)
-    print_ndarr(offset, 'offset')
+    #offset = det.offset(par)
+    #print_ndarr(offset, 'offset')
     
-    bkgd = det.bkgd(par)
-    print_ndarr(bkgd, 'bkgd')
+    #bkgd = det.bkgd(par)
+    #print_ndarr(bkgd, 'bkgd')
     
-    datast = det.datast(par)
-    print_ndarr(datast, 'datast')
+    #datast = det.datast(par)
+    #print_ndarr(datast, 'datast')
 
     status = det.status(par)
     print_ndarr(status, 'status')
@@ -114,8 +120,13 @@ def test_epix10ka_methods(tname) :
     #print_ndarr(statmask, 'statmask')
     #print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
 
-    status_mask = det.status_as_mask(par)
-    print_ndarr(status_mask, 'status_mask')
+    # mode 0/1/2 masks zero/four/eight neighbors around each bad pixel
+    mask_status = det.status_as_mask(par, mode=2, indexes=(0,1,2,3,4)) # indexes=(0,1,2)
+
+    arr1 = np.ones_like(mask_status, dtype=np.uint8)
+    print_ndarr(mask_status, 'mask_status')
+    num1 = np.select((mask_status>0,), (arr1,), 0).sum()
+    print ' ====> mask of status number of 0s: %d and 1s: %d' % (arr1.size-num1, num1)
     
     cmod = det.common_mode(par)
     print_ndarr(cmod, 'common_mod')
@@ -132,8 +143,9 @@ def test_epix10ka_methods(tname) :
     pixel_size = det.pixel_size(par)
     print '%s\npixel size: %s' % (80*'_', str(pixel_size))
     
-    #mask_geo = det.mask_geo(par, mbits=3, width=1)
-    #print_ndarr(mask_geo, 'mask_geo')
+    # mbits = 1 - mask edges, +2 - mask central
+    mask_geo = det.mask_geo(par, mbits=3, width=20, wcentral=5)
+    print_ndarr(mask_geo, 'mask_geo')
 
     ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
     print 'Detector origin indexes: ix, iy:', ipx, ipy
@@ -141,6 +153,10 @@ def test_epix10ka_methods(tname) :
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
     
+    #=====================
+    #sys.exit ('TEST EXIT')
+    #=====================
+
     t0_sec_tot = time()
 
     for i, evt in enumerate(ds.events()) :
@@ -154,9 +170,19 @@ def test_epix10ka_methods(tname) :
         nda_raw = det.raw(evt)
 
         if nda_raw is None : continue
+
         #====================================
+
         #nda = nda_raw
         nda = calib_epix10ka_any(det, evt)
+        #nda = mask_geo + 1
+        #nda = mask_status + 1
+        #nda = mask + 1
+
+        #nda *=  mask
+        #nda *=  mask_geo
+        #nda *=  mask_status
+
         #====================================
 
         if nda is None : continue
@@ -165,12 +191,31 @@ def test_epix10ka_methods(tname) :
         #sh = nda.shape
         #nda.shape = (nda.size/sh[-1], sh[-1])
 
-        ndarr = np.array(nda, dtype=np.float32)
+        ndarr = np.array(nda, dtype=np.float32) #* (1./46.7)
         #ndarr *= mask_geo
+
+        #arr_sel = ndarr[6, 10:170, 200:350].copy()
+        #ndarr[6, 10:170, 200:350] -= 500
+
+        #arr_sel = ndarr[6, 120:170, 200:250].copy()
+        #ndarr[6, 120:170, 200:250] -= 500
+
+        ave, rms = ndarr.mean(), ndarr.std()
+        print 'ave %.3f rms: %.3f' % (ave, rms)
+
+        #amin, amax = (-1, 10) if tname=='4' else\
+        #             (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
+        #             (ave-2*rms, ave+6*rms)
+        amin, amax = (ave-2*rms, ave+6*rms)
+        if tname=='8' : 
+             amin, amax = (-200, 1400)
+             #amin, amax = (0,2)
+
+        img = None
 
         if PLOT_IMG :
     
-            img = det.image(evt, ndarr)
+            img = det.image(evt, ndarr)[600:1000, 600:1000] #[300:1300, 300:1300]
             #img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
 
             if img is None :
@@ -183,27 +228,25 @@ def test_epix10ka_methods(tname) :
             if imsh is not None : del imsh
             imsh = None
 
-            ave, rms = ndarr.mean(), ndarr.std()
-            #amin, amax = (-1, 10) if tname=='4' else\
-            #             (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
-            #             (ave-2*rms, ave+6*rms)
-            amin, amax = (ave-2*rms, ave+6*rms)
-
             gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno')
             #figim.canvas.draw()
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
 
         if PLOT_SPE :
             #arrhi = nda_raw
-            arrhi = ndarr
+            #arrhi = ndarr
+            arrhi = img
+            #arrhi = arr_sel
+
             axhi.clear()
             #range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
-            range_x=(arrhi.min(), arrhi.max())
+            #range_x=(arrhi.min(), arrhi.max())
+            range_x=(amin, amax)
 
             print 'range_x:', range_x
             print_ndarr(arrhi, 'arrhi')
 
-            hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=True)
+            hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=False)
             gr.add_title_labels_to_axes(axhi, title='Event %d'%i, xlabel='Raw data, ADU',\
                                                                   ylabel='Entries', color='k')
             #gr.save_fig(fig, fname='spec-%02d.png'%i, verb=True)
@@ -226,7 +269,7 @@ if __name__ == "__main__" :
 
     import logging
     logger = logging.getLogger(__name__)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO) #DEBUG)
 
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     print '%s\nTest %s' % (80*'_', tname)

@@ -1119,6 +1119,7 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
     dir_ctype = None
     if   ctype == 'pedestals' : dir_ctype = dir_peds
     elif ctype == 'gain'      : dir_ctype = dir_gain
+    elif ctype == 'gainci'    : dir_ctype = dir_gain
     elif ctype == 'rms'       : dir_ctype = dir_rms
     elif ctype == 'status'    : dir_ctype = dir_status
     else :
@@ -1216,6 +1217,7 @@ def deploy_constants(*args, **opts) :
     high       = opts.get('high',   1.)
     medium     = opts.get('medium', 0.33333) 
     low        = opts.get('low',    0.01)
+    do_gainci  = opts.get('gainci', False)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
@@ -1261,16 +1263,15 @@ def deploy_constants(*args, **opts) :
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
 
-        if True :
-            mpars = (('pedestals', 'pedestals',    prefix_peds),\
-                     ('gain',      'pixel_gain',   prefix_gain),\
-                     ('rms',       'pixel_rms',    prefix_rms),\
-                     ('status',    'pixel_status', prefix_status))
-        else : # use charge ijection gains
+        mpars = (('pedestals', 'pedestals',    prefix_peds),\
+                 ('rms',       'pixel_rms',    prefix_rms),\
+                 ('status',    'pixel_status', prefix_status),\
+                 ('gain',      'pixel_gain',   prefix_gain))
+
+        if do_gainci : 
             add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
-            mpars = (('gain',      'pixel_gain',   prefix_gain),\
-                    )
-        
+            mpars = (('gainci', 'pixel_gain',   prefix_gain),)
+
         for (ctype, octype, prefix) in mpars :
             fmt = CTYPE_FMT.get(octype,'%.5f')
             logger.debug('begin merging for ctype:%s, octype:%s, fmt:%s,\n  prefix:%s' % (ctype, octype, fmt, prefix))

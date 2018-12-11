@@ -58,8 +58,9 @@ Usage::
     bkgd   = det.bkgd(par)      # returns array of pixel background from calib store type pixel_bkgd
     status = det.status(par)    # returns array of pixel status from calib store type pixel_status
     datast = det.datast(par)    # returns array of pixel status from calib store type pixel_datast
-    stmask = det.status_as_mask(par, mode=0) # returns array of masked bad pixels in det.status 
-                                             # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
+    stmask = det.status_as_mask(par, **kwargs) # returns array of masked bad pixels in det.status 
+                                               # kwargs.mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
+                                               # kwargs.indexes=(0,1,2,3,4) - merging parameter for epix10ka2m
     mask   = det.mask_calib(par)  # returns array of pixel mask from calib store type pixel_mask
     cmod   = det.common_mode(par) # returns 1-d array of common mode parameters from calib store type common_mode
 
@@ -418,6 +419,7 @@ class AreaDetector(object):
         """
         if self._ndim is None :
             nd = self.pyda.ndim(par)
+            if self.is_epix10ka_any() : return nd
             self._ndim = nd if nd<4 else 3
         return self._ndim
 
@@ -471,6 +473,7 @@ class AreaDetector(object):
         """
         if self._shape is None :
             sh = self.pyda.shape(par)
+            if self.is_epix10ka_any() : return sh
             self._shape = sh if len(sh)<4 else np.array((self.size(par)/sh[-1]/sh[-2], sh[-2], sh[-1]))
         return self._shape        
 
@@ -708,13 +711,14 @@ class AreaDetector(object):
 
 ##-----------------------------
 
-    def status_as_mask(self, par, mode=0) :
+    def status_as_mask(self, par, **kwargs) :
         """Returns per-pixel array of mask generated from pixel_status.
 
            Parameter
 
            - par  : int or psana.Event() - integer run number or psana event object.
-           - mode : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel
+           - kwargs.mode    : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel
+           - kwargs.indexes : tuple of indexes standing for 'FH','FM','FL','AHL-H','AML-M'
 
            Returns
 
@@ -722,8 +726,17 @@ class AreaDetector(object):
         """
         stat = self.status(par)
         if stat is None : return None
+ 
+        if self.is_epix10ka_any() :
+            stat = gu.merge_status(stat, **kwargs) # indexes=(0,1,2,3,4) or (0,1,2)
+
+        #elif self.is_jungfrau() :
+        #    stat = gu.merge_status(stat, indexes=(0,1,2))
+
+        mode = kwargs.get('mode', 0) # 0/1/2 masks zero/four/eight neighbors around each bad pixel
+
         smask = np.asarray(np.select((stat>0,), (0,), default=1), dtype=np.uint8)
-        if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode==2 else False))
+        if mode : smask = gu.mask_neighbors(smask, allnbrs=(True if mode>=2 else False))
         
         if self.is_jungfrau() : 
             mask01 = gu.merge_masks(smask[0,:], smask[1,:])
@@ -1055,7 +1068,11 @@ class AreaDetector(object):
            - unbondnbrs : bool - True/False = on/off mask of unbonded pixel with four neighbors. 
            - unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors. 
            - kwargs     : dict - additional parameters passed to low level methods (width,...) 
-
+                          kwargs.mode=0/1/2 - status_as_mask - masks zero/four/eight neighbors around each bad pixel
+                          kwargs.indexes=(0,1,2,3,4) - status_as_mask list of gain indexes to merge for epix10ka2n
+                          kwargs.mbits - mask_geo: 1 - mask edges, +2 - mask central in mask_geo
+                          kwargs.width - mask_geo=1 - number of masked rows columns on each edge
+                          kwargs.wcentral - mask_geo=1 - number of masked rows columns in the center of each panel
            Returns
 
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
@@ -1064,7 +1081,7 @@ class AreaDetector(object):
 
         mask_nda = None
         if calib  : mask_nda = self.mask_calib(par)
-        if status : mask_nda = gu.merge_masks(mask_nda, self.status_as_mask(par)) 
+        if status : mask_nda = gu.merge_masks(mask_nda, self.status_as_mask(par, **kwargs)) 
 
         mbits = 0
         if edges      : mbits += 1

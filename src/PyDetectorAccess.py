@@ -1270,10 +1270,17 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def shape_config_epix100(self, env) :
-        c = pda.get_epix_config_object(env, self.source)
+        c = pda.get_epix_config_object(env, self.source) # works for all epix detectors
         if c is None : return None
         return (c.numberOfRows(), c.numberOfColumns()) 
-        #return (704, 768) # no other choice
+        # returns 2-d array, ex: (704, 768) for 100a or (352, 384) for 10ka
+
+##-----------------------------
+
+    def shape_config_epix10ka_any(self, env) :
+        c = pda.get_epix10ka_any_config_object(env, self.source)
+        if c is None : return None
+        return (c.numberOfElements(), c.numberOfRows(), c.numberOfColumns()) # (16, 352, 384)
 
 ##-----------------------------
 
@@ -1488,7 +1495,10 @@ class PyDetectorAccess :
 
         if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
         elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
-        elif self.dettype == gu.EPIX100A   : return self.shape_config_epix100(env)
+        elif self.dettype == (gu.EPIX100A, gu.EPIX10KA)\
+                                           : return self.shape_config_epix100(env)
+        elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD)\
+                                           : return self.shape_config_epix10ka_any(env)
         elif self.dettype == gu.PRINCETON  : return self.shape_config_princeton(env)
         elif self.dettype == gu.PNCCD      : return self.shape_config_pnccd(env)
         elif self.dettype == gu.ANDOR      : return self.shape_config_andor(env)
