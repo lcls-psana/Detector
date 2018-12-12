@@ -28,7 +28,7 @@ class EvrDetector(DdlDetector):
         """
         return self.eventCodes(evt, **kwargs)
 
-    def eventCodes(self, evt, this_fiducial_only=False):
+    def eventCodes(self, evt, this_fiducial_only=True):
         """
         Parameters
         ----------
