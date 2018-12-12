@@ -15,7 +15,7 @@ import pyimgalgos.Graphics as gr
 #------------------------------
 
 EVSKIP  = 0
-EVENTS  = 2 + EVSKIP
+EVENTS  = 20 + EVSKIP
 PLOT_IMG = True #False #True
 PLOT_SPE = True
 
@@ -166,27 +166,32 @@ def test_epix10ka_methods(tname) :
         if i <EVSKIP: continue
         if i>=EVENTS: break
 
-        t0_sec = time()
         nda_raw = det.raw(evt)
 
         if nda_raw is None : continue
 
         #====================================
 
+        t0_sec = time()
         #nda = nda_raw
         nda = calib_epix10ka_any(det, evt)
         #nda = mask_geo + 1
         #nda = mask_status + 1
         #nda = mask + 1
 
-        #nda *=  mask
+        
+        t1_sec = time()
+        nda *=  mask
+
+        t2_sec = time()
+
         #nda *=  mask_geo
         #nda *=  mask_status
 
         #====================================
 
         if nda is None : continue
-        print_ndarr(nda, '%s\nEvent %4d, consumed %7.3f sec' % (50*'_', i, time()-t0_sec))
+        print_ndarr(nda, '%s\nEvent %4d, calib %7.3f sec, mask %7.3f sec' % (50*'_', i, t1_sec-t0_sec, t2_sec-t1_sec))
 
         #sh = nda.shape
         #nda.shape = (nda.size/sh[-1], sh[-1])
@@ -215,7 +220,7 @@ def test_epix10ka_methods(tname) :
 
         if PLOT_IMG :
     
-            img = det.image(evt, ndarr)[600:1000, 600:1000] #[300:1300, 300:1300]
+            img = det.image(evt, ndarr) # [600:1000, 600:1000] #[300:1300, 300:1300]
             #img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
 
             if img is None :

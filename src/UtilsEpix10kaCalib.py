@@ -565,8 +565,10 @@ def save_log_record_on_start(dirrepo, fname, fac_mode=0777) :
     dirlog = '%s/logs' % dirrepo
     create_directory(dirlog, fac_mode)
     logfname = '%s/log_%s_%s.txt' % (dirlog, fname, year)
+
+    fexists = os.path.exists(logfname)
     save_textfile(rec, logfname, mode='a')
-    set_file_access_mode(logfname, fac_mode)
+    if not fexists : set_file_access_mode(logfname, fac_mode)
 
     logger.debug('Record on start: %s' % rec)
     logger.info('Saved:  %s' % logfname)
@@ -638,15 +640,17 @@ def selected_record(nrec) :
 #--------------------
 
 def save_ndarray_in_textfile(nda, fname, fmode, fmt) :
+    fexists = os.path.exists(fname)
     save_txt(fname, nda, fmt=fmt)
-    set_file_access_mode(fname, fmode)
+    if not fexists : set_file_access_mode(fname, fmode)
     logger.debug('saved: %s' % fname)
 
 #--------------------
 
 def save_2darray_in_textfile(nda, fname, fmode, fmt) :
+    fexists = os.path.exists(fname)
     np.savetxt(fname, nda, fmt=fmt)
-    set_file_access_mode(fname, fmode)
+    if not fexists : set_file_access_mode(fname, fmode)
     logger.info('saved:  %s' % fname)
         
 #--------------------
@@ -878,8 +882,9 @@ def offset_calibration(*args, **opts) :
 
         #Save diagnostics data, can be commented out:
         #save fitting results
+        fexists = os.path.exists(fname_work)
         np.savez_compressed(fname_work, darks=darks, fits_hl=fits_hl, fits_ml=fits_ml, nsp_hl=nsp_hl, nsp_ml=nsp_ml)
-        set_file_access_mode(fname_work, filemode)
+        if not fexists : set_file_access_mode(fname_work, filemode)
         logger.info('Saved:  %s' % fname_work)
 
     #--------------------
@@ -945,8 +950,9 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
             plt.colorbar()
             plt.title(gm+': '+titles[i])
         plt.pause(0.1)
+        fexists = os.path.exists(fnameout)
         plt.savefig(fnameout)
-        set_file_access_mode(fnameout, filemode)
+        if not fexists : set_file_access_mode(fnameout, filemode)
 
 #--------------------
 
