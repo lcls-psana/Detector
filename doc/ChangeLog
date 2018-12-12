@@ -7,9 +7,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag: V01-00-65
+Tag: V01-00-66
 2018-12-12 Mikhail S. Dubrovin
 - UtilsEpix10kaCalib - fix issue with os.chmod for existing file created by other user
+
+Tag: V01-00-65
+2018-12-12 Chris
+- default to only return eventcodes that match this fiducial
 
 Tag: V01-00-64
 2018-12-11 Mikhail S. Dubrovin
