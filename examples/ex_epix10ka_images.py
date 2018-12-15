@@ -15,7 +15,8 @@ import pyimgalgos.Graphics as gr
 #------------------------------
 
 EVSKIP  = 0
-EVENTS  = 20 + EVSKIP
+EVENTS  = 5 + EVSKIP # event w/o gain switching
+EVENTS  = 3 + EVSKIP
 PLOT_IMG = True #False #True
 PLOT_SPE = True
 
@@ -37,7 +38,12 @@ def dsname_source(tname) :
     elif tname=='7' : return 'exp=xcsx35617:run=12',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
     elif tname=='8' : 
         psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib/')
-        return 'exp=xcsx35617:run=528',  'XcsEndstation.0:Epix10ka2M.0' # fixed high
+        #psana.setOption('psana.calib-dir', '/reg/d/psdm/XCS/xcsx35617/calib')
+
+        #return 'exp=xcsx35617:run=528',  'XcsEndstation.0:Epix10ka2M.0' # FH, FM, ... all
+        #return 'exp=xcsx35617:run=394',  'XcsEndstation.0:Epix10ka2M.0' # FH
+        return 'exp=xcsx35617:run=419',  'XcsEndstation.0:Epix10ka2M.0' # AML
+        #return 'exp=xcsx35617:run=414',  'XcsEndstation.0:Epix10ka2M.0' # AHL
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -181,10 +187,9 @@ def test_epix10ka_methods(tname) :
 
         
         t1_sec = time()
-        nda *=  mask
+        #nda *=  mask
 
         t2_sec = time()
-
         #nda *=  mask_geo
         #nda *=  mask_status
 
@@ -196,14 +201,24 @@ def test_epix10ka_methods(tname) :
         #sh = nda.shape
         #nda.shape = (nda.size/sh[-1], sh[-1])
 
-        ndarr = np.array(nda, dtype=np.float32) #* (1./46.7)
+        ndarr = np.array(nda, dtype=np.float32) # * (1./46.7) # factor for default gain=1
         #ndarr *= mask_geo
+
+        arr_sel = ndarr[6, 10:340, 10:370].copy()
+        ndarr[6, 10:340, 10:370] -= 500
 
         #arr_sel = ndarr[6, 10:170, 200:350].copy()
         #ndarr[6, 10:170, 200:350] -= 500
 
         #arr_sel = ndarr[6, 120:170, 200:250].copy()
         #ndarr[6, 120:170, 200:250] -= 500
+
+        
+        #arr_sel = ndarr[1, 10:340, 10:370].copy()
+        #ndarr[1, 10:340, 10:370] -= 500
+
+        #arr_sel = ndarr[1, 5:170, 5:185].copy()
+        #ndarr[1, 5:170, 5:185] -= 500
 
         ave, rms = ndarr.mean(), ndarr.std()
         print 'ave %.3f rms: %.3f' % (ave, rms)
@@ -213,8 +228,9 @@ def test_epix10ka_methods(tname) :
         #             (ave-2*rms, ave+6*rms)
         amin, amax = (ave-2*rms, ave+6*rms)
         if tname=='8' : 
-             amin, amax = (-200, 1400)
-             #amin, amax = (0,2)
+             #amin, amax = (-200, 400)
+             amin, amax = (0, 40000)
+             #amin, amax = (0, 10)
 
         img = None
 
@@ -239,9 +255,9 @@ def test_epix10ka_methods(tname) :
 
         if PLOT_SPE :
             #arrhi = nda_raw
-            #arrhi = ndarr
-            arrhi = img
-            #arrhi = arr_sel
+            arrhi = ndarr
+            #arrhi = img
+            arrhi = arr_sel
 
             axhi.clear()
             #range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
@@ -274,7 +290,7 @@ if __name__ == "__main__" :
 
     import logging
     logger = logging.getLogger(__name__)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO) #DEBUG)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG) #INFO) #DEBUG)
 
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     print '%s\nTest %s' % (80*'_', tname)

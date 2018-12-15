@@ -7,6 +7,24 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-67
+2018-12-14 Mikhail S. Dubrovin
+- UtilsEpix10kaCalib.pedestals_calibration - accseleration
+  - accumulate ~1024 data in block once per entire frame (16,352,384)
+    then process them for all frames
+  - add option idx to calibrate single panel (10-20sec per panel)
+  - add convenience methods for information about gain mode map and statistics
+- UtilsEpix10kaCalib.deploy_constants - add parameter --proc='psrg'
+	to control deployment types.
+- UtilsEpix10ka - rename auto-switch gain modes for data bit14
+modified: app/epix10ka_deploy_constants
+	  app/epix10ka_offset_calibration
+	  app/epix10ka_pedestals_calibration
+	  doc/ChangeLog
+	  examples/ex_epix10ka_images.py
+	  src/UtilsEpix10ka.py
+	  src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-66
 2018-12-12 Mikhail S. Dubrovin
 - UtilsEpix10kaCalib - fix issue with os.chmod for existing file created by other user

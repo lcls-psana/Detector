@@ -19,8 +19,9 @@ import numpy as np
 from PSCalib.DCUtils import env_time, dataset_time, str_tstamp
 from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES,\
                                alias_for_id, create_directory, set_file_access_mode
-from Detector.UtilsEpix10ka import store, config_objects, get_epix10ka_any_config_object,\
-                            gain_maps_epix10ka_any # cbits_total_epix10ka_any
+from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_objects,\
+                            get_epix10ka_any_config_object, find_gain_mode
+                            #, gain_maps_epix10ka_any # cbits_total_epix10ka_any
 
 from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix10ka, print_object_dir
 
@@ -40,9 +41,6 @@ import warnings
 warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
 #--------------------
-
-GAIN_MODES      = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
-GAIN_MODES_IN   = ['FH','FM','FL','AHL-H','AML-M']
 
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
@@ -279,38 +277,6 @@ def get_panel_id(panel_ids, idx=0) :
         logger.error('get_panel_id: panel_idis None, idx=%d' % idx)
         sys.exit('ERROR EXIT')
     return panel_id
-
-#--------------------
-
-def find_gain_mode(det, data=None) :
-    """Returns str gain mode from the list GAIN_MODES or None.
-       if data=None : distinguish 5-modes w/o data
-    """
-    gmaps = gain_maps_epix10ka_any(det, data)
-    if gmaps is None : return None
-    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
-
-    arr1 = np.ones_like(gr0)
-    npix = arr1.size
-    pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
-                np.select((gr1,), (arr1,), 0).sum(),\
-                np.select((gr2,), (arr1,), 0).sum(),\
-                np.select((gr3,), (arr1,), 0).sum(),\
-                np.select((gr4,), (arr1,), 0).sum(),\
-                np.select((gr5,), (arr1,), 0).sum(),\
-                np.select((gr6,), (arr1,), 0).sum())
-
-    #logger.debug('Statistics in gain groups: %s' % str(pix_stat))
-
-    f = 1.0/arr1.size
-    grp_prob = [npix*f for npix in pix_stat]
-    #logger.debug('grp_prob: %s' % str(grp_prob))
-
-    ind = next(i for i,fr in enumerate(grp_prob) if fr>0.5)
-    gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None 
-    #logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
-
-    return gain_mode
 
 #--------------------
 #--------------------
@@ -955,9 +921,201 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
         if not fexists : set_file_access_mode(fnameout, filemode)
 
 #--------------------
+#--------------------
+#--------------------
 
 def pedestals_calibration(*args, **opts) :
+    """NEWS significant ACCELERATION is acheived:
+       - accumulate data for entire epix10kam_2m/quad array
+       - use MPI 
+       all-panel or selected-panel one-calibcycle (gain range) or all calibcycles calibration of pedestals
+    """
+    exp        = opts.get('exp', None)
+    detname    = opts.get('det', None)
+    irun       = opts.get('run', None)
+    nbs        = opts.get('nbs', 1024)
+    ccnum      = opts.get('ccnum', None)
+    dirxtc     = opts.get('dirxtc', None)
+    dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
+    fmt_peds   = opts.get('fmt_peds', '%.3f')
+    fmt_rms    = opts.get('fmt_rms',  '%.3f')
+    fmt_status = opts.get('fmt_status', '%4i')
+    #mode       = opts.get('mode', None)
+    idx_sel    = opts.get('idx', None)
+    #nspace     = opts.get('nspace', 7)
+    dirmode    = opts.get('dirmode', 0777)
+    filemode   = opts.get('filemode', 0666)
+    usesmd     = opts.get('usesmd', False)
 
+    dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    if usesmd : dsname += ':smd'
+    _name = sys._getframe().f_code.co_name
+
+    logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
+
+    save_log_record_on_start(dirrepo, _name, dirmode)
+
+    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    tstamp      = cpdic.get('tstamp', None)
+    panel_ids   = cpdic.get('panel_ids', None)
+    #gain_mode   = cpdic.get('gain_mode', None)
+    expnum      = cpdic.get('expnum', None)
+    dettype     = cpdic.get('dettype', None)
+    shape       = cpdic.get('shape', None)
+    ny,nx = shape
+
+    #panel_id = get_panel_id(panel_ids, idx)
+    logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
+
+    #read input xtc file and accumulate block of data
+
+    #================= MPI
+
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size() # number of MPI nodes; 1 for regular python command
+
+    #=================
+
+    ds = DataSource(dsname)
+    det = Detector(detname)
+
+    #print 'det.shape', det.shape()
+    shape_block = [nbs,] + list(det.shape()) # [1024, 16, 352, 384]
+    print 'Accumulate raw frames in block shape = %s' % str(shape_block)
+
+    mode = None # gain_mode
+
+    for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
+        if size > 1 :
+            # if MPI is on process all calibcycles, calibcycle per rank
+            if nstep < rank: continue
+            if nstep > rank: break
+
+        elif ccnum is not None :
+            # process calibcycle ccnum ONLY if ccnum is specified and MPI is not used!!!
+            if   nstep < ccnum : continue
+            elif nstep > ccnum : break
+
+        mode = find_gain_mode(det, data=None).upper()
+
+        if mode in GAIN_MODES_IN :
+            logger.info('========== rank %d calibcycle %d: dark run processing for gain mode %s' % (rank, nstep, mode))
+        else :
+            logger.warning('UNRECOGNIZED GAIN MODE: %s, DARKS NOT UPDATED...'%mode)
+            sys.exit()
+            #return
+
+        #============================
+        #continue # TEST
+        #============================
+
+        block=np.zeros(shape_block,dtype=np.int16)
+        nrec,nevt = 0,0
+
+        for nevt,evt in enumerate(step.events()):
+            raw = det.raw(evt)
+            do_print = selected_record(nrec)
+            if raw is None: #skip empty frames
+                if do_print : logger.info('Ev:%04d rec:%04d raw=None' % (nevt,nrec))
+                continue
+            if nrec>=nbs:       # stop after collecting sufficient frames
+                nrec += 1
+                break
+            else:
+                #if raw.ndim > 2 : raw=raw[idx,:]
+                if do_print : logger.info(info_ndarr(raw & M14, 'Ev:%04d rec:%04d raw & M14' % (nevt,nrec)))
+                block[nrec]=raw & M14
+                nrec += 1
+
+        nrec -= 1
+
+        print_statistics(nevt, nrec)
+
+        #---- process statistics in block-array for panels
+
+        for idx, panel_id in enumerate(panel_ids) :
+
+            if idx_sel is not None and idx_sel != idx : continue # skip panels if idx_sel is specified
+
+            logger.info('\n%s\npanel:%02d id:%s' % (100*'=', idx, panel_id))
+
+            #if mode is None :
+            #    msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
+            #    logger.warning(msg)
+            #    sys.exit(msg)
+
+            dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
+            fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
+            #prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
+            prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
+                path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
+
+            #logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after charge-injection offset_calibration' % dir_panel)
+            #assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
+            #assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds        
+
+            create_directory(dir_panel,  mode=dirmode)
+            create_directory(dir_peds,   mode=dirmode)
+            create_directory(dir_offset, mode=dirmode)
+            create_directory(dir_gain,   mode=dirmode)
+            create_directory(dir_rms,    mode=dirmode)
+            create_directory(dir_status, mode=dirmode)
+
+            #dark=block[:nrec,:].mean(0)  #Calculate mean
+
+            #block.sahpe = (1024, 16, 352, 384)
+            dark, rms, status = proc_dark_block(block[:nrec,idx,:], **opts) # process pedestals per-panel (352, 384)
+
+            fname = '%s_pedestals_%s.dat' % (prefix_peds, mode)
+            save_2darray_in_textfile(dark, fname, filemode, fmt_peds)
+
+            fname = '%s_rms_%s.dat' % (prefix_rms, mode)
+            save_2darray_in_textfile(rms, fname, filemode, fmt_rms)
+
+            fname = '%s_status_%s.dat' % (prefix_status, mode)
+            save_2darray_in_textfile(status, fname, filemode, fmt_status)
+
+            #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
+            if mode=='AML-M':
+                fname_offset_AML = find_file_for_timestamp(dir_offset, 'offset_AML', tstamp)
+                offset=None
+                if fname_offset_AML is not None and os.path.exists(fname_offset_AML) :
+                    offset=np.loadtxt(fname_offset_AML)
+                    logger.info('Loaded: %s' % fname_offset_AML)
+                else :
+                    logger.warning('file with offsets DOES NOT EXIST: %s' % fname_offset_AML)
+                    logger.warning('DO NOT save AML-L pedestals w/o offsets')
+
+                if offset is not None :
+                    fname = '%s_pedestals_AML-L.dat' % prefix_peds
+                    save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
+
+            elif mode=='AHL-H':
+                fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
+                offset=None
+                if fname_offset_AHL is not None and os.path.exists(fname_offset_AHL) :
+                    offset=np.loadtxt(fname_offset_AHL)
+                    logger.info('Loaded: %s' % fname_offset_AHL)
+                else :
+                    logger.warning('file with offsets DOES NOT EXIST: %s' % fname_offset_AHL)
+                    logger.warning('DO NOT save AHL-L pedestals w/o offsets')
+
+                if offset is not None :
+                    fname = '%s_pedestals_AHL-L.dat' % prefix_peds
+                    save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
+
+    logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
+
+#--------------------
+#--------------------
+#--------------------
+#--------------------
+
+def pedestals_calibration_v1(*args, **opts) :
+    """all-panel or selected-panel one-calibcycle (gain range) calibration of pedestals
+    """
     exp        = opts.get('exp', None)
     detname    = opts.get('det', None)
     irun       = opts.get('run', None)
@@ -968,8 +1126,8 @@ def pedestals_calibration(*args, **opts) :
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
-    #mode       = opts.get('mode', None)    
-    #idx        = opts.get('idx', 0)    
+    #mode       = opts.get('mode', None)
+    idx_sel    = opts.get('idx', None)
     #nspace     = opts.get('nspace', 7)    
     dirmode    = opts.get('dirmode', 0777)
     filemode   = opts.get('filemode', 0666)
@@ -996,6 +1154,9 @@ def pedestals_calibration(*args, **opts) :
     logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
 
     for idx, panel_id in enumerate(panel_ids) :
+
+        if idx_sel is not None and idx_sel != idx : continue # skip panels if idx_sel is specified
+
         logger.info('\n%s\npanel:%02d id:%s' % (100*'=', idx, panel_id))
 
         #if mode is None : 
@@ -1011,7 +1172,7 @@ def pedestals_calibration(*args, **opts) :
         
         #logger.debug('Directories under %s\n  SHOULD ALREADY EXIST after charge-injection offset_calibration' % dir_panel)
         #assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
-        #assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds        
+        #assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds
 
         create_directory(dir_panel,  mode=dirmode)
         create_directory(dir_peds,   mode=dirmode)
@@ -1223,7 +1384,8 @@ def deploy_constants(*args, **opts) :
     high       = opts.get('high',   1.)
     medium     = opts.get('medium', 0.33333) 
     low        = opts.get('low',    0.01)
-    do_gainci  = opts.get('gainci', False)
+    proc       = opts.get('proc', None)
+    #do_gainci  = opts.get('gainci', False)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
@@ -1269,14 +1431,23 @@ def deploy_constants(*args, **opts) :
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
 
-        mpars = (('pedestals', 'pedestals',    prefix_peds),\
-                 ('rms',       'pixel_rms',    prefix_rms),\
-                 ('status',    'pixel_status', prefix_status),\
-                 ('gain',      'pixel_gain',   prefix_gain))
+        #mpars = (('pedestals', 'pedestals',    prefix_peds),\
+        #         ('rms',       'pixel_rms',    prefix_rms),\
+        #         ('status',    'pixel_status', prefix_status),\
+        #         ('gain',      'pixel_gain',   prefix_gain))
 
-        if do_gainci : 
-            add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
-            mpars = (('gainci', 'pixel_gain',   prefix_gain),)
+        mpars = []
+        if 'p' in proc : mpars.append(('pedestals', 'pedestals',    prefix_peds))
+        if 'r' in proc : mpars.append(('rms',       'pixel_rms',    prefix_rms))
+        if 's' in proc : mpars.append(('status',    'pixel_status', prefix_status))
+        if 'g' in proc : mpars.append(('gain',      'pixel_gain',   prefix_gain))
+        if 'c' in proc : mpars.append(('gainci',    'pixel_gain',   prefix_gain))
+        if 'c' in proc :
+             add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
+
+        #if do_gainci :
+        #    add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
+        #    mpars = (('gainci', 'pixel_gain',   prefix_gain),)
 
         for (ctype, octype, prefix) in mpars :
             fmt = CTYPE_FMT.get(octype,'%.5f')

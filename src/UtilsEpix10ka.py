@@ -35,6 +35,9 @@ get_epix10ka_data_object = get_epix_data_object
 
 #--------------------
 
+GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
+GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
+
 B14 = 040000 # 16384 or 1<<14 (15-th bit starting from 1)
 B04 =    020 #    16 or 1<<4   (5-th bit starting from 1)
 B05 =    040 #    32 or 1<<5   (6-th bit starting from 1)
@@ -46,6 +49,7 @@ class Storage :
     def __init__(self) :
         self.arr1 = None
         self.gfac = None
+        self.counter = -1
 
 #--------------------
 store = Storage() # singleton
@@ -155,7 +159,7 @@ def cbits_total_epix10ka_any(det, data=None) :
     #   0010 = 1<<1 = 2 - M mask bit
     #   0100 = 1<<2 = 4 - g  gain bit
     #   1000 = 1<<3 = 8 - ga gain bit
-    # 010000 = 1<<4 = 16 - trbit
+    # 010000 = 1<<4 = 16 - trbit 1/0 for H/M
     # add data bit
     # 100000 = 1<<5 = 32 - data bit 14
     #--------------------------------
@@ -180,27 +184,28 @@ def gain_maps_epix10ka_any(det, data=None) :
     #--------------------------------
     # cbits - pixel control bit array
     #--------------------------------
-    #   data bit 14
-    #  / trbit
-    # V / bit3
-    #  V / bit2
-    #   V / M
-    #    V / T             gain range index
+    #   data bit 14 is moved here 1/0 for H,M/L
+    #  / trbit  1/0 for H/M
+    # V / bit3  1/0 for F/A
+    #  V / bit2 1/0 for H,M/L
+    #   V / M   mask
+    #    V / T  test       gain range index
     #     V /             /  in calib files
     #      V             V 
     # x111xx =28 -  FH_H 0 
     # x011xx =12 -  FM_M 1 
-    # xx10xx = 8 -  FL_L 2  
-    # 1100xx =48 - AHL_H 3 
-    # 1000xx =32 - AML_M 4 
-    # 0100xx =16 - AHL_L 5 
-    # 0000xx = 0 - AML_L 6 
+    # xx10xx = 8 -  FL_L 2
+    # 0100xx =16 - AHL_H 3
+    # 0000xx = 0 - AML_M 4
+    # 1100xx =48 - AHL_L 5
+    # 1000xx =32 - AML_L 6
     #--------------------------------
     # 111100 =60 - cbitsM60 - mask 
     # 011100 =28 - cbitsM28 - mask 
     # 001100 =12 - cbitsM12 - mask 
     #--------------------------------
 
+    cbitsM60 = cbits & 60 # control bits masked by configuration 3-bit-mask
     cbitsM28 = cbits & 28 # control bits masked by configuration 3-bit-mask
     cbitsM12 = cbits & 12 # control bits masked by configuration 2-bit-mask
     #logger.debug(info_ndarr(cbitsMCB, 'cbitsMCB', first, last))
@@ -208,24 +213,71 @@ def gain_maps_epix10ka_any(det, data=None) :
     gr0 = (cbitsM28 == 28)
     gr1 = (cbitsM28 == 12)
     gr2 = (cbitsM12 ==  8)
-    gr3 = (cbitsM28 == 16)
-    gr4 = (cbitsM28 ==  0)
-    gr5 = (cbits    == 16)
-    gr6 = (cbits    ==  0)
+    gr3 = (cbitsM60 == 16)
+    gr4 = (cbitsM60 ==  0)
+    gr5 = (cbitsM60 == 48)
+    gr6 = (cbitsM60 == 32)
 
-
-    if False :
-        first = 10000
-        last  = first+5
-        logger.debug(info_ndarr(gr0, 'gr0', first, last))
-        logger.debug(info_ndarr(gr1, 'gr1', first, last))
-        logger.debug(info_ndarr(gr2, 'gr2', first, last))
-        logger.debug(info_ndarr(gr3, 'gr3', first, last))
-        logger.debug(info_ndarr(gr4, 'gr4', first, last))
-        logger.debug(info_ndarr(gr5, 'gr5', first, last))
-        logger.debug(info_ndarr(gr6, 'gr6', first, last))
+    #first = 10000; logger.debug(info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first, first+5))
         
     return gr0, gr1, gr2, gr3, gr4, gr5, gr6
+
+#--------------------
+
+def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5) :
+    return 'gain range arrays:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s'%(\
+        info_ndarr(gr0, 'gr0', first, last),\
+        info_ndarr(gr1, 'gr1', first, last),\
+        info_ndarr(gr2, 'gr2', first, last),\
+        info_ndarr(gr3, 'gr3', first, last),\
+        info_ndarr(gr4, 'gr4', first, last),\
+        info_ndarr(gr5, 'gr5', first, last),\
+        info_ndarr(gr6, 'gr6', first, last))
+
+#--------------------
+
+def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6) :
+    """returns (str) with statistics of pixels in defferent gain modes in gain maps
+    """
+    t0_sec = time()
+    arr1 = np.ones_like(gr0, dtype=np.int32)
+    msg = 'gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
+     (np.sum(np.select((gr0,), (arr1,), default=0)),\
+      np.sum(np.select((gr1,), (arr1,), default=0)),\
+      np.sum(np.select((gr2,), (arr1,), default=0)),\
+      np.sum(np.select((gr3,), (arr1,), default=0)),\
+      np.sum(np.select((gr4,), (arr1,), default=0)),\
+      np.sum(np.select((gr5,), (arr1,), default=0)),\
+      np.sum(np.select((gr6,), (arr1,), default=0))) # 3ms !!!
+    return '%s\n statistics processing time (sec) = %.6f' % (msg, time()-t0_sec)
+
+#--------------------
+
+def info_pixel_gain_mode_statistics_for_raw(det, raw) :
+    """returns (str) with statistics of pixels in defferent gain modes in raw data
+    """
+    gmaps = gain_maps_epix10ka_any(det, raw)
+    if gmaps is None : return None
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    return info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+
+#--------------------
+
+def map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6) :
+    """returns map of pixel gain modes shaped as (16/4, 352, 384)
+       enumerated from 0 to 6 for 'FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L'
+    """
+    arr1 = np.ones_like(gr0, dtype=np.int16)
+    return np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
+                     (arr1*0, arr1, arr1*2, arr1*3, arr1*4, arr1*5, arr1*6), default=-1)
+
+#--------------------
+
+def map_pixel_gain_mode_for_raw(det, raw) :
+    gmaps = gain_maps_epix10ka_any(det, raw)
+    if gmaps is None : return None
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    return map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
 
 #--------------------
 
@@ -274,29 +326,31 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
         logger.debug(info_ndarr(gfac,  '\n  gfac ')\
                     +info_ndarr(arr1, '\n  arr1'))
 
+        # 'FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L'
+        #store.gf4 = np.ones_like(raw, dtype=np.int32) * 0.25 # 0.3333 # M - perefierial
+        #store.gf6 = np.ones_like(raw, dtype=np.int32) * 1    # L - center
+
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None : return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
-    if False :
-        t0_sec = time()
-        logger.debug('gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
-         (np.sum(np.select((gr0,), (arr1,), default=0)),\
-          np.sum(np.select((gr1,), (arr1,), default=0)),\
-          np.sum(np.select((gr2,), (arr1,), default=0)),\
-          np.sum(np.select((gr3,), (arr1,), default=0)),\
-          np.sum(np.select((gr4,), (arr1,), default=0)),\
-          np.sum(np.select((gr5,), (arr1,), default=0)),\
-          np.sum(np.select((gr6,), (arr1,), default=0)))) # 3ms !!!
-        dt = time()-t0_sec; print('debug statistics consumed time (sec) = %.6f' % dt)
-
     factor = np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
                        (gfac[0,:], gfac[1,:], gfac[2,:], gfac[3,:],\
                         gfac[4,:], gfac[5,:], gfac[6,:]), default=1) # 2msec
+                        #store.gf4, gfac[5,:], store.gf6), default=1) # 2msec
+
+    #==================== TEST RETURN MAP OF PIXEL GAIN MODES
+    #return map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    #====================
 
     pedest = np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
                        (peds[0,:], peds[1,:], peds[2,:], peds[3,:],\
                         peds[4,:], peds[5,:], peds[6,:]), default=0)
+
+    store.counter += 1
+    if not store.counter%100 :
+        logger.debug(info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6))
+        logger.debug(info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
     logger.debug('TOTAL consumed time (sec) = %.6f' % (time()-t0_sec_tot))
     logger.debug(info_ndarr(factor, 'calib_epix10ka factor'))
@@ -314,6 +368,38 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
 #--------------------
 
 calib_epix10ka = calib_epix10ka_any
+
+#--------------------
+
+def find_gain_mode(det, data=None) :
+    """Returns str gain mode from the list GAIN_MODES or None.
+       if data=None : distinguish 5-modes w/o data
+    """
+    gmaps = gain_maps_epix10ka_any(det, data)
+    if gmaps is None : return None
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+
+    arr1 = np.ones_like(gr0)
+    npix = arr1.size
+    pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
+                np.select((gr1,), (arr1,), 0).sum(),\
+                np.select((gr2,), (arr1,), 0).sum(),\
+                np.select((gr3,), (arr1,), 0).sum(),\
+                np.select((gr4,), (arr1,), 0).sum(),\
+                np.select((gr5,), (arr1,), 0).sum(),\
+                np.select((gr6,), (arr1,), 0).sum())
+
+    #logger.debug('Statistics in gain groups: %s' % str(pix_stat))
+
+    f = 1.0/arr1.size
+    grp_prob = [npix*f for npix in pix_stat]
+    #logger.debug('grp_prob: %s' % str(grp_prob))
+
+    ind = next(i for i,fr in enumerate(grp_prob) if fr>0.5)
+    gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None 
+    #logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
+
+    return gain_mode
 
 #--------------------
 #--------------------
