@@ -206,7 +206,7 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
                 if accept_missing:
                     detector_class = dt.MissingDet
                 else:
-                    raise KeyError('Missing Detector: Source string not found in configStore: %s)' % (di.dev, source_string))
+                    raise KeyError('Missing Detector: Source string not found in configStore: %s)' % source_string)
         else:
             if accept_missing:
                 detector_class = dt.MissingDet
