@@ -183,7 +183,30 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
     else:                                     # assume source is a DetInfo...
         di = DetInfo(source_string)
         if di.dev in dt.detectors.keys():
-            detector_class = dt.detectors[di.dev]
+            # check that the source_string can be found in the
+            # configStore keys.  this handles two unusual cases:
+            # 1. The user passes in a detector name which is a
+            #    detector type (e.g. 'Fccd').  Unfortunately, the
+            #    psana alias map "finds" these as ProcInfo() types
+            #    even if they're not in the data.  This is leftover
+            #    old-psana behavior which I have never completely
+            #    understood, but I don't want to fix at a low-level
+            #    in case it breaks something else (e.g. translator)
+            # 2. There is one known case where a detector had an
+            #    entry in the alias map, but was not present in the data.
+            found_in_config = False
+            for key in env.configStore().keys():
+                if source_string in str(key):
+                    found_in_config = True
+                    break
+
+            if found_in_config:
+                detector_class = dt.detectors[di.dev]
+            else:
+                if accept_missing:
+                    detector_class = dt.MissingDet
+                else:
+                    raise KeyError('Missing Detector: Source string not found in configStore: %s)' % (di.dev, source_string))
         else:
             if accept_missing:
                 detector_class = dt.MissingDet
