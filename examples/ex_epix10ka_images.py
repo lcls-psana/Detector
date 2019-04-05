@@ -5,7 +5,7 @@ import numpy as np
 from time import time
 
 import psana
-from Detector.UtilsEpix10ka import calib_epix10ka_any
+from Detector.UtilsEpix10ka import calib_epix10ka_any, map_pixel_gain_mode_for_raw
 from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
 
@@ -17,8 +17,10 @@ import pyimgalgos.Graphics as gr
 EVSKIP  = 0
 EVENTS  = 5 + EVSKIP # event w/o gain switching
 EVENTS  = 3 + EVSKIP
-PLOT_IMG = True #False #True
-PLOT_SPE = True
+PLOT_IMG      = True #False #True
+PLOT_GAIN_MAP = True #False #True
+PLOT_SPE      = True
+PLOT_ANY      = PLOT_IMG or PLOT_SPE or PLOT_GAIN_MAP
 
 #------------------------------
 # /reg/d/psdm/det/detdaq17/e968-r0131   - source unmasked (up to ~ event 10000), then masked vertically after ~ event 15000 
@@ -42,8 +44,8 @@ def dsname_source(tname) :
 
         #return 'exp=xcsx35617:run=528',  'XcsEndstation.0:Epix10ka2M.0' # FH, FM, ... all
         #return 'exp=xcsx35617:run=394',  'XcsEndstation.0:Epix10ka2M.0' # FH
-        return 'exp=xcsx35617:run=419',  'XcsEndstation.0:Epix10ka2M.0' # AML
-        #return 'exp=xcsx35617:run=414',  'XcsEndstation.0:Epix10ka2M.0' # AHL
+        #return 'exp=xcsx35617:run=419',  'XcsEndstation.0:Epix10ka2M.0' # AML
+        return 'exp=xcsx35617:run=414',  'XcsEndstation.0:Epix10ka2M.0' # AHL
     else :
         print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -75,8 +77,10 @@ def test_epix10ka_methods(tname) :
     #for key in evt.keys() : print key
 
     ##-----------------------------
-    figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG else (None, None, None, None)
-    if figim is not None : gg.move_fig(figim, 300, 0)
+    figim,  axim,  axcb,  imsh  = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG      else (None, None, None, None)
+    figim2, axim2, axcb2, imsh2 = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_GAIN_MAP else (None, None, None, None)
+    if figim  is not None : gg.move_fig(figim,  300, 0)
+    if figim2 is not None : gg.move_fig(figim2, 200, 0)
 
     fighi, axhi = None, None
     if PLOT_SPE : 
@@ -272,13 +276,32 @@ def test_epix10ka_methods(tname) :
                                                                   ylabel='Entries', color='k')
             #gr.save_fig(fig, fname='spec-%02d.png'%i, verb=True)
 
-        if PLOT_IMG or PLOT_SPE :
-            gr.show(mode='do_not_hold')
+        if PLOT_GAIN_MAP :
+    
+            nda_map = map_pixel_gain_mode_for_raw(det, nda_raw) # + 1
+
+            img2 = det.image(evt, nda_map)
+
+            if img2 is None :
+                print 'Image of the gain map is not available.'
+                continue
+
+            #print_ndarr(img2, 'img2')
+
+            axim2.clear()
+            if imsh2 is not None : del imsh2
+            imsh2 = None
+
+            gg.plot_imgcb(figim2, axim2, axcb2, imsh2, img2, amin=0, amax=7, origin='upper', title='Event %d'%i, cmap='inferno')
+            #figim.canvas.draw()
+            #gg.save_fig(figim, fname=ofnimg, pbits=0)
+
+        if PLOT_ANY: gr.show(mode='do_not_hold')
 
     dt_sec_tot = time()-t0_sec_tot
     print 'Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS)
 
-    if PLOT_IMG or PLOT_SPE : gg.show()
+    if PLOT_ANY : gg.show()
 
     ##-----------------------------
     #sys.exit('TEST EXIT')

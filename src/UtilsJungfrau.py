@@ -52,8 +52,8 @@ MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 class Storage :
     def __init__(self) :
-        self.offs = None
-        self.gfac = None
+        #self.offs = None
+        self.gfac = {} # {detname:nda}
 
 #------------------------------
 store = Storage() # singleton
@@ -80,6 +80,8 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
         - cmpars[2] - maximal applied correction 
     """
 
+    #print 'XXX: ====================== det.name', det.name
+
     arr = det.raw(evt) # shape:(1, 512, 1024) dtype:uint16
     if arr is None : return None
 
@@ -95,15 +97,18 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
     if gain is None : gain = np.ones_like(peds)  # - 4d gains
     if offs is None : offs = np.zeros_like(peds) # - 4d gains
 
-    gfac = store.gfac
-    if store.gfac is None :
-       store.gfac = gfac = divide_protected(np.ones_like(peds), gain)
+    # cache
+    gfac = store.gfac.get(det.name, None)
+    if gfac is None :
+       gfac = divide_protected(np.ones_like(peds), gain)
+       store.gfac[det.name] = gfac
 
     #print_ndarr(cmp,  'XXX: common mode parameters ')
     #print_ndarr(arr,  'XXX: calib_jungfrau arr ')
     #print_ndarr(peds, 'XXX: calib_jungfrau peds')
     #print_ndarr(gain, 'XXX: calib_jungfrau gain')
     #print_ndarr(offs, 'XXX: calib_jungfrau offs')
+    #print_ndarr(gfac, 'XXX: calib_jungfrau gfac')
 
     # make bool arrays of gain ranges shaped as data
     #abit15 = arr & BW1 # ~0.5ms

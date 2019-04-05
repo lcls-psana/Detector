@@ -7,6 +7,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-71
+2019-04-05 Mikhail S. Dubrovin
+- add AreaDetectorCompaund.py
+- minor tuning of examples
+
+Tag: V01-00-68, 69, 70
+2019-03-07 chrisvam
+- fixed something in PyDetector.py
+
 Tag: V01-00-67
 2018-12-14 Mikhail S. Dubrovin
 - UtilsEpix10kaCalib.pedestals_calibration - accseleration

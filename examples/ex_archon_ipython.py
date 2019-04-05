@@ -8,7 +8,6 @@ for nevt,evt in enumerate(ds.events()):
     print evt.keys()
     break
 
-
 import psana
 #dsname = 'exp=sxrx35317:run=1'
 dsname = '/reg/g/psdm/detector/data_test/types/0029-SxrEndstation.0-Archon.0.xtc'
@@ -20,7 +19,6 @@ ds  = psana.DataSource(dsname)
 env = ds.env()
 cfg = env.configStore()
 co  = cfg.get(psana.Archon.ConfigV3, src)
-
 
 # co.at                  co.biasVoltage         co.exposureEventCode   co.MaxConfigLineLength co.numPixelsY          co.readoutMode         co.stm1                
 # co.batches             co.config              co.horizontalBinning   co.MaxConfigLines      co.pixels              co.sensorLines         co.Switch              
@@ -67,6 +65,5 @@ for i, evt in enumerate(ds.events()) :
 frame = evt.get(psana.Camera.FrameV1, src)
 data = frame.data16()
 print_ndarr(data, name='data', first=0, last=5)
-
 
 #raw = det.raw(evt)
