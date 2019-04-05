@@ -238,6 +238,8 @@ class PyDetectorAccess :
             # arrays for caching
             self.iX             = None 
             self.iY             = None 
+            self.iX_at_Z        = None 
+            self.iY_at_Z        = None 
             self.coords_x_arr   = None 
             self.coords_y_arr   = None 
             self.coords_z_arr   = None
@@ -454,6 +456,21 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
+    def _update_index_at_z_arrays(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+        """ Returns True if pixel index at z arrays are available, othervise False.
+        """
+        if self.geoaccess(par) is None : return False
+        else :
+            if  self.iX_at_Z is None or do_update :
+                self.iX_at_Z, self.iY_at_Z =\
+                      self.geo.get_pixel_xy_inds_at_z(zplane=zplane, oname=None, oindex=0,\
+                                                      pix_scale_size_um=pix_scale_size_um,\
+                                                      xy0_off_pix=xy0_off_pix, do_tilt=True)
+            if  self.iX_at_Z is None : return False
+        return True
+
+##-----------------------------
+
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """Returns pixel index array iX."""
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
@@ -473,6 +490,14 @@ class PyDetectorAccess :
         if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
         if self.iX is None : return None, None # single None is not the same as (None, None) !
         return self._shaped_geo_array(self.iX), self._shaped_geo_array(self.iY)
+
+##-----------------------------
+
+    def indexes_xy_at_z(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+        """Returns two pixel index arrays iX_at_Z and iY_at_Z."""
+        if not self._update_index_at_z_arrays(par, zplane, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if self.iX_at_Z is None : return None, None # single None is not the same as (None, None) !
+        return self._shaped_geo_array(self.iX_at_Z), self._shaped_geo_array(self.iY_at_Z)
 
 ##-----------------------------
 

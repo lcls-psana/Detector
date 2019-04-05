@@ -138,6 +138,7 @@ Usage::
     ix       = det.indexes_x(par, pix_scale_size_um=110, xy0_off_pix=(1000,1000))
     iy       = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
     ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
+    ix, iy   = det.indexes_xy_at_z(par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None)
     ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
     xaxis    = det.image_xaxis(par, pix_scale_size_um=None, x0_off_pix=None)
@@ -1320,6 +1321,26 @@ class AreaDetector(object):
         rnum = self.runnum(par)
         iX, iY = self.pyda.indexes_xy(par, pix_scale_size_um, xy0_off_pix, do_update)
         return self._shaped_array_(rnum, iX), self._shaped_array_(rnum, iY)
+
+
+    def indexes_xy_at_z(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+        """Returns two arrays of pixel integer x and y indexes projected on orthoganal to the beam plane at z.
+
+           Parameters
+
+           - par               : int or psana.Event() - integer run number or psana event object.
+           - zplane            : float - z coordinate of the orthoganal to the beam plane for projection
+           - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
+           - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
+           - do_update         : bool - force to update cached array.
+
+           Returns
+
+           - (np.array, np.array) - list of two arrays of pixel x and y indexes, respectively.
+        """
+        rnum = self.runnum(par)
+        iX_at_Z, iY_at_Z = self.pyda.indexes_xy_at_z(par, zplane, pix_scale_size_um, xy0_off_pix, do_update)
+        return self._shaped_array_(rnum, iX_at_Z), self._shaped_array_(rnum, iY_at_Z)
 
 
     def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :

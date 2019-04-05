@@ -62,6 +62,9 @@ class AreaDetectorCompaund(object):
                          'mask_geo', 'mask_comb', 'mask_edges', 'mask_neighbors', 'mask_calib',\
                          'datast', 'status_as_mask', 'gain_mask', 'gain_mask_non_zero', 'areas'\
                         ]
+
+    WRAP_METHODS_2NDA  = ['coords_xy', 'indexes_xy', 'indexes_xy_at_z']
+
     #----------
 
     def __init__(self, detnames) :
@@ -87,6 +90,7 @@ class AreaDetectorCompaund(object):
             return [getattr(o, metname)(*args, **kwargs) for o in self.list_dets]
         setattr(self, 'list_%s'%metname , _prototype)
 
+    #----------
 
 #    def list_calib(self, *args, **kwargs) :
 #        """explicit implementation for debugging
@@ -103,6 +107,7 @@ class AreaDetectorCompaund(object):
 #            olst.append(nda)
 #        return olst
 
+    #----------
 
     def add_method_nda(self, metname):
         def _prototype(*args, **kwargs) :
@@ -117,23 +122,56 @@ class AreaDetectorCompaund(object):
             return np.concatenate(list_nda, axis=concaxis) # concatinates for axis=0, other dimensions should be the same...
         setattr(self, metname, _prototype)
 
+    #----------
+
+    def add_method_double_nda(self, metname):
+        def _prototype(*args, **kwargs) :
+            list_double_nda=[getattr(o, metname)(*args, **kwargs) for o in self.list_dets]
+            list_nda0 = [v[0] for v in list_double_nda]
+            list_nda1 = [v[1] for v in list_double_nda]
+            concaxis = list_nda0[0].ndim - 3
+            return np.concatenate(list_nda0, axis=concaxis),  np.concatenate(list_nda1, axis=concaxis)
+        setattr(self, metname, _prototype)
+
+    #----------
 
     def add_methods(self):
         """Generates methods from prototypes with names from WRAP_METHODS_LIST/NDA.
         """
         for name in self.WRAP_METHODS_LIST: self.add_method_list(name)
         for name in self.WRAP_METHODS_NDA:  self.add_method_nda(name)
+        for name in self.WRAP_METHODS_2NDA: self.add_method_double_nda(name)
 
+    #----------
 
     #def image(self, *args, **kwargs) :
     def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
-        """ returns 2d image for compound detector (consisting of two or more regular Detectors.
+        """ returns 2d image for compound detector (consisting of two or more regular Detectors).
             NOTICE:
                - xy0_off_pix=(VERT,HORIZ) on regular image
                - do_update=True is required if indexes_x/y were called earlier with different xy0_off_pix
         """ 
-        ix = self.indexes_x(evt, pix_scale_size_um, xy0_off_pix, do_update)
-        iy = self.indexes_y(evt, pix_scale_size_um, xy0_off_pix, do_update)
+        #ix = self.indexes_x(evt, pix_scale_size_um, xy0_off_pix, do_update)
+        #iy = self.indexes_y(evt, pix_scale_size_um, xy0_off_pix, do_update)
+        ix, iy = self.indexes_xy(evt, pix_scale_size_um, xy0_off_pix, do_update)
+
+        if False :
+            el_begin, el_end = 1000, 1005
+            print_ndarr(nda_in, name='image nda_in', first=el_begin, last=el_end)
+            print_ndarr(ix,     name='image ix    ', first=el_begin, last=el_end)
+            print_ndarr(iy,     name='image iy    ', first=el_begin, last=el_end)
+
+        return img_from_pixel_arrays(ix, iy, nda_in)
+
+    #----------
+
+    def image_at_z(self, evt, zplane=None, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+        """ returns 2d image for compound detector projected on plane at z (um).
+            NOTICE:
+               - xy0_off_pix=(VERT,HORIZ) on regular image
+               - do_update=True is required if indexes_x/y were called earlier with different xy0_off_pix
+        """ 
+        ix, iy = self.indexes_xy_at_z(evt, zplane, pix_scale_size_um, xy0_off_pix, do_update)
 
         if False :
             el_begin, el_end = 1000, 1005
@@ -255,6 +293,8 @@ if __name__ == "__main__" :
 
     img = det.image(evt, nda_in=raw, xy0_off_pix=xy0_offset)
     #img = det.image(evt, nda_in=calib, xy0_off_pix=xy0_offset)
+    #img = det.image_at_z(evt, zplane=500000, nda_in=raw, xy0_off_pix=xy0_offset)
+
     print_ndarr(img, name='img', first=0, last=5)
 
     if True : # True or False for to plot image or not 

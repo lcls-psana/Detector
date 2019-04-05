@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-72
+2019-04-05 Mikhail S. Dubrovin
+add methods
+  - indexes_xy_at_z in AreaDetector and PyDetectorAccess
+  - AreaDetectorCompaund.add_method_double_nda, image_at_z
+
 Tag: V01-00-71
 2019-04-05 Mikhail S. Dubrovin
 - add AreaDetectorCompaund.py
