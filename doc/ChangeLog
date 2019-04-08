@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-73
+2019-04-08 Mikhail S. Dubrovin
+add method examples/ex_AreaDetectorCompound.py
+
 Tag: V01-00-72
 2019-04-05 Mikhail S. Dubrovin
 add methods

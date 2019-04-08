@@ -1,27 +1,39 @@
 #----------
 """
-Class :py:class:`AreaDetectorCompaund` supports list of AreaDetector objects
+Class :py:class:`AreaDetectorCompound` supports list of AreaDetector objects
 ============================================================================
 
 Usage::
 
-    # import
+    # run self-test:
+    # python Detector/src/AreaDetectorCompound.py <test_number>,
+    #                                        where test_number = 1 (cspad2x1) or 2 (Epix)
+
     import psana
-
-    # retreive parameters from psana etc.
-    dsname = 'exp=xpptut15:run=460'
-    src = 'XppGon.0:Cspad.0' # or its alias 'cspad'
-
-    ds  = psana.DataSource(dsname)
+    from Detector.AreaDetectorCompaund import AreaDetectorCompaund
+ 
+    ds = psana.DataSource('exp=xpptut15:run=460')
     env = ds.env()
     evt = ds.events().next()
     runnum = evt.run()
 
+    det = AreaDetectorCompaund(['MecTargetChamber.0:Cspad2x2.1',\
+                                'MecTargetChamber.0:Cspad2x2.2',\
+                                'MecTargetChamber.0:Cspad2x2.3'])
+    raw = det.raw(evt)
+
+    list_raw   = det.list_raw(evt) 
+    list_calib = det.list_calib(evt) 
+
+    raw      = det.raw(evt)
+    calib    = det.calib(evt)
+
+    img      = det.image(evt, nda_in=raw, xy0_off_pix=(550,550))
+    img_at_z = det.image_at_z(evt, zplane=500000, nda_in=raw, xy0_off_pix=(550,550))
 
 Pages about how to generate class methods dynamically
   - https://stackoverflow.com/questions/8307602/programmatically-generate-methods-for-a-class
   - https://stackoverflow.com/questions/533382/dynamic-runtime-method-creation-code-generation-in-python
-
 
 See classes
   - :class:`AreaDetector`
@@ -48,7 +60,7 @@ from Detector.GlobalUtils import info_ndarr, print_ndarr
 
 #----------
 
-class AreaDetectorCompaund(object):
+class AreaDetectorCompound(object):
     """Python access to the list of area detectors.
     """
     # List for methods list_raw, list_calib, list_shape, etc.
@@ -68,7 +80,7 @@ class AreaDetectorCompaund(object):
     #----------
 
     def __init__(self, detnames) :
-        """Constructor of the class :class:`AreaDetectorCompaund`.
+        """Constructor of the class :class:`AreaDetectorCompound`.
            Parameters
            - detnames : (list of str) - list of detector names, e.g. ['CxiDs2.0:Cspad.0','CxiDs2.0:Cspad.1']
         """
@@ -186,7 +198,7 @@ class AreaDetectorCompaund(object):
 if __name__ == "__main__" :
     """
        Self-test
-       Usage: python <path>/AreaDetectorCompaund.py <test-number>
+       Usage: python <path>/AreaDetectorCompound.py <test-number>
     """
     def dsname_and_detectors(ntest) :
        """event_keys -d exp=xppx37817:run=60 -m3 # Epix100a.1
@@ -243,7 +255,7 @@ if __name__ == "__main__" :
     #for key in evt.keys() : print key
 
     t0_sec = time()
-    det = AreaDetectorCompaund(detnames)
+    det = AreaDetectorCompound(detnames)
     print '\nConstructor time = %.6f sec' % (time()-t0_sec)
     print 'det methods - dir(det):\n ', ' '.join([s for s in dir(det) if s[0]!='_'])
 
@@ -261,7 +273,7 @@ if __name__ == "__main__" :
     raw = det.raw(evt)
     print_ndarr(raw, name='raw as nda', first=0, last=5)
 
-    print 'detectors in AreaDetectorCompaund:'
+    print 'detectors in AreaDetectorCompound:'
     for o in det.list_dets : print '%24s shape=%s %s' % (o.name, str(o.shape()), str(o))
 
     calibs = det.list_calib(evt) 
