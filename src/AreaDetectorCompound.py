@@ -17,9 +17,16 @@ Usage::
     evt = ds.events().next()
     runnum = evt.run()
 
+    # pass the **list** of detectors:
     det = AreaDetectorCompaund(['MecTargetChamber.0:Cspad2x2.1',\
                                 'MecTargetChamber.0:Cspad2x2.2',\
-                                'MecTargetChamber.0:Cspad2x2.3'])
+                                'MecTargetChamber.0:Cspad2x2.3'], env)#  env is compulsory parameter here
+
+    # or **str** of space separated detectors prepended by the keyword "compound":
+    det = psana.Detector('compound MecTargetChamber.0:Cspad2x2.1'\
+                                 ' MecTargetChamber.0:Cspad2x2.2'\
+                                 ' MecTargetChamber.0:Cspad2x2.3') # env is optional for Detector
+
     raw = det.raw(evt)
 
     list_raw   = det.list_raw(evt) 
@@ -52,11 +59,11 @@ Created on 2019-04-02 Mikhail Dubrovin
 #----------
 
 import sys
-import psana
 import numpy as np
 
 from PSCalib.GeometryAccess import img_from_pixel_arrays
 from Detector.GlobalUtils import info_ndarr, print_ndarr
+from Detector.AreaDetector import AreaDetector # can't use just a Detector due to circular dependency
 
 #----------
 
@@ -79,13 +86,25 @@ class AreaDetectorCompound(object):
 
     #----------
 
-    def __init__(self, detnames) :
+    def __init__(self, detnames, env) :
         """Constructor of the class :class:`AreaDetectorCompound`.
            Parameters
            - detnames : (list of str) - list of detector names, e.g. ['CxiDs2.0:Cspad.0','CxiDs2.0:Cspad.1']
         """
-        self.detnames = detnames
-        self.list_dets = [psana.Detector(name) for name in detnames]
+        # convert str like 'compound Jungfrau1M Jungfrau512k'
+        # to the list ['Jungfrau1M', 'Jungfrau512k']
+
+        #self.detnames = detnames
+
+        if isinstance(detnames, str) and ('compound' in detnames.lower()):
+            self.detnames = detnames.split(' ')[1:]
+        elif isinstance(detnames, (list,tuple)) :
+            self.detnames = detnames
+        else :
+            raise KeyError('Un-recognized detector name %s' % detnames)
+
+        #self.list_dets = [psana.Detector(name) for name in self.detnames]
+        self.list_dets = [AreaDetector(name, env) for name in self.detnames]
         for det in self.list_dets : det.do_reshape_2d_to_3d(flag=True)
         #for det in self.list_dets : det.set_print_bits(511)
 
@@ -193,6 +212,14 @@ class AreaDetectorCompound(object):
 
         return img_from_pixel_arrays(ix, iy, nda_in)
 
+    #----------
+
+    def common_mode(self, par) :
+        """ returns common mode array for the [0] detector in the list.
+        """ 
+        lst = self.list_common_mode(par)
+        return lst[0] if len(lst) else None
+
 #----------
 
 if __name__ == "__main__" :
@@ -200,6 +227,9 @@ if __name__ == "__main__" :
        Self-test
        Usage: python <path>/AreaDetectorCompound.py <test-number>
     """
+    import psana
+    from PSCalib.GlobalUtils import string_from_source
+
     def dsname_and_detectors(ntest) :
        """event_keys -d exp=xppx37817:run=60 -m3 # Epix100a.1
           event_keys -d exp=xpptut15:run=460 -m3 # Cspad2x2.1,2,3 and Princeton.1,2,3
@@ -222,12 +252,16 @@ if __name__ == "__main__" :
           'MfxEndstation.0:Jungfrau.1']
 
        if ntest==3 : return\
+         'exp=mfxls4916:run=298',\
+         'compound MfxEndstation.0:Jungfrau.0 MfxEndstation.0:Jungfrau.1'
+
+       if ntest==4 : return\
          'exp=xpptut15:run=460',\
          ['MecTargetChamber.0:Princeton.1',\
           'MecTargetChamber.0:Princeton.2',\
           'MecTargetChamber.0:Princeton.3']
 
-       if ntest==4 : 
+       if ntest==5 : 
          return\
          'exp=xppx37817:run=60',\
          ['XppGon.0:Epix100a.1',\
@@ -255,7 +289,7 @@ if __name__ == "__main__" :
     #for key in evt.keys() : print key
 
     t0_sec = time()
-    det = AreaDetectorCompound(detnames)
+    det = AreaDetectorCompound(detnames, env)
     print '\nConstructor time = %.6f sec' % (time()-t0_sec)
     print 'det methods - dir(det):\n ', ' '.join([s for s in dir(det) if s[0]!='_'])
 
@@ -274,7 +308,7 @@ if __name__ == "__main__" :
     print_ndarr(raw, name='raw as nda', first=0, last=5)
 
     print 'detectors in AreaDetectorCompound:'
-    for o in det.list_dets : print '%24s shape=%s %s' % (o.name, str(o.shape()), str(o))
+    for o in det.list_dets : print '%24s shape=%s %s' % (string_from_source(o.source), str(o.shape()), str(o))
 
     calibs = det.list_calib(evt) 
     for nda in calibs :
@@ -289,6 +323,9 @@ if __name__ == "__main__" :
 
     print_ndarr(det.coords_x(evt),   name='coords_x ', first=0, last=5)
     print_ndarr(det.coords_y(evt),   name='coords_y ', first=0, last=5)
+
+    print_ndarr(det.common_mode(evt), name='common_mode ')
+    #print 'list_common_mode', det.list_common_mode(evt)
 
     #print_ndarr(det.indexes_x(evt), name='indexes_x no offset', first=1000, last=1005)
     #print_ndarr(det.indexes_x(evt, xy0_off_pix=(1500,1500)), name='indexes_x, off_pix=(1000,1000)', first=1000, last=1005)
@@ -313,9 +350,10 @@ if __name__ == "__main__" :
         from pyimgalgos.GlobalUtils import reshape_to_2d
         from pyimgalgos.GlobalGraphics import plotImageLarge, show
 
-        plotImageLarge(img, title='img as %s' % str(img.shape), amp_range=(0,5000)) # for raw(0,5000) for calib (-0.5,1) cspad2x2:(1500,2000)
+        ave, rms = img.mean(), img.std()
+        plotImageLarge(img, title='img as %s' % str(img.shape), amp_range=(ave-rms, ave+2*rms)) # (0,5000)
         show()
 
-    sys.exit('TEST COMPLETED')
+    sys.exit('TEST %d IS COMPLETED' % ntest)
 
 #----------

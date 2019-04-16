@@ -7,6 +7,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-74
+2019-04-16 Mikhail S. Dubrovin
+- integrate AreaDetectorCompound under Detector
+- use (str) or (list) input parameter 'compound det1 det2', ['det1', 'det2']
+modified:   examples/ex_AreaDetectorCompound.py
+modified:   src/AreaDetector.py
+modified:   src/AreaDetectorCompound.py
+modified:   src/PyDetector.py
+modified:   src/UtilsJungfrau.py
+
 Tag: V01-00-73
 2019-04-08 Mikhail S. Dubrovin
 add method examples/ex_AreaDetectorCompound.py

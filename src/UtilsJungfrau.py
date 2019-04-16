@@ -93,15 +93,17 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
 
     gain = det.gain(evt)      # - 4d gains
     offs = det.offset(evt)    # - 4d offset
+    detname = string_from_source(det.source)
+
     cmp  = det.common_mode(evt) if cmpars is None else cmpars
     if gain is None : gain = np.ones_like(peds)  # - 4d gains
     if offs is None : offs = np.zeros_like(peds) # - 4d gains
 
     # cache
-    gfac = store.gfac.get(det.name, None)
+    gfac = store.gfac.get(detname, None) # det.name
     if gfac is None :
        gfac = divide_protected(np.ones_like(peds), gain)
-       store.gfac[det.name] = gfac
+       store.gfac[detname] = gfac
 
     #print_ndarr(cmp,  'XXX: common mode parameters ')
     #print_ndarr(arr,  'XXX: calib_jungfrau arr ')

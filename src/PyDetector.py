@@ -9,6 +9,7 @@ Method :meth:`detector_factory` in :class:`PyDetector` returns instance of the d
 See classes
   - :class:`AlgoAccess`
   - :class:`AreaDetector`
+  - :class:`AreaDetectorCompound`
   - :class:`ControlDataDetector`
   - :class:`DdlDetector`       - access to DDL data
   - :class:`DetectorTypes`
@@ -55,6 +56,7 @@ import re
 import Detector.DetectorTypes as dt
 from Detector.EpicsDetector import EpicsDetector
 from Detector.ControlDataDetector import ControlDataDetector
+from Detector.AreaDetectorCompound import AreaDetectorCompound
 
 class DetInfo(object):
     """
@@ -75,6 +77,9 @@ class DetInfo(object):
         device_type   --> 'Cspad'
         device_id     --> 0
         """
+
+        # skip non-string parameters (list or tuple of strings) for compound detector.
+        if not isinstance(source_string, str) : return
 
         m = re.search('(\w+).(\d+)\:(\w+).(\d+)', source_string)
 
@@ -131,6 +136,8 @@ def map_alias_to_source(source_string, env):
     - source_string : str
         De-aliased source string -- a unique identifier.
     """
+    # skip list or tuple for compound detector
+    if not isinstance(source_string, str) : return source_string
 
     # see if the source_string is an alias
     amap = env.aliasMap()
@@ -179,6 +186,10 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
 
     elif source_string in dt.bld_info.keys(): # if source is a BldInfo...
         detector_class = dt.bld_info[source_string]
+
+    elif isinstance(source_string, (list,tuple))\
+      or ('compound' in source_string.lower()) :
+        detector_class = AreaDetectorCompound
 
     else:                                     # assume source is a DetInfo...
         di = DetInfo(source_string)

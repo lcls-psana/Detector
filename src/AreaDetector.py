@@ -257,6 +257,7 @@ class AreaDetector(object):
         
         src = srcpar if isinstance(srcpar, _psana.Source) else _psana.Source(srcpar)
         str_src = gu.string_from_source(src)
+        self.name = str_src
 
         # in case of alias convert it to _psana.Src
         amap = self.env.aliasMap()
