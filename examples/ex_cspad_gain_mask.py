@@ -15,7 +15,7 @@ ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0001-CxiDs2.0-Cspad.
 #ds  = psana.DataSource('exp=cxid9114:run=96')
 
 env = ds.env()
-evt = ds.events().next()
+evt = next(ds.events())
 rnum = evt.run()
 #calibdir = env.calibDir()
 

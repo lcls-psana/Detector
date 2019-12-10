@@ -30,12 +30,12 @@ FNAME_PANEL_ID_ALIASES = '%s/.aliases.txt'%CALIB_REPO_EPIX10KA
 
 #------------------------------
 
-def set_file_access_mode(fname, mode=0777) :
+def set_file_access_mode(fname, mode=0o777) :
     os.chmod(fname, mode)
 
 #------------------------------
 
-def create_directory(dir, mode=0777) :
+def create_directory(dir, mode=0o777) :
     """Creates directory and sets its mode"""
     if os.path.exists(dir) :
         logger.debug('Exists: %s mode(oct): %s' % (dir, oct(file_mode(dir))))

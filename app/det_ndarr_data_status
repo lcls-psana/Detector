@@ -345,7 +345,7 @@ class DetNDArrDataProc :
         cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % self.counter]        
         template = self.fname_template()
 
-        gu.create_path(template, depth=0, mode=0770, verb=(verbos>0))
+        gu.create_path(template, depth=0, mode=0o770, verb=(verbos>0))
 
         if savebw &  1 : det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
         if savebw &  2 : det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
@@ -530,8 +530,8 @@ def option_parser() :
     d_rmsnlo = 0
     d_rmsnhi = 0
     d_plotim = 0      
-    d_verbos = 0377
-    d_savebw = 0377
+    d_verbos = 0o377
+    d_savebw = 0o377
     d_uplobw = 0
     d_clbdir = None
     d_evcode = None

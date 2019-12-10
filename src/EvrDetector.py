@@ -4,8 +4,9 @@ Detector interface for the EVR
 ==============================
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
-from DdlDetector import DdlDetector
+from .DdlDetector import DdlDetector
 from _psana import EventId
 
 class EvrDetector(DdlDetector):

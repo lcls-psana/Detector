@@ -284,7 +284,7 @@ if __name__ == "__main__" :
     env = ds.env()
     cls = env.calibStore()
     eviter = ds.events()
-    evt = eviter.next()
+    evt = next(eviter)
     rnum = evt.run()
 
     #for key in evt.keys() : print key

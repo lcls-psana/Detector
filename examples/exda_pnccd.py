@@ -13,7 +13,7 @@ from time import time
 
 # ds  = psana.DataSource('exp=amob5114:run=403')
 ds  = psana.DataSource('exp=amo86615:run=4')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

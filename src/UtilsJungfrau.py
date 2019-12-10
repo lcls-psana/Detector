@@ -43,9 +43,9 @@ from PSCalib.GlobalUtils import string_from_source, complete_detname
 
 DIRNAME = '/reg/g/psdm/detector/gains/jungfrau'
 
-BW1 =  040000 # 16384 or 1<<14 (15-th bit starting from 1)
-BW2 = 0100000 # 32768 or 2<<14 or 1<<15
-BW3 = 0140000 # 49152 or 3<<14
+BW1 =  0o40000 # 16384 or 1<<14 (15-th bit starting from 1)
+BW2 = 0o100000 # 32768 or 2<<14 or 1<<15
+BW3 = 0o140000 # 49152 or 3<<14
 MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 #MSK =  037777 # 16383 or (1<<14)-1
 

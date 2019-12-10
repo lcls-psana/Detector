@@ -26,7 +26,7 @@ print('co.numPixelsY', co.numPixelsY())
 
 
 #r = ds.runs().next()
-evt = ds.events().next()
+evt = next(ds.events())
 
 evt=None
 for i, evt in enumerate(ds.events()) :    

@@ -523,7 +523,7 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0) :
 
 #--------------------
 
-def save_log_record_on_start(dirrepo, fname, fac_mode=0777) :
+def save_log_record_on_start(dirrepo, fname, fac_mode=0o777) :
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     rec = log_rec_on_start()
@@ -646,8 +646,8 @@ def offset_calibration(*args, **opts) :
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
-    dirmode    = opts.get('dirmode', 0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode', 0o777)
+    filemode   = opts.get('filemode', 0o666)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     if usesmd : dsname += ':smd'
@@ -944,8 +944,8 @@ def pedestals_calibration(*args, **opts) :
     #mode       = opts.get('mode', None)
     idx_sel    = opts.get('idx', None)
     #nspace     = opts.get('nspace', 7)
-    dirmode    = opts.get('dirmode', 0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode', 0o777)
+    filemode   = opts.get('filemode', 0o666)
     usesmd     = opts.get('usesmd', False)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
@@ -1130,8 +1130,8 @@ def pedestals_calibration_v1(*args, **opts) :
     #mode       = opts.get('mode', None)
     idx_sel    = opts.get('idx', None)
     #nspace     = opts.get('nspace', 7)    
-    dirmode    = opts.get('dirmode', 0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode', 0o777)
+    filemode   = opts.get('filemode', 0o666)
     usesmd     = opts.get('usesmd', False)
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
@@ -1276,7 +1276,7 @@ def pedestals_calibration_v1(*args, **opts) :
         
 #--------------------
 
-def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0777) :
+def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777) :
 
     logger.debug('In merge_panel_gain_ranges for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dirrepo, panel_id, ctype, str(tstamp), str(shape)))
@@ -1380,8 +1380,8 @@ def deploy_constants(*args, **opts) :
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
     logmode    = opts.get('logmode', 'DEBUG')
-    dirmode    = opts.get('dirmode',  0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode',  0o777)
+    filemode   = opts.get('filemode', 0o666)
     high       = opts.get('high',   1.)
     medium     = opts.get('medium', 0.33333) 
     low        = opts.get('low',    0.01)

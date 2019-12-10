@@ -4,6 +4,7 @@ Detector interface for the UsdUsb Encoder Box
 =============================================
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 # issues with usdusb: 
 # - can come in with DAQ data
@@ -11,7 +12,7 @@ from __future__ import print_function
 
 import _psana
 import numpy as np
-from DdlDetector import DdlDetector
+from .DdlDetector import DdlDetector
 
 class UsdUsbDetector(DdlDetector):
     """

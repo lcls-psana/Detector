@@ -32,7 +32,7 @@ def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
     #psana.setOption('psana.calib-dir', './calib')
 
     ds  = psana.DataSource(dsname)
-    evt = ds.events().next()
+    evt = next(ds.events())
     env = ds.env()
     
     det = psana.Detector(src, env)
@@ -42,7 +42,7 @@ def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
 
     nda_peds = det.pedestals(evt)       if algors & 2  else None    
     nda_bkgd = det.bkgd(evt)            if algors & 8  else None
-    nda_mask = det.mask_comb(evt, 0377) #if algors & 64 else None
+    nda_mask = det.mask_comb(evt, 0o377) #if algors & 64 else None
 
     rb = None
     nda_polf = None

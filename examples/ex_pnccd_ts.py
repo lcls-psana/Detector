@@ -32,7 +32,7 @@ ds = psana.DataSource(dsname)
 tsecnsec, fid = 6178962762198708138, 0xf762
 et = psana.EventTime(int(tsecnsec),fid)
 
-run = ds.runs().next()
+run = next(ds.runs())
 evt = run.event(et)
 #evt = ds.events().next()
 env = ds.env()

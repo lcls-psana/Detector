@@ -24,7 +24,7 @@ class TestPyDetector(unittest.TestCase) :
 
     def test_lookup(self):
 
-        evt = self.ds.events().next()
+        evt = next(self.ds.events())
 
         print("testing %d detector names" % len(self.detectors))
         for name in self.detectors:
@@ -59,7 +59,7 @@ class TestPyDetector(unittest.TestCase) :
 
     def test_cspad(self):
         cspad = psana.Detector('cspad')
-        evt = self.ds.events().next()
+        evt = next(self.ds.events())
         assert cspad.raw(evt).shape == (32, 185, 388)
         assert cspad.calib(evt).shape == (32, 185, 388)
 
@@ -71,7 +71,7 @@ class TestPyDetector(unittest.TestCase) :
 
     def test_cspad_cm1(self):
     	cspad = psana.Detector('cspad')
-	evt = self.ds.events().next()
+	evt = next(self.ds.events())
 	mask = cspad.mask(evt, unbond=True)
 	nda0, nda1, rms = 30, 20, 3
 
@@ -102,7 +102,7 @@ class TestPyDetector(unittest.TestCase) :
 
     def test_string_pv(self):
         pv = psana.Detector('grid_var01_name')
-        evt = self.ds.events().next()
+        evt = next(self.ds.events())
         assert type(pv(evt)) is str
 
 

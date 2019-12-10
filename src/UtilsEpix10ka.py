@@ -39,9 +39,9 @@ get_epix10ka_data_object = get_epix_data_object
 GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
 
-B14 = 040000 # 16384 or 1<<14 (15-th bit starting from 1)
-B04 =    020 #    16 or 1<<4   (5-th bit starting from 1)
-B05 =    040 #    32 or 1<<5   (6-th bit starting from 1)
+B14 = 0o40000 # 16384 or 1<<14 (15-th bit starting from 1)
+B04 =    0o20 #    16 or 1<<4   (5-th bit starting from 1)
+B05 =    0o40 #    32 or 1<<5   (6-th bit starting from 1)
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #--------------------
@@ -436,7 +436,7 @@ if __name__ == "__main__" :
     ds = psana.DataSource(dsname)
     det = psana.Detector(ssrc)
     env = ds.env()
-    evt = ds.events().next()
+    evt = next(ds.events())
     src = psana.Source(ssrc)
 
     #confo = env.configStore().get(psana.Epix.Config10kaV1, src)

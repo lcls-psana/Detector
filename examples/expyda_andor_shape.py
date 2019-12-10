@@ -12,7 +12,7 @@ import psana
 
 ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0005-SxrEndstation.0-DualAndor.0.xtc')
 #ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0006-SxrEndstation.0-DualAndor.0.xtc')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

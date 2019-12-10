@@ -25,7 +25,7 @@ dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspa
 
 ds  = psana.DataSource(dsname)
 env = ds.env()
-evt = ds.events().next()
+evt = next(ds.events())
 rnum = evt.run()
 #calibdir = env.calibDir()
 #print evt.keys()

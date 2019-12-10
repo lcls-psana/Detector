@@ -27,7 +27,7 @@ def example01() :
     suffix  = detname.replace(":","-").replace(".","-") #.lower()
     cmpars  = (1,1000,500,100)
     do_save = True
-    mask_bits = 0377 # for releases >ana-0.17.11
+    mask_bits = 0o377 # for releases >ana-0.17.11
     #------------------------------
 
     ds  = psana.DataSource(dsname)

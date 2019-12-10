@@ -11,7 +11,7 @@ from time import time
 import psana
 ds = psana.DataSource('exp=xpptut15:run=54')
 env = ds.env()
-evt = ds.events().next()
+evt = next(ds.events())
 det = psana.Detector('XppGon.0:Cspad.0', env)
 
 for i in range(10) :

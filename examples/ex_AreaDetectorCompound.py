@@ -49,7 +49,7 @@ def test_AreaDetectorCompound(ntest) :
     ds, det = datasource_and_detector(ntest)
 
     env = ds.env()
-    evt = ds.events().next()
+    evt = next(ds.events())
     rnum = evt.run()
  
     print('rnum     :', rnum)

@@ -133,7 +133,7 @@ print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
 ds  = psana.DataSource(dsname)
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 nrun = evt.run()
 

@@ -248,7 +248,7 @@ def _test1(ntest):
     env = ds.env()
     cls = env.calibStore()
     eviter = ds.events()
-    evt = eviter.next()
+    evt = next(eviter)
     rnum = evt.run()
 
     for key in evt.keys() : print(key)
@@ -314,7 +314,7 @@ def _test3():
     #det = psana.Detector('ControlData', ds.env())
     det = psana.Detector('ControlData')
 
-    run = ds.runs().next()
+    run = next(ds.runs())
     nsteps = run.nsteps()
     for step in range(nsteps):
         times = run.times(step)
@@ -332,8 +332,8 @@ def test4():
     d = psana.Detector('evr0')
     d2 = psana.Detector('yag2')
     print(d.source, d2.source)
-    print(d( ds.events().next() ))
-    print(d2.raw( ds.events().next() ))
+    print(d( next(ds.events()) ))
+    print(d2.raw( next(ds.events()) ))
 
 ##-----------------------------
 

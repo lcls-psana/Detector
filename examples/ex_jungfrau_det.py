@@ -16,7 +16,7 @@ def test_jungfrau_methods(dsname, src) :
     #/reg/d/psdm/det/detdaq17/calib/Jungfrau::CalibV1/DetLab.0:Jungfrau.2/geometry/1-end.data
 
     ds  = psana.DataSource(dsname)
-    evt = ds.events().next()
+    evt = next(ds.events())
     env = ds.env()
     nrun = evt.run()
     

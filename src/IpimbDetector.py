@@ -4,13 +4,14 @@ Detector interface for the Ipimb
 ================================
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 # issues with ipimb: 
 # - can come in with either BLD or DAQ data
 # - get the FEX type and implement sum(), channel(), xpos(), ypos()
 
 import _psana
-from DdlDetector import DdlDetector
+from .DdlDetector import DdlDetector
 
 class IpimbDetector(DdlDetector):
     """

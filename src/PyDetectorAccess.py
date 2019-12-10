@@ -133,7 +133,7 @@ class PyDetectorAccess :
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
-            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0377)
+            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0o377)
             if self.pbits & 1 : print('PSCalib.CalibParsStore object is created for run %d' % runnum)
 
         return self.cpst
@@ -157,7 +157,7 @@ class PyDetectorAccess :
         fname = apputils.AppDataPath(defname).path()
         if self.pbits : print('%s: Load default geometry from file %s' % (self.__class__.__name__, fname))
          
-        self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+        self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
         if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT    
         #return GeometryAccess(fname, 0377 if self.pbits else 0)
 
@@ -190,7 +190,7 @@ class PyDetectorAccess :
         #save_txt(fntmp.name, data, cmts='', fmt='%.1f')
         #self.geo = GeometryAccess(fntmp.name, 0377 if self.pbits else 0)
 
-        self.geo = GeometryAccess(pbits=0377 if self.pbits else 0)
+        self.geo = GeometryAccess(pbits=0o377 if self.pbits else 0)
         if self.geo is not None :
             self.geo.load_pars_from_str(data)
             #self.geo.print_list_of_geos()
@@ -202,10 +202,10 @@ class PyDetectorAccess :
         """Returns geometry object from calib store or None if can't load geometry.
         """
         group = gu.dic_det_type_to_calib_group[self.dettype]
-        cff = CalibFileFinder(self.env.calibDir(), group, 0377 if self.pbits else 0)
+        cff = CalibFileFinder(self.env.calibDir(), group, 0o377 if self.pbits else 0)
         fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
         if fname :
-            self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+            self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
             if self.pbits & 1 : print('PSCalib.GeometryAccess object is created for run %d' % runnum)
             if self.geo.valid : self.geo_load_status = self.GEO_LOADED_CALIB
         else :
@@ -608,8 +608,8 @@ class PyDetectorAccess :
 
     def set_print_bits(self, pbits) :
         self.pbits  = pbits
-        if self.cpst is not None : self.cpst.set_print_bits(0177777)
-        if self.geo  is not None : self.geo.set_print_bits(0377 if pbits else 0)
+        if self.cpst is not None : self.cpst.set_print_bits(0o177777)
+        if self.geo  is not None : self.geo.set_print_bits(0o377 if pbits else 0)
 
 ##-----------------------------
 
@@ -732,7 +732,7 @@ class PyDetectorAccess :
             if self.pbits & 8 : print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
     
             #roim = 0375 # for test only        
-            if roim == 0377 :
+            if roim == 0o377 :
                 arr[qnum,:] = qdata
 
             else :
@@ -813,8 +813,8 @@ class PyDetectorAccess :
         arr = d.data16()
         if arr is None : return None
 
-        arr_c = (arr>>13)&03
-        arr_v = arr&017777
+        arr_c = (arr>>13)&0o3
+        arr_v = arr&0o17777
         #print 'arr_c:\n', arr_c
         #print 'arr_v:\n', arr_v
 
@@ -1258,7 +1258,7 @@ class PyDetectorAccess :
     
             #roim = 0375 # for test only
         
-            if roim == 0377 : arr.append(qdata)
+            if roim == 0o377 : arr.append(qdata)
             else :
                 if self.pbits : print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
@@ -1588,7 +1588,7 @@ if __name__ == "__main__" :
     env  = ds.env()
     cls  = env.calibStore()
     evts = ds.events()
-    evt  = evts.next()
+    evt  = next(evts)
 
     for key in evt.keys() : print(key)
 

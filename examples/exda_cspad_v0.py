@@ -11,7 +11,7 @@ from time import time
 ##-----------------------------
 
 ds  = psana.DataSource('exp=cxif5315:run=169')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

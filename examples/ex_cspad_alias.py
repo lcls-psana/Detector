@@ -10,7 +10,7 @@ from Detector.GlobalUtils import print_ndarr
 #ds  = psana.DataSource('exp=cxi86715:run=99')
 #src = 'CxiDs2.0:Cspad.0'
 ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 
 src = psana.Source('DsaCsPad')

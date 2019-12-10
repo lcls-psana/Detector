@@ -468,7 +468,7 @@ def command_line_parser() :
     nsigma_def = 6.0
     plotim_def = 0      
     verbos_def = 7
-    savebw_def = 0377
+    savebw_def = 0o377
     intnlo_def = 6.0
     intnhi_def = 6.0
     rmsnlo_def = 6.0

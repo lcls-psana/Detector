@@ -5,8 +5,9 @@ case where it represents waveforms with a time axis.  This interface
 is intended to be identical to the WFDetector 
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
-from Generic1DDetector import Generic1DDetector
+from .Generic1DDetector import Generic1DDetector
 import numpy as np
 
 class GenericWFDetector(Generic1DDetector):

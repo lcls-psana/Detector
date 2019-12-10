@@ -52,7 +52,7 @@ if __name__ == '__main__':
     ds = psana.DataSource('exp=xppk3815:run=100:idx')
     cdd = ControlDataDetector('', ds.env())
 
-    run = ds.runs().next()
+    run = next(ds.runs())
     nsteps = run.nsteps()
     for step in range(nsteps):
         times = run.times(step)

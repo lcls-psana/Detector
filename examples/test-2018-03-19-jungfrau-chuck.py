@@ -11,7 +11,7 @@ runNumber = '56'
 detInfo = 'Jungfrau512k'
 
 ds = psana.DataSource('exp='+experimentName+':run='+runNumber+':idx')
-run = ds.runs().next()
+run = next(ds.runs())
 det = psana.Detector(detInfo)
 times = run.times()
 env = ds.env()

@@ -114,7 +114,7 @@ def jungfrau_gain_constants() :
     if verbose : print_command_line_parameters(parser)
 
     log_fname = log_file_name(lfpath, DSNAME)
-    gu.create_path(log_fname, depth=6, mode=0777, verb=False)
+    gu.create_path(log_fname, depth=6, mode=0o777, verb=False)
 
     #print('==== Start logging ====')
     config_logger(log_fname, loglev)

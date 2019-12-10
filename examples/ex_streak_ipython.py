@@ -31,7 +31,7 @@ arr = co.calibTimesInSeconds()
 
 
 events = ds.events()
-evt = events.next()
+evt = next(events)
 frame = evt.get(psana.Camera.FrameV1, src)
 data = frame.data16()
 

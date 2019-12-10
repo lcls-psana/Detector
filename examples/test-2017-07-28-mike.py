@@ -21,7 +21,7 @@ for det in src:
     cspaddetectors[det] = Detector(det, env)
  
 x = ds.events()
-evt = x.next()
+evt = next(x)
 for det in src:
     detectorname = det[det.find(sourceName)+detectorNameOffset:]
     calibframe = cspaddetectors[det].raw(evt)

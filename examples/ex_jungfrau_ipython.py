@@ -12,8 +12,8 @@ src = psana.Source(s_src)
 ds  = psana.DataSource(dsname)
 env = ds.env()
 
-r = ds.runs().next()
-evt = ds.events().next()
+r = next(ds.runs())
+evt = next(ds.events())
 
 cfg = env.configStore()
 co  = cfg.get(psana.Jungfrau.ConfigV1, src)
@@ -76,7 +76,7 @@ for step in ds.steps():
     for evt in step.events():
 
 
-evt = ds.events().next()
+evt = next(ds.events())
 dato = evt.get(psana.Jungfrau.ElementV1, src)
 
 #------------------------------

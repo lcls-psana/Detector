@@ -16,7 +16,7 @@ src = psana.Source('XppEndstation.0:Imp.0')
 print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
 ds  = psana.DataSource(dsname)
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 nrun = evt.run()
 

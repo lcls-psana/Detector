@@ -3,8 +3,9 @@
 Detector interface for the TDC type
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
-from DdlDetector import DdlDetector
+from .DdlDetector import DdlDetector
 import numpy as np
 
 class TDCDetector(DdlDetector):

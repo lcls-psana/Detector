@@ -22,7 +22,7 @@ for i, evt in enumerate(ds.events()) :
 runnum = 10
 print_ndarr(det.pedestals(runnum), name='pedestals', first=0, last=5)
 
-evt=ds.events().next()
+evt=next(ds.events())
 
 #------------------------------
 
@@ -30,7 +30,7 @@ import psana
 src = psana.Source('NoDetector.0:Epix10kaQuad.0')
 ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0032-NoDetector.0-Epix10kaQuad.0.xtc')
 env = ds.env()
-r = ds.runs().next()
+r = next(ds.runs())
 #evt = ds.events().next()
 
 evt=None

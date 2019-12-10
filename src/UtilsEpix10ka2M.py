@@ -95,7 +95,7 @@ if __name__ == "__main__" :
     ds = psana.DataSource(dsname)
     det = psana.Detector(ssrc)
     env = ds.env()
-    evt = ds.events().next()
+    evt = next(ds.events())
     src = psana.Source(ssrc)
 
     #co = env.configStore().get(psana.Epix.Config10kaQuadV1, src)

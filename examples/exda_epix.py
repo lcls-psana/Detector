@@ -10,7 +10,7 @@ from Detector.GlobalUtils import print_ndarr
 # psana -m EventKeys -n 5 exp=xppi0614:run=74
 
 ds  = psana.DataSource('exp=xppi0614:run=74')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

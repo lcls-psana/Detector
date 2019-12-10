@@ -25,7 +25,7 @@ dsname, src = '/reg/g/psdm/detector/data_test/types/0004-MecTargetChamber.0-Cspa
 
 ds  = psana.DataSource(dsname)
 env = ds.env()
-evt = ds.events().next()
+evt = next(ds.events())
 rnum = evt.run()
 
 calibdir = env.calibDir()
@@ -41,7 +41,7 @@ print('Run number : %d' % rnum)
 ##----------------------------- evt
 
 t0_sec = time()
-nda = det.calib(evt, mbits=0377)
+nda = det.calib(evt, mbits=0o377)
 
 print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(nda, 'raw')

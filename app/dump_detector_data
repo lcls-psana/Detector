@@ -97,7 +97,7 @@ def option_parser() :
     d_format = '%6.2f'
     d_events = 10
     d_evskip = 0
-    d_verbos = 0377
+    d_verbos = 0o377
     d_clbdir = None
     d_dosave = True
 

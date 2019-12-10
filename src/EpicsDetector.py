@@ -50,6 +50,6 @@ if __name__ == '__main__':
     import psana
     ds = psana.DataSource('exp=xpptut15:run=59')
     det = psana.Detector('XPP:LAS:MMN:01.RBV')
-    print(det(ds.events().next()))
+    print(det(next(ds.events())))
  
 

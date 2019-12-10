@@ -22,7 +22,7 @@ src = psana.Source(src)
 ds  = psana.DataSource(dsn)
 env = ds.env()
 
-evt = ds.events().next()
+evt = next(ds.events())
 
 #pda = PyDetectorAccess(src, env, pbits=0)
 cfg = env.configStore()

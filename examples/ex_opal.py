@@ -28,7 +28,7 @@ print('Example for\n dataset: %s\n source : %s' % (dsname, src))
 #psana.setOption('psana.calib-dir', './empty/calib')
 
 ds  = psana.DataSource(dsname)
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 nrun = evt.run()
 print('Run number %d' % nrun)

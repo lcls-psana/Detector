@@ -4,8 +4,9 @@ Detector interface for the Generic1D type
 =========================================
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
-from DdlDetector import DdlDetector
+from .DdlDetector import DdlDetector
 
 
 class Generic1DDetector(DdlDetector):

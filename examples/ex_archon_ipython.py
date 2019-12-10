@@ -49,7 +49,7 @@ print('co.biasVoltage         :', co.biasVoltage)
 print('co.biasChan()          :', co.biasChan())          
 
 events = ds.events()
-evt = events.next()
+evt = next(events)
 frame = evt.get(psana.Camera.FrameV1, src)
 data = frame.data16()
 

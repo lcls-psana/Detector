@@ -17,7 +17,7 @@ print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 #psana.setOption('psana.calib-dir', './empty/calib')
 
 ds  = psana.DataSource(dsname)
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 
 #for key in evt.keys() : print key
@@ -52,7 +52,7 @@ def raw_data_cspad(evt, env, src) :
 
         #roim = 0355 # for test only
 
-        if roim == 0377 : arr.append(qdata)
+        if roim == 0o377 : arr.append(qdata)
         else :
             qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
             i = 0

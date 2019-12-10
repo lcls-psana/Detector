@@ -11,7 +11,7 @@ detInfo = 'pnccdFront'
 # 'exp=amok5415:run=87:idx'
 
 ds = psana.DataSource('exp='+experimentName+':run='+runNumber+':idx')
-run = ds.runs().next()
+run = next(ds.runs())
 det = psana.Detector(detInfo)
 #det.set_print_bits(0377)
 

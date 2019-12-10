@@ -17,7 +17,7 @@ ds, src  = psana.DataSource('exp=sxrb6813:run=52'), psana.Source('DetInfo(SxrEnd
 #ds, src  = psana.DataSource('exp=mecb3114:run=17'), psana.Source('DetInfo(MecTargetChamber.0:Andor.1)')
 #ds, src  = psana.DataSource('exp=sxrb6813:run=52'), psana.Source('DetInfo(MecTargetChamber.0:Andor.1)')
 
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

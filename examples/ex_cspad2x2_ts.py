@@ -28,9 +28,9 @@ print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 #et = psana.EventTime(int((tsec<<32)|tnsec),fid)
 
 ds  = psana.DataSource(dsname)
-run = ds.runs().next()
+run = next(ds.runs())
 #evt = run.event(et)
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 
 for key in evt.keys() : print(key)

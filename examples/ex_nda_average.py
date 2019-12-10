@@ -36,7 +36,7 @@ def example_01():
     #psana.setOption('psana.calib-dir', './calib')
 
     ds   = psana.DataSource(dsname)
-    evt  = ds.events().next()
+    evt  = next(ds.events())
     env  = ds.env()
     rnum = evt.run()
     

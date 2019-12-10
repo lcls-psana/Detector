@@ -10,7 +10,7 @@ import psana
 ##-----------------------------
 
 ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0011-XppEndstation.0-Rayonix.0.xtc')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

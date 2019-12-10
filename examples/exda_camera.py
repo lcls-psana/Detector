@@ -12,7 +12,7 @@ from time import time
 # psana -m EventKeys -n 5 exp=sxrf9414:run=72
 
 ds  = psana.DataSource('exp=sxrf9414:run=72')
-evt = ds.events().next()
+evt = next(ds.events())
 env = ds.env()
 rnum = evt.run()
 

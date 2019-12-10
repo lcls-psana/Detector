@@ -23,7 +23,7 @@ def test_epix10ka_methods(tname) :
     dsname, src = dsname_source(tname)
 
     ds  = psana.DataSource(dsname)
-    evt = ds.events().next()
+    evt = next(ds.events())
     env = ds.env()
     nrun = evt.run()
     
