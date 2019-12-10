@@ -2,6 +2,7 @@
 """
     Script for epix10k merging gain and offset consatnts and producing calibration files.
 """
+from __future__ import print_function
 #--------------------------------
 
 import sys
@@ -11,7 +12,7 @@ from PSCalib.NDArrIO import save_txt
 
 #--------------------------------
 
-print 50*'_'
+print(50*'_')
 
 detname = 'Camera1'
 dir = '/reg/g/psdm/detector/gains/epix10k/2018-06-04-%s' % detname
@@ -43,12 +44,12 @@ for t,ctype,fmt in name_ctype_fmts :
     #print_ndarr(nda, 'calib nda')
 
     nda_one_seg.shape = (len(gainmodes),1,352, 384)
-    print 'Re-shape output array to: %s' % str(nda_one_seg.shape)
+    print('Re-shape output array to: %s' % str(nda_one_seg.shape))
 
     np.save('%s.npy'%ofname, nda_one_seg)
-    print 'Save n-d array in file "%s"' % ('%s.npy'%ofname)
+    print('Save n-d array in file "%s"' % ('%s.npy'%ofname))
 
     save_txt('%s.txt'%ofname, nda_one_seg, fmt=fmt)
-    print 'Save n-d array in file "%s"' % ('%s.txt'%ofname)
+    print('Save n-d array in file "%s"' % ('%s.txt'%ofname))
 
 #--------------------------------

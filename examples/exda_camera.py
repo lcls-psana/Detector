@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 import Detector
@@ -20,7 +21,7 @@ det = Detector.DetectorAccess(src, env, 0) # , 0xffff)
 
 ##-----------------------------
 t0_sec = time()
-print '\nInstrument: ', det.instrument(env)
+print('\nInstrument: ', det.instrument(env))
 print_ndarr(det.pedestals(evt,env),    'pedestals(evt,env)')
 print_ndarr(det.pedestals_v0(rnum),    'pedestals_v0(rnum)')
 print_ndarr(det.pixel_rms(evt,env),    'pixel_rms(evt,env)')
@@ -37,7 +38,7 @@ print_ndarr(raw_data, 'raw_data')
 
 det.print_config(evt,env)
 
-print 'Consumed time = %7.6f sec' % (time()-t0_sec)
+print('Consumed time = %7.6f sec' % (time()-t0_sec))
 
 sys.exit(0)
 ##-----------------------------

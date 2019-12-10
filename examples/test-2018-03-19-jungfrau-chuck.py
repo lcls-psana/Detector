@@ -1,3 +1,4 @@
+from __future__ import print_function
 import psana
 import numpy as np
 import time
@@ -27,6 +28,6 @@ for i in times:
     print_ndarr(img, name='img', first=0, last=5)
     mask_roi = np.zeros_like(img)
     nda = det.ndarray_from_image(evt, mask_roi, pix_scale_size_um=None, xy0_off_pix=None)
-    print calib.shape, img.shape, nda.shape
+    print(calib.shape, img.shape, nda.shape)
     exit()
 

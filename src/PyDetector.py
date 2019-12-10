@@ -50,6 +50,7 @@ Usage::
 This software was developed for the LCLS project.
 If you use all or part of it, please give an appropriate acknowledgment.
 """
+from __future__ import print_function
 
 import _psana
 import re
@@ -241,7 +242,7 @@ def _test1(ntest):
     elif ntest==4  : dsname, src = 'exp=xppi0614:run=74',  'NoDetector.0:Epix100a.0'
     elif ntest==5  : dsname, src = 'exp=sxri0414:run=88',  'SxrEndstation.0:Acqiris.2'
     elif ntest==6  : dsname, src = 'exp=cxii0215:run=49',  'CxiEndstation.0:Imp.1'
-    print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+    print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
     ds = psana.DataSource(dsname)
     env = ds.env()
@@ -250,24 +251,24 @@ def _test1(ntest):
     evt = eviter.next()
     rnum = evt.run()
 
-    for key in evt.keys() : print key
+    for key in evt.keys() : print(key)
 
     det = detector_factory(src, env)
 
     try :
         nda = det.pedestals(rnum)
-        print '\nnda:\n', nda
-        print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
+        print('\nnda:\n', nda)
+        print('nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape))
     except :
-        print 'WARNING: det.pedestals(rnum) is not available for dataset: %s and source : %s' % (dsname, src) 
+        print('WARNING: det.pedestals(rnum) is not available for dataset: %s and source : %s' % (dsname, src)) 
 
     try :
         t0_sec = time()
         nda = det.raw(evt)
-        print '\nConsumed time to get raw data (sec) =', time()-t0_sec
-        print 'nda:\n', nda.flatten()[0:10]
+        print('\nConsumed time to get raw data (sec) =', time()-t0_sec)
+        print('nda:\n', nda.flatten()[0:10])
     except :
-        print 'WARNING: det.raw(evt) is not available for dataset: %s and source : %s' % (dsname, src) 
+        print('WARNING: det.raw(evt) is not available for dataset: %s and source : %s' % (dsname, src)) 
 
 ##-----------------------------
 
@@ -296,10 +297,10 @@ def _test2():
 
     for name in names:
         det = detector_factory(name, env)
-        print name, '-->', type(det)
+        print(name, '-->', type(det))
 
         for evt in ds.events():
-            print det(evt)
+            print(det(evt))
             break
 
     return 
@@ -319,7 +320,7 @@ def _test3():
         times = run.times(step)
         for t in times[:2]:
             evt = run.event(t)
-            print t, det().pvControls()[0].value()
+            print(t, det().pvControls()[0].value())
     
     return
 
@@ -330,9 +331,9 @@ def test4():
     env = ds.env()
     d = psana.Detector('evr0')
     d2 = psana.Detector('yag2')
-    print d.source, d2.source
-    print d( ds.events().next() )
-    print d2.raw( ds.events().next() )
+    print(d.source, d2.source)
+    print(d( ds.events().next() ))
+    print(d2.raw( ds.events().next() ))
 
 ##-----------------------------
 
@@ -347,7 +348,7 @@ if __name__ == '__main__':
 
     try    : ntest = int(sys.argv[1]) if len(sys.argv)>1 else 0
     except : raise ValueError('First input parameter "%s" is expected to be empty or integer test number' % sys.argv[1])
-    print 'Test# %d' % ntest
+    print('Test# %d' % ntest)
 
     if len(sys.argv)<2 : _test2()
     else               : _test1(ntest)

@@ -2,6 +2,7 @@
 
 #------------------------------
 
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -63,7 +64,7 @@ def dump_detector_data() :
             tsec = time()
             dt   = tsec - tdt
             tdt  = tsec
-            print 'Event: %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
+            print('Event: %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt))
             print_ndarr(nda,'  nda')
 
         cmts = ['DATASET %s' % dsname,
@@ -126,7 +127,7 @@ def option_parser() :
 #------------------------------
 
 if __name__ == "__main__" :
-    if len(sys.argv)==1 : print '\n%s' % usage()
+    if len(sys.argv)==1 : print('\n%s' % usage())
     dump_detector_data()
     sys.exit(0)
 

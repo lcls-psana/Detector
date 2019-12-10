@@ -3,6 +3,7 @@
 Detector interface for the UsdUsb Encoder Box
 =============================================
 """
+from __future__ import print_function
 
 # issues with usdusb: 
 # - can come in with DAQ data
@@ -139,6 +140,6 @@ if __name__ == '__main__':
     usdusbdet_not_in_data = UsdUsbDetector('usbencoder1',ds.env())
 
     for i,evt in enumerate(ds.events()):
-        print usdusbdet.descriptions(), usdusbdet.values(evt)
-        print usdusbdet_not_in_data.values(evt), usdusbdet_not_in_data.values(evt)
+        print(usdusbdet.descriptions(), usdusbdet.values(evt))
+        print(usdusbdet_not_in_data.values(evt), usdusbdet_not_in_data.values(evt))
         if i == 5: break

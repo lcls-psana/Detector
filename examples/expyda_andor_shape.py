@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 from Detector.PyDetectorAccess import PyDetectorAccess
 from Detector.PyDataAccess import * # get_andor_config_object
 
@@ -23,12 +24,12 @@ src = psana.Source(source)
 pda = PyDetectorAccess(src, env, pbits=0)
 sh = pda.shape_config_andor(env)
 
-print 'shape_config_andor(3d).shape', sh
+print('shape_config_andor(3d).shape', sh)
 
 ##-----------------------------
 
 det = psana.Detector(source, env)
-print 'det.raw(evt).shape:', det.raw(evt).shape
+print('det.raw(evt).shape:', det.raw(evt).shape)
 
 ##-----------------------------
 

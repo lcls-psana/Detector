@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 # Example of code for ipython
 
@@ -5,7 +6,7 @@ import psana
 nrun = 9 #  9, 11, 12
 dsname = 'exp=cxi11216:run=%d' % nrun # (1, 512, 1024)
 s_src = 'CxiEndstation.0:Jungfrau.0'
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, s_src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, s_src))
 
 src = psana.Source(s_src)
 ds  = psana.DataSource(dsname)
@@ -128,12 +129,12 @@ co = ds.env().configStore().get(psana.Jungfrau.ConfigV3, src)
 #co = get_jungfrau_config_object(ds.env(), src)
 
 nmodules = co.numberOfModules()
-print('numberOfModules', co.numberOfModules())
+print(('numberOfModules', co.numberOfModules()))
 for i in range(nmodules) :
     m = co.moduleConfig(i)
-    print('  firmwareVersion', m.firmwareVersion())         
-    print('  moduleVersion', m.moduleVersion())      
-    print('  serialNumber', m.serialNumber()) 
+    print(('  firmwareVersion', m.firmwareVersion()))         
+    print(('  moduleVersion', m.moduleVersion()))      
+    print(('  serialNumber', m.serialNumber())) 
 
 env = ds.env()
 exp = env.experiment()
@@ -165,23 +166,23 @@ src = psana.Source('XcsEndstation.0:Jungfrau.0')
 co = ds.env().configStore().get(psana.Jungfrau.ConfigV2, src)
 #co = get_jungfrau_config_object(ds.env(), src)
 
-print 'Content of Jungfrau.ConfigV1:'
+print('Content of Jungfrau.ConfigV1:')
 
-print 'numberOfModules         ', co.numberOfModules()
-print 'numberOfRowsPerModule   ', co.numberOfRowsPerModule()
-print 'numberOfColumnsPerModule', co.numberOfColumnsPerModule()
+print('numberOfModules         ', co.numberOfModules())
+print('numberOfRowsPerModule   ', co.numberOfRowsPerModule())
+print('numberOfColumnsPerModule', co.numberOfColumnsPerModule())
 
-print 'biasVoltage             ',co.biasVoltage()
-print 'gainMode                ',co.gainMode()
-print 'SpeedMode               ',co.SpeedMode()
-print 'TypeId                  ',co.TypeId
-print 'exposureTime            ',co.exposureTime()
-print 'GainMode                ',co.GainMode()
-print 'speedMode               ',co.speedMode()
-print 'Version                 ',co.Version
-print 'frameSize               ',co.frameSize()
-print 'numPixels               ',co.numPixels()
-print 'triggerDelay            ',co.triggerDelay()          
+print('biasVoltage             ',co.biasVoltage())
+print('gainMode                ',co.gainMode())
+print('SpeedMode               ',co.SpeedMode())
+print('TypeId                  ',co.TypeId)
+print('exposureTime            ',co.exposureTime())
+print('GainMode                ',co.GainMode())
+print('speedMode               ',co.speedMode())
+print('Version                 ',co.Version)
+print('frameSize               ',co.frameSize())
+print('numPixels               ',co.numPixels())
+print('triggerDelay            ',co.triggerDelay())          
 
 #------------------------------
 #------------------------------

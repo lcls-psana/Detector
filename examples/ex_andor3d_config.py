@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -28,12 +29,12 @@ for i, evt in enumerate(ds.events()) :
     img = det.raw(evt)
     #img = det.calib(evt)
     if img is not None :
-        print 'Detector data found in event %d' % i
+        print('Detector data found in event %d' % i)
         break
 counter=i
 
 if img is None :
-    print 'Detector data IS NOT FOUND in %d events' % counter
+    print('Detector data IS NOT FOUND in %d events' % counter)
     sys.exit('FURTHER TEST IS TERMINATED')
 
 print_ndarr(img, 'andor3d raw')

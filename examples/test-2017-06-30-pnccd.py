@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 #==============================
 # event_keys -d exp=sxrx22915:run=16
@@ -27,19 +28,19 @@ rank = 0
 calibType = eval(sys.argv[1])
 if calibType==0:
     if rank==0:
-        print "skip global gain by pointing to local calib with PAH correction"
+        print("skip global gain by pointing to local calib with PAH correction")
     setOption('psana.calib-dir',
               '/reg/neh/home/philiph/psana/sxrx20915/fooCalib')
 
 if calibType==1:
     if rank==0:
-        print "skip global gain by pointing to local calib with identity gain correction"
+        print("skip global gain by pointing to local calib with identity gain correction")
     setOption('psana.calib-dir',
               '/reg/neh/home/philiph/psana/sxrx20915/oneCalib')
 
 if calibType==2:
     if rank==0:
-        print "use global gain"
+        print("use global gain")
 
 #run = 160
 ##ds  = DataSource('exp=sxrx20915:run=%d:smd' %(run))
@@ -57,7 +58,7 @@ for nevent,evt in enumerate(ds.events()):
     if nevent==3:
         break
 
-    print '%s\nEvent %4d' % (50*'_', nevent)
+    print('%s\nEvent %4d' % (50*'_', nevent))
     #frame = d.calib(evt)
     #print_ndarr(frame, name='frame')
 

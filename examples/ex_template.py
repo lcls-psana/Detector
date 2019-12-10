@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #------------------------------
 #import os
+from __future__ import print_function
 import sys
 import numpy as np
 from time import time
@@ -10,11 +11,11 @@ from Detector.GlobalUtils import print_ndarr
 #------------------------------
 
 def dataset(tname):
-    print '\nIn %s' % sys._getframe().f_code.co_name
+    print('\nIn %s' % sys._getframe().f_code.co_name)
 
     dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0'
     #if tname in ('1', '2', '3') :
-    print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+    print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
     #psana.setOption('psana.calib-dir', './calib')
     #psana.setOption('psana.calib-dir', './empty/calib')
@@ -23,14 +24,14 @@ def dataset(tname):
     evt = ds.events().next()
     env = ds.env()
     nrun = evt.run()
-    print 'env.calibDir(): %s' % env.calibDir()
+    print('env.calibDir(): %s' % env.calibDir())
 
-    for key in evt.keys() : print key
+    for key in evt.keys() : print(key)
 
 #------------------------------
 
 def detector(tname):
-    print '\nIn %s' % sys._getframe().f_code.co_name
+    print('\nIn %s' % sys._getframe().f_code.co_name)
 
     #from Detector.AreaDetector import AreaDetector
     #det = AreaDetector(src, env, pbits=0)
@@ -38,7 +39,7 @@ def detector(tname):
     det = psana.Detector(src, env)
 
     ins = det.instrument()
-    print 80*'_', '\nInstrument: ', ins
+    print(80*'_', '\nInstrument: ', ins)
     #det.set_print_bits(511);
     #det.set_def_value(-5.);
     #det.set_mode(1);
@@ -89,8 +90,8 @@ def detector(tname):
 #------------------------------
 
 def test(tname):
-    print '\nIn %s' % sys._getframe().f_code.co_name
-    print 'test' % tname
+    print('\nIn %s' % sys._getframe().f_code.co_name)
+    print('test' % tname)
 
 #------------------------------
 
@@ -103,7 +104,7 @@ def plot_image(img):
 #------------------------------
 
 if __name__ == "__main__" :
-    print 80*'_'
+    print(80*'_')
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     if tname in ('1', '2', '3') : dataset(tname)
     elif tname == '4'           : dataset(tname)

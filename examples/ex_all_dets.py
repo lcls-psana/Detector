@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -14,7 +15,7 @@ warnings.filterwarnings("ignore",".*GUI is implemented.*")
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+print('Test # %d' % ntest)
 
 ##-----------------------------
 dsname, src = None, None
@@ -125,7 +126,7 @@ elif ntest==26 : #dsname, src = 'exp=xppc0115:run=335', 'XppEndstation.0:Rayonix
     psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/rayonix/calib')
 
 else :
-    print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
+    print('Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src))
     sys.exit(0)
 
 #psana.setOption('psana.calib-dir', './calib')
@@ -136,12 +137,12 @@ evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
 
-print 'experiment %s' % env.experiment()
-print 'Run number %d' % nrun
-print 'dataset exp=%s:run=%d' % (env.experiment(),nrun) 
-print 'calibDir:', env.calibDir()
+print('experiment %s' % env.experiment())
+print('Run number %d' % nrun)
+print('dataset exp=%s:run=%d' % (env.experiment(),nrun)) 
+print('calibDir:', env.calibDir())
 
-for key in evt.keys() : print key
+for key in evt.keys() : print(key)
 
 ##-----------------------------
 
@@ -150,20 +151,20 @@ par = evt
 det = psana.Detector(src, env)
 
 ins = det.instrument()
-print 80*'_', '\nInstrument: ', ins
+print(80*'_', '\nInstrument: ', ins)
 
 #det.set_print_bits(511)
 #det.set_def_value(-5.)
 #det.set_mode(1)
 #det.set_do_offset(True) # works for ex. Opal1000
 #det.print_attributes()
-print 'det.source:', det.source
+print('det.source:', det.source)
 
 shape_nda = det.shape(par)
 print_ndarr(shape_nda, 'shape of ndarray')
 
-print 'size of ndarray: %d' % det.size(par)
-print 'ndim of ndarray: %d' % det.ndim(par)
+print('size of ndarray: %d' % det.size(par))
+print('ndim of ndarray: %d' % det.ndim(par))
 
 peds = det.pedestals(par)
 print_ndarr(peds, 'pedestals')
@@ -197,14 +198,14 @@ for i, evt in enumerate(ds.events()) :
     nda_raw = det.raw(evt)
     if nda_raw is not None :
         dt_sec = time()-t0_sec
-        print 'Detector data found in event %d'\
-              ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec)
+        print('Detector data found in event %d'\
+              ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec))
         break
 
 print_ndarr(nda_raw, 'raw data')
 
 if nda_raw is None :
-    print 'Detector data IS NOT FOUND in %d events' % i
+    print('Detector data IS NOT FOUND in %d events' % i)
     sys.exit('FURTHER TEST IS TERMINATED')
 
 ##-----------------------------
@@ -217,7 +218,7 @@ or det.dettype == gu.CSPAD2X2 :
     t0_sec = time()
     nda_cdata_ub = det.calib(evt, cmpars=(5,50))
     print_ndarr(nda_cdata_ub, 'calibrated cspad(2x2) data with unbond pixel common mode correction')
-    print 'Consumed time for det.calib(evt) = %7.3f sec' % (time()-t0_sec)
+    print('Consumed time for det.calib(evt) = %7.3f sec' % (time()-t0_sec))
 
 coords_x = det.coords_x(par)
 print_ndarr(coords_x, 'coords_x')
@@ -236,10 +237,10 @@ print_ndarr(mask_geo, 'mask_geo')
 #print mask_geo
 
 pixel_size = det.pixel_size(par)
-print '%s\npixel size: %s' % (80*'_', str(pixel_size))
+print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
 
 ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-print 'Detector origin indexes: ix, iy:', ipx, ipy
+print('Detector origin indexes: ix, iy:', ipx, ipy)
 ##-----------------------------
 
 if peds is not None and nda_raw is not None : peds.shape = nda_raw.shape 
@@ -258,14 +259,14 @@ if len(nda_raw.shape) > 2 or det.dettype == gu.EPIX100A :
     t0_sec = time()
     #img = det.image(evt)
     img = det.image(evt, img_arr)
-    print 'Consumed time for det.image(evt) = %7.3f sec (for 1st event!)' % (time()-t0_sec)
+    print('Consumed time for det.image(evt) = %7.3f sec (for 1st event!)' % (time()-t0_sec))
 else :
     img = img_arr
     img.shape = nda_raw.shape
 
 print_ndarr(img, 'image (calibrated data or raw)')
 
-print 80*'_'
+print(80*'_')
 
 ##-----------------------------
 
@@ -284,7 +285,7 @@ print_ndarr(det.image_xaxis(par), 'image_xaxis')
 print_ndarr(det.image_yaxis(par), 'image_yaxis')
 
 ##-----------------------------
-print 80*'_','\nTest do_reshape_2d_to_3d'
+print(80*'_','\nTest do_reshape_2d_to_3d')
 
 print_ndarr(det.pedestals(par), 'pedestals w/o reshape')
 det.do_reshape_2d_to_3d(flag=True)
@@ -293,7 +294,7 @@ print_ndarr(det.pedestals(par), 'pedestals reshaped to 3d')
 print_ndarr(img, 'img')
 print_ndarr(det.ndarray_from_image(par, img), 'nda_from_img')
 
-print 'det.shape_config(env): ', det.shape_config(env)
+print('det.shape_config(env): ', det.shape_config(env))
 print_ndarr(det.photons(evt), 'photons')
          
 ##-----------------------------

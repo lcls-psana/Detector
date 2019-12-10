@@ -3,6 +3,7 @@
 """ 
 Methiods for Epix10kaQuad, Epix10ka2M combined from 4, 16 of Epix10ka panels, respectively.
 """
+from __future__ import print_function
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ from Detector.UtilsEpix import id_epix
 #------------------------------
 
 def print_object_dir(o) :
-    print 'dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_']))
+    print('dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_'])))
 
 #------------------------------
 
@@ -89,7 +90,7 @@ if __name__ == "__main__" :
   def test_config_epix10ka2m(tname) :
     
     ssrc, dsname = ex_source_dsname(tname)
-    print 'Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc)
+    print('Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc))
 
     ds = psana.DataSource(dsname)
     det = psana.Detector(ssrc)
@@ -105,15 +106,15 @@ if __name__ == "__main__" :
     datao = get_epix10ka2m_data_object(evt, src)
     if datao is None : datao = get_epix_data_object(evt, src)
 
-    print 'epix10ka2m_config: %s' % str(confo)
-    print 'epix10ka2m_data  : %s' % str(datao)
+    print('epix10ka2m_config: %s' % str(confo))
+    print('epix10ka2m_data  : %s' % str(datao))
     #print_object_dir(confo)
 
     #epix_name = 'epix-%s' % id_epix10ka(confo, ielem=0)
     #print('epix_name: %s' % epix_name)
 
     ids = ids_epix10ka2m(confo)
-    for i,id in enumerate(ids) : print 'elem %2d: %s' % (i,id)
+    for i,id in enumerate(ids) : print('elem %2d: %s' % (i,id))
 
     #print_object_dir(datao)
     print_ndarr(datao.frame(), 'datao.frame()')
@@ -140,7 +141,7 @@ if __name__ == "__main__" :
 if __name__ == "__main__" :
     import sys
 
-    print 80*'_'
+    print(80*'_')
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     if   tname == '1' : test_config_epix10ka2m(tname)

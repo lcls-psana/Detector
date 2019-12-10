@@ -70,6 +70,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import sys
@@ -124,9 +125,9 @@ class WFDetector :
         if not isinstance(self.source, _psana.Source) : self.source = _psana.Source(self.source)
 
         if self.pbits & 16 :
-            print '%s: input source: %s' % (self.__class__.__name__, src),\
+            print('%s: input source: %s' % (self.__class__.__name__, src),\
                   '\n  string source: %s' % (str_src),\
-                  '\n  source object: %s of type: %s' % (self.source, type(self.source))
+                  '\n  source object: %s of type: %s' % (self.source, type(self.source)))
 
         if set_sub :
             self.pyda.set_source(self.source)
@@ -134,13 +135,13 @@ class WFDetector :
 ##-----------------------------
 
     def print_attributes(self) :
-        print '%s object attributes:' % self.__class__.__name__, \
+        print('%s object attributes:' % self.__class__.__name__, \
               '\n  source : %s' % self.source, \
               '\n  dettype: %d' % self.dettype, \
               '\n  detname: %s' % gu.dic_det_type_to_name[self.dettype], \
               '\n  pbits  : %d' % self.pbits, \
               '\n  iscpp  : %d' % self.iscpp, \
-              '\n  ispyt  : %d' % self.ispyt
+              '\n  ispyt  : %d' % self.ispyt)
         self.pyda.print_attributes()
 
 ##-----------------------------
@@ -210,8 +211,8 @@ class WFDetector :
         elif self.dettype == gu.IMP :
             return rdata # returns np.array with shape=(4,1023) or None
         
-        print 'WARNING! %s: data for source %s is not found'%\
-              (self.__class__.__name__, self.source)
+        print('WARNING! %s: data for source %s is not found'%\
+              (self.__class__.__name__, self.source))
         return None
 
 ##-----------------------------
@@ -229,8 +230,8 @@ class WFDetector :
         elif self.dettype == gu.IMP :
             return range(rdata.shape[1]) # returns list of integer numbers from 0 to 1022 for wf shape=(4,1023)
         
-        print 'WARNING! %s: data for source %s is not found'%\
-              (self.__class__.__name__, self.source)
+        print('WARNING! %s: data for source %s is not found'%\
+              (self.__class__.__name__, self.source))
         return None
 
 ##-----------------------------
@@ -248,12 +249,12 @@ if __name__ == "__main__" :
     from Detector.GlobalUtils import print_ndarr
 
     ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print 'Test # %d' % ntest
+    print('Test # %d' % ntest)
 
     dsname, src                = 'exp=sxri0414:run=88', psana.Source('DetInfo(acq02)')
     if ntest==2  : dsname, src = 'exp=sxri0414:run=88', psana.Source('DetInfo(SxrEndstation.0:Acqiris.2)')
     if ntest==3  : dsname, src = 'exp=cxii0215:run=49', psana.Source('DetInfo(CxiEndstation.0:Imp.1)')
-    print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+    print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
@@ -262,14 +263,14 @@ if __name__ == "__main__" :
     evt = eviter.next()
     rnum = evt.run()
 
-    for key in evt.keys() : print key
+    for key in evt.keys() : print(key)
 
     det = WFDetector(src, env, pbits=0)
 
     det.print_attributes()    
     det.print_config(evt)
 
-    print 'Instrument: %s' % det.instrument()
+    print('Instrument: %s' % det.instrument())
     print_ndarr(det.waveform(evt), 'test det.waveform(evt)')
     print_ndarr(det.wftime(evt), 'test det.wftime(evt)')
 
@@ -277,7 +278,7 @@ if __name__ == "__main__" :
     while data is None :
         t0_sec = time()
         data = det.raw(evt)
-        print '\nConsumed time to get raw data (sec) =', time()-t0_sec
+        print('\nConsumed time to get raw data (sec) =', time()-t0_sec)
 
  
     import pyimgalgos.GlobalGraphics as gg
@@ -304,7 +305,7 @@ if __name__ == "__main__" :
     print_ndarr(wf, 'wf')
     print_ndarr(wt, 'wt')
 
-    print 'wf:\n', wf
+    print('wf:\n', wf)
 
     gg.show()
 

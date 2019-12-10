@@ -5,6 +5,7 @@
 
   Created on 2018-09-19 by Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import logging
@@ -41,7 +42,7 @@ def dump_epix10ka_id() :
     from Detector.UtilsEpix10ka import get_epix10ka_config_object
 
     logger.info('%s\nFinding epix10ka Id in dataset "%s" using name pattern %s' % (80*'_', DSNAME, DETNAME))
-    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
+    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print(usage())
 
     ds = DataSource(DSNAME)
     #det = Detector(DETNAME)
@@ -61,7 +62,7 @@ def dump_epix10ka_ids() :
 
     logger.info('%s\nFinding epix10ka/2m/quad Ids in dataset "%s" using name pattern %s'%\
                  (80*'_', DSNAME, DETNAME))
-    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
+    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print(usage())
 
     ds = DataSource(DSNAME)
     #det = Detector(DETNAME)

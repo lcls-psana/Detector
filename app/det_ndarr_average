@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 ##-----------------------------
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -25,7 +26,7 @@ def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
     #dsname = 'exp=cxif5315:run=169'
     #src    = psana.Source('DetInfo(%s)' % source)
     src    = source
-    if verbos : print 'Calibrated detector data average for\n  dataset: %s\n  source : %s' % (dsname, src)
+    if verbos : print('Calibrated detector data average for\n  dataset: %s\n  source : %s' % (dsname, src))
 
     # Non-standard calib directory
     #psana.setOption('psana.calib-dir', './calib')
@@ -37,7 +38,7 @@ def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
     det = psana.Detector(src, env)
     shape = det.shape(evt) 
 
-    print '  det.shape() = ', shape 
+    print('  det.shape() = ', shape) 
 
     nda_peds = det.pedestals(evt)       if algors & 2  else None    
     nda_bkgd = det.bkgd(evt)            if algors & 8  else None
@@ -89,13 +90,13 @@ def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
            if i<5 \
            or (i<51   and i%10==0) \
            or (i<1001 and i%100==0) \
-           or i%1000==0 : print '  Event: %d, time/event = %f sec' % (i, time()-dt0_sec)
+           or i%1000==0 : print('  Event: %d, time/event = %f sec' % (i, time()-dt0_sec))
         counter += 1
         arr_sum += nda 
         arr_max = np.maximum(arr_max, nda)
 
-    print '  Detector data found in %d events' % counter
-    print '  Total consumed time = %f sec' % (time()-t0_sec)
+    print('  Detector data found in %d events' % counter)
+    print('  Total consumed time = %f sec' % (time()-t0_sec))
 
     arr_ave = arr_sum/counter if counter>0 else arr_sum
   
@@ -130,7 +131,7 @@ def example_01(dsname, source, ofname, events, evskip, algors, plotim, verbos):
         print_ndarr(arr_daq, 'arr_daq')
         fname = '%s-max-noheader.txt' % prefix
         np.savetxt(fname, arr_daq, fmt='%.2f', delimiter=' ', newline='\n')
-        print 'Saved file %s' % fname
+        print('Saved file %s' % fname)
 
 #------------------------------
 
@@ -193,7 +194,7 @@ if __name__ == "__main__" :
 
     proc_name = os.path.basename(sys.argv[0])
     if len(sys.argv)==1 :
-        print 'Try command: %s -h' % proc_name
+        print('Try command: %s -h' % proc_name)
         sys.exit ('End of %s' % proc_name)
         
     #print '%s\nExample # %d' % (80*'_', ntest)
@@ -201,9 +202,9 @@ if __name__ == "__main__" :
     (opts, args) = input_options_parser()
 
     if opts.verbos :
-        print 'Command arguments:', ' '.join(sys.argv)
-        print '  opts: ', opts
-        print '  args: ', args
+        print('Command arguments:', ' '.join(sys.argv))
+        print('  opts: ', opts)
+        print('  args: ', args)
 
     example_01(opts.dsname, opts.source, opts.ofname, opts.events, opts.evskip, opts.algors, opts.plotim, opts.verbos)
 

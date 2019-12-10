@@ -1,3 +1,4 @@
+from __future__ import print_function
 from psana import *
 #ds = DataSource('exp=mfxlr1716:run=134:smd')
 #det = Detector('Jungfrau1M')
@@ -10,8 +11,8 @@ for nevt,evt in enumerate(ds.events()):
    calib = det.calib(evt)
    image = det.image(evt)
 
-   if calib is None: print nevt, 'calib is None'
-   else:             print nevt, 'calib.shape:', calib.shape
+   if calib is None: print(nevt, 'calib is None')
+   else:             print(nevt, 'calib.shape:', calib.shape)
 
-   if image is None: print nevt, 'image is None'
-   else:             print nevt, 'image.shape:', image.shape
+   if image is None: print(nevt, 'image is None')
+   else:             print(nevt, 'image.shape:', image.shape)

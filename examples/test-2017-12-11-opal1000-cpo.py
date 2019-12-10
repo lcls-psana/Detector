@@ -1,3 +1,4 @@
+from __future__ import print_function
 from psana import *
 import time
 import sys
@@ -19,9 +20,9 @@ for i,evt in enumerate(ds.events()) :
     specraw = spec.raw(evt)
     if i>50: sys.exit('THE END after %d events' % i)
     if specraw is None:
-        print 'spec none'
+        print('spec none')
         continue
-    print specraw.shape
+    print(specraw.shape)
     sys.exit('THE END after %d events' % i)
 
 
@@ -44,9 +45,9 @@ source_string = 'DetInfo(CxiDs2.0:Cspad.0)'
 import re
 source_string = 'DetInfo(XrayTransportDiagnostic.2:Opal1000.0)'
 source_string = 'DetInfo(XrayTransportDiagnostic.20:Opal1000.0)'
-print 'XXX: DetInfo source_string = ', source_string
+print('XXX: DetInfo source_string = ', source_string)
 m = re.search('(\w+).(\d+)\:(\w+).(\d+)', source_string)
-print 'XXX: DetInfo m = re.search: ', m
-print 'XXX: m.groups():', m.groups()
+print('XXX: DetInfo m = re.search: ', m)
+print('XXX: m.groups():', m.groups())
 
 #------------------------------

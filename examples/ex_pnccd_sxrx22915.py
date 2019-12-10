@@ -1,3 +1,4 @@
+from __future__ import print_function
 from pyimgalgos.GlobalUtils import print_ndarr
 import os
 import sys
@@ -28,7 +29,7 @@ for evnum,evt in enumerate(myDataSource.events()):
         if evnum > 200: break #stops after the indicated number of events
 
         if evnum%20==1: #selects 1 every 5 events,to be exact,the events 1001,1006,1011,etc
-                print evnum                        
+                print(evnum)                        
                 if mask is None:               
                         mask = pnccd.mask(evt, calib=True, status=True)
                         print_ndarr(mask, name='mask for ev %d'%evnum, first=0, last=5)

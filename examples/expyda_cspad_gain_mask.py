@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 
@@ -28,7 +29,7 @@ pda = PyDetectorAccess(src, env, pbits=0)
 
 t0_sec = time()
 gm = pda.cspad_gain_mask()  # gain=6.87526
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(gm, 'cspad_gain_map')
 
 img = pda.image(rnum, gm)

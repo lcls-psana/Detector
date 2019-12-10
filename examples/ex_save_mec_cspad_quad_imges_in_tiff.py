@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #------------------------------
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -15,7 +16,7 @@ def example01() :
     """Saves per event images of MecTargetChamber.0:Cspad0.0 detector quad [0-3] in tiff files."""
 
     #------------------------------
-    print 'PARAMETERS'
+    print('PARAMETERS')
     
     exp     =     sys.argv[1]   # ex.: mecj5515
     runnum  = int(sys.argv[2])  # ex.: 102
@@ -35,17 +36,17 @@ def example01() :
     calibdir = env.calibDir()
     shape = det.shape(runnum)
 
-    print 'experiment  : %s' % exp
-    print 'run number  : %d' % runnum
-    print 'dsname      : %s' % dsname
-    print 'calibdir    : %s' % calibdir
-    print 'quadnum     : %s' % quadnum
-    print 'detname     : %s' % detname
-    print 'shape       : %s' % str(shape)
-    print 'common mode : %s' % str(cmpars)
-    print 'mask bits   : %s' % bin(mask_bits).replace('0b', '')
-    print 'do_save     : %s' % str(do_save)
-    print '%s' % (50*'_')
+    print('experiment  : %s' % exp)
+    print('run number  : %d' % runnum)
+    print('dsname      : %s' % dsname)
+    print('calibdir    : %s' % calibdir)
+    print('quadnum     : %s' % quadnum)
+    print('detname     : %s' % detname)
+    print('shape       : %s' % str(shape))
+    print('common mode : %s' % str(cmpars))
+    print('mask bits   : %s' % bin(mask_bits).replace('0b', ''))
+    print('do_save     : %s' % str(do_save))
+    print('%s' % (50*'_'))
 
     iX, iY = det.geometry(runnum).get_pixel_coord_indexes('QUAD:V1', quadnum)
     #print_ndarr(iX, 'iX')
@@ -63,7 +64,7 @@ def example01() :
         nda = det.calib(evt, cmpars, mbits=mask_bits)
 
         if nda is None :
-            print 'Event %d: Detector data IS NOT FOUND' % evnum
+            print('Event %d: Detector data IS NOT FOUND' % evnum)
             continue
 
         counter += 1
@@ -74,7 +75,7 @@ def example01() :
             img = img_from_pixel_arrays(iX, iY, W=ndaq)
             #img = det.image(evt, nda)
             ofname = 'img-%s-r%04d-e%06d-%s-quad-%1d.tiff' % (env.experiment(), runnum, evnum, suffix, quadnum)
-            print 'Event %4d, save image in file %s' % (evnum, ofname)
+            print('Event %4d, save image in file %s' % (evnum, ofname))
             im = Image.fromarray(img.astype(np.int16))
             im.save(ofname)
             #np.savetxt(ofname, img, fmt='%8.1f', delimiter=' ', newline='\n')
@@ -83,7 +84,7 @@ def example01() :
             print('\nEvent %d' % (evnum))
             print_ndarr(nda, 'cspad raw')
 
-    print 'Detector data found in %d events, processing time %.3f sec' % (counter, time()-t0_sec)
+    print('Detector data found in %d events, processing time %.3f sec' % (counter, time()-t0_sec))
 
 #------------------------------
 
@@ -96,14 +97,14 @@ def usage() :
           '\nUsage   : %s <experient> <run-number> <quad-number-[0-3]>'\
           '\nExample : %s mecj5515 102 1'\
           '\n%s\n' % (100*'_',' '.join(sys.argv), example01.__doc__, scrname, scrname, 100*'_')
-    print msg
+    print(msg)
     
 #------------------------------
 
 if __name__ == "__main__" :
     usage()
     if len(sys.argv)==4: example01()
-    else : print 'WARNING: Wrong parameters, see comment on Usage.'
+    else : print('WARNING: Wrong parameters, see comment on Usage.')
     sys.exit(0)
 
 #------------------------------

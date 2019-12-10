@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 import Detector
@@ -19,7 +20,7 @@ det = Detector.DetectorAccess(src, env, 0) # , 0xffff)
 #print evt.keys()
 
 ##-----------------------------
-print '\nInstrument: ', det.instrument(env)
+print('\nInstrument: ', det.instrument(env))
 print_ndarr(det.pedestals(evt,env),    'pedestals(evt,env)')
 print_ndarr(det.pedestals_v0(rnum),    'pedestals_v0(rnum)')
 print_ndarr(det.pixel_rms(evt,env),    'pixel_rms(evt,env)')
@@ -46,8 +47,8 @@ print_ndarr(det.pixel_mask_geo_v0(rnum,255), 'pixel_mask_geo_v0(rnum,255)')
 print_ndarr(det.pixel_mask_geo(evt,env,255), 'pixel_mask_geo(evt,env,255)')
 print_ndarr(det.pixel_indexes_x(evt,env),    'pixel_indexes_x(evt,env)')
 print_ndarr(det.pixel_indexes_y(evt,env),    'pixel_indexes_y(evt,env)')
-print '\n pixel_scale_size(evt,env): ', det.pixel_scale_size(evt,env)
-print '\n pixel_scale_size_v0(rnum): ', det.pixel_scale_size_v0(rnum)
+print('\n pixel_scale_size(evt,env): ', det.pixel_scale_size(evt,env))
+print('\n pixel_scale_size_v0(rnum): ', det.pixel_scale_size_v0(rnum))
 
 #print_ndarr(, '')
 

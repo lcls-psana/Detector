@@ -8,7 +8,7 @@ from Detector.PyDataAccess import get_jungfrau_data_object, get_jungfrau_config_
 
 def jungfrau_id(dsname, srcname) :
 
-    print 50*'_'
+    print(50*'_')
     
     ds  = psana.DataSource(dsname)
     src = psana.Source(srcname)
@@ -31,7 +31,7 @@ def jungfrau_id(dsname, srcname) :
 
 def jungfrau_id_guaranteed() :
     # Garanteed data availability example:
-    print 50*'_'
+    print(50*'_')
     
     # event_keys -d exp=xpptut15:run=410 -m2
     ds  = psana.DataSource('exp=xpptut15:run=410')

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 
@@ -33,7 +34,7 @@ for i, evt in enumerate(ds.events()) :
   #gm = det.gain_mask(gain=8)
   #gm = det.raw(evt)
   gm = det.calib(evt)
-  print 'Event: %d  consumed time = %7.3f sec' % (i, time()-t0_sec)
+  print('Event: %d  consumed time = %7.3f sec' % (i, time()-t0_sec))
   print_ndarr(gm, 'gain_map')
   if gm is not None : break
 

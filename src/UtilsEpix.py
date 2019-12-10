@@ -12,6 +12,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created on 2018-02-22 by Mikhail Dubrovin
 """
+from __future__ import print_function
 
 #------------------------------
 import os
@@ -118,7 +119,7 @@ def time_of_nda(t0_sec, res, cmt='XXX') :
 #------------------------------
 
 def print_object_dir(o) :
-    print 'dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_']))
+    print('dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_'])))
 
 #------------------------------
 #------------------------------
@@ -131,13 +132,13 @@ if __name__ == "__main__" :
      #panel_id = 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
      panel_id = '-'.join(ranlst)
      alias = alias_for_id(panel_id, fname='./aliases-test.txt')
-     print 'alias:', alias
+     print('alias:', alias)
 
 #------------------------------
 
 if __name__ == "__main__" :
     import sys
-    print 80*'_'
+    print(80*'_')
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     if tname == '1' : test_alias_for_id(tname)

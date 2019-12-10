@@ -1,3 +1,4 @@
+from __future__ import print_function
 import psana
 import numpy as np
 import time
@@ -32,7 +33,7 @@ print(det.dettype)
 
 raw = det.raw(evt)
 print(raw.shape)
-print('shape_config:', det.shape_config(env))
+print(('shape_config:', det.shape_config(env)))
 
 calib = det.calib(evt)
 print(calib.shape)
@@ -46,4 +47,4 @@ print(calib.shape)
 #c = get_rayonix_config_object(env, det.source)
 
 c = env.configStore().get(psana.Rayonix.ConfigV2, det.source)
-print 'c.deviceID:', c.deviceID(), "See PyDetectorAccess.py shape=(7680,7680) if 'MX340' in c.deviceID() else (3840,3840)"  
+print('c.deviceID:', c.deviceID(), "See PyDetectorAccess.py shape=(7680,7680) if 'MX340' in c.deviceID() else (3840,3840)")  

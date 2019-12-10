@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 from Detector.PyDetectorAccess import PyDetectorAccess
 
 import sys
@@ -20,12 +21,12 @@ pda = PyDetectorAccess(src, env, pbits=0)
 
 sh = pda.shape_config_rayonix(env)
 
-print 'shape_config_rayonix:', sh
+print('shape_config_rayonix:', sh)
 
 ##-----------------------------
 
 det = psana.Detector(source, env)
-print 'det.raw(evt).shape:', det.raw(evt).shape
+print('det.raw(evt).shape:', det.raw(evt).shape)
 
 ##-----------------------------
 

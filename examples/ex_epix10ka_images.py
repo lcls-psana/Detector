@@ -1,3 +1,4 @@
+from __future__ import print_function
 ####!/usr/bin/env python
 
 import sys
@@ -47,7 +48,7 @@ def dsname_source(tname) :
         #return 'exp=xcsx35617:run=419',  'XcsEndstation.0:Epix10ka2M.0' # AML
         return 'exp=xcsx35617:run=414',  'XcsEndstation.0:Epix10ka2M.0' # AHL
     else :
-        print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
+        print('Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src))
         sys.exit(0)
 
 #------------------------------
@@ -69,10 +70,10 @@ def test_epix10ka_methods(tname) :
     env = ds.env()
     pssrc = psana.Source(src)
 
-    print 'experiment %s' % env.experiment()
-    print 'run        %d' % runnum
-    print 'dataset    %s' % (dsname) 
-    print 'calibDir:', env.calibDir()
+    print('experiment %s' % env.experiment())
+    print('run        %d' % runnum)
+    print('dataset    %s' % (dsname)) 
+    print('calibDir:', env.calibDir())
 
     #for key in evt.keys() : print key
 
@@ -93,10 +94,10 @@ def test_epix10ka_methods(tname) :
 
     par = runnum
     shape_nda = det.shape(par)
-    print 'det.source      : %s' % det.source
-    print 'shape of ndarray: %s' % str(det.shape(par))
-    print 'size of ndarray : %d' % det.size(par)
-    print 'ndim of ndarray : %d' % det.ndim(par)
+    print('det.source      : %s' % det.source)
+    print('shape of ndarray: %s' % str(det.shape(par)))
+    print('size of ndarray : %d' % det.size(par))
+    print('ndim of ndarray : %d' % det.ndim(par))
 
     peds = det.pedestals(par)
     print_ndarr(peds, 'pedestals')
@@ -136,7 +137,7 @@ def test_epix10ka_methods(tname) :
     arr1 = np.ones_like(mask_status, dtype=np.uint8)
     print_ndarr(mask_status, 'mask_status')
     num1 = np.select((mask_status>0,), (arr1,), 0).sum()
-    print ' ====> mask of status number of 0s: %d and 1s: %d' % (arr1.size-num1, num1)
+    print(' ====> mask of status number of 0s: %d and 1s: %d' % (arr1.size-num1, num1))
     
     cmod = det.common_mode(par)
     print_ndarr(cmod, 'common_mod')
@@ -151,14 +152,14 @@ def test_epix10ka_methods(tname) :
     print_ndarr(areas, 'area')
 
     pixel_size = det.pixel_size(par)
-    print '%s\npixel size: %s' % (80*'_', str(pixel_size))
+    print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
     
     # mbits = 1 - mask edges, +2 - mask central
     mask_geo = det.mask_geo(par, mbits=3, width=20, wcentral=5)
     print_ndarr(mask_geo, 'mask_geo')
 
     ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-    print 'Detector origin indexes: ix, iy:', ipx, ipy
+    print('Detector origin indexes: ix, iy:', ipx, ipy)
 
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
@@ -171,7 +172,7 @@ def test_epix10ka_methods(tname) :
 
     for i, evt in enumerate(ds.events()) :
 
-        if selected_record(i) : print '%s\nEvent %4d' % (50*'_', i)
+        if selected_record(i) : print('%s\nEvent %4d' % (50*'_', i))
 
         if i <EVSKIP: continue
         if i>=EVENTS: break
@@ -225,7 +226,7 @@ def test_epix10ka_methods(tname) :
         #ndarr[1, 5:170, 5:185] -= 500
 
         ave, rms = ndarr.mean(), ndarr.std()
-        print 'ave %.3f rms: %.3f' % (ave, rms)
+        print('ave %.3f rms: %.3f' % (ave, rms))
 
         #amin, amax = (-1, 10) if tname=='4' else\
         #             (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
@@ -244,7 +245,7 @@ def test_epix10ka_methods(tname) :
             #img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
 
             if img is None :
-                print 'Image is not available.'
+                print('Image is not available.')
                 continue
 
             #print_ndarr(img, 'img')
@@ -268,7 +269,7 @@ def test_epix10ka_methods(tname) :
             #range_x=(arrhi.min(), arrhi.max())
             range_x=(amin, amax)
 
-            print 'range_x:', range_x
+            print('range_x:', range_x)
             print_ndarr(arrhi, 'arrhi')
 
             hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=False)
@@ -283,7 +284,7 @@ def test_epix10ka_methods(tname) :
             img2 = det.image(evt, nda_map)
 
             if img2 is None :
-                print 'Image of the gain map is not available.'
+                print('Image of the gain map is not available.')
                 continue
 
             #print_ndarr(img2, 'img2')
@@ -299,7 +300,7 @@ def test_epix10ka_methods(tname) :
         if PLOT_ANY: gr.show(mode='do_not_hold')
 
     dt_sec_tot = time()-t0_sec_tot
-    print 'Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS)
+    print('Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS))
 
     if PLOT_ANY : gg.show()
 
@@ -316,7 +317,7 @@ if __name__ == "__main__" :
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG) #INFO) #DEBUG)
 
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
-    print '%s\nTest %s' % (80*'_', tname)
+    print('%s\nTest %s' % (80*'_', tname))
     test_epix10ka_methods(tname)
     sys.exit ('End of %s' % sys.argv[0])
 

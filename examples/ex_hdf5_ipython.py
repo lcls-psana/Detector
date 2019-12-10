@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 #===============
 ipython
@@ -15,9 +16,9 @@ ebeam = None
 for i, evt in enumerate(ds.events()) : 
     ebeam = det_ebeam.get(evt)
     if ebeam is None: 
-        print 'Event %3d: EBeam is None' % i
+        print('Event %3d: EBeam is None' % i)
     else : 
-        print 'EBeam object is found in event %d' % i
+        print('EBeam object is found in event %d' % i)
         break
 
 ebeam.ebeamPhotonEnergy()

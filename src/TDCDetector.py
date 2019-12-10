@@ -2,6 +2,7 @@
 """
 Detector interface for the TDC type
 """
+from __future__ import print_function
 
 from DdlDetector import DdlDetector
 import numpy as np
@@ -93,15 +94,15 @@ if __name__ == '__main__':
     
     tdcdet = TDCDetector('DetInfo(SxrEndstation.0:AcqTDC.2)', ds.env())
 
-    print '----- Times -----'
+    print('----- Times -----')
     for evt in ds.events():
         times = tdcdet.times(evt)
         for chan,t in enumerate(times):
-            if t.size>0: print chan,t
+            if t.size>0: print(chan,t)
 
-    print '----- Overflows -----'
+    print('----- Overflows -----')
     for evt in ds.events():
         times = tdcdet.overflows(evt)
         for chan,t in enumerate(times):
-            if t.size>0: print chan,t
+            if t.size>0: print(chan,t)
 

@@ -24,6 +24,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created on 2017-10-03 by Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import logging
@@ -195,8 +196,8 @@ def common_mode_jungfrau(frame, cormax) :
                         frame[r, col0:col0+bsize] -= cmode
             except:
                 cmode = -666
-                print "cmode problem"
-                print frame[r, col0:col0 + bsize]
+                print("cmode problem")
+                print(frame[r, col0:col0 + bsize])
             col0 += bsize
 
 #------------------------------
@@ -412,18 +413,18 @@ if __name__ == "__main__" :
 #------------------------------
 
   def print_dict(d, cmt='') :
-    print cmt
-    for k,v in d.items() : print '%s : %s' % (str(k).ljust(26), v)
+    print(cmt)
+    for k,v in d.items() : print('%s : %s' % (str(k).ljust(26), v))
 
 #------------------------------
 
   def test_keys(env) :
     for k in env.configStore().keys() : 
-        print k
-        print '  type:', k.type(), '  src:', k.src(), '  alias:', k.alias()
+        print(k)
+        print('  type:', k.type(), '  src:', k.src(), '  alias:', k.alias())
         src = k.src()
         if not isinstance(src, psana.DetInfo) : continue
-        print '  detname_from_src:', complete_detname_from_detinfo(src)
+        print('  detname_from_src:', complete_detname_from_detinfo(src))
 
 #------------------------------
 
@@ -479,16 +480,16 @@ if __name__ == "__main__" :
     print_dict(dict_detinfo_alias(env), cmt='\ndict_detinfo_alias(env):')
     print_dict(dict_alias_detinfo(env), cmt='\ndict_alias_detinfo(env):')
 
-    print 'complete_detname for full name Xcs : ', complete_detname(env, 'XcsEndstation.0:Jungfrau.0')
-    print 'complete_detname for full name Cxi : ', complete_detname(env, 'CxiEndstation.0:Jungfrau.0')
-    print 'complete_detname for "Jungfrau.0"  : ', complete_detname(env, 'Jungfrau.0')
-    print 'complete_detname for "jungfrau1M"  : ', complete_detname(env, 'jungfrau1M')
-    print 'complete_detname for "Jungfrau"    : ', complete_detname(env, 'Jungfrau')
+    print('complete_detname for full name Xcs : ', complete_detname(env, 'XcsEndstation.0:Jungfrau.0'))
+    print('complete_detname for full name Cxi : ', complete_detname(env, 'CxiEndstation.0:Jungfrau.0'))
+    print('complete_detname for "Jungfrau.0"  : ', complete_detname(env, 'Jungfrau.0'))
+    print('complete_detname for "jungfrau1M"  : ', complete_detname(env, 'jungfrau1M'))
+    print('complete_detname for "Jungfrau"    : ', complete_detname(env, 'Jungfrau'))
 
 #------------------------------
 
 if __name__ == "__main__" :
-    print 80*'_'
+    print(80*'_')
     #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '5'

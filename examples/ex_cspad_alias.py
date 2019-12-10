@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #------------------------------
+from __future__ import print_function
 import sys
 import psana
 from Detector.AreaDetector import AreaDetector
@@ -15,7 +16,7 @@ env = ds.env()
 src = psana.Source('DsaCsPad')
 if len(sys.argv)>1 and sys.argv[1] == '2' : src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 
-print '%s: src: %s' % (sys.argv[0], src)
+print('%s: src: %s' % (sys.argv[0], src))
 
 #print evt.get(psana.CsPad.DataV2,src)
 

@@ -34,6 +34,7 @@ epix_4:
   repo : /reg/d/psdm/detector/calib/epix100a/epix100a-3925999620-0998275585-0385875978-1232100352-0416335371-2654033921-1056964631.h5
 
 """
+from __future__ import print_function
 
 
 rnum = 400
@@ -42,7 +43,7 @@ from psana import *
 ds = DataSource('exp=xcslr0016:run=%d' % rnum)
 det2 = Detector('epix_4')
 #det2.set_print_bits(01777)
-print det2.coords_x(rnum)
-print det2.gain(rnum)
-print det2.pedestals(rnum)
+print(det2.coords_x(rnum))
+print(det2.gain(rnum))
+print(det2.pedestals(rnum))
 #print det2.status(rnum)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import psana
 
 #src, dsn = 'CxiDs2.0:Cspad.0', '/reg/g/psdm/detector/data_test/types/0003-CxiDs2.0-Cspad.0-fiber-data.xtc'
@@ -15,7 +16,7 @@ src, dsn = ':Fccd.0',     '/reg/g/psdm/detector/data_test/types/0015-SxrEndstati
 
 #src, dsn = ':Imp.1',      '/reg/g/psdm/detector/data_test/types/0015-Imp_ConfigV1.xtc'
 
-print 'src=%s, dsname=%s' % (src, dsn)
+print('src=%s, dsname=%s' % (src, dsn))
 
 src = psana.Source(src)
 ds  = psana.DataSource(dsn)
@@ -49,4 +50,4 @@ co = cfg.get(psana.FCCD.FccdConfigV2, src)     # (500, 1152)
 #co.width()
 #co.height()
 
-print 'Config object:', co
+print('Config object:', co)

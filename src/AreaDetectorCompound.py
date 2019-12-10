@@ -56,6 +56,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created on 2019-04-02 Mikhail Dubrovin
 """
+from __future__ import print_function
 #----------
 
 import sys
@@ -272,10 +273,10 @@ if __name__ == "__main__" :
     from time import time
 
     ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print 'Test # %d' % ntest
+    print('Test # %d' % ntest)
 
     dsname, detnames = dsname_and_detectors(ntest)
-    print 'Example for\n  dataset: %s\n  detnames : %s' % (dsname, detnames)
+    print('Example for\n  dataset: %s\n  detnames : %s' % (dsname, detnames))
 
     #psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
     ds = psana.DataSource(dsname)
@@ -290,25 +291,25 @@ if __name__ == "__main__" :
 
     t0_sec = time()
     det = AreaDetectorCompound(detnames, env)
-    print '\nConstructor time = %.6f sec' % (time()-t0_sec)
-    print 'det methods - dir(det):\n ', ' '.join([s for s in dir(det) if s[0]!='_'])
+    print('\nConstructor time = %.6f sec' % (time()-t0_sec))
+    print('det methods - dir(det):\n ', ' '.join([s for s in dir(det) if s[0]!='_']))
 
-    print 'rnum     :', rnum
-    print 'calibdir :', str(env.calibDir())
-    print 'size     :', str(det.list_size(evt))
-    print 'shapes   :', str(det.list_shape(evt))
-    print 'ndims    :', str(det.list_ndim(evt))
+    print('rnum     :', rnum)
+    print('calibdir :', str(env.calibDir()))
+    print('size     :', str(det.list_size(evt)))
+    print('shapes   :', str(det.list_shape(evt)))
+    print('ndims    :', str(det.list_ndim(evt)))
 
     t0_sec = time()
     raws = det.list_raw(evt)
-    print '\nConsumed time to get raw data %.6f sec' % (time()-t0_sec)
+    print('\nConsumed time to get raw data %.6f sec' % (time()-t0_sec))
     for nda in raws : print_ndarr(nda, name='    -- per det list_raw', first=0, last=5)
 
     raw = det.raw(evt)
     print_ndarr(raw, name='raw as nda', first=0, last=5)
 
-    print 'detectors in AreaDetectorCompound:'
-    for o in det.list_dets : print '%24s shape=%s %s' % (string_from_source(o.source), str(o.shape()), str(o))
+    print('detectors in AreaDetectorCompound:')
+    for o in det.list_dets : print('%24s shape=%s %s' % (string_from_source(o.source), str(o.shape()), str(o)))
 
     calibs = det.list_calib(evt) 
     for nda in calibs :

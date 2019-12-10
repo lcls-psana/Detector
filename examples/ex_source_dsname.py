@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 
 ##-----------------------------
@@ -122,17 +123,17 @@ if __name__ == "__main__" :
   def test_dataset(ntest) :
     import psana
     src, dsn = ex_source_dsname(ntest)
-    print 'src=%s, dsname=%s' % (src, dsn)
+    print('src=%s, dsname=%s' % (src, dsn))
     ds = psana.DataSource(dsn)
     for nevt,evt in enumerate(ds.events()):
-        print evt.keys()
+        print(evt.keys())
         break
 
 ##-----------------------------
 
 if __name__ == "__main__" :
     ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print '%s\nExample # %d' % (80*'_', ntest)
+    print('%s\nExample # %d' % (80*'_', ntest))
     test_dataset(ntest)    
     sys.exit(0)
 

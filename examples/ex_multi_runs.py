@@ -2,6 +2,7 @@
 
 #------------------------------
 
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -28,14 +29,14 @@ def test_multiruns() :
     nruns = 0
 
     for irun, run in enumerate(ds.runs()):
-        print '%s\nRun %d' % (50*'=', run.run())
+        print('%s\nRun %d' % (50*'=', run.run()))
         nruns += 1
         
         # Loop over calibcycles
         nclc = 0
         for istep, step in enumerate(run.steps()):
             env = step.env()
-            print '  Calibcycle %d'%(istep)
+            print('  Calibcycle %d'%(istep))
             nclc += 1
 
             # Loop over events
@@ -44,13 +45,13 @@ def test_multiruns() :
                 if i<SKIP : continue
                 if not i<EVENTS : break
                 #if not ecm.select(evt) : continue 
-                if not (i%10) : print '  Event %4d,  time=%7.3f sec' % (i, time()-t0_sec)
+                if not (i%10) : print('  Event %4d,  time=%7.3f sec' % (i, time()-t0_sec))
 
-            print '# processed events %d in calibcycle %d' % (i, nclc)
+            print('# processed events %d in calibcycle %d' % (i, nclc))
             
-        print '# calibcycles %d in run %d' % (nclc, run.run())
+        print('# calibcycles %d in run %d' % (nclc, run.run()))
 
-    print '# runs processed %d' % nruns
+    print('# runs processed %d' % nruns)
 
 #------------------------------
 

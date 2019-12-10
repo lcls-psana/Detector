@@ -2,6 +2,7 @@
 
 """ Generates fake constants for epix10ka2m and/or epix10kaquad for pixel_gain and pedestals
 """
+from __future__ import print_function
 
 #--------------------
 
@@ -50,7 +51,7 @@ def do_work() :
     npanels = 16             
 
     for ifname, ofname in zip(ifnames, ofnames) :
-        print 'Load constants from file: %s' % ifname
+        print('Load constants from file: %s' % ifname)
         nda1 = load_txt(ifname)
         print_ndarr(nda1, 'nda1')
 
@@ -58,7 +59,7 @@ def do_work() :
         print_ndarr(ndao, 'ndao')
 
 	#ofname = fname.rsplit('_',1)[-1]
-	print 'Save: %s' % ofname
+	print('Save: %s' % ofname)
         save_txt(ofname, ndao, fmt='%.3f')
 
 #--------------------

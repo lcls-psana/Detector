@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -9,7 +10,7 @@ from Detector.GlobalUtils import print_ndarr
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+print('Test # %d' % ntest)
 
 ##-----------------------------
 
@@ -19,7 +20,7 @@ psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/alignment/cspad/calib-c
 
 
 if ntest==2 : dsname, src = 'exp=meca1113:run=376', psana.Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')
@@ -42,12 +43,12 @@ print_ndarr(mask, 'mask')
 img_arr = mask
 img = det.image(evt, img_arr)
 print_ndarr(img, 'img')
-print 80*'_'
+print(80*'_')
 
 ##-----------------------------
 
 if img is None :
-    print 'Image is not available'
+    print('Image is not available')
     sys.exit('FURTHER TEST IS TERMINATED')
 
 import pyimgalgos.GlobalGraphics as gg

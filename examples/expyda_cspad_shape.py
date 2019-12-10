@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 
@@ -19,7 +20,7 @@ pda = PyDetectorAccess(src, env, pbits=0)
 
 sh = pda.shape_config_cspad(env)
 
-print 'shape_config_cspad:', pda.shape_config_cspad(env)
+print('shape_config_cspad:', pda.shape_config_cspad(env))
 
 
 ##-----------------------------

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 #import Detector
@@ -26,7 +27,7 @@ pda = PyDetectorAccess(src, env, pbits=0)
 ##-----------------------------
 t0_sec = time()
 print_ndarr(pda.pedestals(rnum),    'pedestals(rnum)')
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(pda.pixel_rms(rnum),    'pixel_rms(rnum)')
 print_ndarr(pda.pixel_gain(rnum),   'pixel_gain(rnum)')
 print_ndarr(pda.pixel_mask(rnum),   'pixel_mask(rnum)')
@@ -36,9 +37,9 @@ print_ndarr(pda.common_mode(rnum),  'common_mode(rnum)')
 
 ##-----------------------------
 
-print 'ndim  = %d' % pda.ndim(rnum)
-print 'size  = %d' % pda.size(rnum)
-print 'shape = %s' % str(pda.shape(rnum))
+print('ndim  = %d' % pda.ndim(rnum))
+print('size  = %d' % pda.size(rnum))
+print('shape = %s' % str(pda.shape(rnum)))
 
 ##-----------------------------
 

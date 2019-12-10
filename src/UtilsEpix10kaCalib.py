@@ -5,6 +5,7 @@ CALIBRATION - TEST PULSES
 
 @author: blaj
 """
+from __future__ import print_function
 #--------------------
 import os
 import sys
@@ -983,7 +984,7 @@ def pedestals_calibration(*args, **opts) :
 
     #print 'det.shape', det.shape()
     shape_block = [nbs,] + list(det.shape()) # [1024, 16, 352, 384]
-    print 'Accumulate raw frames in block shape = %s' % str(shape_block)
+    print('Accumulate raw frames in block shape = %s' % str(shape_block))
 
     mode = None # gain_mode
 

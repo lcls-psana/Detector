@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #------------------------------
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -34,7 +35,7 @@ def plot_det_image(det, evt, nda, tit='') :
     #img = det.image(evt, nda)
     img = reshape_to_2d(nda)
     if img is None : 
-        print 'plot_det_image - Image "%s" is not available.'%tit
+        print('plot_det_image - Image "%s" is not available.'%tit)
         #sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
         return
     
@@ -106,30 +107,30 @@ class Epix10kaNDArrDarkProc :
 
 
     def print_attrs(self) :
-        print '%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__)
-        print 'dataset name                    : %s'   % self.dsname
-        print 'source name                     : %s'   % self.src   
-        print 'output file name template       : %s'   % self.ofname
-        print 'calib directory                 : %s'   % self.clbdir   
-        print 'upload files in calib directory : %s'   % self.upload  
-        print 'number of events to collect     : %d'   % self.events
-        print 'number of events to skip        : %d'   % self.evskip
-        print 'number of events for stage 1    : %d'   % self.evstg1
-        print 'number of sigma intensity range : %.3f' % self.nsigma
-        print 'control bit-word to plot images : %d'   % self.plotim
-        print 'control bit-word for verbosity  : %d'   % self.verbos
-        print 'control bit-word to save arrays : %d'   % self.savebw
-        print 'INTENSITY low limit (ADU)       : ',      self.int_lo
-        print 'INTENSITY high limit (ADU)      : ',      self.int_hi
-        print 'RMS low limit (ADU)             : ',      self.rms_lo
-        print 'RMS high limit (ADU)            : ',      self.rms_hi
-        print 'allowed low/high fraction limit : %.3f' % self.fraclm
-        print '\nParameters for auto-evaluation of limits:'
-        print 'number of sigma from mean for INTENSITY low limit  : ',  self.intnlo
-        print 'number of sigma from mean for INTENSITY high limit : ',  self.intnhi
-        print 'number of sigma from mean for RMS low limit        : ',  self.rmsnlo
-        print 'number of sigma from mean for RMS high limit       : ',  self.rmsnhi
-        print 50*'_', '\n'
+        print('%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__))
+        print('dataset name                    : %s'   % self.dsname)
+        print('source name                     : %s'   % self.src)   
+        print('output file name template       : %s'   % self.ofname)
+        print('calib directory                 : %s'   % self.clbdir)   
+        print('upload files in calib directory : %s'   % self.upload)  
+        print('number of events to collect     : %d'   % self.events)
+        print('number of events to skip        : %d'   % self.evskip)
+        print('number of events for stage 1    : %d'   % self.evstg1)
+        print('number of sigma intensity range : %.3f' % self.nsigma)
+        print('control bit-word to plot images : %d'   % self.plotim)
+        print('control bit-word for verbosity  : %d'   % self.verbos)
+        print('control bit-word to save arrays : %d'   % self.savebw)
+        print('INTENSITY low limit (ADU)       : ',      self.int_lo)
+        print('INTENSITY high limit (ADU)      : ',      self.int_hi)
+        print('RMS low limit (ADU)             : ',      self.rms_lo)
+        print('RMS high limit (ADU)            : ',      self.rms_hi)
+        print('allowed low/high fraction limit : %.3f' % self.fraclm)
+        print('\nParameters for auto-evaluation of limits:')
+        print('number of sigma from mean for INTENSITY low limit  : ',  self.intnlo)
+        print('number of sigma from mean for INTENSITY high limit : ',  self.intnhi)
+        print('number of sigma from mean for RMS low limit        : ',  self.rmsnlo)
+        print('number of sigma from mean for RMS high limit       : ',  self.rmsnhi)
+        print(50*'_', '\n')
 
 
     def _common_mode_pars(self, arr_ave, arr_rms, arr_msk) :
@@ -145,8 +146,8 @@ class Epix10kaNDArrDarkProc :
         rms = arr_rms[arr_msk>0].mean()
 
         if self.verbos & 1 :
-            print 'Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
-                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms)
+            print('Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
+                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms))
 
         if dettype == gu.PNCCD :
             return np.array((3, math.ceil(4*rms), math.ceil(4*rms), 128))
@@ -191,8 +192,8 @@ class Epix10kaNDArrDarkProc :
         self.shape = ndaraw.shape
         self.dtype_raw = ndaraw.dtype
 
-        if self.verbos & 1 : print 'Begin stage 1 for %s, raw.dtype = %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
-                                   (self.src, str(self.dtype_raw), str(self.shape), self.int_lo, self.int_hi)
+        if self.verbos & 1 : print('Begin stage 1 for %s, raw.dtype = %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
+                                   (self.src, str(self.dtype_raw), str(self.shape), self.int_lo, self.int_hi))
 
         self.arr0       = np.zeros(self.shape, dtype=self.dtype_raw)
         self.arr1       = np.ones (self.shape, dtype=self.dtype_raw)
@@ -277,9 +278,9 @@ class Epix10kaNDArrDarkProc :
         gate_half = self.nsigma*rms_ave
 
         if self.verbos & 1 :
-            print '%s\nBegin stage 2 for %s after %d events' % (50*'_', self.src, self.counter)
-            print '  mean per pixel rms=%.3f x %.1f = intensity gate= +/- %.3f around each pixel average intensity' %\
-                  (rms_ave, self.nsigma, gate_half)
+            print('%s\nBegin stage 2 for %s after %d events' % (50*'_', self.src, self.counter))
+            print('  mean per pixel rms=%.3f x %.1f = intensity gate= +/- %.3f around each pixel average intensity' %\
+                  (rms_ave, self.nsigma, gate_half))
 
         #print_ndarr(arr_av1, 'arr_av1')
 
@@ -295,18 +296,18 @@ class Epix10kaNDArrDarkProc :
 
         self.stage = 2
 
-        if self.verbos & 1 : print 'Stage 2 initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec)
+        if self.verbos & 1 : print('Stage 2 initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec))
 
 
     def summary(self, evt, env) :
 
         #if self.verbos & 1 :
-        print '%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter),
+        print('%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter), end=' ')
 
         if self.counter :
-            print ', begin data summary stage'
+            print(', begin data summary stage')
         else :
-            print ', counter=%d there are no arrays to save...' % self.counter
+            print(', counter=%d there are no arrays to save...' % self.counter)
             return 
 
         t0_sec = time()
@@ -344,13 +345,13 @@ class Epix10kaNDArrDarkProc :
         arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
         arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
 
-        print '  Bad pixel status:'  
-        print '  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max) 
-        print '  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min) 
-        print '  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm) 
-        print '  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)
-        print '  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max) 
-        print '  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)
+        print('  Bad pixel status:')  
+        print('  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)) 
+        print('  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)) 
+        print('  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)) 
+        print('  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm))
+        print('  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)) 
+        print('  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min))
 
         #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
         arr_sta = np.zeros(self.shape, dtype=np.int64)
@@ -382,9 +383,9 @@ class Epix10kaNDArrDarkProc :
         """Saves n-d array in text files"""
 
         if self.counter :
-            print ' save_ndarrays()'
+            print(' save_ndarrays()')
         else :
-            print ' save_ndarrays(): counter=0 - do not save files'
+            print(' save_ndarrays(): counter=0 - do not save files')
             return 
 
         addmetad = True
@@ -465,7 +466,7 @@ class Epix10kaDarkProc :
 
 
     def print_ndarrays(self) :
-        print '%s\nStacked for gain modes np.arrays:' % (80*'_')
+        print('%s\nStacked for gain modes np.arrays:' % (80*'_'))
 
         print_ndarr(self.arr_av1, 'arr_av1')
         print_ndarr(self.arr_rms, 'arr_rms')
@@ -476,7 +477,7 @@ class Epix10kaDarkProc :
 
 
     def save_ndarrays(self, addmetad=True) :
-        print '%s\nSave arrays:' % (80*'_')
+        print('%s\nSave arrays:' % (80*'_'))
 
         jdp0 = self.lst_jdp[0]
 
@@ -491,7 +492,7 @@ class Epix10kaDarkProc :
         template = gu.calib_fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
                                            jdp0.tsdate, jdp0.tstime, str_src, counter, ofname)
 
-        if verbos : print 'File name template: %s' % template
+        if verbos : print('File name template: %s' % template)
 
         gu.create_path(template, depth=0, mode=0770, verb=True) # in case if template is work/...
 
@@ -502,7 +503,7 @@ class Epix10kaDarkProc :
         if savebw & 16 : det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
         if savebw & 32 : det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
 
-        if verbos : print 'All files saved'
+        if verbos : print('All files saved')
 
         if jdp0.upload :
             calibgrp = gu.dic_det_type_to_calib_group[gu.EPIX10KA] # 'Epix10ka::CalibV1'
@@ -511,7 +512,7 @@ class Epix10kaDarkProc :
             fname = '%d-end.data' % jdp0.runnum
 
             #print 'Deploy files in %s' % clbdir
-            print 'Deploy files in %s' % ctypedir
+            print('Deploy files in %s' % ctypedir)
 
             if savebw &  1 : gu.deploy_file(template % 'ave', ctypedir, 'pedestals',    fname, LOG_FILE, verbos)
             if savebw &  2 : gu.deploy_file(template % 'rms', ctypedir, 'pixel_rms',    fname, LOG_FILE, verbos) 
@@ -525,15 +526,15 @@ class Epix10kaDarkProc :
         for o in self.lst_jdp : 
             o.summary(evt, env)
 
-        print '%s\nBrief summary:' % (80*'_')
+        print('%s\nBrief summary:' % (80*'_'))
 
         self.status = 0
         for i,o in enumerate(self.lst_jdp) :
-            print o.str_status()
+            print(o.str_status())
             if o.status_bw() : self.status |= (1<<i)
 
         if self.status :
-            print 'WARNING: further processing is termenated due to problem with data, status=%d' % self.status
+            print('WARNING: further processing is termenated due to problem with data, status=%d' % self.status)
             return
 
         else :
@@ -559,22 +560,22 @@ def epix10ka_ndarr_raw_proc():
     source = popts.source
     dsname = popts.dsname
 
-    print '%s\nIn epix10ka_ndarr_raw_proc' % (50*'_')
+    print('%s\nIn epix10ka_ndarr_raw_proc' % (50*'_'))
     print_command_line_parameters(parser)
 
     # Non-standard calib directory
     #psana.setOption('psana.calib-dir', './calib')
 
-    if verbos & 1 : print 'Raw data processing of dataset: %s' % dsname
+    if verbos & 1 : print('Raw data processing of dataset: %s' % dsname)
 
     # ecm = EventCodeManager(popts.evcode, verbos)
 
-    print '\nDIC_GAIN_MODE:'
-    for item in DIC_GAIN_MODE.iteritems() : print item
+    print('\nDIC_GAIN_MODE:')
+    for item in DIC_GAIN_MODE.iteritems() : print(item)
 
     lst_dpo = [Epix10kaDarkProc(parser) for src in source.split(',') if 'Epix10ka' in src]
     #          if PROC_DATA else []
-    print 'List of sources: %s' % source
+    print('List of sources: %s' % source)
 
     if not len(lst_dpo) : 
         raise IOError('WARNING: list of sources "%s" does not have Epix10ka' % source)
@@ -592,7 +593,7 @@ def epix10ka_ndarr_raw_proc():
 
     # Loop over runs
     for irun, run in enumerate(ds.runs()):
-        print '%s\nRun %d' % (50*'=', run.run())
+        print('%s\nRun %d' % (50*'=', run.run()))
         
         # Loop over calibcycles
         nevclc = 0
@@ -602,14 +603,14 @@ def epix10ka_ndarr_raw_proc():
             igm = DIC_GAIN_MODE[gm.name]
 
             if irun==0 and istep==0 :
-              print '\ngm.names:'
-              for name in gm.names.iteritems()  : print name
+              print('\ngm.names:')
+              for name in gm.names.iteritems()  : print(name)
 
-              print '\ngm.values:'
-              for value in gm.values.iteritems() : print value
+              print('\ngm.values:')
+              for value in gm.values.iteritems() : print(value)
 
-            print '  Calibcycle %d,  gain mode %s,  proc.index %d,  gm.numerator %d,  gm.denominator %d'%\
-                  (istep, gm.name, igm, gm.numerator, gm.denominator)
+            print('  Calibcycle %d,  gain mode %s,  proc.index %d,  gm.numerator %d,  gm.denominator %d'%\
+                  (istep, gm.name, igm, gm.numerator, gm.denominator))
 
             # Loop over events
             for i, evt in enumerate(step.events()):
@@ -631,16 +632,16 @@ def epix10ka_ndarr_raw_proc():
                       tsec = time()
                       dt   = tsec - tdt
                       tdt  = tsec
-                      print '  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
+                      print('  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt))
 
-            print '  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
-                  (run.run(), istep, nevclc, nevtot, gm.name)
-        print '  Run %d, number of calibcycles processed %d' % (run.run(), istep+1)
-    print 'Number of runs processed %d' % (irun+1)
+            print('  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
+                  (run.run(), istep, nevclc, nevtot, gm.name))
+        print('  Run %d, number of calibcycles processed %d' % (run.run(), istep+1))
+    print('Number of runs processed %d' % (irun+1))
 
     if PROC_DATA : 
         for dpo in lst_dpo : dpo.summary(evt,env)
-    if verbos & 1 : print '%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec)
+    if verbos & 1 : print('%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec))
 
 #------------------------------
 
@@ -737,7 +738,7 @@ def option_parser() :
 #------------------------------
 
 if __name__ == "__main__" :
-    if len(sys.argv)==1 : print '\n%s' % usage(2)
+    if len(sys.argv)==1 : print('\n%s' % usage(2))
     else : epix10ka_ndarr_raw_proc()
     sys.exit(0)
 

@@ -7,6 +7,7 @@
    Geometry:
    /reg/g/psdm/detector/data_test/calib/Epix10kaQuad::CalibV1/...
 """
+from __future__ import print_function
 from time import time
 import sys
 import numpy as np
@@ -39,7 +40,7 @@ def test_pnccd() :
         if nev < EVSKIP : continue
         if nev > EVENTS : break
     
-        print '%s\nEvent %4d' % (50*'_', nev)
+        print('%s\nEvent %4d' % (50*'_', nev))
 
         print_ndarr(d.raw(evt),            name='raw        ', first=0, last=5)
         print_ndarr(d.calib(evt),          name='calib      ', first=0, last=5)
@@ -77,7 +78,7 @@ def test_pnccd_graph(tname) :
     d  = psana.Detector(DETNAME)
     for nev,evt in enumerate(ds.events()):
     
-        print '%s\nEvent %4d' % (50*'_', nev)
+        print('%s\nEvent %4d' % (50*'_', nev))
         if nev < EVSKIP : continue
         if nev > EVENTS : break
  
@@ -132,7 +133,7 @@ def test_pnccd_graph(tname) :
         #--------------------
         t0_sec = time()
 
-        print 'ex_pnccd_plot_in_evloop: CM consumed time (sec) =', time()-t0_sec
+        print('ex_pnccd_plot_in_evloop: CM consumed time (sec) =', time()-t0_sec)
         #--------------------
 
         mask_badpix = d.status_as_mask(evt)
@@ -185,11 +186,11 @@ def test_pnccd_graph(tname) :
 
     ofname = 'pnccd-img.npy'
     np.save(ofname, img)
-    print 'Last image array saved in %s' % ofname
+    print('Last image array saved in %s' % ofname)
 
     ofname = 'pnccd-nda.npy'
     np.save(ofname, nda)
-    print 'Last n-d array saved in %s' % ofname
+    print('Last n-d array saved in %s' % ofname)
 
 #------------------------------
 
@@ -208,7 +209,7 @@ def test_description(tname=None) :
 #------------------------------
 
 if __name__ == "__main__" :
-    print 80*'_'
+    print(80*'_')
     tname = sys.argv[1] if len(sys.argv)>1 else None
     if   tname == '1' : test_pnccd()
     elif tname in ('2','3','4','5','6','10') : test_pnccd_graph(tname)

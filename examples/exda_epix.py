@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 import Detector
@@ -17,7 +18,7 @@ src = psana.Source('DetInfo(NoDetector.0:Epix100a.0)')
 det = Detector.DetectorAccess(src,env,0) # , 0xffff)
 
 ##-----------------------------
-print '\nInstrument: ', det.instrument(env)
+print('\nInstrument: ', det.instrument(env))
 print_ndarr(det.pedestals(evt,env),    'pedestals(evt,env)')
 print_ndarr(det.pedestals_v0(rnum),    'pedestals_v0(rnum)')
 print_ndarr(det.pixel_rms(evt,env),    'pixel_rms(evt,env)')

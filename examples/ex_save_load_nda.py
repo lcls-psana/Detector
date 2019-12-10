@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import psana
 from time import time
 from Detector.GlobalUtils import print_ndarr
@@ -32,19 +33,19 @@ fname = tmp_file.name
 
 t0_sec=time()
 det.save_txtnda(fname, ndarr=peds, cmts=('comment1', 'comment2'), fmt='%.2f', verbos=True)
-print 'Time to save %s n-d array  in  file = %9.6f sec' % (src, time()-t0_sec)
+print('Time to save %s n-d array  in  file = %9.6f sec' % (src, time()-t0_sec))
 
 
 f = open(fname)
 for i,line in enumerate(f) :
     if i>16 : f.close(); break
-    print line.rstrip('\n')
+    print(line.rstrip('\n'))
 
 t0_sec=time()
 peds_loaded = det.load_txtnda(fname)
-print 'Time to load %s n-d array from file = %9.6f sec' % (src, time()-t0_sec)
+print('Time to load %s n-d array from file = %9.6f sec' % (src, time()-t0_sec))
 print_ndarr(peds_loaded, '%s\npedestals loaded'%(80*'_'))
 
-print 'End of test'
+print('End of test')
 
 ##-----------------------------

@@ -3,6 +3,7 @@
 Detector interface for the Generic1D type
 =========================================
 """
+from __future__ import print_function
 
 from DdlDetector import DdlDetector
 import numpy as np
@@ -95,5 +96,5 @@ if __name__ == '__main__':
     ocean = OceanDetector('DetInfo(XppLas.0:OceanOptics.1)', ds.env())
 
     for evt in ds.events():
-        print ocean.intensity(evt),'\n',ocean.wavelength(evt),'\n',ocean._raw(evt)
+        print(ocean.intensity(evt),'\n',ocean.wavelength(evt),'\n',ocean._raw(evt))
         break

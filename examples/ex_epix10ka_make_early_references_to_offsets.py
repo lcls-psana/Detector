@@ -5,6 +5,7 @@
     ln -s /reg/g/psdm/detector/gains/epix10k/panels/.../offset/epix10ka_*_20181129124822_xcsx35617_r0544_offset_AML.dat
           /reg/g/psdm/detector/gains/epix10k/panels/.../offset/epix10ka_*_20180101000000_xcsx35617_r0544_offset_AML.dat
 """
+from __future__ import print_function
 #--------------------
 
 import os
@@ -38,22 +39,22 @@ source = psana.Source(src)
 
 confo = get_epix10ka_any_config_object(env, source)
 
-print 'experiment %s' % env.experiment()
+print('experiment %s' % env.experiment())
 #print 'run        %d' % runnum
-print 'dataset    %s' % (dsname) 
-print 'calibDir:', env.calibDir()
+print('dataset    %s' % (dsname)) 
+print('calibDir:', env.calibDir())
 
 ids = ids_epix10ka2m(confo)
 for i,id in enumerate(ids) : 
-    print 'elem %2d: %s' % (i,id)
+    print('elem %2d: %s' % (i,id))
     path = '%s/%s/offset' % (DIR_REPO, id)
-    print '  path:', path
+    print('  path:', path)
 
     for fname in os.listdir(path) :
         if TS_PTRN in fname : fname_ref = fname.replace(TS_PTRN, TS_SUBS)
         cmd = 'ln -s %s/%s %s/%s' % (path, fname, path, fname_ref)
         #cmd = 'rm %s/%s' % (path, fname_ref)
-        print '   cmd:', cmd
+        print('   cmd:', cmd)
 
         if DO_REF: os.system(cmd)
 

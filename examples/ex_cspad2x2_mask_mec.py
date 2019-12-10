@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 import numpy as np
@@ -13,7 +14,7 @@ from time import time
 detnum = int(sys.argv[1]) if len(sys.argv)>1 else 1
 if detnum<1 : detnum = 0
 if detnum>4 : detnum = 4
-print 'CSPAD2x2 Detnum # %d' % detnum
+print('CSPAD2x2 Detnum # %d' % detnum)
 
 ##----------------------------- init
 
@@ -32,17 +33,17 @@ calibdir = env.calibDir()
 
 det = psana.Detector(src, env)
 
-print 'dsname     : %s' % dsname
-print 'calibdir   : %s' % calibdir
-print 'src        : %s' % src
-print 'Run number : %d' % rnum
+print('dsname     : %s' % dsname)
+print('calibdir   : %s' % calibdir)
+print('src        : %s' % src)
+print('Run number : %d' % rnum)
 
 ##----------------------------- evt
 
 t0_sec = time()
 nda = det.calib(evt, mbits=0377)
 
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(nda, 'raw')
 
 if nda is None :

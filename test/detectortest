@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!@PYTHON@
  
 import sys
@@ -25,7 +26,7 @@ class TestPyDetector(unittest.TestCase) :
 
         evt = self.ds.events().next()
 
-        print "testing %d detector names" % len(self.detectors)
+        print("testing %d detector names" % len(self.detectors))
         for name in self.detectors:
 
             det = psana.Detector(name)

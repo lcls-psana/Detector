@@ -2,6 +2,7 @@
 
 #------------------------------
 
+from __future__ import print_function
 from ImgAlgos.PyAlgos import photons as alg_photons
 
 #------------------------------
@@ -24,7 +25,7 @@ def test_photons() :
 
     t0_sec = time()
     arr3d = alg_photons(data, mask)
-    print '\nTime consumed by photons(data, mask) (sec) = %10.6f' % (time()-t0_sec)
+    print('\nTime consumed by photons(data, mask) (sec) = %10.6f' % (time()-t0_sec))
 
     print_ndarr(arr3d, 'arr3d')
 

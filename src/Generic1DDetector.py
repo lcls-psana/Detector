@@ -3,6 +3,7 @@
 Detector interface for the Generic1D type
 =========================================
 """
+from __future__ import print_function
 
 from DdlDetector import DdlDetector
 
@@ -77,5 +78,5 @@ if __name__ == '__main__':
     g1ddet = Generic1DDetector('DetInfo(MfxEndstation.0:Wave8.0)', ds.env())
 
     for evt in ds.events():
-        print g1ddet(evt)
+        print(g1ddet(evt))
         break

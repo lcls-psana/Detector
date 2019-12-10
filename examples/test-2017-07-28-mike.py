@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import os
 from psana import *
@@ -13,7 +14,7 @@ detectorNameOffset = 19
 src = [sourceName+':'+'Cspad.0']+[sourceName+':'+'Cspad2x2.1']+[sourceName+':'+'Cspad2x2.2']+[sourceName+':'+'Cspad2x2.3']+[sourceName+':'+'Cspad2x2.4']+[sourceName+':'+'Cspad2x2.5']
 #src = [sourceName+':'+'Cspad2x2.1']+[sourceName+':'+'Cspad2x2.2']+[sourceName+':'+'Cspad2x2.3']+[sourceName+':'+'Cspad2x2.4']+[sourceName+':'+'Cspad2x2.5']
 #src = [sourceName+':'+'Cspad2x2.1']
-print src
+print(src)
 
 cspaddetectors = {}
 for det in src:
@@ -27,5 +28,5 @@ for det in src:
     if not calibframe is None:
         cropframe = cspaddetectors[det].image(evt, calibframe)
         #cropframe = cspaddetectors[det].raw(evt)
-        print det
-        print cropframe
+        print(det)
+        print(cropframe)

@@ -31,6 +31,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import sys
@@ -133,7 +134,7 @@ class PyDetectorAccess :
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
             self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0377)
-            if self.pbits & 1 : print 'PSCalib.CalibParsStore object is created for run %d' % runnum
+            if self.pbits & 1 : print('PSCalib.CalibParsStore object is created for run %d' % runnum)
 
         return self.cpst
 
@@ -154,7 +155,7 @@ class PyDetectorAccess :
             return
 
         fname = apputils.AppDataPath(defname).path()
-        if self.pbits : print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
+        if self.pbits : print('%s: Load default geometry from file %s' % (self.__class__.__name__, fname))
          
         self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
         if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT    
@@ -205,11 +206,11 @@ class PyDetectorAccess :
         fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
         if fname :
             self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
-            if self.pbits & 1 : print 'PSCalib.GeometryAccess object is created for run %d' % runnum
+            if self.pbits & 1 : print('PSCalib.GeometryAccess object is created for run %d' % runnum)
             if self.geo.valid : self.geo_load_status = self.GEO_LOADED_CALIB
         else :
             self.geo = None
-            if self.pbits & 1 : print 'WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum
+            if self.pbits & 1 : print('WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum)
 
 ##-----------------------------
 
@@ -253,10 +254,10 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def print_attributes(self) :
-        print 'PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d' % \
+        print('PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d' % \
               (self.source, self.dettype, self.pbits), \
               '\n  do_offset (Camera): %s\n  correct_time (Acqiris): %s\n  do_calib_imp (Imp): %s' % \
-              (self.do_offset, self.correct_time, self.do_calib_imp)
+              (self.do_offset, self.correct_time, self.do_calib_imp))
 
 ##-----------------------------
 
@@ -601,7 +602,7 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def print_config(self, evt) :
-        print '%s:print_config(evt) - is not implemented in pythonic version' % self.__class__.__name__
+        print('%s:print_config(evt) - is not implemented in pythonic version' % self.__class__.__name__)
 
 ##-----------------------------
 
@@ -706,20 +707,20 @@ class PyDetectorAccess :
         # data object
         d = pda.get_cspad_data_object(evt, self.source)        
         if d is None :
-            if self.pbits & 1 : print 'cspad data object is not found'
+            if self.pbits & 1 : print('cspad data object is not found')
             return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
         if c is None :
-            if self.pbits & 1 : print 'cspad config object is not found'
+            if self.pbits & 1 : print('cspad config object is not found')
             return None
     
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()
 
         #print 'd.TypeId: ', d.TypeId
-        if self.pbits & 8 : print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
+        if self.pbits & 8 : print('nquads in data: %d and config: %d' % (nquads, nquads_c))
 
         arr = np.zeros((4,8,185,388), dtype=np.int16) if nquads<4 else np.empty((4,8,185,388), dtype=np.int16)
 
@@ -728,14 +729,14 @@ class PyDetectorAccess :
             qnum = q.quad()
             qdata = q.data()
             roim = c.roiMask(qnum)
-            if self.pbits & 8 : print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
+            if self.pbits & 8 : print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
     
             #roim = 0375 # for test only        
             if roim == 0377 :
                 arr[qnum,:] = qdata
 
             else :
-                if self.pbits : print 'PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim
+                if self.pbits : print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
                 i = 0
                 for s in range(8) :
@@ -744,7 +745,7 @@ class PyDetectorAccess :
                         i += 1
                 arr[qnum,:,:] = qdata_full
     
-        if self.pbits & 8 : print 'arr.shape: ', arr.shape
+        if self.pbits & 8 : print('arr.shape: ', arr.shape)
         arr.shape = (32,185,388)
         return arr
     
@@ -759,15 +760,15 @@ class PyDetectorAccess :
         c = pda.get_cspad2x2_config_object(env, self.source)
         if c is None :
             if self.pbits and self.counter_cspad2x2_msg <3 :
-                print 'WARNING PyDetectorAccess: missing configuration object for source %s' % (self.str_src)
-                if self.counter_cspad2x2_msg == 2 : print 'Stop WARNING messages for %s configuration' % self.str_src
+                print('WARNING PyDetectorAccess: missing configuration object for source %s' % (self.str_src))
+                if self.counter_cspad2x2_msg == 2 : print('Stop WARNING messages for %s configuration' % self.str_src)
                 self.counter_cspad2x2_msg += 1
             #return None
 
         if c.roiMask() != 3 :
             if self.pbits and self.counter_cspad2x2_msg <3 :
-                print 'WARNING PyDetectorAccess: configuration of %s has non-complete mask=%d of included 2x1' % (self.str_src, c.roiMask())
-                if self.counter_cspad2x2_msg == 2 : print 'Stop WARNING messages for %s configuration' % self.str_src
+                print('WARNING PyDetectorAccess: configuration of %s has non-complete mask=%d of included 2x1' % (self.str_src, c.roiMask()))
+                if self.counter_cspad2x2_msg == 2 : print('Stop WARNING messages for %s configuration' % self.str_src)
                 self.counter_cspad2x2_msg += 1
 
         return d.data()
@@ -869,37 +870,37 @@ class PyDetectorAccess :
         if d is None : return None
 
         if self.pbits & 4 :
-            print 'Data object:', d
-            print 'shotIdStart = ', d.shotIdStart() 
-            print 'readoutTime = ', d.readoutTime()
-            print 'temperature = ', d.temperature()
+            print('Data object:', d)
+            print('shotIdStart = ', d.shotIdStart()) 
+            print('readoutTime = ', d.readoutTime())
+            print('temperature = ', d.temperature())
 
         c = pda.get_andor_config_object(env, self.source)                
 
         if c is not None and self.pbits & 4 :
-            print 'Configuration object:', c
-            print 'width              = ', c.width()            
-            print 'height             = ', c.height()            
-            print 'numSensors         = ', c.numSensors()        
-            print 'orgX               = ', c.orgX()              
-            print 'orgY               = ', c.orgY()              
-            print 'binX               = ', c.binX()              
-            print 'binY               = ', c.binY()              
-            print 'exposureTime       = ', c.exposureTime()      
-            print 'coolingTemp        = ', c.coolingTemp ()      
-            print 'fanMode            = ', c.fanMode ()          
-            print 'baselineClamp      = ', c.baselineClamp()     
-            print 'highCapacity       = ', c.highCapacity()      
-            print 'gainIndex          = ', c.gainIndex()         
-            print 'readoutSpeedIndex  = ', c.readoutSpeedIndex() 
-            print 'exposureEventCode  = ', c.exposureEventCode() 
-            print 'exposureStartDelay = ', c.exposureStartDelay()
-            print 'numDelayShots      = ', c.numDelayShots()     
-            print 'frameSize          = ', c.frameSize()         
-            print 'numPixelsX         = ', c.numPixelsX()        
-            print 'numPixelsY         = ', c.numPixelsY()        
-            print 'numPixelsPerSensor = ', c.numPixelsPerSensor()
-            print 'numPixels          = ', c.numPixels()         
+            print('Configuration object:', c)
+            print('width              = ', c.width())            
+            print('height             = ', c.height())            
+            print('numSensors         = ', c.numSensors())        
+            print('orgX               = ', c.orgX())              
+            print('orgY               = ', c.orgY())              
+            print('binX               = ', c.binX())              
+            print('binY               = ', c.binY())              
+            print('exposureTime       = ', c.exposureTime())      
+            print('coolingTemp        = ', c.coolingTemp ())      
+            print('fanMode            = ', c.fanMode ())          
+            print('baselineClamp      = ', c.baselineClamp())     
+            print('highCapacity       = ', c.highCapacity())      
+            print('gainIndex          = ', c.gainIndex())         
+            print('readoutSpeedIndex  = ', c.readoutSpeedIndex()) 
+            print('exposureEventCode  = ', c.exposureEventCode()) 
+            print('exposureStartDelay = ', c.exposureStartDelay())
+            print('numDelayShots      = ', c.numDelayShots())     
+            print('frameSize          = ', c.frameSize())         
+            print('numPixelsX         = ', c.numPixelsX())        
+            print('numPixelsY         = ', c.numPixelsY())        
+            print('numPixelsPerSensor = ', c.numPixelsPerSensor())
+            print('numPixels          = ', c.numPixels())         
 
         nda = d.data()
         return nda if nda is not None else None
@@ -1043,8 +1044,8 @@ class PyDetectorAccess :
         sampInterval = h.sampInterval()
         nbrSamples = h.nbrSamples()
 
-        if self.pbits & 4 : print '  nbrChannels: %d, H-nbrSamples: %d, H-sampInterval: %g' \
-           % (nbrChannels, nbrSamples, sampInterval)
+        if self.pbits & 4 : print('  nbrChannels: %d, H-nbrSamples: %d, H-sampInterval: %g' \
+           % (nbrChannels, nbrSamples, sampInterval))
 
         shape = (nbrChannels, nbrSamples)
         wf = np.zeros(shape, dtype=np.float)
@@ -1064,9 +1065,9 @@ class PyDetectorAccess :
             wforms          = elem.waveforms()
 
             if self.pbits & 4 :
-                print '    chan: %d,  nbrSegments: %d,  nbrSamplesInSeg: %d,  indexFirstPoint: %d,' \
+                print('    chan: %d,  nbrSegments: %d,  nbrSamplesInSeg: %d,  indexFirstPoint: %d,' \
                   % (chan, nbrSegments, nbrSamplesInSeg, indexFirstPoint), \
-                  '  V-slope: %f,  V-offset: %f,  H-pos[seg=0]: %g' % (slope,  offset, tstamps[0].pos())
+                  '  V-slope: %f,  V-offset: %f,  H-pos[seg=0]: %g' % (slope,  offset, tstamps[0].pos()))
 
             for seg in range(nbrSegments) :
                 raw = wforms[seg]
@@ -1099,33 +1100,33 @@ class PyDetectorAccess :
             c = pda.get_imp_config_object(env, self.source)
             if c is None : return None
 
-            print "Configuration object for %s" % self.source
-            print "  range =",           c.range()
-            print "  calRange =",        c.calRange()
-            print "  reset =",           c.reset()
-            print "  biasData =",        c.biasData()
-            print "  calData =",         c.calData()
-            print "  biasDacData =",     c.biasDacData()
-            print "  calStrobe =",       c.calStrobe()
-            print "  numberOfSamples =", c.numberOfSamples()
-            print "  trigDelay =",       c.trigDelay()
-            print "  adcDelay =",        c.adcDelay()
+            print("Configuration object for %s" % self.source)
+            print("  range =",           c.range())
+            print("  calRange =",        c.calRange())
+            print("  reset =",           c.reset())
+            print("  biasData =",        c.biasData())
+            print("  calData =",         c.calData())
+            print("  biasDacData =",     c.biasDacData())
+            print("  calStrobe =",       c.calStrobe())
+            print("  numberOfSamples =", c.numberOfSamples())
+            print("  trigDelay =",       c.trigDelay())
+            print("  adcDelay =",        c.adcDelay())
             
-            print "Data object for %s" % self.source
-            print "  vc =",          d.vc()
-            print "  lane =",        d.lane()
-            print "  frameNumber =", d.frameNumber()
-            print "  range =",       d.range()
+            print("Data object for %s" % self.source)
+            print("  vc =",          d.vc())
+            print("  lane =",        d.lane())
+            print("  frameNumber =", d.frameNumber())
+            print("  range =",       d.range())
             
             laneStatus = d.laneStatus()
-            print "  laneStatus.linkErrCount =",  laneStatus.linkErrCount()
-            print "  laneStatus.linkDownCount =", laneStatus.linkDownCount()
-            print "  laneStatus.cellErrCount =",  laneStatus.cellErrCount()
-            print "  laneStatus.rxCount =",       laneStatus.rxCount()
-            print "  laneStatus.locLinked =",     laneStatus.locLinked()
-            print "  laneStatus.remLinked =",     laneStatus.remLinked()
-            print "  laneStatus.zeros =",         laneStatus.zeros()
-            print "  laneStatus.powersOkay =",    laneStatus.powersOkay()
+            print("  laneStatus.linkErrCount =",  laneStatus.linkErrCount())
+            print("  laneStatus.linkDownCount =", laneStatus.linkDownCount())
+            print("  laneStatus.cellErrCount =",  laneStatus.cellErrCount())
+            print("  laneStatus.rxCount =",       laneStatus.rxCount())
+            print("  laneStatus.locLinked =",     laneStatus.locLinked())
+            print("  laneStatus.remLinked =",     laneStatus.remLinked())
+            print("  laneStatus.zeros =",         laneStatus.zeros())
+            print("  laneStatus.powersOkay =",    laneStatus.powersOkay())
 
         lst_of_samps = d.samples()
         a = np.array([sample.channels() for sample in lst_of_samps])
@@ -1152,7 +1153,7 @@ class PyDetectorAccess :
         if c is None :
             msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
             #raise IOError(msg)
-            print msg
+            print(msg)
             return None
 
         #self.gm = np.empty((32,185,388), dtype=np.uint8)
@@ -1190,7 +1191,7 @@ class PyDetectorAccess :
         if c is None :
             msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
             #raise IOError(msg)
-            if self.pbits : print msg
+            if self.pbits : print(msg)
             return None
 
         #self.gm = np.empty((2,185,388), dtype=np.uint8)
@@ -1230,20 +1231,20 @@ class PyDetectorAccess :
         # data object
         d = pda.get_cspad_data_object(evt, self.source)        
         if d is None :
-            if self.pbits & 1 : print 'cspad data object is not found'
+            if self.pbits & 1 : print('cspad data object is not found')
             return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
         if c is None :
-            if self.pbits & 1 : print 'cspad config object is not found'
+            if self.pbits & 1 : print('cspad config object is not found')
             return None
     
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()
 
         #print 'd.TypeId: ', d.TypeId
-        if self.pbits & 8 : print 'nquads in data: %d and config: %d' % (nquads, nquads_c)
+        if self.pbits & 8 : print('nquads in data: %d and config: %d' % (nquads, nquads_c))
 
         arr = []
         for iq in range(nquads) :
@@ -1252,14 +1253,14 @@ class PyDetectorAccess :
             qdata = q.data()
             #n2x1stored = qdata.shape[0]
             roim = c.roiMask(qnum)
-            if self.pbits & 8 : print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
+            if self.pbits & 8 : print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
             #     '  n2x1stored: %d' % (n2x1stored)
     
             #roim = 0375 # for test only
         
             if roim == 0377 : arr.append(qdata)
             else :
-                if self.pbits : print 'PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim
+                if self.pbits : print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
                 i = 0
                 for s in range(8) :
@@ -1269,7 +1270,7 @@ class PyDetectorAccess :
                 arr.append(qdata_full)
     
         nda = np.array(arr)
-        if self.pbits & 8 : print 'nda.shape: ', nda.shape
+        if self.pbits & 8 : print('nda.shape: ', nda.shape)
         nda.shape = (32,185,388)
         return nda
 
@@ -1328,27 +1329,27 @@ class PyDetectorAccess :
 ##-----------------------------
 
     def print_config_rayonix(self, c) :
-        print 'XXX:shape_config_rayonix', dir(c)
-        print 'DeviceIDMax() :', c.DeviceIDMax
-        print 'ReadoutMode() :', c.ReadoutMode
-        print 'TypeId()      :', c.TypeId
-        print 'Version()     :', c.Version
-        print 'deviceID()    :', c.deviceID()   # MX340-HS:125
-        print 'binning_f()   :', c.binning_f()  # 4
-        print 'binning_s()   :', c.binning_s()  # 4
-        print 'darkFlag()    :', c.darkFlag()
-        print 'exposure()    :', c.exposure()
-        print 'rawMode()     :', c.rawMode()
-        print 'readoutMode() :', c.readoutMode()
-        print 'testPattern() :', c.testPattern()
-        print 'trigger()     :', c.trigger()     
-        print 'NEW STUFF IN Rayonix.ConfigV2 since 2018-10-29 ana-1.3.73'
-        print 'width()       :', c.width()
-        print 'height()      :', c.height()
-        print 'maxWidth()    :', c.maxWidth()
-        print 'maxHeight()   :', c.maxHeight()
-        print 'pixelWidth()  :', c.pixelWidth()
-        print 'pixelHeight() :', c.pixelHeight()
+        print('XXX:shape_config_rayonix', dir(c))
+        print('DeviceIDMax() :', c.DeviceIDMax)
+        print('ReadoutMode() :', c.ReadoutMode)
+        print('TypeId()      :', c.TypeId)
+        print('Version()     :', c.Version)
+        print('deviceID()    :', c.deviceID())   # MX340-HS:125
+        print('binning_f()   :', c.binning_f())  # 4
+        print('binning_s()   :', c.binning_s())  # 4
+        print('darkFlag()    :', c.darkFlag())
+        print('exposure()    :', c.exposure())
+        print('rawMode()     :', c.rawMode())
+        print('readoutMode() :', c.readoutMode())
+        print('testPattern() :', c.testPattern())
+        print('trigger()     :', c.trigger())     
+        print('NEW STUFF IN Rayonix.ConfigV2 since 2018-10-29 ana-1.3.73')
+        print('width()       :', c.width())
+        print('height()      :', c.height())
+        print('maxWidth()    :', c.maxWidth())
+        print('maxHeight()   :', c.maxHeight())
+        print('pixelWidth()  :', c.pixelWidth())
+        print('pixelHeight() :', c.pixelHeight())
 
 ##-----------------------------
 
@@ -1589,19 +1590,19 @@ if __name__ == "__main__" :
     evts = ds.events()
     evt  = evts.next()
 
-    for key in evt.keys() : print key
+    for key in evt.keys() : print(key)
 
     det = PyDetectorAccess(src, env, pbits=255)
 
     nda = det.pedestals(evt)
-    print '\npedestals nda:', nda
-    if nda is not None : print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
+    print('\npedestals nda:', nda)
+    if nda is not None : print('nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape))
 
     t0_sec = time()
     nda = det.raw_data(evt, env)
-    print '\nPython consumed time to get raw data (sec) =', time()-t0_sec
+    print('\nPython consumed time to get raw data (sec) =', time()-t0_sec)
 
-    print '\nraw_data nda:\n', nda
+    print('\nraw_data nda:\n', nda)
 
     sys.exit ('Self test is done')
 

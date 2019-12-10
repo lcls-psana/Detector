@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #------------------------------
 #import os
+from __future__ import print_function
 import sys
 import numpy as np
 from time import time
@@ -10,12 +11,12 @@ from Detector.GlobalUtils import print_ndarr
 #------------------------------
 
 def test01(tname):
-    print '\nIn %s' % sys._getframe().f_code.co_name
+    print('\nIn %s' % sys._getframe().f_code.co_name)
 
     #dsname, src = 'exp=cxif5315:run=169', 'CxiDs2.0:Cspad.0'
     dsname, src = 'exp=mecx32415:run=101', 'MecTargetChamber.0:Cspad.0'
 
-    print '\n  dataset: %s\n  source : %s' % (dsname, src)
+    print('\n  dataset: %s\n  source : %s' % (dsname, src))
 
     psana.setOption('psana.calib-dir', './calib')
 
@@ -23,7 +24,7 @@ def test01(tname):
     ds  = psana.DataSource(dsname)
     env = ds.env()
 
-    print 'env.calibDir(): %s' % env.calibDir()
+    print('env.calibDir(): %s' % env.calibDir())
 
     #evt = ds.events().next()
     #nrun = evt.run()
@@ -55,7 +56,7 @@ def test01(tname):
 #------------------------------
 
 def detector(tname):
-    print '\nIn %s' % sys._getframe().f_code.co_name
+    print('\nIn %s' % sys._getframe().f_code.co_name)
 
     #from Detector.AreaDetector import AreaDetector
     #det = AreaDetector(src, env, pbits=0)
@@ -63,7 +64,7 @@ def detector(tname):
     det = psana.Detector(src, env)
 
     ins = det.instrument()
-    print 80*'_', '\nInstrument: ', ins
+    print(80*'_', '\nInstrument: ', ins)
     #det.set_print_bits(511);
     #det.set_def_value(-5.);
     #det.set_mode(1);
@@ -114,8 +115,8 @@ def detector(tname):
 #------------------------------
 
 def test(tname):
-    print '\nIn %s' % sys._getframe().f_code.co_name
-    print 'test' % tname
+    print('\nIn %s' % sys._getframe().f_code.co_name)
+    print('test' % tname)
 
 #------------------------------
 
@@ -128,7 +129,7 @@ def plot_image(img):
 #------------------------------
 
 if __name__ == "__main__" :
-    print 80*'_'
+    print(80*'_')
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     if tname in ('1', '2', '3') : test01(tname)
     elif tname == '4'           : test(tname)

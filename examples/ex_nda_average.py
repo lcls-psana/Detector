@@ -8,6 +8,7 @@
    python ex_nda_average.py
    bsub -q psfehq -o log-r0092.log python ex_nda_average.py
 """
+from __future__ import print_function
 
 ##-----------------------------
 import sys
@@ -29,7 +30,7 @@ def example_01():
     dsname = 'exp=cxif5315:run=169'
     #src    = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
     src    = 'CxiDs2.0:Cspad.0'
-    print 'Example of the detector calibrated data average for\n  dataset: %s\n  source : %s' % (dsname, src)
+    print('Example of the detector calibrated data average for\n  dataset: %s\n  source : %s' % (dsname, src))
 
     # Non-standard calib directory
     #psana.setOption('psana.calib-dir', './calib')
@@ -43,7 +44,7 @@ def example_01():
     det = psana.Detector(src, env)
     shape = det.shape(rnum) 
 
-    print '  det.shape() = ', shape 
+    print('  det.shape() = ', shape) 
     
     #mask = det.mask(evt)
     
@@ -61,13 +62,13 @@ def example_01():
         #cdata = det.raw_data(evt)
 
         if cdata is None : continue
-        if not i%10 : print '  Event: %d' % i
+        if not i%10 : print('  Event: %d' % i)
         counter += 1
         arr_sum += cdata 
         arr_max = np.maximum(arr_max, cdata)
 
-    print '  Detector data found in %d events' % counter
-    print '  Total consumed time = %f sec' % (time()-t0_sec)
+    print('  Detector data found in %d events' % counter)
+    print('  Total consumed time = %f sec' % (time()-t0_sec))
 
     arr_ave = arr_sum/counter if counter>0 else arr_sum
   
@@ -90,19 +91,19 @@ def example_01():
 
     arr_ave = reshape_nda_to_2d(arr_ave)
     ofname_ave = 'nda-ave-%s-r%04d.txt' % (env.experiment(), evt.run())    
-    print 'Save averaged array in file %s' % ofname_ave
+    print('Save averaged array in file %s' % ofname_ave)
     np.savetxt(ofname_ave, arr_ave, fmt='%8.1f', delimiter=' ', newline='\n')
 
     arr_max = reshape_nda_to_2d(arr_max)
     ofname_max = 'nda-max-%s-r%04d.txt' % (env.experiment(), evt.run())    
-    print 'Save maximum  array in file %s' % ofname_max
+    print('Save maximum  array in file %s' % ofname_max)
     np.savetxt(ofname_max, arr_ave, fmt='%8.1f', delimiter=' ', newline='\n')
 
 ##-----------------------------
 if __name__ == "__main__" :
 
     ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print '%s\nExample # %d' % (80*'_', ntest)
+    print('%s\nExample # %d' % (80*'_', ntest))
 
     example_01()
 

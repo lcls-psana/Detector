@@ -1,3 +1,4 @@
+from __future__ import print_function
 import psana
 import numpy as np
 import time
@@ -34,6 +35,6 @@ for i in times:
     plt.imshow(calib[3],interpolation='none',vmin=0,vmax=100)
     plt.show()       
     _img = det.image(evt)
-    print "$$$$$: ", _img.shape
+    print("$$$$$: ", _img.shape)
     exit()
 

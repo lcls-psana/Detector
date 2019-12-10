@@ -1,3 +1,4 @@
+from __future__ import print_function
 import psana
 from pyimgalgos.GlobalUtils import print_ndarr
 
@@ -19,19 +20,19 @@ evt = None
 raw = None
 for nev,evt in enumerate(ds.events()):    
     if nev > EVENTS : break
-    print '%s\nEvent %4d' % (50*'_', nev)
+    print('%s\nEvent %4d' % (50*'_', nev))
     if evt is None : continue
     raw = det.raw(evt)
     if raw is not None : break
 
 print_ndarr(det.raw(evt), name='raw', first=0, last=5)
-print 'raw.shape:', raw.shape
-print 'det.shape_config:', det.shape_config(env)
-print 'det.pixel_size(evt):', det.pixel_size(evt)
+print('raw.shape:', raw.shape)
+print('det.shape_config:', det.shape_config(env))
+print('det.pixel_size(evt):', det.pixel_size(evt))
 
 #from Detector.PyDataAccess import get_rayonix_config_object
 #c = get_rayonix_config_object(env, det.source)
 
 c = env.configStore().get(psana.Rayonix.ConfigV2, det.source)
-print 'c.deviceID:', c.deviceID(), "See PyDetectorAccess.py shape=(7680,7680) if 'MX340' in c.deviceID() else (3840,3840)"  
+print('c.deviceID:', c.deviceID(), "See PyDetectorAccess.py shape=(7680,7680) if 'MX340' in c.deviceID() else (3840,3840)")  
 

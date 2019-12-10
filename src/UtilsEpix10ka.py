@@ -12,6 +12,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created on 2018-11-14 by Mikhail Dubrovin
 """
+from __future__ import print_function
 
 #--------------------
 import os
@@ -430,7 +431,7 @@ if __name__ == "__main__" :
   def test_config_data(tname) :
     
     ssrc, dsname = ex_source_dsname(tname)
-    print 'Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc)
+    print('Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc))
 
     ds = psana.DataSource(dsname)
     det = psana.Detector(ssrc)
@@ -451,7 +452,7 @@ if __name__ == "__main__" :
   def test_calib(tname) :
     
     ssrc, dsname = ex_source_dsname(tname)
-    print 'Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc)
+    print('Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc))
 
     ds  = psana.DataSource(dsname)
     d   = psana.Detector(ssrc)
@@ -461,7 +462,7 @@ if __name__ == "__main__" :
     for nev,evt in enumerate(ds.events()):
     
         if nev > EVENTS : break
-        print '%s\nEvent %4d' % (50*'_', nev)
+        print('%s\nEvent %4d' % (50*'_', nev))
         if evt is None : continue
 
         raw = d.raw(evt)
@@ -469,7 +470,7 @@ if __name__ == "__main__" :
         gain = d.gain(evt)
         peds = d.pedestals(evt)
         dt = time()-t0_sec
-        print '\nXXX: det.gain & peds constants consumed time (sec) =', dt
+        print('\nXXX: det.gain & peds constants consumed time (sec) =', dt)
 
         print_ndarr(raw,  name='raw ')
         print_ndarr(gain, name='gain')
@@ -486,7 +487,7 @@ if __name__ == "__main__" :
 #--------------------
 
 if __name__ == "__main__" :
-    print 80*'_'
+    print(80*'_')
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     if tname == '1' : test_config_data(tname)

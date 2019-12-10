@@ -7,6 +7,7 @@
 
     Usage: python Detector/examples/ex_time_fiducials.py
 """
+from __future__ import print_function
 ##-----------------------------
 
 import psana
@@ -25,10 +26,10 @@ for i, evt in enumerate(ds.events()) :
     tstamp_data = strftime('%Y-%m-%dT%H:%M:%S', localtime(tsec))
     tstamp_now  = strftime('%Y-%m-%dT%H:%M:%S', localtime())
 
-    print '%s\nEvent# %3d t[sec]=%10d  t[nsec]=%9d  fid=%5d  tstamp(data): %s  tstamp(now): %s'%\
-          (127*'_', i, tsec, tnsec, fid, tstamp_data, tstamp_now)
+    print('%s\nEvent# %3d t[sec]=%10d  t[nsec]=%9d  fid=%5d  tstamp(data): %s  tstamp(now): %s'%\
+          (127*'_', i, tsec, tnsec, fid, tstamp_data, tstamp_now))
 
     et = psana.EventTime(int((tsec<<32)|tnsec),fid)
-    print 'EventTime: t[sec]=%10d  t[nsec]=%9d  fid=%5d' % (et.seconds(), et.nanoseconds(), et.fiducial()) #, et.time
+    print('EventTime: t[sec]=%10d  t[nsec]=%9d  fid=%5d' % (et.seconds(), et.nanoseconds(), et.fiducial())) #, et.time
 
 ##-----------------------------

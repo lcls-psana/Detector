@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import numpy as np
 from time import time
@@ -15,7 +16,7 @@ import Detector.UtilsEpix as ue
 #------------------------------
 
 def print_object_dir(o) :
-    print 'dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_']))
+    print('dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_'])))
 
 #------------------------------
 
@@ -31,52 +32,52 @@ def test_epix10ka2m_config(tname) :
     env = ds.env()
     co = env.configStore().get(psana.Epix.Config10ka2MV1, src)
 
-    print 'experiment "%s"' % env.experiment()
-    print 'src        %s' % str(src) 
-    print 'dataset    %s' % str(ds) 
-    print 'calibDir:', env.calibDir()
+    print('experiment "%s"' % env.experiment())
+    print('src        %s' % str(src)) 
+    print('dataset    %s' % str(ds)) 
+    print('calibDir:', env.calibDir())
 
     print_object_dir(co) # psana.Epix.Config10ka2MV1
 
-    print 'dir(co):', ', '.join([v for v in dir(co) if v[:1]!='_'])
-    print 'co.evr()    ...Epix.PgpEvrConfig:', co.evr()
-    print 'co.elemCfg(0) ...Epix.Config10ka:', co.elemCfg(0)
-    print 'co.quad(0)...Epix.Config10kaQuad:', co.quad(0)
-    print 'co.elemCfg_shape()          [16]:', co.elemCfg_shape()
-    print 'co.numberOfAsics()            64:', co.numberOfAsics()
-    print 'co.numberOfCalibrationRows()   4:', co.numberOfCalibrationRows()
-    print 'co.numberOfColumns()         384:', co.numberOfColumns()
-    print 'co.numberOfElements()         16:', co.numberOfElements()
-    print 'co.numberOfEnvironmentalRows() 2:', co.numberOfEnvironmentalRows()
-    print 'co.numberOfReadableRows()    352:', co.numberOfReadableRows()
-    print 'co.numberOfRows()            352:', co.numberOfRows()
-    print 'co.TypeId                    117:', co.TypeId
-    print 'co.Version                     1:', co.Version
-    print 'co.quad_shape()              [4]:', co.quad_shape()
+    print('dir(co):', ', '.join([v for v in dir(co) if v[:1]!='_']))
+    print('co.evr()    ...Epix.PgpEvrConfig:', co.evr())
+    print('co.elemCfg(0) ...Epix.Config10ka:', co.elemCfg(0))
+    print('co.quad(0)...Epix.Config10kaQuad:', co.quad(0))
+    print('co.elemCfg_shape()          [16]:', co.elemCfg_shape())
+    print('co.numberOfAsics()            64:', co.numberOfAsics())
+    print('co.numberOfCalibrationRows()   4:', co.numberOfCalibrationRows())
+    print('co.numberOfColumns()         384:', co.numberOfColumns())
+    print('co.numberOfElements()         16:', co.numberOfElements())
+    print('co.numberOfEnvironmentalRows() 2:', co.numberOfEnvironmentalRows())
+    print('co.numberOfReadableRows()    352:', co.numberOfReadableRows())
+    print('co.numberOfRows()            352:', co.numberOfRows())
+    print('co.TypeId                    117:', co.TypeId)
+    print('co.Version                     1:', co.Version)
+    print('co.quad_shape()              [4]:', co.quad_shape())
 
     e0co = co.elemCfg(0) # psana.Epix.Config10ka
     print_object_dir(e0co)
 
-    print 'e0co.asicMask()                       0:', e0co.asicMask()
-    print 'e0co.asicPixelConfigArray()         arr:', e0co.asicPixelConfigArray()
-    print 'e0co.asics()       Asic10kaConfigV1 obj:', e0co.asics(0)
-    print 'e0co.asics_shape()                  [4]:', e0co.asics_shape()
-    print 'e0co.calibPixelConfigArray()        arr:', e0co.calibPixelConfigArray()
-    print 'e0co.calibrationRowCountPerASIC()   2  :', e0co.calibrationRowCountPerASIC()
-    print 'e0co.carrierId0()                   0  :', e0co.carrierId0()
-    print 'e0co.carrierId1()                   0  :', e0co.carrierId1()
-    print 'e0co.environmentalRowCountPerASIC() 1  :', e0co.environmentalRowCountPerASIC()
-    print 'e0co.numberOfAsics()                4  :', e0co.numberOfAsics()
-    print 'e0co.numberOfAsicsPerColumn()       2  :', e0co.numberOfAsicsPerColumn()
-    print 'e0co.numberOfAsicsPerRow()          2  :', e0co.numberOfAsicsPerRow()
-    print 'e0co.numberOfCalibrationRows()      4  :', e0co.numberOfCalibrationRows()
-    print 'e0co.numberOfColumns()              384:', e0co.numberOfColumns()
-    print 'e0co.numberOfEnvironmentalRows()    2  :', e0co.numberOfEnvironmentalRows()
-    print 'e0co.numberOfPixelsPerAsicRow()     192:', e0co.numberOfPixelsPerAsicRow()
-    print 'e0co.numberOfReadableRows()         352:', e0co.numberOfReadableRows()
-    print 'e0co.numberOfReadableRowsPerAsic()  176:', e0co.numberOfReadableRowsPerAsic()
-    print 'e0co.numberOfRows()                 352:', e0co.numberOfRows()
-    print 'e0co.numberOfRowsPerAsic()          176:', e0co.numberOfRowsPerAsic()         
+    print('e0co.asicMask()                       0:', e0co.asicMask())
+    print('e0co.asicPixelConfigArray()         arr:', e0co.asicPixelConfigArray())
+    print('e0co.asics()       Asic10kaConfigV1 obj:', e0co.asics(0))
+    print('e0co.asics_shape()                  [4]:', e0co.asics_shape())
+    print('e0co.calibPixelConfigArray()        arr:', e0co.calibPixelConfigArray())
+    print('e0co.calibrationRowCountPerASIC()   2  :', e0co.calibrationRowCountPerASIC())
+    print('e0co.carrierId0()                   0  :', e0co.carrierId0())
+    print('e0co.carrierId1()                   0  :', e0co.carrierId1())
+    print('e0co.environmentalRowCountPerASIC() 1  :', e0co.environmentalRowCountPerASIC())
+    print('e0co.numberOfAsics()                4  :', e0co.numberOfAsics())
+    print('e0co.numberOfAsicsPerColumn()       2  :', e0co.numberOfAsicsPerColumn())
+    print('e0co.numberOfAsicsPerRow()          2  :', e0co.numberOfAsicsPerRow())
+    print('e0co.numberOfCalibrationRows()      4  :', e0co.numberOfCalibrationRows())
+    print('e0co.numberOfColumns()              384:', e0co.numberOfColumns())
+    print('e0co.numberOfEnvironmentalRows()    2  :', e0co.numberOfEnvironmentalRows())
+    print('e0co.numberOfPixelsPerAsicRow()     192:', e0co.numberOfPixelsPerAsicRow())
+    print('e0co.numberOfReadableRows()         352:', e0co.numberOfReadableRows())
+    print('e0co.numberOfReadableRowsPerAsic()  176:', e0co.numberOfReadableRowsPerAsic())
+    print('e0co.numberOfRows()                 352:', e0co.numberOfRows())
+    print('e0co.numberOfRowsPerAsic()          176:', e0co.numberOfRowsPerAsic())         
 
     a0co = e0co.asics(0)
     print_object_dir(a0co)
@@ -84,9 +85,9 @@ def test_epix10ka2m_config(tname) :
     q0co = co.quad(0) # psana.Epix.Config10kaQuad
     print_object_dir(q0co)
 
-    print 'q0co....'
-    print 'q0co.digitalCardId0          15:', q0co.digitalCardId0()         
-    print 'q0co.digitalCardId1           0:', q0co.digitalCardId1()         
+    print('q0co....')
+    print('q0co.digitalCardId0          15:', q0co.digitalCardId0())         
+    print('q0co.digitalCardId1           0:', q0co.digitalCardId1())         
 
     
 
@@ -94,28 +95,28 @@ def test_epix10ka2m_config(tname) :
     sys.exit ('TEST EXIT')
 
 
-    print 'id_epix       :', ue.id_epix(co)
+    print('id_epix       :', ue.id_epix(co))
 
     a    = co.asicPixelConfigArray()
     arr1 = np.ones(a.shape, dtype=np.int32)
-    print 'asicPixelConfigArray:'
+    print('asicPixelConfigArray:')
 
     cbits = np.bitwise_and(a,12)
 
-    print 'number of non-zero-status pixels', np.sum(np.select((a!=0,), (arr1,), default=0))
-    print 'number of pixels cbits = 0 AUTO ', np.sum(np.select((cbits==0,), (arr1,), default=0))
-    print 'number of pixels cbits = 4 FORCE', np.sum(np.select((cbits==4,), (arr1,), default=0))
-    print 'number of pixels cbits = 8 LOW  ', np.sum(np.select((cbits==8,), (arr1,), default=0))
-    print 'number of pixels cbits =12 HIGH ', np.sum(np.select((cbits==12,), (arr1,), default=0))
+    print('number of non-zero-status pixels', np.sum(np.select((a!=0,), (arr1,), default=0)))
+    print('number of pixels cbits = 0 AUTO ', np.sum(np.select((cbits==0,), (arr1,), default=0)))
+    print('number of pixels cbits = 4 FORCE', np.sum(np.select((cbits==4,), (arr1,), default=0)))
+    print('number of pixels cbits = 8 LOW  ', np.sum(np.select((cbits==8,), (arr1,), default=0)))
+    print('number of pixels cbits =12 HIGH ', np.sum(np.select((cbits==12,), (arr1,), default=0)))
 
     print_ndarr(a, 'asicPixelConfigArray')
-    print 'numberOfAsics :', co.numberOfAsics()
+    print('numberOfAsics :', co.numberOfAsics())
 
     for iasic in range(co.numberOfAsics()) :
         asic = co.asics(iasic)
-        print '  ASIC:%d'%iasic,\
+        print('  ASIC:%d'%iasic,\
               '  trbit:',  asic.trbit(),\
-              '  chipID:', asic.chipID()
+              '  chipID:', asic.chipID())
 
 
 
@@ -161,7 +162,7 @@ def test_epix10ka2m_config(tname) :
 
 if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '377'
-    print '%s\nTest %s' % (80*'_', tname)
+    print('%s\nTest %s' % (80*'_', tname))
     test_epix10ka2m_config(tname)
     print('try mfxx32516 runs: 336-AUTO, 337-AUTO&LOW, 340-HIGH, 363-HIGH, 365-LOW, 367-HIGH, 368-HIGH, 377-AUTO')
     sys.exit ('End of %s' % sys.argv[0])

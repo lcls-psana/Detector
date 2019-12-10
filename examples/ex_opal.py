@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -10,7 +11,7 @@ from Detector.AreaDetector import AreaDetector
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+print('Test # %d' % ntest)
 
 ##-----------------------------
 dsname, src = None, None
@@ -21,7 +22,7 @@ if ntest==1 :
     dsname, src = 'exp=sxrm2016:run=40',  'OPAL3'
     #psana.setOption('psana.calib-dir', './calib')
 
-print 'Example for\n dataset: %s\n source : %s' % (dsname, src)
+print('Example for\n dataset: %s\n source : %s' % (dsname, src))
 
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')
@@ -30,9 +31,9 @@ ds  = psana.DataSource(dsname)
 evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
-print 'Run number %d' % nrun
+print('Run number %d' % nrun)
 
-for key in evt.keys() : print key
+for key in evt.keys() : print(key)
 
 ##-----------------------------
 
@@ -42,15 +43,15 @@ par = nrun # evt or nrun
 det = AreaDetector(src, env, pbits=0)
 
 ins = det.instrument()
-print 80*'_', '\nInstrument: ', ins
+print(80*'_', '\nInstrument: ', ins)
 
 det.print_attributes()
 
 shape_nda = det.shape(par)
 print_ndarr(shape_nda, 'shape of ndarray')
 
-print 'size of ndarray: %d' % det.size(par)
-print 'ndim of ndarray: %d' % det.ndim(par)
+print('size of ndarray: %d' % det.size(par))
+print('ndim of ndarray: %d' % det.ndim(par))
 
 peds = det.pedestals(par)
 print_ndarr(peds, 'pedestals')
@@ -84,14 +85,14 @@ for i, evt in enumerate(ds.events()) :
     nda_raw = det.raw(evt)
     if nda_raw is not None :
         dt_sec = time()-t0_sec
-        print 'Detector data found in event %d'\
-              ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec)
+        print('Detector data found in event %d'\
+              ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec))
         if i==8 : break
 
 print_ndarr(nda_raw, 'raw data')
 
 if nda_raw is None :
-    print 'Detector data IS NOT FOUND in %d events' % i
+    print('Detector data IS NOT FOUND in %d events' % i)
     sys.exit('FURTHER TEST IS TERMINATED')
 
 ##-----------------------------
@@ -117,7 +118,7 @@ img = det.image(evt)
 
 print_ndarr(img, 'image (calibrated data or raw)')
 
-print 80*'_'
+print(80*'_')
 
 ##-----------------------------
 

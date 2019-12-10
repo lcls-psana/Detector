@@ -184,6 +184,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import sys
@@ -267,9 +268,9 @@ class AreaDetector(object):
         if not isinstance(self.source, _psana.Source) : self.source = _psana.Source(self.source)
 
         if self.pbits & 16 :
-            print '%s: input source: %s' % (self.__class__.__name__, src),\
+            print('%s: input source: %s' % (self.__class__.__name__, src),\
                   '\n  string source: %s' % (str_src),\
-                  '\n  source object: %s of type: %s' % (self.source, type(self.source))
+                  '\n  source object: %s of type: %s' % (self.source, type(self.source)))
 
         if set_sub :
             self.pyda.set_source(self.source)
@@ -287,13 +288,13 @@ class AreaDetector(object):
     def print_attributes(self) :
         """Prints some of object attributes.
         """
-        print 'AreaDetector object attributes:', \
+        print('AreaDetector object attributes:', \
               '\n  source : %s' % self.source, \
               '\n  dettype: %d' % self.dettype, \
               '\n  detname: %s' % gu.dic_det_type_to_name[self.dettype], \
               '\n  pbits  : %d' % self.pbits, \
               '\n  iscpp  : %d' % self.iscpp, \
-              '\n  ispyt  : %d' % self.ispyt
+              '\n  ispyt  : %d' % self.ispyt)
         if self.iscpp : self.da.print_members()
         else          : self.pyda.print_attributes()
 
@@ -857,8 +858,8 @@ class AreaDetector(object):
         if rdata is not None : return self._shaped_array_(self.runnum(evt), rdata)
 
         if self.pbits :
-            print 'WARNING: AreaDetector.raw - data for source %s is not found in %s interface.'%\
-                  (self.source, 'C++' if self.iscpp else 'Python')
+            print('WARNING: AreaDetector.raw - data for source %s is not found in %s interface.'%\
+                  (self.source, 'C++' if self.iscpp else 'Python'))
 
         return rdata
 
@@ -938,7 +939,7 @@ class AreaDetector(object):
 ##-----------------------------
 
     def _print_warning(self, msg='') :
-        print '\nWARNING! %s: %s' % (self.__class__.__name__, msg)
+        print('\nWARNING! %s: %s' % (self.__class__.__name__, msg))
 
 ##-----------------------------
 
@@ -1593,12 +1594,12 @@ if __name__ == "__main__" :
     import psana
 
     ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print 'Test # %d' % ntest
+    print('Test # %d' % ntest)
     dsname, src                  = 'exp=cxif5315:run=169', psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
     if   ntest==2  : dsname, src = 'exp=meca1113:run=376', psana.Source('DetInfo(MecTargetChamber.0:Cspad2x2.1)')
     elif ntest==3  : dsname, src = 'exp=amob5114:run=403', psana.Source('DetInfo(Camp.0:pnCCD.0)')
     elif ntest==4  : dsname, src = 'exp=xppi0614:run=74',  psana.Source('DetInfo(NoDetector.0:Epix100a.0)')
-    print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+    print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
     ds = psana.DataSource(dsname)
 
@@ -1608,18 +1609,18 @@ if __name__ == "__main__" :
     evt = eviter.next()
     rnum = evt.run()
 
-    for key in evt.keys() : print key
+    for key in evt.keys() : print(key)
 
     det = AreaDetector(src, env, pbits=0)
 
     nda = det.pedestals(rnum)
-    print '\nnda:\n', nda
-    print 'nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape)
+    print('\nnda:\n', nda)
+    print('nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape))
 
     t0_sec = time()
     nda = det.raw(evt)
-    print '\nConsumed time to get raw data (sec) =', time()-t0_sec
-    print '\nnda:\n', nda.flatten()[0:10]
+    print('\nConsumed time to get raw data (sec) =', time()-t0_sec)
+    print('\nnda:\n', nda.flatten()[0:10])
 
     sys.exit ('Self test is done')
 

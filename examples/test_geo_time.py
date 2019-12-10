@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 #------------
 # In ipython
@@ -16,6 +17,6 @@ det = psana.Detector('XppGon.0:Cspad.0', env)
 for i in range(10) :
     t0_sec = time()
     det.coords_x(evt)
-    print 'Ccmmand#%2d consumed astro time = %9.6f sec' % (i, time()-t0_sec)
+    print('Ccmmand#%2d consumed astro time = %9.6f sec' % (i, time()-t0_sec))
 
 #------------

@@ -5,6 +5,7 @@
 
   Created on 2018-04-30 by Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import logging
@@ -88,7 +89,7 @@ def jungfrau_gain_constants() :
 
     if len(sys.argv)==1 :
         parser.print_help()
-        print '\n%s' % usage()
+        print('\n%s' % usage())
         sys.exit('\nWARNING: MISSING ARGUMENTS\n')
 
     (popts, pargs) = parser.parse_args()

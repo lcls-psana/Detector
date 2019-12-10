@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #------------------------------
 
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -26,7 +27,7 @@ def plot_det_image(det, evt, nda, tit='') :
     #img = det.image(evt, nda)
     img = reshape_to_2d(nda)
     if img is None : 
-        print 'plot_det_image - Image "%s" is not available.'%tit
+        print('plot_det_image - Image "%s" is not available.'%tit)
         #sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
         return
     
@@ -85,31 +86,31 @@ class DetNDArrDataProc :
 
 
     def print_attrs(self) :
-        print '%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__)
-        print 'dataset name                    : %s'   % self.dsname
-        print 'source name                     : %s'   % self.src   
-        print 'output file name template       : %s'   % self.ofname
-        print 'calib directory                 : %s'   % self.clbdir   
-        print 'number of events to collect     : %d'   % self.events
-        print 'number of events to skip        : %d'   % self.evskip
-        print 'event codes to select events    : %s'   % self.evcode
+        print('%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__))
+        print('dataset name                    : %s'   % self.dsname)
+        print('source name                     : %s'   % self.src)   
+        print('output file name template       : %s'   % self.ofname)
+        print('calib directory                 : %s'   % self.clbdir)   
+        print('number of events to collect     : %d'   % self.events)
+        print('number of events to skip        : %d'   % self.evskip)
+        print('event codes to select events    : %s'   % self.evcode)
 
-        print 'control bit-word to plot images : %d'   % self.plotim
-        print 'control bit-word for verbosity  : %d'   % self.verbos
-        print 'control bit-word to save arrays : %d'   % self.savebw
-        print 'control bit-word to upload files: %d'   % self.uplobw
+        print('control bit-word to plot images : %d'   % self.plotim)
+        print('control bit-word for verbosity  : %d'   % self.verbos)
+        print('control bit-word to save arrays : %d'   % self.savebw)
+        print('control bit-word to upload files: %d'   % self.uplobw)
 
-        print 'INTENSITY low limit (ADU)       : ',      self.intlow
-        print 'INTENSITY high limit (ADU)      : ',      self.inthig
-        print 'RMS low limit (ADU)             : ',      self.rmslow
-        print 'RMS high limit (ADU)            : ',      self.rmshig
-        print 'allowed low/high fraction limit : %.3f' % self.fraclm
-        print '\nParameters for auto-evaluation of limits (ON/OFF if non-0/0):'
-        print 'number of sigma from mean for INTENSITY low limit  : ',  self.intnlo
-        print 'number of sigma from mean for INTENSITY high limit : ',  self.intnhi
-        print 'number of sigma from mean for RMS low limit        : ',  self.rmsnlo
-        print 'number of sigma from mean for RMS high limit       : ',  self.rmsnhi
-        print 50*'_', '\n'
+        print('INTENSITY low limit (ADU)       : ',      self.intlow)
+        print('INTENSITY high limit (ADU)      : ',      self.inthig)
+        print('RMS low limit (ADU)             : ',      self.rmslow)
+        print('RMS high limit (ADU)            : ',      self.rmshig)
+        print('allowed low/high fraction limit : %.3f' % self.fraclm)
+        print('\nParameters for auto-evaluation of limits (ON/OFF if non-0/0):')
+        print('number of sigma from mean for INTENSITY low limit  : ',  self.intnlo)
+        print('number of sigma from mean for INTENSITY high limit : ',  self.intnhi)
+        print('number of sigma from mean for RMS low limit        : ',  self.rmsnlo)
+        print('number of sigma from mean for RMS high limit       : ',  self.rmsnhi)
+        print(50*'_', '\n')
 
 
     def _common_mode_pars(self, arr_ave, arr_rms, arr_msk) :
@@ -125,8 +126,8 @@ class DetNDArrDataProc :
         rms = arr_rms[arr_msk>0].mean()
 
         if self.verbos & 1 :
-            print 'Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
-                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms)
+            print('Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
+                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms))
 
         if dettype == gu.PNCCD :
             return np.array((3, math.ceil(4*rms), math.ceil(4*rms), 128))
@@ -163,8 +164,8 @@ class DetNDArrDataProc :
         self.shape = ndaraw.shape
         self.dtype_raw = ndaraw.dtype
 
-        if self.verbos & 1 : print 'Begin processing for %s, raw.dtype = %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
-                                   (self.src, str(self.dtype_raw), str(self.shape), self.intlow, self.inthig)
+        if self.verbos & 1 : print('Begin processing for %s, raw.dtype = %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
+                                   (self.src, str(self.dtype_raw), str(self.shape), self.intlow, self.inthig))
 
         self.arr0       = np.zeros(self.shape, dtype=self.dtype_raw)
         self.arr1       = np.ones (self.shape, dtype=self.dtype_raw)
@@ -186,7 +187,7 @@ class DetNDArrDataProc :
         self.runnum = evt.run()
         self.tsec, self.tnsec, self.fid, self.tsdate, self.tstime = time_pars_evt(evt)
 
-        if self.verbos & 1 : print 'Initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec)
+        if self.verbos & 1 : print('Initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec))
 
         return True
 
@@ -233,12 +234,12 @@ class DetNDArrDataProc :
     def summary(self, evt, env) :
 
         #if self.verbos & 1 :
-        print '%s\nSummary for dataset: %s source: %s' % (80*'_', self.dsname, self.src)
+        print('%s\nSummary for dataset: %s source: %s' % (80*'_', self.dsname, self.src))
 
         if self.counter :
-            print '  %d events found/processed' % (self.counter),
+            print('  %d events found/processed' % (self.counter), end=' ')
         else :
-            print '  counter=%d there is no statistics to process/save...' % self.counter
+            print('  counter=%d there is no statistics to process/save...' % self.counter)
             return 
  
         t0_sec = time()
@@ -286,16 +287,16 @@ class DetNDArrDataProc :
         
         arr_msk = np.select((arr_sta>0,), (self.arr0,), 1)
 
-        print '  Bad pixel status bits:'  
-        print '  bit   1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max) 
-        print '  bit   8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min) 
-        print '  bit   2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), inthig, fraclm) 
-        print '  bit   4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), intlow, fraclm)
-        print '  bit  16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max) 
-        print '  bit  32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)
-        print '  bit  64: %8d pixel max       > %g'   % (arr_sta_max_hi.sum(), ave_max) 
-        print '  bit 128: %8d pixel min       < %g'   % (arr_sta_min_lo.sum(), ave_min)
-        print '  total  : %8d pixel marked by any bit'% (arr_msk.size - arr_msk.sum())
+        print('  Bad pixel status bits:')  
+        print('  bit   1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)) 
+        print('  bit   8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)) 
+        print('  bit   2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), inthig, fraclm)) 
+        print('  bit   4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), intlow, fraclm))
+        print('  bit  16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)) 
+        print('  bit  32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min))
+        print('  bit  64: %8d pixel max       > %g'   % (arr_sta_max_hi.sum(), ave_max)) 
+        print('  bit 128: %8d pixel min       < %g'   % (arr_sta_min_lo.sum(), ave_min))
+        print('  total  : %8d pixel marked by any bit'% (arr_msk.size - arr_msk.sum()))
 
         if plotim &  1 : plot_det_image(det, evt, arr_av1,         tit='average')
         if plotim &  2 : plot_det_image(det, evt, arr_rms,         tit='RMS')
@@ -320,7 +321,7 @@ class DetNDArrDataProc :
 #------------------------------
 
     def print_ndarrays(self) :
-        print '%s\nCollected np.arrays for %s:' % (80*'_', self.src)
+        print('%s\nCollected np.arrays for %s:' % (80*'_', self.src))
         print_ndarr(self.arr_av1, 'arr_av1')
         print_ndarr(self.arr_rms, 'arr_rms')
         print_ndarr(self.arr_sta, 'arr_sta')
@@ -336,7 +337,7 @@ class DetNDArrDataProc :
 #------------------------------
 
     def save_ndarrays(self, addmetad=True) :
-        print '%s\nSave arrays:' % (80*'_')
+        print('%s\nSave arrays:' % (80*'_'))
 
         det      = self.det
         verbos   = self.verbos
@@ -353,7 +354,7 @@ class DetNDArrDataProc :
         if savebw & 16 : det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
         if savebw & 32 : det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
 
-        if verbos : print 'All files saved'
+        if verbos : print('All files saved')
 
 #------------------------------
 
@@ -366,7 +367,7 @@ class DetNDArrDataProc :
         ctypedir = '%s/%s/%s' % (clbdir, calibgrp, self.src) # self.src)
         fname = '%d-end.data' % self.runnum
 
-        print 'Deploy files in %s' % ctypedir
+        print('Deploy files in %s' % ctypedir)
 
         verbos = self.verbos
         uplobw = self.uplobw
@@ -378,7 +379,7 @@ class DetNDArrDataProc :
         if uplobw & 16 : gu.deploy_file(template % 'max', ctypedir, 'pixel_datamax',  fname, LOG_FILE, verbos)   
         if uplobw & 32 : gu.deploy_file(template % 'min', ctypedir, 'pixel_datamin',  fname, LOG_FILE, verbos)   
  
-        if verbos : print 'All files deploed'
+        if verbos : print('All files deploed')
 
 #------------------------------
 
@@ -409,30 +410,30 @@ def detector_ndarr_data_proc():
     dsname = popts.dsname
     evcode = popts.evcode
 
-    print '%s\nIn detector_ndarr_data_proc' % (50*'_')
+    print('%s\nIn detector_ndarr_data_proc' % (50*'_'))
     print_command_line_parameters(parser)
 
     # Non-standard calib directory
     #psana.setOption('psana.calib-dir', './calib')
 
-    if verbos & 1 : print 'Raw data processing of dataset: %s' % dsname
+    if verbos & 1 : print('Raw data processing of dataset: %s' % dsname)
 
     ecm = EventCodeManager(evcode, verbos) # see: det_ndarr_raw_proc
 
     sources_all = list_of_sources_for_dataset(dsname)
 
-    print '%s\nSources in %s:' % (50*'_', dsname)
-    for i,s in enumerate(sources_all) : print '%4d %s' % (i,s)
+    print('%s\nSources in %s:' % (50*'_', dsname))
+    for i,s in enumerate(sources_all) : print('%4d %s' % (i,s))
 
     det_types = [s.lower() for s in source.split(',')]
-    print '%s\nData processing is requested for detector types:' % (50*'_')
-    for t in det_types : print '    %s' % t
+    print('%s\nData processing is requested for detector types:' % (50*'_'))
+    for t in det_types : print('    %s' % t)
 
     sources_sel = [s for s in sources_all if any([t in s.lower() for t in det_types])]
 
-    print '%s\nSources selected for processing:' % (50*'_')
-    for i,s in enumerate(sources_sel) : print '%4d %s' % (i,s)
-    print 50*'_'
+    print('%s\nSources selected for processing:' % (50*'_'))
+    for i,s in enumerate(sources_sel) : print('%4d %s' % (i,s))
+    print(50*'_')
 
     #lst_dpo = [DetectorDataProc(parser, src) for src in sources_sel]
     lst_dpo = [DetNDArrDataProc(parser, src) for src in sources_sel]
@@ -482,7 +483,7 @@ def detector_ndarr_data_proc():
                       tsec = time()
                       dt   = tsec - tdt
                       tdt  = tsec
-                      print '  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
+                      print('  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt))
 
 #            print '  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
 #                  (run.run(), istep, nevclc, nevtot, gm.name)
@@ -491,7 +492,7 @@ def detector_ndarr_data_proc():
 
     if PROC_DATA : 
         for dpo in lst_dpo : dpo.end_of_proc(evt,env)
-    if verbos & 1 : print '%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec)
+    if verbos & 1 : print('%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec))
 
 #------------------------------
 
@@ -585,7 +586,7 @@ def option_parser() :
 #------------------------------
 
 if __name__ == "__main__" :
-    if len(sys.argv)==1 : print '\n%s' % usage(2)
+    if len(sys.argv)==1 : print('\n%s' % usage(2))
     else : detector_ndarr_data_proc()
     sys.exit(0)
 

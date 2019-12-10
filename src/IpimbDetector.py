@@ -3,6 +3,7 @@
 Detector interface for the Ipimb
 ================================
 """
+from __future__ import print_function
 
 # issues with ipimb: 
 # - can come in with either BLD or DAQ data
@@ -134,8 +135,8 @@ if __name__ == '__main__':
     ipimbdet_not_in_data = IpimbDetector('XppEnds_Ipm1')
 
     for i,evt in enumerate(ds.events()):
-        print ipimbdet.channel(evt), ipimbdet.sum(evt), ipimbdet.xpos(evt), ipimbdet.ypos(evt)
-        print ipimbdet_not_in_data.channel(evt), ipimbdet_not_in_data.sum(evt)
+        print(ipimbdet.channel(evt), ipimbdet.sum(evt), ipimbdet.xpos(evt), ipimbdet.ypos(evt))
+        print(ipimbdet_not_in_data.channel(evt), ipimbdet_not_in_data.sum(evt))
         if i == 5: break
 
 

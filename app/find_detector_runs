@@ -7,6 +7,7 @@
 
   Created on 2018-04-19 by Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import sys
@@ -28,11 +29,11 @@ def usage():
 #------------------------------
 
 def find_detector_runs(ins=INSTR, dtype=DET) :    
-    print '%s\nList of experiments and runs containing detector "%s" in instrument %s' % (80*'_', dtype, ins)
+    print('%s\nList of experiments and runs containing detector "%s" in instrument %s' % (80*'_', dtype, ins))
     if INSTR is None or not(INSTR.upper() in INSTRS) : 
-        print usage()
+        print(usage())
         sys.exit()
-    print '%s\n%s:' % (80*'_', ins)
+    print('%s\n%s:' % (80*'_', ins))
     test_find_detector_runs_for_instrument(ins, dtype)
 
 #------------------------------

@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 ## Run this example:
 ## python Detector/examples/ex_AreaDetectorCompond.py
@@ -51,11 +52,11 @@ def test_AreaDetectorCompound(ntest) :
     evt = ds.events().next()
     rnum = evt.run()
  
-    print 'rnum     :', rnum
-    print 'calibdir :', str(env.calibDir())
-    print 'size     :', str(det.list_size(evt))
-    print 'shapes   :', str(det.list_shape(evt))
-    print 'ndims    :', str(det.list_ndim(evt))
+    print('rnum     :', rnum)
+    print('calibdir :', str(env.calibDir()))
+    print('size     :', str(det.list_size(evt)))
+    print('shapes   :', str(det.list_shape(evt)))
+    print('ndims    :', str(det.list_ndim(evt)))
  
     raws = det.list_raw(evt)
     for nda in raws : print_ndarr(nda, name='-- per det list_raw', first=0, last=5)
@@ -86,7 +87,7 @@ if __name__ == "__main__" :
 
     import sys
     ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-    print 'Test # %d' % ntest
+    print('Test # %d' % ntest)
 
     test_AreaDetectorCompound(ntest)
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #------------------------------
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -17,7 +18,7 @@ def proc_rec(s, f, verbos, pattrn) :
         if rec in LIST_SELECTED_RECS : return
         else : LIST_SELECTED_RECS.append(rec)
 
-    if verbos : print rec
+    if verbos : print(rec)
     if f is not None : f.write('%s\n'%rec)
 
 #------------------------------
@@ -28,13 +29,13 @@ def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
     EVENTS = events + SKIP
 
     if verbos :
-        print 'scan dataset       : %s' % (dsname)
-        print 'output file        : %s' % (ofname)
-        print 'first event        : %d' % (SKIP)
-        print 'last event         : %d' % (EVENTS)
-        print 'mode bits          : %d' % (modebw)
-        print 'verbose            : %d' % (verbos)
-        print 'pattern to squeeze : %s' % (pattrn)
+        print('scan dataset       : %s' % (dsname))
+        print('output file        : %s' % (ofname))
+        print('first event        : %d' % (SKIP))
+        print('last event         : %d' % (EVENTS))
+        print('mode bits          : %d' % (modebw))
+        print('verbose            : %d' % (verbos))
+        print('pattern to squeeze : %s' % (pattrn))
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
@@ -50,7 +51,7 @@ def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
         if i<SKIP : continue
         if not i<EVENTS : break
 
-        if do_print : print '%s\nEvent# %3d' % (85*'_', i)
+        if do_print : print('%s\nEvent# %3d' % (85*'_', i))
 
         if modebw & 1 :
             for s in evt.keys() : proc_rec(s, f, verbos, pattrn)
@@ -63,13 +64,13 @@ def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
 
         counter += 1
 
-    if do_print : print '%s' % (85*'_')
+    if do_print : print('%s' % (85*'_'))
 
     if ofname is not None:
         f.close()
-        print 'File %s is saved.' % (ofname)
+        print('File %s is saved.' % (ofname))
 
-    print 'Loop over %d events of the dataset %s consumes %f sec.' % (counter, dsname, time()-t0_sec)
+    print('Loop over %d events of the dataset %s consumes %f sec.' % (counter, dsname, time()-t0_sec))
 
 #------------------------------
 
@@ -114,11 +115,11 @@ if __name__ == "__main__" :
     (opts, args) = command_line_parser()
 
     if len(sys.argv)==1 :
-        print usage(1)
+        print(usage(1))
         sys.exit ('Help: %s -h' % os.path.basename(sys.argv[0]))
         
     if opts.verbos :
-        print 'Command:', ' '.join(sys.argv)
+        print('Command:', ' '.join(sys.argv))
     #    print 'Options:'
     #    for k,v in opts.__dict__.items() : print '  %s : %s' % (k, str(v))
     #    print 'Arguments: ', args

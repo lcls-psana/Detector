@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 #------------------------------
+from __future__ import print_function
 import os
 import sys
 import psana
@@ -39,8 +40,8 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=1000, verbos=1, cmt=''
     lo, hi = max(lo, lim_lo), min(hi, lim_hi)
 
     if verbos & 1 :
-        print '  %s: %s ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
-              (sys._getframe().f_code.co_name, cmt, ave, std, lo, hi)
+        print('  %s: %s ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
+              (sys._getframe().f_code.co_name, cmt, ave, std, lo, hi))
 
     return lo, hi
 
@@ -124,32 +125,32 @@ class DetNDArrRawProc :
 
         if verbos & 1 :
             self.print_attrs()
-            print 'Begin processing'
+            print('Begin processing')
 
 
     def print_attrs(self) :
-        print '%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__)
-        print 'dataset name                    : %s'   % self.dsname
-        print 'source name                     : %s'   % self.src   
-        print 'output file name template       : %s'   % self.ofname
-        print 'number of events to collect     : %d'   % self.events
-        print 'number of events to skip        : %d'   % self.evskip
-        print 'number of events for stage 1    : %d'   % self.evstg1
-        print 'number of sigma intensity range : %.3f' % self.nsigma
-        print 'control bit-word to plot images : %d'   % self.plotim
-        print 'control bit-word for verbosity  : %d'   % self.verbos
-        print 'control bit-word to save arrays : %d'   % self.savebw
-        print 'INTENSITY low limit (ADU)       : ',      self.int_lo
-        print 'INTENSITY high limit (ADU)      : ',      self.int_hi
-        print 'RMS low limit (ADU)             : ',      self.rms_lo
-        print 'RMS high limit (ADU)            : ',      self.rms_hi
-        print 'allowed low/high fraction limit : %.3f' % self.fraclm
-        print '\nParameters for auto-evaluation of limits:'
-        print 'number of sigma from mean for INTENSITY low limit  : ',  self.intnlo
-        print 'number of sigma from mean for INTENSITY high limit : ',  self.intnhi
-        print 'number of sigma from mean for RMS low limit        : ',  self.rmsnlo
-        print 'number of sigma from mean for RMS high limit       : ',  self.rmsnhi
-        print 50*'_', '\n'
+        print('%s\nAttributes of the %s object' % (50*'_', self.__class__.__name__))
+        print('dataset name                    : %s'   % self.dsname)
+        print('source name                     : %s'   % self.src)   
+        print('output file name template       : %s'   % self.ofname)
+        print('number of events to collect     : %d'   % self.events)
+        print('number of events to skip        : %d'   % self.evskip)
+        print('number of events for stage 1    : %d'   % self.evstg1)
+        print('number of sigma intensity range : %.3f' % self.nsigma)
+        print('control bit-word to plot images : %d'   % self.plotim)
+        print('control bit-word for verbosity  : %d'   % self.verbos)
+        print('control bit-word to save arrays : %d'   % self.savebw)
+        print('INTENSITY low limit (ADU)       : ',      self.int_lo)
+        print('INTENSITY high limit (ADU)      : ',      self.int_hi)
+        print('RMS low limit (ADU)             : ',      self.rms_lo)
+        print('RMS high limit (ADU)            : ',      self.rms_hi)
+        print('allowed low/high fraction limit : %.3f' % self.fraclm)
+        print('\nParameters for auto-evaluation of limits:')
+        print('number of sigma from mean for INTENSITY low limit  : ',  self.intnlo)
+        print('number of sigma from mean for INTENSITY high limit : ',  self.intnhi)
+        print('number of sigma from mean for RMS low limit        : ',  self.rmsnlo)
+        print('number of sigma from mean for RMS high limit       : ',  self.rmsnhi)
+        print(50*'_', '\n')
 
 
     def _common_mode_pars(self, arr_ave, arr_rms, arr_msk) :
@@ -165,8 +166,8 @@ class DetNDArrRawProc :
         rms = arr_rms[arr_msk>0].mean()
 
         if self.verbos & 1 :
-            print 'Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
-                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms)
+            print('Evaluate common mode for source: %s det: %s, estimated intensity ave: %.3f  rms: %.3f' %\
+                  (self.src, gu.dic_det_type_to_name[dettype], ave, rms))
 
         if dettype == gu.PNCCD :
             return np.array((3, math.ceil(4*rms), math.ceil(4*rms), 128))
@@ -200,8 +201,8 @@ class DetNDArrRawProc :
 
         self.shape=ndaraw.shape
 
-        if self.verbos & 1 : print 'Begin stage 1 for %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
-                                   (self.src, str(self.shape), self.int_lo, self.int_hi) 
+        if self.verbos & 1 : print('Begin stage 1 for %s, raw.shape = %s, intensity limits low: %.1f  high: %.1f'%\
+                                   (self.src, str(self.shape), self.int_lo, self.int_hi)) 
     
         self.arr0       = np.zeros(self.shape, dtype=np.int64)
         self.arr1       = np.ones (self.shape, dtype=np.int64)
@@ -277,9 +278,9 @@ class DetNDArrRawProc :
         gate_half = self.nsigma*rms_ave
 
         if self.verbos & 1 :
-            print '%s\nBegin stage 2 for %s after %d events' % (80*'_', self.src, self.counter)
-            print '  mean rms=%.3f x %.1f = intensity gate= +/- %.3f around pixel average intensity' %\
-                  (rms_ave, self.nsigma, gate_half)
+            print('%s\nBegin stage 2 for %s after %d events' % (80*'_', self.src, self.counter))
+            print('  mean rms=%.3f x %.1f = intensity gate= +/- %.3f around pixel average intensity' %\
+                  (rms_ave, self.nsigma, gate_half))
 
         #print_ndarr(arr_av1, 'arr_av1')
 
@@ -295,18 +296,18 @@ class DetNDArrRawProc :
 
         self.stage = 2
 
-        if self.verbos & 1 : print 'Stage 2 initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec)
+        if self.verbos & 1 : print('Stage 2 initialization for %s consumes dt=%7.3f sec' % (self.src, time()-t0_sec))
 
 
     def summary(self, evt, env) :
 
         if self.verbos & 1 :
-            print '%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter),
+            print('%s\nRaw data for %s found/selected in %d events' % (80*'_', self.src, self.counter), end=' ')
 
         if self.counter :
-            print ', begin data summary stage'
+            print(', begin data summary stage')
         else :
-            print ', STOP processing, there are no arrays to save...'
+            print(', STOP processing, there are no arrays to save...')
             return 
 
         t0_sec = time()
@@ -344,13 +345,13 @@ class DetNDArrRawProc :
         arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
         arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
 
-        print '  Bad pixel status:'  
-        print '  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max) 
-        print '  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min) 
-        print '  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm) 
-        print '  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)
-        print '  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max) 
-        print '  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)
+        print('  Bad pixel status:')  
+        print('  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)) 
+        print('  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)) 
+        print('  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)) 
+        print('  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm))
+        print('  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)) 
+        print('  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min))
 
         #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
         arr_sta = np.zeros(self.shape, dtype=np.int64)
@@ -390,7 +391,7 @@ class DetNDArrRawProc :
             np.savetxt(template % 'cmo', cmod, fmt='%d', delimiter=' ', newline=' ')
             det.save_asdaq(template % 'cmm', cmod, cmts + ['ARR_TYPE  common_mode'],'%d', verbos, False)
 
-        if self.verbos & 1 : print 'Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec)
+        if self.verbos & 1 : print('Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec))
 
 #------------------------------
 
@@ -406,7 +407,7 @@ def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, 
     SKIP   = evskip
     EVENTS = events + SKIP
 
-    if verbos & 1 : print 'Raw data processing of dataset: %s' % (dsname)
+    if verbos & 1 : print('Raw data processing of dataset: %s' % (dsname))
 
     ecm = EventCodeManager(evcode, verbos)
 
@@ -431,11 +432,11 @@ def det_ndarr_raw_proc(dsname, sources, ofname, events, evskip, intlow, inthig, 
             tsec = time()
             dt   = tsec - tdt
             tdt  = tsec
-            print '  Event: %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt)
+            print('  Event: %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt))
 
     for dpo in lst_dpo : dpo.summary(evt,env)
 
-    if verbos & 1 : print '%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec)
+    if verbos & 1 : print('%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec))
 
 #------------------------------
 
@@ -526,16 +527,16 @@ if __name__ == "__main__" :
 
     proc_name = os.path.basename(sys.argv[0])
     if len(sys.argv)==1 :
-        print '%s\nHelp: %s -h' % (usage(1), proc_name)
+        print('%s\nHelp: %s -h' % (usage(1), proc_name))
         sys.exit(0)
         
     opts, args = command_line_parser()
 
     if opts.verbos & 4 :
-        print 'Command:', ' '.join(sys.argv)
-        print 'Options:'
-        for k,v in opts.__dict__.items() : print '  %s : %s' % (k, str(v))
-        print 'Arguments: ', args
+        print('Command:', ' '.join(sys.argv))
+        print('Options:')
+        for k,v in opts.__dict__.items() : print('  %s : %s' % (k, str(v)))
+        print('Arguments: ', args)
 
     if opts.dsname is None : sys.exit('WARNING: dataset (-d <dataset>) must be specified.')
     if opts.source is None : sys.exit('WARNING: Data source (-s <source>) must be specified.')

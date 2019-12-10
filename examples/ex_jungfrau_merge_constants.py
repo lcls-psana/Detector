@@ -2,13 +2,14 @@
 
 #--------------------------------
 
+from __future__ import print_function
 import numpy as np
 from Detector.GlobalUtils import print_ndarr
 from PSCalib.NDArrIO import save_txt
 
 #--------------------------------
 
-print 50*'_'
+print(50*'_')
 
 #dirsegs = 'M068', 'M088'
 dirsegs = ('M044',)
@@ -34,9 +35,9 @@ print_ndarr(nda, 'calib nda')
 #sh = (3,<nsegs>,512,1024)
 
 np.save('%s.npy'%ofname, nda)
-print 'Save n-d array in file "%s"' % ('%s.npy'%ofname)
+print('Save n-d array in file "%s"' % ('%s.npy'%ofname))
 
 save_txt('%s.txt'%ofname, nda, fmt=ofmt)
-print 'Save n-d array in file "%s"' % ('%s.txt'%ofname)
+print('Save n-d array in file "%s"' % ('%s.txt'%ofname))
 
 #--------------------------------

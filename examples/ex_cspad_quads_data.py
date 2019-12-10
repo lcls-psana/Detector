@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 import numpy as np
@@ -13,7 +14,7 @@ from time import time
 quad = int(sys.argv[1]) if len(sys.argv)>1 else 0
 if quad<0 : quad = 0
 if quad>3 : quad = 3
-print 'CSPAD Quad # %d' % quad
+print('CSPAD Quad # %d' % quad)
 
 ##----------------------------- init
 
@@ -46,7 +47,7 @@ t0_sec = time()
 
 nda = det.raw(evt)
 
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(nda, 'raw')
 
 if nda is None :

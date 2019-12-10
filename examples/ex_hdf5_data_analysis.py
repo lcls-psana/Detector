@@ -13,6 +13,7 @@ System setup:
 To run script use command:
 > python ex-data-analysis-h5.py 3
 """
+from __future__ import print_function
 #------------------------------
 import sys
 import numpy as np
@@ -59,9 +60,9 @@ def access_data_detector() :
         if i>EVENTS : break
 
         ebeam = det_ebeam.get(evt)
-        print 'Event %3d' % i
+        print('Event %3d' % i)
         if ebeam is None: continue
-        print 'Photon energy %.6f' % ebeam.ebeamPhotonEnergy()
+        print('Photon energy %.6f' % ebeam.ebeamPhotonEnergy())
 
         raw = det_orca.raw(evt)
         print_ndarr(raw, name='orca raw',first=0, last=5)
@@ -111,9 +112,9 @@ def filter_events() :
         if i>EVENTS : break
 
         ebeam = det_ebeam.get(evt)
-        print 'Event %3d' % i
+        print('Event %3d' % i)
         if ebeam is None: continue
-        print 'Photon energy %.6f' % ebeam.ebeamPhotonEnergy()
+        print('Photon energy %.6f' % ebeam.ebeamPhotonEnergy())
 
         img = det_orca.raw(evt)
         print_ndarr(img, name='orca raw',first=0, last=5)
@@ -142,8 +143,8 @@ def filter_events() :
 
     np.savetxt(OFNAME, img_ave, fmt='%3i', delimiter=' ', newline='\n')
 
-    print 'Selected %d events of total %d' % (nev_sel, nev_tot)
-    print 'Plot image and histograms'
+    print('Selected %d events of total %d' % (nev_sel, nev_tot))
+    print('Plot image and histograms')
 
     mean, std = img_ave.mean(), img_ave.std()
     plot_image(img_ave, amp_range=(mean-1*std, mean+5*std))
@@ -159,7 +160,7 @@ def filter_events() :
 if __name__ == "__main__" :
 
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
-    print '%s\nTest %s' % (80*'_', tname)
+    print('%s\nTest %s' % (80*'_', tname))
 
     if   tname == '1' : access_data_direct()
     elif tname == '2' : access_data_detector()

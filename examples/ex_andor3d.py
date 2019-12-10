@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -8,7 +9,7 @@ from Detector.GlobalUtils import print_ndarr
 #------------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+print('Test # %d' % ntest)
 
 #------------------------------
 
@@ -29,15 +30,15 @@ ds  = psana.DataSource(dsname)
 env = ds.env()
 nrun = ds.runs().next().run()
 
-print 'Example for\n  dataset: %s\n  source : %s\n  run number : %d\n  calib dir : %s'%\
-      (dsname, src, nrun, env.calibDir())
+print('Example for\n  dataset: %s\n  source : %s\n  run number : %d\n  calib dir : %s'%\
+      (dsname, src, nrun, env.calibDir()))
 
 #------------------------------
 
 det = psana.Detector(src, env)
 
 print_ndarr(det.pedestals(nrun), '%s\npedestals' % (80*'_'))
-print 80*'_'
+print(80*'_')
 
 i, evt, nda = 0, None, None
 
@@ -45,14 +46,14 @@ for i, evt in enumerate(ds.events()) :
     #nda = det.raw(evt)
     nda = det.calib(evt)
     if nda is not None :
-        for key in evt.keys() : print key
-        print 'Detector data found in the event # %d' % i
+        for key in evt.keys() : print(key)
+        print('Detector data found in the event # %d' % i)
         break
 
 print_ndarr(nda, 'nda')
 
 if nda is None :
-    print 'Detector data IS NOT FOUND in %d events' % i
+    print('Detector data IS NOT FOUND in %d events' % i)
     sys.exit('FURTHER TEST IS TERMINATED')
 
 #------------------------------

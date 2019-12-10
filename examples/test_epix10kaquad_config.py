@@ -1,7 +1,8 @@
+from __future__ import print_function
 import psana
 
 def print_object_dir(o) :
-    print 'dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_']))
+    print('dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_'])))
 
 src = psana.Source('NoDetector.0:Epix10kaQuad.0')
 ds  = psana.DataSource('/reg/g/psdm/detector/data_test/types/0032-NoDetector.0-Epix10kaQuad.0.xtc')
@@ -18,6 +19,6 @@ print_object_dir(evr)
 a0co = e0co.asics(0)
 print_object_dir(a0co)
 
-print 'e0co.carrierId0():', e0co.carrierId0()
-print 'e0co.carrierId1():', e0co.carrierId1()
-print 'a0co.chipID()    :', a0co.chipID()
+print('e0co.carrierId0():', e0co.carrierId0())
+print('e0co.carrierId1():', e0co.carrierId1())
+print('a0co.chipID()    :', a0co.chipID())

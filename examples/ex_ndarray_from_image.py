@@ -7,6 +7,7 @@ Test method det.ndarray_from_image(rnum, image):
 3. convert image back to n-d array using method det.ndarray_from_image
 4. compare initial and final n-d arrays
 """
+from __future__ import print_function
 
 import sys
 import psana
@@ -18,7 +19,7 @@ from pyimgalgos.GlobalUtils import print_ndarr, table_from_cspad_ndarr, cspad_nd
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+print('Test # %d' % ntest)
 
 ##-----------------------------
 
@@ -50,14 +51,14 @@ print_ndarr(image, 'image from mask n-d array')
 
 t0_sec = time()
 nda = det.ndarray_from_image(rnum, image)
-print 'det.ndarray_from_image consumed time %.6f sec' % (time()-t0_sec)
+print('det.ndarray_from_image consumed time %.6f sec' % (time()-t0_sec))
 print_ndarr(nda, 'n-d array of mask retreived from image')
 
 ##-----------------------------
 
 t0_sec = time()
 tmask0 = table_from_cspad_ndarr(mask)
-print 'table creation time %.6f sec' % (time()-t0_sec)
+print('table creation time %.6f sec' % (time()-t0_sec))
 tmask1 = table_from_cspad_ndarr(nda)
 print_ndarr(tmask0, 'table  of mask0')
 
@@ -66,7 +67,7 @@ print_ndarr(tmask0, 'table  of mask0')
 t0_sec = time()
 nda_cspad = cspad_ndarr_from_table(tmask0)
 print_ndarr(nda_cspad, 'cspad_ndarr_from_table')
-print 'cspad_ndarr_from_table consumed time %.6f sec' % (time()-t0_sec)
+print('cspad_ndarr_from_table consumed time %.6f sec' % (time()-t0_sec))
 nda_cspad.shape = (32*185,388)
 
 ##-----------------------------

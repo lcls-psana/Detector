@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 from time import time
 import psana
@@ -19,12 +20,12 @@ def test_jungfrau_methods(dsname, src) :
     env = ds.env()
     nrun = evt.run()
     
-    print 'experiment %s' % env.experiment()
-    print 'Run number %d' % nrun
-    print 'dataset exp=%s:run=%d' % (env.experiment(),nrun) 
-    print 'calibDir:', env.calibDir()
+    print('experiment %s' % env.experiment())
+    print('Run number %d' % nrun)
+    print('dataset exp=%s:run=%d' % (env.experiment(),nrun)) 
+    print('calibDir:', env.calibDir())
     
-    for key in evt.keys() : print key
+    for key in evt.keys() : print(key)
 
     ##-----------------------------
     par = nrun # evt or nrun
@@ -32,8 +33,8 @@ def test_jungfrau_methods(dsname, src) :
     det = psana.Detector(src, env)
     
     ins = det.instrument()
-    print 80*'_', '\nInstrument: ', ins
-    print 'src:', src    
+    print(80*'_', '\nInstrument: ', ins)
+    print('src:', src)    
 
     #det.set_print_bits(0)
     det.set_print_bits(1023)
@@ -41,13 +42,13 @@ def test_jungfrau_methods(dsname, src) :
     #det.set_mode(1)
     #det.set_do_offset(True) # works for ex. Opal1000
     #det.print_attributes()
-    print 'det.source:', det.source
+    print('det.source:', det.source)
     
     shape_nda = det.shape(par)
     print_ndarr(shape_nda, 'shape of ndarray')
     
-    print 'size of ndarray: %d' % det.size(par)
-    print 'ndim of ndarray: %d' % det.ndim(par)
+    print('size of ndarray: %d' % det.size(par))
+    print('ndim of ndarray: %d' % det.ndim(par))
     
     #peds = det.pedestals(par)
     #print_ndarr(peds, 'pedestals')
@@ -74,11 +75,17 @@ def test_jungfrau_methods(dsname, src) :
     status = det.status(par)
     print_ndarr(status, 'status')
 
+<<<<<<< HEAD
     if False :
 
         statmask = det.status_as_mask(par)
         print_ndarr(statmask, 'statmask')
         print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+=======
+    statmask = det.status_as_mask(par)
+    print_ndarr(statmask, 'statmask')
+    print('number of bad status pixels: %d' % (len(statmask[statmask==0])))
+>>>>>>> 2to3 print
 
         status_mask = det.status_as_mask(par)
         print_ndarr(status_mask, 'status_mask')
@@ -107,14 +114,14 @@ def test_jungfrau_methods(dsname, src) :
         nda_raw = det.raw(evt)
         if nda_raw is not None :
             dt_sec = time()-t0_sec
-            print 'Detector data found in event %d'\
-                  ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec)
+            print('Detector data found in event %d'\
+                  ' consumed time for det.raw(evt) = %7.3f sec' % (i, time()-t0_sec))
             break
     
     print_ndarr(nda_raw, 'raw data')
         
     if nda_raw is None :
-        print 'Detector data IS NOT FOUND in %d events' % i
+        print('Detector data IS NOT FOUND in %d events' % i)
         sys.exit('FURTHER TEST IS TERMINATED')
 
     print('>>> is_jungfrau: %s' % det.is_jungfrau())
@@ -141,7 +148,7 @@ def test_jungfrau_methods(dsname, src) :
     #print mask_geo
     
     pixel_size = det.pixel_size(par)
-    print '%s\npixel size: %s' % (80*'_', str(pixel_size))
+    print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
     
 #    ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
 #    print 'Detector origin indexes: ix, iy:', ipx, ipy
@@ -159,14 +166,14 @@ def test_jungfrau_methods(dsname, src) :
         t0_sec = time()
         #img = det.image(evt)
         img = det.image(evt, img_arr)
-        print 'Consumed time for det.image(evt) = %7.3f sec (for 1st event!)' % (time()-t0_sec)
+        print('Consumed time for det.image(evt) = %7.3f sec (for 1st event!)' % (time()-t0_sec))
     else :
         img = img_arr
         img.shape = nda_raw.shape
     
     print_ndarr(img, 'image (calibrated data or raw)')
     
-    print 80*'_'
+    print(80*'_')
 
     ##-----------------------------
     
@@ -203,6 +210,7 @@ def test_jungfrau_methods(dsname, src) :
 
 if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
+<<<<<<< HEAD
     print '%s\nTest %s' % (80*'_', tname)
 
     if   tname=='1' : test_jungfrau_methods('exp=xpptut15:run=410', 'Jungfrau512k')
@@ -215,6 +223,11 @@ if __name__ == "__main__" :
     #elif tname=='2': test_jungfrau_methods('exp=mfxls0816:run=193', 'MfxEndstation.0:Jungfrau.1')
     #elif tname=='3': test_jungfrau_methods('exp=mfxlr1716:run=1',   'MfxEndstation.0:Jungfrau.0')
     else : sys.exit('Not recognized test name: "%s"' % tname)
+=======
+    print('%s\nTest %s' % (80*'_', tname))
+    if tname in ('1', '2', '3') : test_jungfrau_methods(tname)
+    else : sys.exit ('Not recognized test name: "%s"' % tname)
+>>>>>>> 2to3 print
     sys.exit ('End of %s' % sys.argv[0])
 
 #----------

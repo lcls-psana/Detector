@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -19,7 +20,7 @@ logging.basicConfig(format='%(levelname)s: %(name)s %(message)s', level=logging.
 ##-----------------------------
 
 tname = sys.argv[1] if len(sys.argv)>1 else '1'
-print 'Test "%s"' % tname
+print('Test "%s"' % tname)
 
 ##-----------------------------
 
@@ -125,7 +126,7 @@ elif tname=='101' :
 
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'
 
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
 #psana.setOption('psana.calib-dir', './calib')
 #psana.setOption('psana.calib-dir', './empty/calib')
@@ -136,12 +137,12 @@ evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
 
-print 'experiment %s' % env.experiment()
-print 'Run number %d' % nrun
-print 'dataset exp=%s:run=%d' % (env.experiment(),nrun) 
-print 'calibDir:', env.calibDir()
+print('experiment %s' % env.experiment())
+print('Run number %d' % nrun)
+print('dataset exp=%s:run=%d' % (env.experiment(),nrun)) 
+print('calibDir:', env.calibDir())
 
-for key in evt.keys() : print key
+for key in evt.keys() : print(key)
 
 ##-----------------------------
 #sys.exit('Test exit')
@@ -155,7 +156,7 @@ det = AreaDetector(src, env, pbits=0)
 #det.set_print_bits(511);
 
 ins = det.instrument()
-print 80*'_', '\nInstrument: ', ins
+print(80*'_', '\nInstrument: ', ins)
 
 #det.set_def_value(-5.);
 #det.set_mode(1);
@@ -216,16 +217,16 @@ i=0
 if True :
     for i, evt in enumerate(ds.events()) :
         if i<EVSKIP: continue
-        print 'Event %d' % i
+        print('Event %d' % i)
         nda_raw = det.raw(evt)
         if nda_raw is not None :
-            print 'Detector data found in event %d' % i
+            print('Detector data found in event %d' % i)
             break
 
 print_ndarr(nda_raw, 'raw data')
 
 if nda_raw is None :
-    print 'Detector data IS NOT FOUND in %d events' % i
+    print('Detector data IS NOT FOUND in %d events' % i)
     sys.exit('FURTHER TEST IS TERMINATED')
 
 ##-----------------------------
@@ -292,12 +293,12 @@ if img is None :
 
 print_ndarr(img, 'image (calibrated data or raw)')
 
-print 80*'_'
+print(80*'_')
 
 ##-----------------------------
 
 if img is None :
-    print 'Image is not available'
+    print('Image is not available')
     sys.exit('FURTHER TEST IS TERMINATED')
 
 

@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 # event_keys -d exp=mfxx32516:run=5
 # shape=(352, 384)
@@ -10,10 +11,10 @@ for i, evt in enumerate(ds.events()) :
     if i>100 : break
     raw = det.raw(evt)
     if raw is None:
-        print i, 'none'
+        print(i, 'none')
         continue
     else:
-        print i, raw.shape
+        print(i, raw.shape)
 
 #------------------------------
 
@@ -21,29 +22,29 @@ import psana
 nrun = 5
 dsname = 'exp=mfxx32516:run=%d' % nrun
 s_src = 'MfxEndstation.0:Epix10ka.0'
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, s_src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, s_src))
 
 src = psana.Source(s_src)
 ds  = psana.DataSource(dsname)
 env = ds.env()
 
-r = ds.runs().next()
+r = next(ds.runs())
 #evt = ds.events().next()
 
 evt=None
 for i, evt in enumerate(ds.events()) :    
-    if evt is None : print 'Event %4d is None' % i
+    if evt is None : print('Event %4d is None' % i)
     else :  
-        print 'Event %4d is NOT None' % i 
+        print('Event %4d is NOT None' % i) 
         break
         
 
 cfg = env.configStore()
 co = cfg.get(psana.Epix.Config10kaV1, src)
 
-print 'analogCardId0():', co.analogCardId0()
-print 'analogCardId1():', co.analogCardId1()
-print 'asicMask()     :', co.asicMask()     
+print('analogCardId0():', co.analogCardId0())
+print('analogCardId1():', co.analogCardId1())
+print('asicMask()     :', co.asicMask())     
 
 det = psana.Detector(s_src, env)
 raw = det.raw(evt)
@@ -53,7 +54,7 @@ raw.shape #Out[8]: ((352, 384)
 raw.dtype #Out[9]: dtype('uint16')
 
 
-evt = ds.events().next()
+evt = next(ds.events())
 dato = evt.get(psana.Epix.ElementV3, src)
 
 #------------------------------
@@ -79,25 +80,25 @@ confo = env.configStore().get(psana.Epix.Config10kaV1, src)
 cfg = env.configStore()
 confo = cfg.get(psana.Epix.Config10kaV1, src)
 
-print 'Content of psana.Epix.Config10kaV1:'
+print('Content of psana.Epix.Config10kaV1:')
 
-print 'acqToAsicR0Delay :', co.acqToAsicR0Delay()
-print 'adcClkHalfT      :', co.adcClkHalfT()      
-print 'adcPipelineDelay :', co.adcPipelineDelay() 
-print 'adcPipelineDelay0:', co.adcPipelineDelay0()
-print 'adcPipelineDelay1:', co.adcPipelineDelay1()
-print 'adcPipelineDelay2:', co.adcPipelineDelay2()
-print 'adcPipelineDelay3:', co.adcPipelineDelay3()
-print 'adcReadsPerPixel :', co.adcReadsPerPixel() 
-print 'adcStreamMode    :', co.adcStreamMode()    
-print 'analogCardId0    :', co.analogCardId0()    
-print 'analogCardId1    :', co.analogCardId1()    
-print 'asicAcq          :', co.asicAcq()          
-print 'asicAcqControl   :', co.asicAcqControl()   
-print 'asicAcqLToPPmatL :', co.asicAcqLToPPmatL() 
-print 'asicAcqWidth     :', co.asicAcqWidth()     
-print 'asicGR           :', co.asicGR()           
-print 'asicGRControl    :', co.asicGRControl()    
+print('acqToAsicR0Delay :', co.acqToAsicR0Delay())
+print('adcClkHalfT      :', co.adcClkHalfT())      
+print('adcPipelineDelay :', co.adcPipelineDelay()) 
+print('adcPipelineDelay0:', co.adcPipelineDelay0())
+print('adcPipelineDelay1:', co.adcPipelineDelay1())
+print('adcPipelineDelay2:', co.adcPipelineDelay2())
+print('adcPipelineDelay3:', co.adcPipelineDelay3())
+print('adcReadsPerPixel :', co.adcReadsPerPixel()) 
+print('adcStreamMode    :', co.adcStreamMode())    
+print('analogCardId0    :', co.analogCardId0())    
+print('analogCardId1    :', co.analogCardId1())    
+print('asicAcq          :', co.asicAcq())          
+print('asicAcqControl   :', co.asicAcqControl())   
+print('asicAcqLToPPmatL :', co.asicAcqLToPPmatL()) 
+print('asicAcqWidth     :', co.asicAcqWidth())     
+print('asicGR           :', co.asicGR())           
+print('asicGRControl    :', co.asicGRControl())    
 
 #------------------------------
 
@@ -107,14 +108,14 @@ nrun = 377
 dsname = 'exp=mfxx32516:run=%d' % nrun
 s_src = 'MfxEndstation.0:Epix10ka.0'
 #s_src1 = 'MfxEndstation.0:Epix10ka.1'
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, s_src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, s_src))
 
 ds = psana.DataSource(dsname)
 #det = psana.Detector(s_src) # 'Epix10ka_0'
 #det = psana.Detector(s_src) # 'Epix10ka_1'
 
 env = ds.env()
-evt = ds.events().next()
+evt = next(ds.events())
 src = psana.Source(s_src)
 cfg = env.configStore()
 

@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import _psana
 
@@ -57,9 +58,9 @@ if __name__ == '__main__':
         times = run.times(step)
         for t in times[:2]:
             evt = run.event(t)
-            print t, cdd().pvControls()[0].value()
+            print(t, cdd().pvControls()[0].value())
 
-    print 'done'
+    print('done')
 
 
 

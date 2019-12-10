@@ -3,6 +3,7 @@
 Detector interface for the EVR
 ==============================
 """
+from __future__ import print_function
 
 from DdlDetector import DdlDetector
 from _psana import EventId
@@ -80,8 +81,8 @@ if __name__ == '__main__':
     evrdet = EvrDetector('NoDetector.0:Evr.0')
 
     for evt in ds.events():
-        print evrdet(evt)
-        print evrdet(evt, this_fiducial_only=True)
-        print evrdet.eventCodes(evt)
-        print evrdet.eventCodes(evt, this_fiducial_only=True)
+        print(evrdet(evt))
+        print(evrdet(evt, this_fiducial_only=True))
+        print(evrdet.eventCodes(evt))
+        print(evrdet.eventCodes(evt, this_fiducial_only=True))
         break

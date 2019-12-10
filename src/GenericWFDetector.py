@@ -4,6 +4,7 @@ Detector interface for the Generic1D type, but specialized for the
 case where it represents waveforms with a time axis.  This interface
 is intended to be identical to the WFDetector 
 """
+from __future__ import print_function
 
 from Generic1DDetector import Generic1DDetector
 import numpy as np
@@ -75,5 +76,5 @@ if __name__ == '__main__':
 
     for evt in ds.events():
         for t,wf in zip(g1ddet.raw(evt),g1ddet.wftime(evt)):
-            print t.shape,wf.shape
+            print(t.shape,wf.shape)
         break

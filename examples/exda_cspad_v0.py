@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 import Detector
@@ -21,13 +22,13 @@ calibdir = env.calibDir()
 #print evt.keys()
 
 ###-----------------------------
-print '\nInstrument: ', det.instrument(env)
+print('\nInstrument: ', det.instrument(env))
 t0_sec = time()
 print_ndarr(det.pedestals(evt,env),    'pedestals(evt,env)')
 t0_sec = time()
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(det.pedestals_v0(rnum),    'pedestals_v0(rnum)')
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(det.pixel_rms(evt,env),    'pixel_rms(evt,env)')
 print_ndarr(det.pixel_rms_v0(rnum),    'pixel_rms_v0(rnum)')
 print_ndarr(det.pixel_gain(evt,env),   'pixel_gain(evt,env)')

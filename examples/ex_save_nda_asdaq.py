@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import psana
 from time import time
 from Detector.GlobalUtils import print_ndarr
@@ -31,20 +32,20 @@ fname = tmp_file.name
 t0_sec=time()
 #det.save_txtnda(fname, nda, cmts=('comment1', 'comment2'), fmt='%.2f', verbos=True)
 det.save_asdaq(fname, nda, cmts=('comment1', 'comment2'), fmt='%.2f', verbos=True)
-print 'Time to save %s n-d array in file = %9.6f sec' % (src, time()-t0_sec)
+print('Time to save %s n-d array in file = %9.6f sec' % (src, time()-t0_sec))
 
-print '%s\nATTENTION HERE: cspad2x2 array originally shaped as (2, 185, 388) is saved as in DAQ (185, 388, 2)' % (100*'!')
+print('%s\nATTENTION HERE: cspad2x2 array originally shaped as (2, 185, 388) is saved as in DAQ (185, 388, 2)' % (100*'!'))
 
 f = open(fname)
 for i,line in enumerate(f) :
     if i>20 : f.close(); break
-    print line.rstrip('\n')
+    print(line.rstrip('\n'))
 
 t0_sec=time()
 nda_loaded = det.load_txtnda(fname)
-print 'Time to load %s n-d array from file = %9.6f sec' % (src, time()-t0_sec)
+print('Time to load %s n-d array from file = %9.6f sec' % (src, time()-t0_sec))
 print_ndarr(nda_loaded, '%s\nnda loaded'%(80*'_'))
 
-print 'End of test'
+print('End of test')
 
 ##-----------------------------

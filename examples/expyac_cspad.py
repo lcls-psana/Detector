@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 import numpy as np
@@ -7,7 +8,7 @@ import Detector.PyDataAccess as pda
 from Detector.GlobalUtils import print_ndarr
 
 dsname, src = 'exp=cxif5315:run=169', psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
 # Use non-standard calib directory
 #opts = {'psana.calib-dir':'./calib',}
@@ -27,7 +28,7 @@ def raw_data_cspad(evt, env, src) :
     # data object
     d = pda.get_cspad_data_object(evt, src)
     if d is None : return None
-    print 'd.TypeId: ', d.TypeId
+    print('d.TypeId: ', d.TypeId)
 
     # configuration from data
     c = pda.get_cspad_config_object(env, src)
@@ -35,7 +36,7 @@ def raw_data_cspad(evt, env, src) :
 
     nquads_d = d.quads_shape()[0]
     nquads_c = c.numQuads()
-    print 'nquads in data: %d and config: %d' % (nquads_d, nquads_c)
+    print('nquads in data: %d and config: %d' % (nquads_d, nquads_c))
 
     nquads = nquads_d
 
@@ -46,7 +47,7 @@ def raw_data_cspad(evt, env, src) :
         qdata = q.data()
         #n2x1stored = qdata.shape[0]
         roim = c.roiMask(qnum)
-        print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
+        print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
         #     '  n2x1stored: %d' % (n2x1stored)
 
         #roim = 0355 # for test only
@@ -62,7 +63,7 @@ def raw_data_cspad(evt, env, src) :
             arr.append(qdata_full)
 
     nda = np.array(arr)
-    print 'nda.shape: ', nda.shape
+    print('nda.shape: ', nda.shape)
     nda.shape = (32,185,388)
     return nda
 

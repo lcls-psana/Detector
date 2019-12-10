@@ -19,6 +19,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created (moved from app/det_ndarr_raw_proc) on 2017-10-20 by Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 from Detector.EvrDetector import EvrDetector
@@ -36,8 +37,8 @@ class EventCodeManager :
         self.set_event_codes(evcode)
         self.evrdet = EvrDetector(':Evr')
         self.do_check = self.lst_ec is not None and self.evrdet is not None
-        if self.verbos & 1 : print '%s: list of requested event codes: %s, do_check=%s' %\
-           (self.__class__.__name__, str(self.lst_ec), self.do_check)
+        if self.verbos & 1 : print('%s: list of requested event codes: %s, do_check=%s' %\
+           (self.__class__.__name__, str(self.lst_ec), self.do_check))
         self.counter = 0
 
 
@@ -66,8 +67,8 @@ class EventCodeManager :
         if self.counter < 20 :
             self.counter += 1
             if self.verbos & 2 : 
-                print '%s.select: evt_codes=%s, result=%s' % (self.__class__.__name__, str(evt_codes), res)
-                if self.counter == 20 : print '%s.select: stop printing messages' % (self.__class__.__name__)
+                print('%s.select: evt_codes=%s, result=%s' % (self.__class__.__name__, str(evt_codes), res))
+                if self.counter == 20 : print('%s.select: stop printing messages' % (self.__class__.__name__))
         return res
 
 #------------------------------

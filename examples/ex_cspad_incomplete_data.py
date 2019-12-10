@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##-----------------------------
 
+from __future__ import print_function
 import sys
 import psana
 
@@ -42,12 +43,12 @@ nda=None
 for i, evt in enumerate(ds.events()) :
     nda = det.raw(evt)
     if nda is not None :
-        print 'Detector data found in event %d' % i
+        print('Detector data found in event %d' % i)
         break
 
 rnum = evt.run()
 
-print 'Consumed time = %7.3f sec' % (time()-t0_sec)
+print('Consumed time = %7.3f sec' % (time()-t0_sec))
 print_ndarr(nda, 'raw')
 
 if nda is None :

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import psana
 from time import time
@@ -8,12 +9,12 @@ from Detector.GlobalUtils import print_ndarr
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
+print('Test # %d' % ntest)
 
 ##-----------------------------
 
 dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # or alias='Sc1Questar'
-print 'Example for\n  dataset: %s\n  source : %s' % (dsname, src)
+print('Example for\n  dataset: %s\n  source : %s' % (dsname, src))
 
 #psana.setOption('psana.calib-dir', './calib')
 
@@ -22,7 +23,7 @@ evt = ds.events().next()
 env = ds.env()
 nrun = evt.run()
 
-for key in evt.keys() : print key
+for key in evt.keys() : print(key)
 
 ##-----------------------------
 from Detector.AreaDetector import AreaDetector
@@ -31,7 +32,7 @@ par = nrun # evt or nrun
 det = AreaDetector(src, env, pbits=0, iface='P') # iface='P' or 'C'
 
 ins = det.instrument()
-print 80*'_', '\nInstrument: ', ins
+print(80*'_', '\nInstrument: ', ins)
 #det.set_print_bits(511);
 #det.set_def_value(-5.);
 #det.set_mode(1);
@@ -78,13 +79,13 @@ if nda_raw is None :
     for i, evt in enumerate(ds.events()) :
         nda_raw = det.raw(evt)
         if nda_raw is not None :
-            print 'Detector data found in event %d' % i
+            print('Detector data found in event %d' % i)
             break
 
 print_ndarr(nda_raw, 'raw data')
 
 if nda_raw is None :
-    print 'Detector data IS NOT FOUND in %d events' % i
+    print('Detector data IS NOT FOUND in %d events' % i)
     sys.exit('FURTHER TEST IS TERMINATED')
 
 ##-----------------------------
@@ -133,12 +134,12 @@ else :
 
 print_ndarr(img, 'image (calibrated data or raw)')
 
-print 80*'_'
+print(80*'_')
 
 ##-----------------------------
 
 if img is None :
-    print 'Image is not available'
+    print('Image is not available')
     sys.exit('FURTHER TEST IS TERMINATED')
 
 import pyimgalgos.GlobalGraphics as gg

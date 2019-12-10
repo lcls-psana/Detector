@@ -1,3 +1,4 @@
+from __future__ import print_function
 #------------------------------
 #event_keys -d /reg/g/psdm/detector/data_test/xtc/mecdaq115-e993-r0174-s00-c00.xtc
 #EventKey(type=psana.Pixis.FrameV1, src='DetInfo(MecTargetChamber.0:Pixis.1)', alias='pixis1')
@@ -18,12 +19,12 @@ import sys
 from Detector.GlobalUtils import print_ndarr
 
 npars=len(sys.argv)
-print '%s npars:%d' % (sys.argv[0], npars) 
+print('%s npars:%d' % (sys.argv[0], npars)) 
 #dsname = '/reg/g/psdm/detector/data_test/xtc/mecdaq115-e993-r0174-s00-c00.xtc' if npars==1 else sys.argv[1]
 #dsname = 'exp=mecdaq115:run=174' if npars==1 else sys.argv[1]
 dsname = '/reg/g/psdm/detector/data_test/types/0026-MecTargetChamber.0-Pixis.1.xtc' if npars==1 else sys.argv[1]
 srcname = 'MecTargetChamber.0:Pixis.1'      if npars<3  else sys.argv[2]
-print 'Test of dsname: %s  srcname: %s' % (dsname, srcname)
+print('Test of dsname: %s  srcname: %s' % (dsname, srcname))
 
 psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/') # '/reg/d/psdm/det/mecdaq115/calib'
 
@@ -34,15 +35,15 @@ for i, evt in enumerate(ds.events()) :
     if i>10 : break
     raw = det.raw(evt)
     if raw is None:
-        print i, 'None'
+        print(i, 'None')
     else:
         print_ndarr(raw, 'Event %3d: raw' % i)
 
 #------------------------------
 
 rnum = evt.run()
-print '\nGet calib arrays for run %d' % rnum
-print 'det.shape: ', det.shape()
+print('\nGet calib arrays for run %d' % rnum)
+print('det.shape: ', det.shape())
 print_ndarr(det.pedestals(rnum),   'det.pedestals  ')
 print_ndarr(det.rms(rnum),         'det.rms        ')
 print_ndarr(det.status(rnum),      'det.status     ')
@@ -52,6 +53,6 @@ t0_sec = time()
 calib = det.calib(evt) #, cmpars=0)
 dt_sec = time() - t0_sec
 print_ndarr(calib, 'det.calib      ')
-print 'calib time = %.3f sec' % (dt_sec)
+print('calib time = %.3f sec' % (dt_sec))
 
 #------------------------------

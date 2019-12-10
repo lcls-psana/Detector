@@ -5,6 +5,7 @@
 
   Created on 2018-04-19 by Mikhail Dubrovin
 """
+from __future__ import print_function
 #------------------------------
 
 import logging
@@ -35,7 +36,7 @@ def usage():
 
 def jungfrau_id() :    
     logger.info('%s\nFinding Jungfrau Id in dataset "%s" using name pattern %s' % (80*'_', DSNAME, DETNAME))
-    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print usage()
+    if DSNAME==DSNAME_DEF and DETNAME==DETNAME_DEF: print(usage())
     ds = psana.DataSource(DSNAME)
     source = psana_source(ds.env(), DETNAME) 
     strsrc = string_from_source(source).replace(':','-')
