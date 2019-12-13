@@ -125,7 +125,7 @@ da = evt.get(psana.Epix.ElementV3, src)
 asic = co.asics(0)
 
 #------------------------------
-
+"""
 psana.Epix.Config10kaV1 :
 
   co.acqToAsicR0Delay                 co.asicMask                         co.calibPixelConfigArray            co.numberOfCalibrationRows          co.scopeEnable                       
@@ -167,6 +167,6 @@ asic(0) :
             asic.emph_bc            asic.PulserR            asic.S2D3_GR            asic.VREF_DAC           
             asic.emph_bd            asic.PulserSync         asic.S2D3_tcDAC         asic.VrefLow            
             asic.fastPP_enable      asic.RO_Monost          asic.S2D_DAC_Bias                        
-
+"""
 #------------------------------
 #------------------------------
