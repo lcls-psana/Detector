@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 
 # Example of code for ipython
 
@@ -113,7 +114,7 @@ co = env.configStore().get(psana.Epix.Config10ka2MV1, src)
 
 for ie in range(co.numberOfElements()) :
     eco = co.elemCfg(ie)
-    qco = co.quad(ie/4)
+    qco = co.quad(ie//4)
     #print_object_dir(eco)
     print('%s\nElement:%2d' % (50*"=", ie))
     print('  co.Version:', co.Version) 

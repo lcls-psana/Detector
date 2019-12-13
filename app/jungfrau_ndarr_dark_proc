@@ -2,6 +2,7 @@
 
 #------------------------------
 from __future__ import print_function
+from __future__ import division
 import os
 import sys
 import psana
@@ -44,7 +45,7 @@ def plot_det_image(det, evt, nda, tit='') :
 
 #------------------------------
 
-class JungfrauNDArrDarkProc :
+class JungfrauNDArrDarkProc(object) :
 
     # Jungfrau gain range coding
     # bit: 15,14,...,0   Gain range, ind
@@ -438,7 +439,7 @@ class JungfrauNDArrDarkProc :
 
 #------------------------------
 
-class JungfrauDarkProc :
+class JungfrauDarkProc(object) :
     """Takes care about jungfrau dark data processing for a few (currently 3) gain modes.
     """
     def __init__(self, parser=None):
@@ -570,7 +571,7 @@ def jungfrau_ndarr_raw_proc():
     # ecm = EventCodeManager(popts.evcode, verbos)
 
     print('\nDIC_GAIN_MODE:')
-    for item in DIC_GAIN_MODE.iteritems() : print(item)
+    for item in DIC_GAIN_MODE.items() : print(item)
 
     lst_dpo = [JungfrauDarkProc(parser) for src in source.split(',') if 'Jungfrau' in src]
     #          if PROC_DATA else []
@@ -603,10 +604,10 @@ def jungfrau_ndarr_raw_proc():
 
             if irun==0 and istep==0 :
               print('\ngm.names:')
-              for name in gm.names.iteritems()  : print(name)
+              for name in gm.names.items()  : print(name)
 
               print('\ngm.values:')
-              for value in gm.values.iteritems() : print(value)
+              for value in gm.values.items() : print(value)
 
             print('  Calibcycle %d,  gain mode %s,  proc.index %d,  gm.numerator %d,  gm.denominator %d'%\
                   (istep, gm.name, igm, gm.numerator, gm.denominator))

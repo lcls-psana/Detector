@@ -38,7 +38,7 @@ def plot_det_image(det, evt, nda, tit='') :
 
 #------------------------------
 
-class DetNDArrDataProc :
+class DetNDArrDataProc(object) :
 
     def __init__(self, parser, source):
         self.src = source

@@ -32,6 +32,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 Author Mikhail Dubrovin
 """
 from __future__ import print_function
+from __future__ import division
 #------------------------------
 
 import sys
@@ -53,7 +54,7 @@ from pyimgalgos.cm_epix import cm_epix
 
 ##-----------------------------
 
-class PyDetectorAccess :
+class PyDetectorAccess(object) :
     """Class :py:class:`PyDetectorAccess` - python access to detector data.
     """
     GEO_NOT_LOADED     = 0
@@ -366,7 +367,7 @@ class PyDetectorAccess :
         if self.dettype == gu.EPIX100A : arr.shape = (704, 768)
         elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD) : 
             sh = arr.shape
-            arr.shape = (arr.size/sh[-2]/sh[-1], sh[-2],sh[-1]) # 3d : (16/4,352,384)
+            arr.shape = (arr.size//sh[-2]//sh[-1], sh[-2],sh[-1]) # 3d : (16/4,352,384)
         elif self.dettype == gu.EPIX10KA :
             sh = arr.shape
             arr.shape = (sh[-2],sh[-1]) # 2d : (352,384)
@@ -1383,8 +1384,8 @@ class PyDetectorAccess :
         except : pass
         #npixx = c.numPixelsY() # for Andor3D only
         #npixy = c.numPixelsX() # for Andor3D only
-        npixx = c.width() / c.binX()
-        npixy = c.height() / c.binY()
+        npixx = c.width() // c.binX()
+        npixy = c.height() // c.binY()
 
         if npixx and npixy :
             return (npixy, npixx) if nsegs is None else (nsegs, npixy, npixx)

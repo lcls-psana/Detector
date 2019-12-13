@@ -7,7 +7,7 @@ from __future__ import print_function
 import psana
 ds = psana.DataSource('/reg/g/psdm/detector/data_test/types/0030-DetLab.0-StreakC7700.0.xtc')
 for nevt,evt in enumerate(ds.events()):
-    print(evt.keys())
+    print(list(evt.keys()))
     break
 
 

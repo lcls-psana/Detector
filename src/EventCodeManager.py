@@ -24,7 +24,7 @@ from __future__ import print_function
 
 from Detector.EvrDetector import EvrDetector
 
-class EventCodeManager :
+class EventCodeManager(object) :
     """Class-helper for event selection using event code.
 
     The string of comma-separated event codes is passed in evcode through option -c, (ex.: -c 1,2,4).

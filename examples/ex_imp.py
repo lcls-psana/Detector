@@ -37,7 +37,7 @@ wf = det.raw(evt)
 print_ndarr(wf, 'Imp waveform')
 print('wf:\n', wf)
 
-x = range(wf.shape[1])
+x = list(range(wf.shape[1]))
 fig, ax = gg.plotGraph(x, wf[0], figsize=(15,5))
 ax.plot(x,wf[1],'r-')
 ax.plot(x,wf[2],'g-')

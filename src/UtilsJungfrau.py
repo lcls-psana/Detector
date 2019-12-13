@@ -25,6 +25,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 Created on 2017-10-03 by Mikhail Dubrovin
 """
 from __future__ import print_function
+from __future__ import division
 #------------------------------
 
 import logging
@@ -51,7 +52,7 @@ MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #------------------------------
 
-class Storage :
+class Storage(object) :
     def __init__(self) :
         #self.offs = None
         self.gfac = {} # {detname:nda}
@@ -182,7 +183,7 @@ def common_mode_jungfrau(frame, cormax) :
     rows = 512
     cols = 1024
     banks = 4
-    bsize = cols/banks
+    bsize = cols//banks
 
     for r in range(rows):
         col0 = 0
@@ -292,7 +293,7 @@ def id_jungfrau(env, src, iseg=None) :
 
 #------------------------------
 
-class JFPanelCalibDir() :
+class JFPanelCalibDir(object) :
     """Works with names like '170505-149520170815-3d00b0-20171025000000'
        It does validiti check for availability of 3 or 4 fields and 
        separate panel name and time stamp.

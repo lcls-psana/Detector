@@ -185,7 +185,7 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
     elif source_string in ['ControlData', 'ScanData']:
         detector_class = ControlDataDetector
 
-    elif source_string in dt.bld_info.keys(): # if source is a BldInfo...
+    elif source_string in list(dt.bld_info.keys()): # if source is a BldInfo...
         detector_class = dt.bld_info[source_string]
 
     elif isinstance(source_string, (list,tuple))\
@@ -194,7 +194,7 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
 
     else:                                     # assume source is a DetInfo...
         di = DetInfo(source_string)
-        if di.dev in dt.detectors.keys():
+        if di.dev in list(dt.detectors.keys()):
             # check that the source_string can be found in the
             # configStore keys.  this handles two unusual cases:
             # 1. The user passes in a detector name which is a

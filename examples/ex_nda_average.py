@@ -9,6 +9,7 @@
    bsub -q psfehq -o log-r0092.log python ex_nda_average.py
 """
 from __future__ import print_function
+from __future__ import division
 
 ##-----------------------------
 import sys

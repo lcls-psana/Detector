@@ -8,6 +8,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created on 2018-01-30 by Mikhail Dubrovin
 """
+from __future__ import division
 #------------------------------
 
 #from time import time
@@ -27,7 +28,7 @@ def common_mode_rows_128_v0(data, mask, cormax) :
     #rows = 512
     cols = 512
     banks = 4
-    bsize = cols/banks
+    bsize = cols//banks
     for bank in range(banks) :
         cbeg = bank * bsize
         cend = cbeg + bsize

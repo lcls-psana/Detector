@@ -126,7 +126,7 @@ if __name__ == "__main__" :
     print('src=%s, dsname=%s' % (src, dsn))
     ds = psana.DataSource(dsn)
     for nevt,evt in enumerate(ds.events()):
-        print(evt.keys())
+        print(list(evt.keys()))
         break
 
 ##-----------------------------

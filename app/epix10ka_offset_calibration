@@ -10,7 +10,7 @@ from Detector.UtilsEpix10kaCalib import offset_calibration, CALIB_REPO_EPIX10KA
 
 import logging
 logger = logging.getLogger(__name__)
-DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
+DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.items() if isinstance(k, str)}
 STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
 
 #------------------------------

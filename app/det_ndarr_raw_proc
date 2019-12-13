@@ -2,6 +2,7 @@
 
 #------------------------------
 from __future__ import print_function
+from __future__ import division
 import os
 import sys
 import psana
@@ -87,7 +88,7 @@ def fname_template(evt, env, src, ofname, nevts):
 
 #------------------------------
 
-class DetNDArrRawProc :
+class DetNDArrRawProc(object) :
 
     def __init__(self, dsname, source, ofname, events, evskip, intlow, inthig, rmslow, rmshig, fraclm, nsigma,\
                  plotim, verbos, savebw, intnlo, intnhi, rmsnlo, rmsnhi):

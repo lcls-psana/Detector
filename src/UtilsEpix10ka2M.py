@@ -4,6 +4,7 @@
 Methiods for Epix10kaQuad, Epix10ka2M combined from 4, 16 of Epix10ka panels, respectively.
 """
 from __future__ import print_function
+from __future__ import division
 
 import logging
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def id_epix10ka(co, ielem=0) :
 
     quad_shape = getattr(co, "quad_shape", None)
     eco = co.elemCfg(ielem)
-    qco = co.quad() if quad_shape is None else co.quad(ielem/4)
+    qco = co.quad() if quad_shape is None else co.quad(ielem//4)
 
     #print '%s\nQuad:%d element:%d' % (50*'=',iquad, ielem)
     #print 'quad_shape %s' % str(quad_shape)

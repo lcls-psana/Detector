@@ -5,7 +5,7 @@ import numpy as np
 
 print('numpy version:', np.version.version)
 
-a = np.array(range(27)); a.shape = (3,9)
+a = np.array(list(range(27))); a.shape = (3,9)
 print_ndarr(a,'Original array:')
 print(a)
 

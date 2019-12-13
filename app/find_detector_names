@@ -54,7 +54,7 @@ def find_detector_names(name_pattern=None) :
 
     print('%s\n' % (80*'_'))
 
-    dtypes = dict_type_names.keys()
+    dtypes = list(dict_type_names.keys())
     print(dtypes)
     print('%s\n' % (80*'_'))
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
 import sys
 import psana
 from time import time
@@ -275,12 +276,12 @@ if img is None :
     if 'Jungfrau' in src : 
         img = nda_raw
         sh = nda_raw.shape
-        img.shape = (img.size/sh[-1],sh[-1])
+        img.shape = (img.size//sh[-1],sh[-1])
 
     elif 'Uxi' in src : # 3-d like (<n-frames>, 1024, 512)
         img = nda_raw # det.calib(evt)
         sh = img.shape # (2, 1024, 512)
-        img.shape = (img.size/sh[-1],sh[-1])
+        img.shape = (img.size//sh[-1],sh[-1])
 
     else :
         calib = np.array(det.calib(evt), dtype=np.float32)

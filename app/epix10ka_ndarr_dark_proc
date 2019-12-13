@@ -2,6 +2,7 @@
 
 #------------------------------
 from __future__ import print_function
+from __future__ import division
 import os
 import sys
 import psana
@@ -45,7 +46,7 @@ def plot_det_image(det, evt, nda, tit='') :
 
 #------------------------------
 
-class Epix10kaNDArrDarkProc :
+class Epix10kaNDArrDarkProc(object) :
 
     # Epix10ka gain range coding
     # bit: 15,14,...,0   Gain range, ind
@@ -439,7 +440,7 @@ class Epix10kaNDArrDarkProc :
 
 #------------------------------
 
-class Epix10kaDarkProc :
+class Epix10kaDarkProc(object) :
     """Takes care about epix10ka dark data processing for a few (currently 3) gain modes.
     """
     def __init__(self, parser=None):
@@ -571,7 +572,7 @@ def epix10ka_ndarr_raw_proc():
     # ecm = EventCodeManager(popts.evcode, verbos)
 
     print('\nDIC_GAIN_MODE:')
-    for item in DIC_GAIN_MODE.iteritems() : print(item)
+    for item in DIC_GAIN_MODE.items() : print(item)
 
     lst_dpo = [Epix10kaDarkProc(parser) for src in source.split(',') if 'Epix10ka' in src]
     #          if PROC_DATA else []
@@ -604,10 +605,10 @@ def epix10ka_ndarr_raw_proc():
 
             if irun==0 and istep==0 :
               print('\ngm.names:')
-              for name in gm.names.iteritems()  : print(name)
+              for name in gm.names.items()  : print(name)
 
               print('\ngm.values:')
-              for value in gm.values.iteritems() : print(value)
+              for value in gm.values.items() : print(value)
 
             print('  Calibcycle %d,  gain mode %s,  proc.index %d,  gm.numerator %d,  gm.denominator %d'%\
                   (istep, gm.name, igm, gm.numerator, gm.denominator))

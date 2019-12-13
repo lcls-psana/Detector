@@ -22,7 +22,7 @@ class TDCDetector(DdlDetector):
         # to make the users' and our lives simpler, until
         # we receive requests for the extra functionality (i.e.
         # no "Common" and no "AuxIO/Marker" channels)
-        self.chanlist = range(1,7)
+        self.chanlist = list(range(1,7))
 
         return
 

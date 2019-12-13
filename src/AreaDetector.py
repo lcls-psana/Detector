@@ -185,6 +185,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 Author Mikhail Dubrovin
 """
 from __future__ import print_function
+from __future__ import division
 #------------------------------
 
 import sys
@@ -477,7 +478,7 @@ class AreaDetector(object):
         if self._shape is None :
             sh = self.pyda.shape(par)
             if self.is_epix10ka_any() : return sh
-            self._shape = sh if len(sh)<4 else np.array((self.size(par)/sh[-1]/sh[-2], sh[-2], sh[-1]))
+            self._shape = sh if len(sh)<4 else np.array((self.size(par)//sh[-1]//sh[-2], sh[-2], sh[-1]))
         return self._shape        
 
 ##-----------------------------

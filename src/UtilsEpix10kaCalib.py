@@ -6,6 +6,7 @@ CALIBRATION - TEST PULSES
 @author: blaj
 """
 from __future__ import print_function
+from __future__ import division
 #--------------------
 import os
 import sys
@@ -1351,7 +1352,7 @@ def add_links_for_gainci_fixed_modes(dir_gain, fname_prefix, verbose=True) :
                  'FM' : 'AML-M',
                  'FL' : 'AML-L'} # 'AHL-L'
 
-    for k,v in dic_links.iteritems() :
+    for k,v in dic_links.items() :
         fname_auto  = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, v)
         fname_fixed = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, k)
         #print 'file %s existx %s' % (fname_auto, os.path.exists(fname_auto))
@@ -1468,7 +1469,7 @@ def deploy_constants(*args, **opts) :
     create_directory(dmerge, mode=dirmode)
     fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
 
-    for octype, lst in dic_consts.iteritems() :
+    for octype, lst in dic_consts.items() :
         mrg_nda = merge_panels(lst)
         logger.info(info_ndarr(mrg_nda, 'merged constants for %s' % octype))
         fmerge = '%s-%s.txt' % (fmerge_prefix, octype)

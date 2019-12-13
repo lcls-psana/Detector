@@ -7,7 +7,7 @@ import numpy as np
 
 print('numpy version:', np.version.version)
 
-a = np.array(range(12)); a.shape = (4,3)
+a = np.array(list(range(12))); a.shape = (4,3)
 m = np.array((1,1,0,0,1,1,0,0,0,1,1,1)); m.shape = (4,3)
 
 print('a=', a)

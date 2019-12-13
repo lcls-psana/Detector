@@ -144,7 +144,7 @@ exp = env.experiment()
 cdir = env.calibDir()
 #calibs = env.calibStore()
 cs = env.configStore()
-keys = cs.keys()
+keys = list(cs.keys())
 key_jf_data = keys[16]
 key_jf_conf = keys[17] # EventKey(type=psana.Jungfrau.ConfigV3, src='DetInfo(XcsEndstation.0:Jungfrau.0)', alias='jungfrau1M')
 a = key_jf_conf.alias()    # 'jungfrau1M'

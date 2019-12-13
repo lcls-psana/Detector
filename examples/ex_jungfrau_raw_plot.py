@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
 import sys
 import psana
 import numpy as np
@@ -12,7 +13,7 @@ from Detector.UtilsJungfrau import calib_jungfrau
 
 #------------------------------
 
-class Store :
+class Store(object) :
     def __init__(self) : 
         self.hwin_x0y0 = (100,10)
         self.do_save = True
@@ -150,7 +151,7 @@ def test_jungfrau(tname) :
     #img.shape = (512, 1024)
     #img = img[:,:512]
 
-    img.shape = (img.size/1024, 1024)
+    img.shape = (img.size//1024, 1024)
 
     print_ndarr(img, 'img')
     print(80*'_')

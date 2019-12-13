@@ -13,6 +13,7 @@ If you use all or part of it, please give an appropriate acknowledgment.
 Created on 2018-11-14 by Mikhail Dubrovin
 """
 from __future__ import print_function
+from __future__ import division
 
 #--------------------
 import os
@@ -46,7 +47,7 @@ M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #--------------------
 
-class Storage :
+class Storage(object) :
     def __init__(self) :
         self.arr1 = None
         self.gfac = None
@@ -64,7 +65,7 @@ def config_objects(env, src, idx=0) :
         psana.Epix.Config10ka or psana.Epix.Config10kaV1
     """
     dco = get_epix10ka2m_config_object(env, src)
-    if dco is not None : return dco, dco.quad(idx/4), dco.elemCfg(idx)
+    if dco is not None : return dco, dco.quad(idx//4), dco.elemCfg(idx)
 
     qco = get_epix10kaquad_config_object(env, src)
     if qco is not None : return None, qco, qco.elemCfg(idx)

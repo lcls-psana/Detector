@@ -81,7 +81,7 @@ from   Detector.PyDetectorAccess import PyDetectorAccess
 
 ##-----------------------------
 
-class WFDetector :
+class WFDetector(object) :
     """Python access to wave-form detector data.
     """
 ##-----------------------------
@@ -228,7 +228,7 @@ class WFDetector :
             return wt
 
         elif self.dettype == gu.IMP :
-            return range(rdata.shape[1]) # returns list of integer numbers from 0 to 1022 for wf shape=(4,1023)
+            return list(range(rdata.shape[1])) # returns list of integer numbers from 0 to 1022 for wf shape=(4,1023)
         
         print('WARNING! %s: data for source %s is not found'%\
               (self.__class__.__name__, self.source))
@@ -295,7 +295,7 @@ if __name__ == "__main__" :
 
     if ntest==3 : 
         wf = data
-        wt = range(wf.shape[1])
+        wt = list(range(wf.shape[1]))
 
         fig, ax = gg.plotGraph(wt, wf[0], figsize=(15,5))
         ax.plot(wt, wf[1],'r-')
