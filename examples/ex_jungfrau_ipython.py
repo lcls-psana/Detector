@@ -65,15 +65,18 @@ gm.values
 ds = DataSource('exp=...:run=12,13,14')
 for run in ds.runs():
     for evt in run.events():
+      pass
 
 ds = DataSource('exp=...:run=12,13,14')
 for run in ds.runs():
     for step in run.steps():
         for evt in step.events():
+	  pass
 
 ds = DataSource('exp=...:run=12,13,14')
 for step in ds.steps():
     for evt in step.events():
+      pass
 
 
 evt = next(ds.events())
