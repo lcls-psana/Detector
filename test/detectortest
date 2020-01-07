@@ -1,15 +1,15 @@
-from __future__ import print_function
 #!@PYTHON@
- 
+from __future__ import print_function
+
 import sys
 import unittest
 import psana
 import Detector
 import numpy as np
 
- 
+
 class TestPyDetector(unittest.TestCase) :
- 
+
     def setUp(self):
 
         psana.setOption('psana.calib-dir', '/reg/g/psdm/data_test/calib')
@@ -20,7 +20,7 @@ class TestPyDetector(unittest.TestCase) :
         self.detectors += [t[1] for t in psana.DetNames('epics') if t[1] != '']
 
         return
- 
+
 
     def test_lookup(self):
 
@@ -70,34 +70,34 @@ class TestPyDetector(unittest.TestCase) :
 
 
     def test_cspad_cm1(self):
-    	cspad = psana.Detector('cspad')
-	evt = next(self.ds.events())
-	mask = cspad.mask(evt, unbond=True)
-	nda0, nda1, rms = 30, 20, 3
+        cspad = psana.Detector('cspad')
+        evt = next(self.ds.events())
+        mask = cspad.mask(evt, unbond=True)
+        nda0, nda1, rms = 30, 20, 3
 
-	nda = np.ones((32, 185, 388))
-	## mean > 25, will call alg #5 since every pixel is "hit"
-	nda[0] *= nda0
-	## mean < 25, will continue with alg #1
-	nda[1] *= nda1
-       	nda[np.where(mask == 0)] = rms
-	nda_before = np.copy(nda)
+        nda = np.ones((32, 185, 388))
+        ## mean > 25, will call alg #5 since every pixel is "hit"
+        nda[0] *= nda0
+        ## mean < 25, will continue with alg #1
+        nda[1] *= nda1
+        nda[np.where(mask == 0)] = rms
+        nda_before = np.copy(nda)
 
-	# set parameters to nominal default, because test data has cmpars
-	# set in the calib-dir
-	cspad.common_mode_apply(evt, nda, cmpars=[1,25,25,100,1])
+        # set parameters to nominal default, because test data has cmpars
+        # set in the calib-dir
+        cspad.common_mode_apply(evt, nda, cmpars=[1,25,25,100,1])
 
-	## Test call to unbonded cm (alg #5) if alg #1 fails
-	assert (nda[0] == nda_before[0] - rms).all()
-	## Test if alg #1 succeeds
-	assert (nda[1] == nda_before[1] - nda1).all()
+        ## Test call to unbonded cm (alg #5) if alg #1 fails
+        assert (nda[0] == nda_before[0] - rms).all()
+        ## Test if alg #1 succeeds
+        assert (nda[1] == nda_before[1] - nda1).all()
 
-	# now try with par[4]=0 (disabling alg #5)
-	nda = np.copy(nda_before)
-	cspad.common_mode_apply(evt, nda, cmpars=[1,25,25,100,0])
-	# should do nothing, since every pixel is "hit" (>25) and we have
-	# disabled algorithm 5
-	assert (nda[0] == nda_before[0]).all()
+        # now try with par[4]=0 (disabling alg #5)
+        nda = np.copy(nda_before)
+        cspad.common_mode_apply(evt, nda, cmpars=[1,25,25,100,0])
+        # should do nothing, since every pixel is "hit" (>25) and we have
+        # disabled algorithm 5
+        assert (nda[0] == nda_before[0]).all()
 
 
     def test_string_pv(self):
@@ -142,6 +142,6 @@ class TestPyDetector(unittest.TestCase) :
         except KeyError:
             pass
 
- 
+
 if __name__ == '__main__':
      unittest.main(argv=[sys.argv[0], '-v'])
