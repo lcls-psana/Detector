@@ -283,6 +283,7 @@ def id_jungfrau(env, src, iseg=None) :
     #print 'XXX: id_jungfrau src:', type(src)
     source = psana_source(env, src)
     co = get_jungfrau_config_object(env, source)
+    if co is None : return None
     jfid = id_jungfrau_from_config(co, iseg)
     if jfid is not None : return jfid # '170505-149520170815-3d00b0'
     return string_from_source(source).replace(':','-') # e.g. 'XcsEndstation.0-Jungfrau.0'
