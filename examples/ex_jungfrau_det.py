@@ -6,22 +6,14 @@ import psana
 from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
 
-#------------------------------
-
-def dsname_source(tname) :
-    if   tname=='1': return 'exp=mecls3216:run=2',   'MecTargetChamber.0:Jungfrau.0' # 170505-149520170815-3d00b0_170505-149520170815-3d00f7 -> M068, M088
-    elif tname=='2': return 'exp=mfxls0816:run=193', 'MfxEndstation.0:Jungfrau.1' # 171113-154920171025-3d00fb                            -> M044
-    elif tname=='3': return 'exp=mfxlr1716:run=1',   'MfxEndstation.0:Jungfrau.0' # 171113-154920171025-3d00b0_171113-154920171025-3d00f7
-    else :
-        print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
-        sys.exit(0)
-
+#----------
     
-def test_jungfrau_methods(tname) :
+def test_jungfrau_methods(dsname, src) :
 
-    dsname, src = dsname_source(tname)
+    #psana.setOption('psana.calib-dir', './calib')
+    #/reg/d/psdm/xpp/xpptut13/calib/Jungfrau::CalibV1/DetLab.0:Jungfrau.2/geometry/1-end.data
+    #/reg/d/psdm/det/detdaq17/calib/Jungfrau::CalibV1/DetLab.0:Jungfrau.2/geometry/1-end.data
 
-    psana.setOption('psana.calib-dir', './calib')
     ds  = psana.DataSource(dsname)
     evt = ds.events().next()
     env = ds.env()
@@ -43,9 +35,8 @@ def test_jungfrau_methods(tname) :
     print 80*'_', '\nInstrument: ', ins
     print 'src:', src    
 
-    det.set_print_bits(0)
-
-    #det.set_print_bits(511)
+    #det.set_print_bits(0)
+    det.set_print_bits(1023)
     #det.set_def_value(-5.)
     #det.set_mode(1)
     #det.set_do_offset(True) # works for ex. Opal1000
@@ -74,10 +65,6 @@ def test_jungfrau_methods(tname) :
     offset = det.offset(par)
     print_ndarr(offset, 'offset')
     
-    ######################
-    sys.exit ('TEST EXIT')
-    ######################
-
     bkgd = det.bkgd(par)
     print_ndarr(bkgd, 'bkgd')
     
@@ -87,15 +74,17 @@ def test_jungfrau_methods(tname) :
     status = det.status(par)
     print_ndarr(status, 'status')
 
-    statmask = det.status_as_mask(par)
-    print_ndarr(statmask, 'statmask')
-    print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+    if False :
 
-    status_mask = det.status_as_mask(par)
-    print_ndarr(status_mask, 'status_mask')
+        statmask = det.status_as_mask(par)
+        print_ndarr(statmask, 'statmask')
+        print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+
+        status_mask = det.status_as_mask(par)
+        print_ndarr(status_mask, 'status_mask')
     
-    cmod = det.common_mode(par)
-    print_ndarr(cmod, 'common_mod')
+        cmod = det.common_mode(par)
+        print_ndarr(cmod, 'common_mod')
 
     coords_x = det.coords_x(par)
     print_ndarr(coords_x, 'coords_x')
@@ -105,7 +94,11 @@ def test_jungfrau_methods(tname) :
 
     areas = det.areas(par)
     print_ndarr(areas, 'area')
-   
+
+    ######################
+    #sys.exit ('TEST EXIT')
+    ######################
+
     i=0
     nda_raw = None
     evt = None
@@ -124,6 +117,8 @@ def test_jungfrau_methods(tname) :
         print 'Detector data IS NOT FOUND in %d events' % i
         sys.exit('FURTHER TEST IS TERMINATED')
 
+    print('>>> is_jungfrau: %s' % det.is_jungfrau())
+
     nda_cdata = nda_raw
         
     ##-----------------------------
@@ -134,8 +129,8 @@ def test_jungfrau_methods(tname) :
     #data_sub_peds = nda_raw - peds if peds is not None else nda_raw
     #print_ndarr(data_sub_peds, 'data - peds')
     
-#    nda_cdata = det.calib(evt)
-#    print_ndarr(nda_cdata, 'calibrated data')
+    #nda_cdata = det.calib(evt)
+    #print_ndarr(nda_cdata, 'calibrated data')
     
 #    mask_geo = det.mask_geo(par, mbits=3, width=1)
 #    print_ndarr(mask_geo, 'mask_geo')
@@ -180,9 +175,14 @@ def test_jungfrau_methods(tname) :
     
     import pyimgalgos.GlobalGraphics as gg
     
-    ave, rms = img.mean(), img.std()
-    gg.plotImageLarge(img, amp_range=None, figsize=(13,12)) # amp_range=(ave-1*rms, ave+2*rms))
+    ave, rms = img.mean(), img.std() 
+    amprange=None
+    amprange=(ave-1*rms, ave+2*rms)
+    amprange=(57000, 58000)
+    gg.plotImageLarge(img, amp_range=amprange, figsize=(11.5,12))
     
+    gg.save('img.png', True)
+
     ##-----------------------------
     hnda = nda_raw 
 
@@ -195,19 +195,26 @@ def test_jungfrau_methods(tname) :
     gg.show()
 
     ##-----------------------------
-    
+
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
-    
-    ##-----------------------------
 
-#------------------------------
+#----------
 
 if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
     print '%s\nTest %s' % (80*'_', tname)
-    if tname in ('1', '2', '3') : test_jungfrau_methods(tname)
-    else : sys.exit ('Not recognized test name: "%s"' % tname)
+
+    if   tname=='1' : test_jungfrau_methods('exp=xpptut15:run=410', 'Jungfrau512k')
+    elif tname=='2' : test_jungfrau_methods('exp=xpptut15:run=430', 'Jungfrau1M')
+    elif tname=='3' : test_jungfrau_methods('/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2') # OR:
+    elif tname=='4' : test_jungfrau_methods('/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc',         'DetLab.0:Jungfrau.2')
+    # MISSING DATA
+    #elif tname=='3' : test_jungfrau_methods('exp=xpptut13:run=177', 'DetLab.0:Jungfrau.2') # OR:
+    #elif tname=='1': test_jungfrau_methods('exp=mecls3216:run=2',   'MecTargetChamber.0:Jungfrau.0')
+    #elif tname=='2': test_jungfrau_methods('exp=mfxls0816:run=193', 'MfxEndstation.0:Jungfrau.1')
+    #elif tname=='3': test_jungfrau_methods('exp=mfxlr1716:run=1',   'MfxEndstation.0:Jungfrau.0')
+    else : sys.exit('Not recognized test name: "%s"' % tname)
     sys.exit ('End of %s' % sys.argv[0])
 
-#------------------------------
+#----------

@@ -13,33 +13,37 @@ import pyimgalgos.Graphics as gr
 
 #------------------------------
 EVSKIP  = 0
-EVENTS  = EVSKIP + 105
+EVENTS  = EVSKIP + 7
 PLOT_IMG = True #False #True #False
-PLOT_SPE = True #False #True #False
+PLOT_SPE = False #True #False #True #False
 
 #------------------------------
 
 def dsname_source(tname) :
-    if   tname=='1' : return 'exp=cxi11216:run=9',    'CxiEndstation.0:Jungfrau.0' # 9,11,12 - dark for gain modes
-    elif tname=='2' : return 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0' # dark: 503, 504, 505
-    elif tname=='20': return 'exp=xcsx22015:run=508', 'XcsEndstation.0:Jungfrau.0' # dark: 508, 509, 510; 516, 517, 518
-    elif tname=='21': return 'exp=xcsx22015:run=509', 'XcsEndstation.0:Jungfrau.0' 
-    elif tname=='22': return 'exp=xcsx22015:run=510', 'XcsEndstation.0:Jungfrau.0' 
-    elif tname=='3' : return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0' # data with variable gain
-    elif tname=='4' : return 'exp=xcsx22015:run=552', 'XcsEndstation.0:Jungfrau.0' # Silver behenate, attenuation 1.2e-2
-    elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0'
-    elif tname=='6' : return 'exp=mfx11116:run=689',  'MfxEndstation.0:Jungfrau.1' # Philip test 0.5M constants
-    elif tname=='30': return 'exp=mfxls1016:run=369', 'MfxEndstation.0:Jungfrau.1' # dark:369 test for clemens
-    else :
-        print 'Example for\n dataset: %s\n source : %s \nis not implemented' % (dsname, src)
-        sys.exit(0)
+    if   tname=='1' : return 'exp=xpptut15:run=410', 'Jungfrau512k', 410
+    elif tname=='2' : return 'exp=xpptut15:run=430', 'Jungfrau1M',   430
+    elif tname=='40': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
+    elif tname=='41': return '/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
+    elif tname=='42': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
+    # MISSING DATA
+    #elif tname=='1' : return 'exp=cxi11216:run=9',    'CxiEndstation.0:Jungfrau.0', None # 9,11,12 - dark for gain modes
+    #elif tname=='2' : return 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0', None # dark: 503, 504, 505
+    #elif tname=='20': return 'exp=xcsx22015:run=508', 'XcsEndstation.0:Jungfrau.0', None # dark: 508, 509, 510; 516, 517, 518
+    #elif tname=='21': return 'exp=xcsx22015:run=509', 'XcsEndstation.0:Jungfrau.0', None 
+    #elif tname=='22': return 'exp=xcsx22015:run=510', 'XcsEndstation.0:Jungfrau.0', None 
+    #elif tname=='3' : return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0', None # data with variable gain
+    #elif tname=='4' : return 'exp=xcsx22015:run=552', 'XcsEndstation.0:Jungfrau.0', None # Silver behenate, attenuation 1.2e-2
+    #elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0', None
+    #elif tname=='6' : return 'exp=mfx11116:run=689',  'MfxEndstation.0:Jungfrau.1', None # Philip test 0.5M constants
+    #elif tname=='30': return 'exp=mfxls1016:run=369', 'MfxEndstation.0:Jungfrau.1', None # dark:369 test for clemens
+    else : sys.exit('Not recognized test name: "%s"' % tname)
 
 #------------------------------
     
 def test_jungfrau_methods(tname) :
 
-    dsname, src = dsname_source(tname)
-    runnum = int(dsname.split(':')[1].split('=')[1])
+    dsname, src, rnum = dsname_source(tname)
+    runnum = rnum if rnum is not None else int(dsname.split(':')[1].split('=')[1])
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
@@ -56,7 +60,7 @@ def test_jungfrau_methods(tname) :
     if figim is not None : gg.move_fig(figim, 300, 0)
 
     fighi, axhi = None, None
-    if PLOT_IMG :
+    if PLOT_SPE :
         fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
         axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
 
@@ -98,7 +102,9 @@ def test_jungfrau_methods(tname) :
 
     statmask = det.status_as_mask(par)
     print_ndarr(statmask, 'statmask')
-    print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+
+    if statmask is not None :
+        print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
 
     status_mask = det.status_as_mask(par)
     print_ndarr(status_mask, 'status_mask')
@@ -145,9 +151,22 @@ def test_jungfrau_methods(tname) :
 
         nda = det.calib(evt, cmpars=(7,3,100)) # cmpars=(7,1,100)
 
-        if nda is None : continue
+        if nda is None : 
+            print('det.calib() is None, so plot det.raw()')
+            nda = nda_raw
+        else :
+            print_ndarr(nda, 'det.calib')
+
+        if tname=='42' :
+            size = 8*512*1024
+            nda = np.arange(size, dtype=np.uint32)
+            nda.shape = (8, 512, 1024)
+
         print '    Consumed time for det.raw/calib(evt) = %7.3f sec' % (time()-t0_sec)
         print_ndarr(nda, 'data nda')
+
+        ave,  rms  = None, None
+        amin, amax = None, None
 
         if PLOT_IMG :
             ndarr = np.array(nda)
@@ -155,7 +174,7 @@ def test_jungfrau_methods(tname) :
     
             img = det.image(evt, ndarr)
             #img = ndarr; ndarr.shape = (1024,1024) # up and down pannels look flipped 
-        
+
             if img is None :
                 print 'Image is not available.'
                 continue
@@ -172,15 +191,21 @@ def test_jungfrau_methods(tname) :
             amin, amax = (-1, 10) if tname=='4' else\
                          (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
                          (-1, 1) if tname=='30' else\
-                         (ave-2*rms, ave+6*rms)
+                         (0,size) if tname=='42' else\
+                         (ave-1*rms, ave+1*rms)
+                         #(57000,57800) if tname in ('40','41') else\
             gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='jet') # , cmap='inferno'
             #figim.canvas.draw()
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
+            gr.show(mode='do_not_hold')
+            gg.save('img.png', True)
 
         if PLOT_SPE :
             #arrhi = ndarr # nda_raw
             #arrhi, range_x = nda_raw,(0,(1<<16)-1)
-            arrhi, range_x = ndarr, (-2,2) 
+            #arrhi, range_x = ndarr, (-2,2)
+            #arrhi, range_x = ndarr, (ave-1*rms, ave+1*rms) 
+            arrhi, range_x = ndarr, (amin, amax) 
             #range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
 
             axhi.clear()
@@ -204,7 +229,7 @@ def test_jungfrau_methods(tname) :
 #------------------------------
 
 if __name__ == "__main__" :
-    tname = sys.argv[1] if len(sys.argv)>1 else '3'
+    tname = sys.argv[1] if len(sys.argv)>1 else '40'
     print '%s\nTest %s' % (80*'_', tname)
     test_jungfrau_methods(tname)
     sys.exit ('End of %s' % sys.argv[0])

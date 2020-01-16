@@ -28,7 +28,8 @@ DETNAME = sys.argv[2] if len(sys.argv) > 2 else DETNAME_DEF
 def usage():
     return  'Usage: jungfrau_id <DSNAME> [<DETNAME>]\n'\
            +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES)\
-           +'       <DETNAME> is optional parameterr like one of the list:\n         %s  ' % '\n         '.join(DETNAMES)
+           +'       <DETNAME> is optional parameterr like one of the list:\n         %s  ' % '\n         '.join(DETNAMES)\
+           +'\nEx:    jungfrau_id exp=detdaq17:run=177 DetLab.0:Jungfrau.2'
 
 #------------------------------
 

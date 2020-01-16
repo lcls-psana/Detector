@@ -60,6 +60,16 @@ def h1d(hlst, bins=None, amp_range=None, weights=None, color=None, show_stat=Tru
 
 #------------------------------
 
+def dsname_source(tname) :
+    if   tname=='1': return 'exp=xpptut15:run=410', 'Jungfrau512k', 410, 'xpptut15'
+    elif tname=='2': return 'exp=xpptut15:run=430', 'Jungfrau1M',   430, 'xpptut15'
+    elif tname=='3': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177, 'xpptut13'
+    elif tname=='4': return '/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc',         'DetLab.0:Jungfrau.2', 177, 'detdaq17'
+    elif tname=='5': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177, 'xpptut13'
+    else : sys.exit('Not recognized test name: "%s"' % tname)
+
+#------------------------------
+
 def test_jungfrau(tname) :
 
     """The data is in cxi11216.  There is one tile.  I appear to be using 
@@ -73,11 +83,15 @@ def test_jungfrau(tname) :
     #exp = 'cxi11216'
     #nrun = 9 # 9 11 12
 
-    src = 'XcsEndstation.0:Jungfrau.0'
-    exp = 'xcsx22015'
-    nrun = 503 # 503,504,505
+    #src = 'XcsEndstation.0:Jungfrau.0'
+    #exp = 'xcsx22015'
+    #nrun = 503 # 503,504,505
 
-    dsname = 'exp=%s:run=%d' % (exp, nrun) # (1, 512, 1024)
+    #dsname = 'exp=%s:run=%d' % (exp, nrun) # (1, 512, 1024)
+
+    dsname, src, nrun, exp = dsname_source(tname)
+
+
     #sp.prefix = 'fig-%s-r%04d-%s' % (exp, nrun, tname) 
     sp.prefix = 'fig-%s-r%04d-%s-cm' % (exp, nrun, tname) 
 
@@ -91,7 +105,6 @@ def test_jungfrau(tname) :
     source = psana.Source(src)
     #do = get_jungfrau_data_object(evt, src) # cfg.get(psana.Jungfrau.ConfigV1, src)
     co = get_jungfrau_config_object(env, source)
-    gm = co.gainMode()
 
     print '  env.calibDir: %s' % env.calibDir()
 
@@ -112,13 +125,13 @@ def test_jungfrau(tname) :
 
     if nda is None :
         for i, evt in enumerate(ds.events()) :
-            nda = det.raw(evt) if tname=='0' else\
-                  det.calib(evt, cmpars=(7,1,100)) # cmpars=(7,0,100)
+            nda = det.raw(evt) # if tname=='0' else\
+                  #det.calib(evt, cmpars=(7,1,100)) # cmpars=(7,0,100)
                   #calib_jungfrau(det, evt, source)
 
             print 'Event %d' % i
             ###===============
-            if i<10 : continue
+            #if i<10 : continue
             ###===============
             if nda is not None :
                 print 'Detector data found in event %d' % i
@@ -148,7 +161,7 @@ def test_jungfrau(tname) :
     import pyimgalgos.GlobalGraphics as gg
 
     ave, rms = img.mean(), img.std()
-    gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+2*rms))
+    gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+1*rms))
     gg.save(fname='%s-%s'%(sp.prefix, 'img.png'), do_save=True, pbits=1)
 
     if True :
@@ -163,6 +176,9 @@ def test_jungfrau(tname) :
     print '1<<14 = ', 1<<14
     print '2<<14 = ', 2<<14
     print '3<<14 = ', 3<<14
+
+    if co is None : return
+    gm = co.gainMode()
     print 'gm.name', gm.name
     print 'gm.names:\n', gm.names
     for k,v in gm.names.iteritems() : print k,v 
@@ -175,11 +191,9 @@ def test_jungfrau(tname) :
 
 if __name__ == "__main__" :
     import sys; global sys
-    tname = sys.argv[1] if len(sys.argv) > 1 else '0'
+    tname = sys.argv[1] if len(sys.argv) > 1 else '1'
     print 50*'_', '\nTest %s:' % tname
-    if   tname == '0' : test_jungfrau(tname)
-    elif tname == '1' : test_jungfrau(tname)
-    else : print 'Test %s is not implemented' % tname
+    test_jungfrau(tname)
     sys.exit('End of test %s' % tname)
 
 #------------------------------
