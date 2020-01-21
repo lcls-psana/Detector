@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-76
+2020-01-21 Mikhail S. Dubrovin
+- update examples/ex_jungfrau_images.py for pixel numeration demo
+
 Tag: V01-00-75
 2020-01-15 Mikhail S. Dubrovin
 - update Detector/examples for Jungfrau4M
