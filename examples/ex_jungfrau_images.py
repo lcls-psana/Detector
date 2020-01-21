@@ -158,9 +158,15 @@ def test_jungfrau_methods(tname) :
             print_ndarr(nda, 'det.calib')
 
         if tname=='42' :
-            size = 8*512*1024
+            det_shape = nsegs, nrows, ncols = (8, 512, 1024)
+            size = nsegs*nrows*ncols
             nda = np.arange(size, dtype=np.uint32)
-            nda.shape = (8, 512, 1024)
+            nda.shape = det_shape
+
+            row_asc  = np.arange(nrows, dtype=np.uint32)
+            col_asc  = np.arange(ncols, dtype=np.uint32)
+            seg_rows, seg_cols = np.meshgrid(row_asc, col_asc)
+            nda[0,seg_rows,seg_cols] = (seg_rows*ncols + seg_cols*nrows)*4
 
         print '    Consumed time for det.raw/calib(evt) = %7.3f sec' % (time()-t0_sec)
         print_ndarr(nda, 'data nda')
