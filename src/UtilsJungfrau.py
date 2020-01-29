@@ -59,7 +59,7 @@ class Storage :
 store = Storage() # singleton
 #------------------------------
 
-def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
+def calib_jungfrau(det, evt, src, cmpars=(7,3,100), nda_raw=None) :
     """
     Returns calibrated jungfrau data
 
@@ -78,11 +78,12 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100)) :
         - cmpars[0] - algorithm # 7-for jungfrau
         - cmpars[1] - control bit-word 1-in rows, 2-in columns
         - cmpars[2] - maximal applied correction 
+    - nda_raw - if not None, substitutes evt.raw()
     """
 
     #print 'XXX: ====================== det.name', det.name
 
-    arr = det.raw(evt) # shape:(1, 512, 1024) dtype:uint16
+    arr = det.raw(evt) if nda_raw is None else nda_raw # shape:(<npanels>, 512, 1024) dtype:uint16
     if arr is None : return None
 
     #arr  = np.array(det.raw(evt), dtype=np.float32)

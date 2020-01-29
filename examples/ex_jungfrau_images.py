@@ -25,6 +25,9 @@ def dsname_source(tname) :
     elif tname=='40': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
     elif tname=='41': return '/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
     elif tname=='42': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
+    elif tname=='51': return 'exp=detdaq17:run=178', 'DetLab.0:Jungfrau.3', 178
+    elif tname=='52': return 'exp=detdaq17:run=179', 'DetLab.0:Jungfrau.3', 179
+    elif tname=='53': return 'exp=detdaq17:run=180', 'DetLab.0:Jungfrau.3', 180
     # MISSING DATA
     #elif tname=='1' : return 'exp=cxi11216:run=9',    'CxiEndstation.0:Jungfrau.0', None # 9,11,12 - dark for gain modes
     #elif tname=='2' : return 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0', None # dark: 503, 504, 505
@@ -41,6 +44,8 @@ def dsname_source(tname) :
 #------------------------------
     
 def test_jungfrau_methods(tname) :
+
+    if tname in ('51','52','53') : psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib')
 
     dsname, src, rnum = dsname_source(tname)
     runnum = rnum if rnum is not None else int(dsname.split(':')[1].split('=')[1])
@@ -149,7 +154,8 @@ def test_jungfrau_methods(tname) :
 
         print_ndarr(nda_raw, 'nda_raw')
 
-        nda = det.calib(evt, cmpars=(7,3,100)) # cmpars=(7,1,100)
+        raw_fake = None # 1000*np.ones((2, 512, 1024), dtype=np.uint16)
+        nda = det.calib(evt, cmpars=(7,3,100), nda_raw=raw_fake) # cmpars=(7,1,100)
 
         if nda is None : 
             print('det.calib() is None, so plot det.raw()')

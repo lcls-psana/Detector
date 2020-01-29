@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-77
+2020-01-29 Mikhail S. Dubrovin
+- In UtilsJungfrau.calib_jungfrau add optional parameter nda_raw=None to bypass det.raw (for Silke)
+
 Tag: V01-00-76
 2020-01-21 Mikhail S. Dubrovin
 - update examples/ex_jungfrau_images.py for pixel numeration demo
