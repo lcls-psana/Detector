@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-78
+2020-02-25 Mikhail S. Dubrovin
+- app/jungfrau_gain_constants contract intermediate file name (Philip)
+
 Tag: V01-00-77
 2020-01-29 Mikhail S. Dubrovin
 - In UtilsJungfrau.calib_jungfrau add optional parameter nda_raw=None to bypass det.raw (for Silke)
