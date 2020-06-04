@@ -26,7 +26,8 @@ def epix10ka_offset_calibration():
 
     if popts.exp is None : raise IOError('WARNING: option "-e <experiment>" MUST be specified.') # sys.exit()
     if popts.det is None : raise IOError('WARNING: option "-d <detector-name>" MUST be specified.')
-    if popts.run is None : raise IOError('WARNING: option "-r <run-number>" MUST be specified.')
+    if popts.run is None\
+    and popts.runs is None: raise IOError('WARNING: option "-r <run-number> OR -R <runs>" MUST be specified.')
 
     logging.basicConfig(format='%(levelname)s: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
 
@@ -64,6 +65,7 @@ def option_parser() :
     d_exp     = None # 'mfxx32516'
     d_det     = None # 'NoDetector.0:Epix10ka.3'
     d_run     = None # 1021
+    d_runs    = None # '1021,1022'
     d_idx     = None # 0-15 for epix10ka2m, 0-3 for epix10kaquad
     d_nbs     = 4600 # number of frames
     d_nspace  = 7    # 2
@@ -78,6 +80,7 @@ def option_parser() :
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
     h_run     = 'run number, default = %s' % str(d_run)
+    h_runs    = 'run range, default = %s' % str(d_run)
     h_idx     = 'panel index (0-15/3 for epix10ka2m/quad), default = %s' % str(d_idx)
     h_nbs     = 'number of frames to calibrate offsets, default = %s' % str(d_nbs)
     h_nspace  = 'space between calibrated pixels, default = %s' % str(d_nspace)
@@ -93,6 +96,7 @@ def option_parser() :
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
     parser.add_option('-d', '--det',     default=d_det,     action='store', type='string', help=h_det)
     parser.add_option('-r', '--run',     default=d_run,     action='store', type='int',    help=h_run)
+    parser.add_option('-R', '--runs',    default=d_runs,    action='store', type='string', help=h_runs)
     parser.add_option('-i', '--idx',     default=d_idx,     action='store', type='int',    help=h_idx)
     parser.add_option('-b', '--nbs',     default=d_nbs,     action='store', type='int',    help=h_nbs)
     parser.add_option('-n', '--nspace',  default=d_nspace,  action='store', type='int',    help=h_nspace)
