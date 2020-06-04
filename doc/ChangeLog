@@ -7,6 +7,18 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-79
+2020-06-03 Mikhail S. Dubrovin
+- add -R option and diagnostics (plot) to app/epix10ka_offset_calibration
+- add ../examples/ex_epix10ka*
+- add common-mode correction to epix10ka, det.calib(evt, cmpars=(7,2,100))
+- pass raw data as external parameter, det.calib(evt, nda_raw=raw)
+	modified:   ../app/epix10ka_offset_calibration
+	new file:   ../examples/ex_epix10ka2m_test_calibcycles.py
+	new file:   ../examples/ex_epix10ka_cmod.py
+	modified:   AreaDetector.py
+	modified:   UtilsEpix10ka.py
+
 Tag: V01-00-78
 2020-02-25 Mikhail S. Dubrovin
 - app/jungfrau_gain_constants contract intermediate file name (Philip)
