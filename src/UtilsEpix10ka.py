@@ -374,6 +374,10 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
     #if False:
     logger.debug('common-mode correction pars cmp: %s' % str(cmp))
 
+    #print_ndarr(arrf[0], 'arrf[0]')
+    #np.savetxt('img-detdaq18-r23-epix10ka-raw-peds-for-cmtest.txt', arrf[0],\
+    #           fmt='%.2f', delimiter=' ', newline='\n', header=' 2-d array (352, 384) for cm test epix10ka raw-peds detdaq18 r23 seg0', footer='', comments='#')
+
     t0_sec_cm = time()
 
     if cmp is not None:

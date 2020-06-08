@@ -3,7 +3,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d : %(message)s', level=logging.INFO) #DEBUG
+logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d : %(message)s', level=logging.INFO) # INFO) #DEBUG
 
 import sys
 import psana
@@ -113,10 +113,11 @@ if nda_raw is None :
 print_ndarr(peds, 'peds')
 print_ndarr(nda_raw, 'raw')
 
-#nda_cdata = det.calib(evt)
-#nda_cdata = det.calib(evt, cmpars=None)        # cm pars from calib directory
-#nda_cdata = det.calib(evt, cmpars=(0, 0, 100)) # use cmpars, do not app[ly cm correction
-nda_cdata = det.calib(evt, cmpars=(0, 2, 100)) # use cmpars, apply correction in columns
+#cmpars=None        # cm pars from calib directory
+#cmpars=(0, 0, 100) # use cmpars, do not app[ly cm correction
+cmpars=(0, 2, 100) # use cmpars, apply correction in columns
+
+nda_cdata = det.calib(evt, cmpars=cmpars)  # cm pars from calib directory
 
 print_ndarr(nda_cdata, 'calibrated data')
 
@@ -148,6 +149,11 @@ print 'ave=%.3f rms=%.3f' % (ave, rms)
 amp_range=(ave-1*rms, ave+2*rms)
 amp_range=(-10, 25)
 gg.plotImageLarge(img, amp_range=amp_range, cmap='jet')
+
+scmpars = str(None if cmpars is None else cmpars[1])
+fname = 'img-%s-%s-cmpars-%s.png' % (dsname.replace('=','-').replace(':','-'), src.replace(':','-').replace('.','-'), cmpars[1])
+gg.save(fname=fname, do_save=True, pbits=0377)
+
 gg.show()
 
 ##-----------------------------

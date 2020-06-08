@@ -8,8 +8,8 @@ from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_obje
                             get_epix10ka_any_config_object, find_gain_mode
 
 PREFIX = './img'
-DO_PLOT = True # False #True
-DO_SAVE = True # False
+DO_PLOT = False # False #True
+DO_SAVE = False # False
 
 if DO_PLOT: 
     import pyimgalgos.Graphics as gr
@@ -116,7 +116,8 @@ def do_work():
     #ds = DataSource('exp=detdaq18:run=35-36:smd')
     #ds = DataSource('exp=detdaq18:run=37:smd')
     #ds = DataSource('exp=detdaq18:run=38:smd')
-    ds = DataSource('exp=detdaq18:run=39:smd')
+    #ds = DataSource('exp=detdaq18:run=39:smd')
+    ds = DataSource('exp=detdaq18:run=40:smd')
 
     cd  = Detector('ControlData')
     det = Detector('DetLab.0:Epix10ka2M.0')

@@ -7,6 +7,14 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-80
+2020-06-08 Mikhail S. Dubrovin
+- speed-up common mode correction algorithms common_mode_rows, common_mode_cols
+modified:   examples/ex_epix10ka2m_test_calibcycles.py
+modified:   examples/ex_epix10ka_cmod.py
+modified:   src/UtilsCommonMode.py
+modified:   src/UtilsEpix10ka.py
+
 Tag: V01-00-79
 2020-06-03 Mikhail S. Dubrovin
 - add -R option and diagnostics (plot) to app/epix10ka_offset_calibration
