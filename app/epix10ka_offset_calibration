@@ -29,7 +29,7 @@ def epix10ka_offset_calibration():
     if popts.run is None\
     and popts.runs is None: raise IOError('WARNING: option "-r <run-number> OR -R <runs>" MUST be specified.')
 
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
 
     logger.debug('%s\nIn epix10ka_offset_calibration' % (50*'_'))
     logger.debug(info_command_line_parameters(parser))

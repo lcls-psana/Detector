@@ -7,6 +7,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+### Not tagged yet
+2020-06-10 Mikhail S. Dubrovin
+  - add plot for charge injection raw intensity vs event to clarify problem with fit
+	modified:   app/epix10ka_offset_calibration
+	modified:   examples/ex_epix10ka2m_test_calibcycles.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-80
 2020-06-08 Mikhail S. Dubrovin
 - speed-up common mode correction algorithms common_mode_rows, common_mode_cols
