@@ -8,6 +8,15 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 ### Not tagged yet
+2020-06-18 Mikhail S. Dubrovin
+- work on epix10ka_offset_calibration. Pulser period-independent fit is done.
+  TODO: - apply charge injection fit results to pedestal calibration,
+	- code polishing
+	modified:   ../app/epix10ka_offset_calibration
+	modified:   ../examples/ex_epix10ka2m_test_calibcycles.py
+	modified:   UtilsEpix10kaCalib.py
+
+### Not tagged yet
 2020-06-10 Mikhail S. Dubrovin
   - add plot for charge injection raw intensity vs event to clarify problem with fit
 	modified:   app/epix10ka_offset_calibration

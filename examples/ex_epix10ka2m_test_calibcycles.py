@@ -8,12 +8,22 @@ from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_obje
                             get_epix10ka_any_config_object, find_gain_mode
 
 #----------
+    #ds = DataSource('exp=detdaq18:run=14:smd')
+    #ds = DataSource('exp=detdaq18:run=18:smd') # good dark calib-cycles: FH, FM, FL, AHL-H, AML_M
+    #ds = DataSource('exp=detdaq18:run=27-29:smd')
+    #ds = DataSource('exp=detdaq18:run=35-36:smd')
+    #ds = DataSource('exp=detdaq18:run=37:smd')
+    #ds = DataSource('exp=detdaq18:run=38:smd')
+    #ds = DataSource('exp=detdaq18:run=39:smd')
+    #ds = DataSource('exp=detdaq18:run=40:smd')
+    #det = Detector('DetLab.0:Epix10ka2M.0')
+#----------
 
 def argument_parser():
 
     import argparse
     
-    d_dsname  = 'exp=detdaq18:run=40:smd'
+    d_dsname  = 'exp=detdaq18:run=51:smd'
     d_detname = 'DetLab.0:Epix10ka2M.0'
     d_prefix  ='./img'
     d_procev  = False
@@ -151,15 +161,6 @@ def info_config(cfg):
 
 def do_work():
 
-    #ds = DataSource('exp=detdaq18:run=14:smd')
-    #ds = DataSource('exp=detdaq18:run=18:smd') # good dark calib-cycles: FH, FM, FL, AHL-H, AML_M
-    #ds = DataSource('exp=detdaq18:run=27-29:smd')
-    #ds = DataSource('exp=detdaq18:run=35-36:smd')
-    #ds = DataSource('exp=detdaq18:run=37:smd')
-    #ds = DataSource('exp=detdaq18:run=38:smd')
-    #ds = DataSource('exp=detdaq18:run=39:smd')
-    #ds = DataSource('exp=detdaq18:run=40:smd')
-    #det = Detector('DetLab.0:Epix10ka2M.0')
     ds  = DataSource(DSNAME)
     cd  = Detector('ControlData')
     det = Detector(DETNAME)
@@ -182,6 +183,10 @@ def do_work():
         nstep += 1
         print '%s\nrun: %04d step: %03d/%03d (in run/total)' % (50*'=', run.run(), nstep, nstep_in_run), \
               '    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(),cd().pvLabels(),cd().pvMonitors() # EMPTY: ,
+
+        for pvl in cd().pvLabels():
+            print '  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value())
+
 
         if nstep<SKIPNCC : 
             print '    skip calibcycles < %d' % SKIPNCC
