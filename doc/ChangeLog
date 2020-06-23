@@ -7,6 +7,13 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-81
+2020-06-23 Mikhail S. Dubrovin
+- epix10ka_offset_calibration - new period-independent charge-injection fit and ped_L formulae from Gabriel
+	modified:   ../app/epix10ka_offset_calibration
+	new file:   ../examples/test_load_npz.py
+	modified:   UtilsEpix10kaCalib.py
+
 ### Not tagged yet
 2020-06-18 Mikhail S. Dubrovin
 - work on epix10ka_offset_calibration. Pulser period-independent fit is done.

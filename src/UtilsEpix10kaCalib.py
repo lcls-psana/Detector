@@ -135,7 +135,7 @@ def plot_fit_figaxis():
 #--------------------
 
 def plot_fit(x,y,pf0,pf1,fname):
-    print 'update_plot %s' % fname
+    print 'plot_fit %s' % fname
     fig, ax = plot_fit_figaxis()
 
     #fig.clf()
@@ -152,42 +152,6 @@ def plot_fit(x,y,pf0,pf1,fname):
     ax.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
     fig.canvas.set_window_title(fname)
     fig.canvas.manager.window.move(0,0)
-    plt.plot()
-    plt.pause(3)
-    plt.savefig(fname)
-    print 'saved file %s' % fname
-    #plt.ioff()
-    plt.show()    
-    #plt.ion()
-
-#--------------------
-
-#--------------------
-
-def init_plot(x,xx,itrim):
-    f0=plt.figure(100,facecolor='w');f0.clf()
-    ax0=f0.add_subplot(111)
-    col='r' if itrim else 'g' # 'g'-medium 'r'-high gain
-    line0,=ax0.plot(x,x,'ko',markersize=1)
-    line1,=ax0.plot(xx,xx,'-',color=col,linewidth=1)
-    line2,=ax0.plot(xx,xx,'b-',linewidth=1)
-    ax0.set_xlim(0,1024);ax0.set_ylim(0,16384)
-    ax0.set_xticks(np.arange(0,1025,128))
-    ax0.set_yticks(np.arange(0,16385,2048))
-    handle=f0,ax0,line0,line1,line2
-    return handle
-
-#--------------------
-
-def update_plot(handle,trace,xx,pf0,pf1,fname):
-    print 'update_plot %s' % fname
-    f0,ax0,line0,line1,line2=handle
-    line0.set_ydata(trace & M14) # (trace%16384)
-    line1.set_ydata(np.polyval(pf0,xx))
-    line2.set_ydata(np.polyval(pf1,xx))
-    ax0.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
-    f0.canvas.set_window_title(fname)
-    f0.canvas.manager.window.move(0,0)
     plt.plot()
     plt.pause(3)
     plt.savefig(fname)
@@ -242,7 +206,7 @@ def imshow_cbar(fig, axim, axcb, img, amin=None, amax=None, extent=None,\
 #--------------------
 # 2020-06 development
 
-def fit(block, evnum, itrim, display=True, prefix='fig-fit', ioff=10, all_periods=False):
+def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False):
 
     mf,my,mx=block.shape
     fits=np.zeros((my,mx,2,2))
@@ -271,17 +235,17 @@ def fit(block, evnum, itrim, display=True, prefix='fig-fit', ioff=10, all_period
             nsp[iy,ix]=ixs
             tracem = trace & M14
 
-            x0 =  evnum[ixb:ixs-ioff]-evnum[ixb]
-            y0 = tracem[ixb:ixs-ioff]
-            x1 =  evnum[ixs+ioff:ixe]-evnum[ixb]
-            y1 = tracem[ixs+ioff:ixe]           
+            x0 =  evnum[ixb:ixs-ixoff]-evnum[ixb]
+            y0 = tracem[ixb:ixs-ixoff]
+            x1 =  evnum[ixs+ixoff:ixe]-evnum[ixb]
+            y1 = tracem[ixs+ixoff:ixe]           
             
-            if all_periods:
+            if nperiods:
                for ixb,ixs,ixe in edges[1:]:
-                 x0 = np.hstack((x0,  evnum[ixb:ixs-ioff]-evnum[ixb]))
-                 y0 = np.hstack((y0, tracem[ixb:ixs-ioff]))
-                 x1 = np.hstack((x1,  evnum[ixs+ioff:ixe]-evnum[ixb]))
-                 y1 = np.hstack((y1, tracem[ixs+ioff:ixe]))
+                 x0 = np.hstack((x0,  evnum[ixb:ixs-ixoff]-evnum[ixb]))
+                 y0 = np.hstack((y0, tracem[ixb:ixs-ixoff]))
+                 x1 = np.hstack((x1,  evnum[ixs+ixoff:ixe]-evnum[ixb]))
+                 y1 = np.hstack((y1, tracem[ixs+ixoff:ixe]))
                  
             pf0=np.polyfit(x0,y0,1)
             pf1=np.polyfit(x1,y1,1)
@@ -293,13 +257,13 @@ def fit(block, evnum, itrim, display=True, prefix='fig-fit', ioff=10, all_period
                 s = '==== ix%02d-iy%02d:' % (ix, iy)
                 for ixb, ixs, ixe in edges:
                     s += '\n  saw edges begin: %4d switch: %4d end: %4d period: %4d' % (ixb, ixs, ixe, ixe-ixb+1)
-                    s += info_ndarr(tracem, '\n  XXXX tracem', last=10)
-                    s += info_ndarr(x0,     '\n  XXXX x0', last=10)  
-                    s += info_ndarr(y0,     '\n  XXXX y0', last=10)
-                    s += info_ndarr(x1,     '\n  XXXX x1', last=10)
-                    s += info_ndarr(y1,     '\n  XXXX y1', last=10)
-                    s += info_ndarr(pf0,    '\n  XXXX pf0', last=10)
-                    s += info_ndarr(pf1,    '\n  XXXX pf1', last=10)
+                    s += info_ndarr(tracem, '\n    tracem', last=10)
+                    s += info_ndarr(x0,     '\n    x0', last=10)  
+                    s += info_ndarr(y0,     '\n    y0', last=10)
+                    s += info_ndarr(x1,     '\n    x1', last=10)
+                    s += info_ndarr(y1,     '\n    y1', last=10)
+                    s += info_ndarr(pf0,    '\n    pf0', last=10)
+                    s += info_ndarr(pf1,    '\n    pf1', last=10)
                 logger.debug(s)
 
                 msg+='.'
@@ -307,8 +271,8 @@ def fit(block, evnum, itrim, display=True, prefix='fig-fit', ioff=10, all_period
                     fname = '%s-ix%02d-iy%02d.png' % (prefix, ix, iy)
                     x = np.hstack((x0,x1))
                     y = np.hstack((y0,y1))
-                    logger.debug(info_ndarr(x,'\n  XXXX x')\
-                               + info_ndarr(y,'\n  XXXX y'))
+                    logger.debug(info_ndarr(x,'\n    x')\
+                               + info_ndarr(y,'\n    y'))
                     plot_fit(x,y,pf0,pf1,fname)
 
     return fits,nsp,msg
@@ -378,10 +342,10 @@ def fit_old(block, evnum, itrim, display=True, prefix='fig-fit', period=1024):
                 print '==== ix%02d-iy%02d:' % (ix, iy)
                 print '  ixoff:', ixoff
                 print '  isp  :', isp
-                print_ndarr(idx0,  '  XXXX idx0') #idx0: [ True  True  True ..., False False False]
-                print_ndarr(idx1,  '  XXXX idx1') #idx1: [False False False ...,  True  True  True]
-                print_ndarr(x,     '  XXXX x')
-                print_ndarr(tracem,'  XXXX tracem')
+                print_ndarr(idx0,  '    idx0') #idx0: [ True  True  True ..., False False False]
+                print_ndarr(idx1,  '    idx1') #idx1: [False False False ...,  True  True  True]
+                print_ndarr(x,     '    x')
+                print_ndarr(tracem,'    tracem')
 
                 msg+='.'
                 if display:
@@ -857,7 +821,7 @@ def step_counter(cd, nstep_tot, nstep_run, nspace=7):
 
     cc_name  = pvl[0].name()
     cc_value = pvl[0].value()
-    logger.debug('cc_name "%s" cc_value "%s"' % (cc_name, cc_value))
+    logger.info('cc_name "%s" cc_value "%s"' % (cc_name, cc_value))
 
     ind = calibcycle_names(nspace).index(cc_value)
     if ind in list_of_cc_collected():
@@ -902,6 +866,9 @@ def offset_calibration(*args, **opts):
     usesmd     = opts.get('usesmd', False)
     dirmode    = opts.get('dirmode', 0777)
     filemode   = opts.get('filemode', 0666)
+    ixoff      = opts.get('ixoff', 10)
+    nperiods   = opts.get('nperiods', True)
+    skipncc    = opts.get('skipncc', 0)    
 
     run = runs if runs is not None else str(irun)
     if run != str(irun): irun = int(run.split(',',1)[0].split('-',1)[0])
@@ -922,8 +889,6 @@ def offset_calibration(*args, **opts):
     ny,nx = shape
 
     if display:
-        #store.handle = None # is used in fit
-        #store.plobs = None
         fig2, axim2, axcb2 = fig_img_cbar_axes()
         #fig2.canvas.manager.window.move(500, 0)
         plt.ion() # do not hold control on plt.show()
@@ -946,34 +911,28 @@ def offset_calibration(*args, **opts):
     create_directory(dir_rms,    mode=dirmode)
     create_directory(dir_status, mode=dirmode)
 
-    #--------------------
-    #sys.exit('TEST EXIT')
-    #--------------------
-
     try:
         npz=np.load(fname_work)
-        logger.info('Loaded: %s' % fname_work)
+        logger.info('Charge-injection data loaded from file: %s' % fname_work)
+        logger.info('SKIP CALIBRATION CYCLES')
 
         darks=npz['darks']
         fits_ml=npz['fits_ml']
         fits_hl=npz['fits_hl']
 
     except IOError:
+        logger.info('Unavailable charge-injection data file: %s' % fname_work)
+        logger.info('BEGIN CALIBRATION CYCLES')
+
         darks=np.zeros((7,ny,nx))
         fits_ml=np.zeros((ny,nx,2,2))
         fits_hl=np.zeros((ny,nx,2,2))
         nsp_ml=np.zeros((ny,nx),dtype=np.int16)
         nsp_hl=np.zeros((ny,nx),dtype=np.int16)
 
-        #ds = DataSource('/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/pslab03/e0-r1013-s00-c00.xtc')
         ds = DataSource(dsname)
         det = Detector(detname)
         cd = Detector('ControlData')
-
-        #print 'XXXXXX number of steps', len(steps)
-        #print_object_dir(ds)
-
-        #for nstep, step in enumerate(ds.steps()):
 
         nstep_tot = -1
         for orun in ds.runs():
@@ -982,18 +941,21 @@ def offset_calibration(*args, **opts):
           for nstep_run, step in enumerate(orun.steps()):
             nstep_tot += 1
 
+            logger.info('=============== calibcycle %02d ===============' % nstep_tot)
+
             nstep = step_counter(cd, nstep_tot, nstep_run, nspace)
             if nstep is None: continue
-
-            logger.debug('=============== calibcycle %02d ===============' % nstep)
 
             figprefix = 'fig-%s-r%04d-%s-seg%02d-cc%03d'%\
                         (exp, orun.run(), detname.replace(':','-').replace('.','-'), idx, nstep)
 
+            if nstep_tot<skipncc:
+                logger.info('skip %d consecutive calib-cycles' % skipncc)
+                continue
+
             nrec,nevt = -1,0
             #First 5 Calib Cycles correspond to darks:
             if dopeds and nstep<5:
-                #dark
                 msg = 'DARK Calib Cycle %d ' % nstep
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
 
@@ -1001,7 +963,7 @@ def offset_calibration(*args, **opts):
                     raw = det.raw(evt)
                     do_print = selected_record(nevt)
                     if raw is None: #skip empty frames
-                        if do_print: logger.debug('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
+                        logger.warning('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
                         msg += 'none'
                         continue
                     if nevt>=nbs:
@@ -1009,7 +971,7 @@ def offset_calibration(*args, **opts):
                     else:
                         nrec += 1
                         if raw.ndim > 2: raw=raw[idx,:]
-                        if do_print: logger.debug(info_ndarr(raw & M14, 'Ev:%04d rec:%04d panel:%02d raw & M14' % (nevt,nrec,idx)))
+                        if do_print: logger.info(info_ndarr(raw & M14, 'Ev:%04d rec:%04d panel:%02d raw & M14' % (nevt,nrec,idx)))
                         if display and nevt<3:
                             imsh, cbar = imshow_cbar(fig2, axim2, axcb2, raw, amin=None, amax=None, extent=None,\
                                                      interpolation='nearest', aspect='auto', origin='upper',\
@@ -1023,7 +985,6 @@ def offset_calibration(*args, **opts):
 
                 print_statistics(nevt, nrec)
 
-                #darks[:,:,nstep]=block[:nrec,:].mean(0)
                 darks[nstep,:,:], nda_rms, nda_status = proc_dark_block(block[:nrec,:,:], **opts)
                 logger.debug(msg)
 
@@ -1042,7 +1003,6 @@ def offset_calibration(*args, **opts):
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto Medium-to-Low    
             elif nstep>4 and nstep<5+nspace**2:
-                #data
                 msg = ' AML %2d/%2d '%(nstep-5+1,nspace**2)
 
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
@@ -1051,16 +1011,15 @@ def offset_calibration(*args, **opts):
                     raw = det.raw(evt)
                     do_print = selected_record(nevt)
                     if raw is None:
-                        if do_print: logger.debug('Ev:%04d rec:%04d panel:%02d AML raw=None' % (nevt,nrec,idx))
+                        logger.warning('Ev:%04d rec:%04d panel:%02d AML raw=None' % (nevt,nrec,idx))
                         msg += 'none'
                         continue
                     if nevt>=nbs:
                         break
                     else:
                         nrec += 1
-                        #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2: raw=raw[idx,:]
-                        if do_print: logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AML raw' % (nevt,nrec,idx)))
+                        if do_print: logger.info(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AML raw' % (nevt,nrec,idx)))
                         block[nrec]=raw
                         evnum[nrec]=nevt
                         if nevt%200==0: msg+='.'
@@ -1081,12 +1040,16 @@ def offset_calibration(*args, **opts):
                 jx=istep%nspace                    
                 block=block[:nrec,jy:ny:nspace,jx:nx:nspace]         # select only pulsed pixels
                 evnum=evnum[:nrec]                                   # list of non-empty events
-                fits0,nsp0,msgf=fit(block,evnum,0,display,figprefix) # fit offset, gain
+                fits0,nsp0,msgf=fit(block,evnum,display,figprefix,ixoff,nperiods) # fit offset, gain
                 fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0             # collect results
                 nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0               # collect switching points
-                #print 'NEVT='+str(nevt)
-                #darks[:,:,6]=darks[:,:,4]-fits_ml[:,:,1,1]      # !!!! THIS IS WRONG - moved outside loop over steps 
-                logger.debug(msg + msgf)
+                s = '\n  block fit results AML'\
+                  + info_ndarr(fits0[:,:,0,0],'\n  M gain',   last=5)\
+                  + info_ndarr(fits0[:,:,1,0],'\n  L gain',   last=5)\
+                  + info_ndarr(fits0[:,:,0,1],'\n  M offset', last=5)\
+                  + info_ndarr(fits0[:,:,1,1],'\n  L offset', last=5) 
+
+                logger.info(msg + msgf + s)
 
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto High-to-Low    
             elif nstep>4+nspace**2 and nstep<5+2*nspace**2:
@@ -1097,16 +1060,15 @@ def offset_calibration(*args, **opts):
                     raw = det.raw(evt)
                     do_print = selected_record(nevt)
                     if raw is None:
-                        if do_print: logger.debug('Ev:%04d rec:%04d panel:%02d AHL raw=None' % (nevt,nrec,idx))
+                        logger.warning('Ev:%04d rec:%04d panel:%02d AHL raw=None' % (nevt,nrec,idx))
                         msg+='None'
                         continue
                     if nevt>=nbs:
                         break
                     else:
                         nrec += 1
-                        #block=insert_subframe(block,raw,nevt,nspace,nevt-5)
                         if raw.ndim > 2: raw=raw[idx,:]
-                        if do_print: logger.debug(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AHL raw' % (nevt,nrec,idx)))
+                        if do_print: logger.info(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AHL raw' % (nevt,nrec,idx)))
                         block[nrec]=raw
                         evnum[nrec]=nevt
                         if nevt%200==0: msg+='.'
@@ -1118,25 +1080,27 @@ def offset_calibration(*args, **opts):
                 jx=istep%nspace                    
                 block=block[:nrec,jy:ny:nspace,jx:nx:nspace]       # select only pulsed pixels
                 evnum=evnum[:nrec]                                 # list of non-empty events
-                fits0,nsp0,msgf=fit(block,evnum,1,display=display) # fit offset, gain
+                fits0,nsp0,msgf=fit(block,evnum,display,figprefix,ixoff,nperiods) # fit offset, gain
                 fits_hl[jy:ny:nspace,jx:nx:nspace]=fits0           # collect results
                 nsp_hl[jy:ny:nspace,jx:nx:nspace]=nsp0
-                #print 'NEVT='+str(nevt)
-                #darks[:,:,5]=darks[:,:,3]-fits_hl[:,:,1,1]     # !!!! THIS IS WRONG - moved outside loop over steps
-                logger.debug(msg + msgf)
-                #test=update_test(test,block,nspace,nstep-5)
+                s = '\n  block fit results AHL'\
+                  + info_ndarr(fits0[:,:,0,0],'\n  H gain',   last=5)\
+                  + info_ndarr(fits0[:,:,1,0],'\n  L gain',   last=5)\
+                  + info_ndarr(fits0[:,:,0,1],'\n  H offset', last=5)\
+                  + info_ndarr(fits0[:,:,1,1],'\n  L offset', last=5) 
+                logger.info(msg + msgf + s)
 
             elif nstep>=5+2*nspace**2:
                 break
 
             list_of_cc_collected().append(nstep)
 
-        logger.debug(info_ndarr(fits_ml, 'XXXX: fits_ml', last=10)) # shape:(352, 384, 2, 2)
-        logger.debug(info_ndarr(fits_hl, 'XXXX: fits_hl', last=10)) # shape:(352, 384, 2, 2)
-        logger.debug(info_ndarr(darks, 'XXXX: darks', last=10))     # shape:(352, 384, 7)
+        logger.debug(info_ndarr(fits_ml, '  fits_ml', last=10)) # shape:(352, 384, 2, 2)
+        logger.debug(info_ndarr(fits_hl, '  fits_hl', last=10)) # shape:(352, 384, 2, 2)
+        logger.debug(info_ndarr(darks,   '  darks',   last=10)) # shape:(352, 384, 7)
 
-        darks[6,:,:]=darks[4,:,:]-fits_ml[:,:,1,1]      # FIXED: subtract once for all pixels
-        darks[5,:,:]=darks[3,:,:]-fits_hl[:,:,1,1]      # FIXED: subtract once for all pixels
+        #darks[6,:,:]=darks[4,:,:]-fits_ml[:,:,1,1] # 2020-06-19 M.D. - commented out, it is done later
+        #darks[5,:,:]=darks[3,:,:]-fits_hl[:,:,1,1] # 2020-06-19 M.D. - commented out, it is done later
 
         #Save diagnostics data, can be commented out:
         #save fitting results
@@ -1164,8 +1128,22 @@ def offset_calibration(*args, **opts):
     save_2darray_in_textfile(gain_hl_l, fname_gain_AHL_L, filemode, fmt_gain)
 
     #Save offsets:
-    offset_ahl=fits_hl[:,:,1,1] # - fits_hl[:,:,0,1]
-    offset_aml=fits_ml[:,:,1,1] # - fits_ml[:,:,0,1]
+    offset_ml_m = fits_ml[:,:,0,1]
+    offset_ml_l = fits_ml[:,:,1,1]
+    offset_hl_h = fits_hl[:,:,0,1]
+    offset_hl_l = fits_hl[:,:,1,1]
+    fname_offset_AML_M = '%s_offset_AML-M.dat' % prefix_offset
+    fname_offset_AML_L = '%s_offset_AML-L.dat' % prefix_offset
+    fname_offset_AHL_H = '%s_offset_AHL-H.dat' % prefix_offset
+    fname_offset_AHL_L = '%s_offset_AHL-L.dat' % prefix_offset
+    save_2darray_in_textfile(offset_ml_m, fname_offset_AML_M, filemode, fmt_offset)
+    save_2darray_in_textfile(offset_ml_l, fname_offset_AML_L, filemode, fmt_offset)
+    save_2darray_in_textfile(offset_hl_h, fname_offset_AHL_H, filemode, fmt_offset)
+    save_2darray_in_textfile(offset_hl_l, fname_offset_AHL_L, filemode, fmt_offset)
+
+    #Save offsets:
+    offset_ahl = offset_hl_h - offset_hl_l # 2020-06-19 M.D. - difference at 0 is taken as offset for peds
+    offset_aml = offset_ml_m - offset_ml_l # 2020-06-19 M.D. - difference at 0 is taken as offset for peds
     fname_offset_AHL = '%s_offset_AHL.dat' % prefix_offset
     fname_offset_AML = '%s_offset_AML.dat' % prefix_offset
     save_2darray_in_textfile(offset_ahl, fname_offset_AHL, filemode, fmt_offset)
@@ -1176,13 +1154,21 @@ def offset_calibration(*args, **opts):
         fname = '%s_pedestals_%s.dat' % (prefix_peds, GAIN_MODES[i])
         save_2darray_in_textfile(darks[i,:,:], fname, filemode, fmt_peds)
 
-        if i==3:    #if AHL_H, we can calculate AHL_L
+        if i==3:    # evaluate AHL_L from AHL_H
+            ped_hl_h = darks[i,:,:]
+            #ped_hl_l = ped_hl_h - offset_ahl # V0
+            #ped_hl_l = ped_hl_h - offset_ahl + (offset_hl_h - ped_hl_h) * divide_protected(gain_hl_l, gain_hl_h) #V2
+            ped_hl_l = offset_hl_l - (offset_hl_h - ped_hl_h) * divide_protected(gain_hl_l, gain_hl_h) #V3 Gabriel's
             fname = '%s_pedestals_AHL-L.dat' % prefix_peds
-            save_2darray_in_textfile(darks[i,:,:]-offset_ahl, fname, filemode, fmt_peds)
+            save_2darray_in_textfile(ped_hl_l, fname, filemode, fmt_peds)
 
-        elif i==4:  #if AML_M, we can calculate AML_L
+        elif i==4:  # evaluate AML_L from AML_M
+            ped_ml_m = darks[i,:,:]
+            #ped_ml_l = ped_ml_m - offset_aml # V0
+            #ped_ml_l = ped_ml_m - offset_aml + (offset_ml_m - ped_ml_m) * divide_protected(gain_ml_l, gain_ml_m) #V2
+            ped_ml_l = offset_ml_l - (offset_ml_m - ped_ml_m) * divide_protected(gain_ml_l, gain_ml_m) #V3 Gabriel's
             fname = '%s_pedestals_AML-L.dat' % prefix_peds
-            save_2darray_in_textfile(darks[i,:,:]-offset_aml, fname, filemode, fmt_peds)
+            save_2darray_in_textfile(ped_ml_l, fname, filemode, fmt_peds)
         
     if display:
         plt.close("all")
