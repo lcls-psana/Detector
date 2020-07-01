@@ -34,14 +34,14 @@ def id_epix10ka(co, ielem=0) :
     eco = co.elemCfg(ielem)
     qco = co.quad() if quad_shape is None else co.quad(ielem//4)
 
-    #print '%s\nQuad:%d element:%d' % (50*'=',iquad, ielem)
-    #print 'quad_shape %s' % str(quad_shape)
-    #print 'XXXX dco', co
-    #print 'XXXX eco', eco
-    #print 'XXXX qco', qco
+    #print('%s\nQuad:%d element:%d' % (50*'=',iquad, ielem))
+    #print('quad_shape %s' % str(quad_shape))
+    #print('XXXX dco', co)
+    #print('XXXX eco', eco)
+    #print('XXXX qco', qco)
     #print_object_dir(eco)
-    #print 'XXXX eco.carrierId0/1:', eco.carrierId0(), eco.carrierId1()  
-    #print 'XXXX qco.digitalCardId0/1():', qco.digitalCardId0(), qco.digitalCardId1()   
+    #print('XXXX eco.carrierId0/1:', eco.carrierId0(), eco.carrierId1())
+    #print('XXXX qco.digitalCardId0/1():', qco.digitalCardId0(), qco.digitalCardId1())
 
     fmt2 = '%010d-%010d'
     zeros = fmt2 % (0,0)

@@ -21,7 +21,7 @@ rnum = evt.run()
 
 det = psana.Detector('CxiDs2.0:Cspad.0', env)
 
-#print evt.keys()
+#print(evt.keys())
 
 ##-----------------------------
 

@@ -57,8 +57,8 @@ if nda is None :
     sys.exit('FURTHER TEST IS TERMINATED')
 
 #------------------------------
-#print 'env.experiment(): ', env.experiment()
-#print 'env.instrument(): ', env.instrument()
+#print('env.experiment(): ', env.experiment())
+#print('env.instrument(): ', env.instrument())
 
 fname = 'nda-andor3d-%s-r%04d-%s.txt' % (env.experiment(), nrun, src.replace(":","-").replace(".","-"))
 det.save_txtnda(fname, nda, verbos=True)

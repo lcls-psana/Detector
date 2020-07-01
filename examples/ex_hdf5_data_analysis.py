@@ -128,7 +128,7 @@ def filter_events() :
 
         lst_px.append(px)
         lst_py.append(py)
-        #print '  px, py = %.3f, %.3f' % (px, py)
+        #print('  px, py = %.3f, %.3f' % (px, py))
         nev_tot += 1
         
         if px < -0.01 : continue

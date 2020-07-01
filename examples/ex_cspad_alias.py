@@ -18,7 +18,7 @@ if len(sys.argv)>1 and sys.argv[1] == '2' : src = psana.Source('DetInfo(CxiDs2.0
 
 print('%s: src: %s' % (sys.argv[0], src))
 
-#print evt.get(psana.CsPad.DataV2,src)
+#print(evt.get(psana.CsPad.DataV2,src))
 
 det = AreaDetector(src, env, pbits=0, iface='P')
 print_ndarr(det.raw(evt), '%s\nraw'%(80*'_'))

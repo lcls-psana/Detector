@@ -93,7 +93,7 @@ class WFDetector(object) :
            pbits[int]       - print control bit-word
            iface[char]      - preferable interface: 'C' - C++ (everything) or 'P' - Python based (not used in this class) 
         """
-        #print 'In c-tor WFDetector'
+        #print('In c-tor WFDetector')
 
         self.env     = env
         self.pbits   = pbits
@@ -112,7 +112,7 @@ class WFDetector(object) :
     def set_source(self, srcpar, set_sub=True) :
         """Accepts regular source or alias
         """
-        #print 'type of srcpar: ', type(srcpar)
+        #print('type of srcpar: ', type(srcpar))
         
         src = srcpar if isinstance(srcpar, _psana.Source) else _psana.Source(srcpar)
         str_src = gu.string_from_source(src)

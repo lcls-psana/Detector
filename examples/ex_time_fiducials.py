@@ -18,7 +18,7 @@ ds = psana.DataSource('exp=amoj5415:run=49')
 
 for i, evt in enumerate(ds.events()) :
     if i>10 : break
-    #for key in evt.keys() : print key
+    #for key in evt.keys() : print(key)
     evtid = evt.get(psana.EventId)
     tsec, tnsec = evtid.time()
     fid = evtid.fiducials()

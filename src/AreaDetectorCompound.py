@@ -129,7 +129,7 @@ class AreaDetectorCompound(object):
 #        """
 #        olst = []
 #        for det in self.list_dets :
-#            print '\nmake calib for %s' % det.name
+#            print('\nmake calib for %s' % det.name)
 #            print_ndarr(det.pedestals(*args, **kwargs),    name='  -- list_calib pedestals', first=0, last=5) 
 #            print_ndarr(det.gain(*args, **kwargs),         name='  -- list_calib gain     ', first=0, last=5) 
 #            print_ndarr(det.offset(*args, **kwargs),       name='  -- list_calib offset   ', first=0, last=5)
@@ -144,7 +144,7 @@ class AreaDetectorCompound(object):
     def add_method_nda(self, metname):
         def _prototype(*args, **kwargs) :
             list_nda=[getattr(o, metname)(*args, **kwargs) for o in self.list_dets]
-            #for i,nda in enumerate(list_nda) : print '  XXX add_method_nda det:%d shape = %s' % (i,str(nda.shape))
+            #for i,nda in enumerate(list_nda) : print('  XXX add_method_nda det:%d shape = %s' % (i,str(nda.shape)))
             # ATTENTION !!! IMPORTANT for Jungfrau, Epix, etc. multi-gain detectors)
             # concatinate for index preceding the 2d shape
             # Ex. for Jungfrau combined of 2 detectors:
@@ -287,7 +287,7 @@ if __name__ == "__main__" :
     evt = next(eviter)
     rnum = evt.run()
 
-    #for key in evt.keys() : print key
+    #for key in evt.keys() : print(key)
 
     t0_sec = time()
     det = AreaDetectorCompound(detnames, env)
@@ -326,7 +326,7 @@ if __name__ == "__main__" :
     print_ndarr(det.coords_y(evt),   name='coords_y ', first=0, last=5)
 
     print_ndarr(det.common_mode(evt), name='common_mode ')
-    #print 'list_common_mode', det.list_common_mode(evt)
+    #print('list_common_mode', det.list_common_mode(evt))
 
     #print_ndarr(det.indexes_x(evt), name='indexes_x no offset', first=1000, last=1005)
     #print_ndarr(det.indexes_x(evt, xy0_off_pix=(1500,1500)), name='indexes_x, off_pix=(1000,1000)', first=1000, last=1005)

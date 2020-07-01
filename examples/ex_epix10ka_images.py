@@ -76,7 +76,7 @@ def test_epix10ka_methods(tname) :
     print('dataset    %s' % (dsname)) 
     print('calibDir:', env.calibDir())
 
-    #for key in evt.keys() : print key
+    #for key in evt.keys() : print(key)
 
     ##-----------------------------
     figim,  axim,  axcb,  imsh  = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG      else (None, None, None, None)
@@ -130,7 +130,7 @@ def test_epix10ka_methods(tname) :
 
     #statmask = det.status_as_mask(par)
     #print_ndarr(statmask, 'statmask')
-    #print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
+    #print('number of bad status pixels: %d' % (len(statmask[statmask==0])))
 
     # mode 0/1/2 masks zero/four/eight neighbors around each bad pixel
     mask_status = det.status_as_mask(par, mode=2, indexes=(0,1,2,3,4)) # indexes=(0,1,2)

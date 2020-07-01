@@ -20,7 +20,7 @@ ds  = psana.DataSource(dsname)
 evt = next(ds.events())
 env = ds.env()
 
-#for key in evt.keys() : print key
+#for key in evt.keys() : print(key)
 
 ##-----------------------------
 

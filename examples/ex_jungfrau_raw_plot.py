@@ -139,7 +139,7 @@ def test_jungfrau(tname) :
                 print('Detector data found in event %d' % i)
                 break
 
-    #for key in evt.keys() : print key
+    #for key in evt.keys() : print(key)
 
     print_ndarr(nda, 'raw data')
 
@@ -175,15 +175,15 @@ def test_jungfrau(tname) :
 
     gg.show()
 
-    print ('1<<14 = ', 1<<14)
-    print ('2<<14 = ', 2<<14)
-    print ('3<<14 = ', 3<<14)
+    print('1<<14 = ', 1<<14)
+    print('2<<14 = ', 2<<14)
+    print('3<<14 = ', 3<<14)
 
     if co is None : return
     gm = co.gainMode()
-    print ('gm.name', gm.name)
-    print ('gm.names:\n', gm.names)
-    for k,v in gm.names.iteritems() : print k,v 
+    print('gm.name', gm.name)
+    print('gm.names:\n', gm.names)
+    for k,v in gm.names.iteritems() : print(k,v)
 
 #------------------------------
 #------------------------------
@@ -194,7 +194,7 @@ def test_jungfrau(tname) :
 if __name__ == "__main__" :
     import sys; global sys
     tname = sys.argv[1] if len(sys.argv) > 1 else '1'
-    print (50*'_', '\nTest %s:' % tname)
+    print(50*'_', '\nTest %s:' % tname)
     test_jungfrau(tname)
     sys.exit('End of test %s' % tname)
 

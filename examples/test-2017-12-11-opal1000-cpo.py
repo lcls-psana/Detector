@@ -15,7 +15,7 @@ spec = Detector('SXR_Spectrometer')
 for i,evt in enumerate(ds.events()) :
     # xtcavraw = xtcav.raw(evt)
     # if xtcavraw is None:
-    #     print 'xtcav none'
+    #     print('xtcav none')
     #     continue
     specraw = spec.raw(evt)
     if i>50: sys.exit('THE END after %d events' % i)

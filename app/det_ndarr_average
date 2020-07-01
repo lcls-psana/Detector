@@ -198,7 +198,7 @@ if __name__ == "__main__" :
         print('Try command: %s -h' % proc_name)
         sys.exit ('End of %s' % proc_name)
         
-    #print '%s\nExample # %d' % (80*'_', ntest)
+    #print('%s\nExample # %d' % (80*'_', ntest))
 
     (opts, args) = input_options_parser()
 

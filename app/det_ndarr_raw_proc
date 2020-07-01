@@ -246,7 +246,7 @@ class DetNDArrRawProc(object) :
         cond_hi = ndaraw>self.gate_hi
         condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
 
-        #print 'XXX:'
+        #print('XXX:')
         #print_ndarr(self.arr1, 'arr1')
         #print_ndarr(self.arr_sum0, 'arr_sum0')
         #print_ndarr(self.arr_sum1, 'arr_sum1')

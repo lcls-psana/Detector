@@ -24,7 +24,7 @@ rnum = evt.run()
 det = Detector.DetectorAccess(src, env, 0) # , 0xffff)
 det.set_print_bits(511);
 
-#print evt.keys()
+#print(evt.keys())
 print(80*'_')
 
 ##-----------------------------

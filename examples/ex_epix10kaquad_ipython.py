@@ -56,8 +56,8 @@ print('co.numberOfElements():', co.numberOfElements())
 print('co.numberOfEnvironmentalRows():', co.numberOfEnvironmentalRows())
 print('co.numberOfReadableRows():', co.numberOfReadableRows())
 print('co.numberOfRows():', co.numberOfRows())
-#print 'co.quad(0):', co.quad(0)
-#print 'co.quad_shape():', co.quad_shape()
+#print('co.quad(0):', co.quad(0))
+#print('co.quad_shape():', co.quad_shape())
 print('co.TypeId:', co.TypeId) # 120
 print('co.Version:', co.Version)
 

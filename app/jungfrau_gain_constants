@@ -165,7 +165,7 @@ def jungfrau_gain_constants() :
     #fprefix = '%s-r%04d_%s_%s'%(exp, runnum, ssource, jfid)
     fprefix = '%s-r%04d_%s'%(exp, runnum, ssource)
     #logger.info('fprefix %s' % fprefix)
-    #print '\nXXXXXXXX fprefix %s' % fprefix
+    #print('\nXXXXXXXX fprefix %s' % fprefix)
 
     fprefix_g = '%s_%s'%(fprefix, ctype_gain)
     fprefix_o = '%s_%s'%(fprefix, ctype_offset)

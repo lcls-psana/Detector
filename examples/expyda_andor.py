@@ -22,7 +22,7 @@ src = psana.Source('DetInfo(SxrEndstation.0:Andor.1)')
 #src = psana.Source('DetInfo(SxrEndstation.0:Andor.0)')
 pda = PyDetectorAccess(src, env, pbits=0)
 
-#print evt.keys()
+#print(evt.keys())
 
 ##-----------------------------
 t0_sec = time()

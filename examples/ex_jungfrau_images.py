@@ -60,7 +60,7 @@ def test_jungfrau_methods(tname) :
     print('dataset    %s' % (dsname)) 
     print('calibDir:', env.calibDir())
 
-    #for key in evt.keys() : print key
+    #for key in evt.keys() : print(key)
 
     ##-----------------------------
     figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG else (None, None, None, None)

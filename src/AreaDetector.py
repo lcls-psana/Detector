@@ -255,7 +255,7 @@ class AreaDetector(object):
            - srcpar  : str  - regular source or its alias, ex.: 'XppEndstation.0:Rayonix.0' or 'rayonix'
            - set_sub : bool - default=True - propagates source parameter to low level package  
         """
-        #print 'type of srcpar: ', type(srcpar)
+        #print('type of srcpar: ', type(srcpar))
         
         src = srcpar if isinstance(srcpar, _psana.Source) else _psana.Source(srcpar)
         str_src = gu.string_from_source(src)
@@ -534,7 +534,7 @@ class AreaDetector(object):
         if arr.size != self.size(rnum) :
             #msg = 'WARNING: Array shape %s size %d is different from its configuration shape %s size %d' %\
             #      (arr.shape, arr.size, self._shape_daq_(rnum), self.size(rnum))
-            #print msg
+            #print(msg)
             #raise IOError(msg)
             return arr # return array as is, works for Jungfrau
         if self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD, gu.EPIX10KA) : return arr # as is
@@ -1024,8 +1024,8 @@ class AreaDetector(object):
 
         if self.is_cspad() :
             gainmask = self.gain_mask_non_zero(rnum, gain=self._gain_mask_factor)
-            #print 'XXX: use _gain_mask_factor = ', self._gain_mask_factor        
-            #print 'XXX: gainmask.mean(): ', gainmask.mean()
+            #print('XXX: use _gain_mask_factor = ', self._gain_mask_factor)
+            #print('XXX: gainmask.mean(): ', gainmask.mean())
             #print_ndarr(gainmask, 'XXX: det.calib(): apply gain_mask')
 
             if gainmask is None :

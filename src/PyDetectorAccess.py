@@ -71,7 +71,7 @@ class PyDetectorAccess(object) :
            - env    - environment
            - pbits  - print control bit-word
         """
-        #print 'In c-tor DetPyAccess'
+        #print('In c-tor DetPyAccess')
 
         self.source = source
         self.str_src= gu.string_from_source(source)
@@ -124,10 +124,10 @@ class PyDetectorAccess(object) :
     def cpstore(self, par) : # par = evt or runnum
 
         runnum = self.runnum(par)
-        #print 80*'_'
-        #print 'cpstore XXX runnum = %d' % runnum
-        #print 'cpstore XXX par', par,
-        #print 'XXX  isinstance(par, psana.Event)', isinstance(par, _psana.Event)
+        #print(80*'_')
+        #print('cpstore XXX runnum = %d' % runnum)
+        #print('cpstore XXX par', par,)
+        #print('XXX  isinstance(par, psana.Event)', isinstance(par, _psana.Event))
 
         # for 1st entry and when runnum is changing:
         if runnum != self.runnum_cps or self.cpst is None :
@@ -184,10 +184,10 @@ class PyDetectorAccess(object) :
 
         if data is None : return
 
-        #for s in data : print 'XXX: %s' % s
+        #for s in data : print('XXX: %s' % s)
         #import tempfile
         #fntmp = tempfile.NamedTemporaryFile(mode='r+b',suffix='.data')
-        #print 'XXX Save constants in tmp file: %s' % fntmp.name
+        #print('XXX Save constants in tmp file: %s' % fntmp.name)
         #save_txt(fntmp.name, data, cmts='', fmt='%.1f')
         #self.geo = GeometryAccess(fntmp.name, 0377 if self.pbits else 0)
 
@@ -673,8 +673,8 @@ class PyDetectorAccess(object) :
     def raw_data(self, evt, env) :
 
         #print('XXXX dettype', dettype)
-        #print 'TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement
-        #print 'TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig
+        #print('TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement)
+        #print('TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig)
 
         if   self.dettype == gu.CSPAD      : return self.raw_data_cspad(evt, env)     # 3   ms
         elif self.dettype == gu.CSPAD2X2   : return self.raw_data_cspad2x2(evt, env)  # 0.6 ms
@@ -720,7 +720,7 @@ class PyDetectorAccess(object) :
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()
 
-        #print 'd.TypeId: ', d.TypeId
+        #print('d.TypeId: ', d.TypeId)
         if self.pbits & 8 : print('nquads in data: %d and config: %d' % (nquads, nquads_c))
 
         arr = np.zeros((4,8,185,388), dtype=np.int16) if nquads<4 else np.empty((4,8,185,388), dtype=np.int16)
@@ -785,7 +785,7 @@ class PyDetectorAccess(object) :
         #c = pda.get_camera_config_object(env, self.source)
         #if c is None : return None
 
-        #print 'data width: %d, height: %d, depth: %d, offset: %f' % (d.width(), d.height(), d.depth(), d.offset())
+        #print('data width: %d, height: %d, depth: %d, offset: %f' % (d.width(), d.height(), d.depth(), d.offset()))
         offset = d.offset()
         
         d16 = d.data16()
@@ -816,8 +816,8 @@ class PyDetectorAccess(object) :
 
         arr_c = (arr>>13)&0o3
         arr_v = arr&0o17777
-        #print 'arr_c:\n', arr_c
-        #print 'arr_v:\n', arr_v
+        #print('arr_c:\n', arr_c)
+        #print('arr_v:\n', arr_v)
 
         return np.select([arr_c==0, arr_c==1, arr_c==3], \
                          [arr_v,    arr_v<<2, arr_v<<3])
@@ -832,7 +832,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_princeton_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
@@ -841,7 +841,7 @@ class PyDetectorAccess(object) :
 
     def raw_data_pnccd(self, evt, env) :
         # data object
-        #print '=== in raw_data_pnccd'
+        #print('=== in raw_data_pnccd')
         #d = evt.get(_psana.PNCCD.FullFrameV1, self.source)
         #d = evt.get(_psana.PNCCD.FramesV1, self.source)
         d = pda.get_pnccd_data_object(evt, self.source)
@@ -849,7 +849,7 @@ class PyDetectorAccess(object) :
 
         #c = pda.get_pnccd_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: numLinks: %d, payloadSizePerLink: %d' % (d.numLinks(), c.payloadSizePerLink())
+        #print('config: numLinks: %d, payloadSizePerLink: %d' % (d.numLinks(), c.payloadSizePerLink()))
 
         arr = []
         nlinks = d.numLinks()
@@ -857,10 +857,10 @@ class PyDetectorAccess(object) :
             frame = d.frame(i)
             fdata = frame.data()
             arr.append(fdata)
-            #print '   data.shape: %s' % (str(fdata.shape))
+            #print('   data.shape: %s' % (str(fdata.shape)))
 
         nda = np.array(arr)
-        #print 'nda.shape: ', nda.shape
+        #print('nda.shape: ', nda.shape)
         return nda
 
 ##-----------------------------
@@ -924,10 +924,10 @@ class PyDetectorAccess(object) :
         #c = pda.get_epix_config_object(env, self.source)
         #if c is None : return None
 
-        #print 'config: rows: %d, cols: %d, asics: %d' % (c.numberOfRows(), c.numberOfColumns(), c.numberOfAsics())
-        #print 'config: digitalCardId0: %d, 1: %d' % (c.digitalCardId0(), c.digitalCardId1())
-        #print 'config: analogCardId0 : %d, 1: %d' % (c.analogCardId0(),  c.analogCardId1())
-        #print 'config: version: %d, asicMask: %d' % (c.version(), c.asicMask())
+        #print('config: rows: %d, cols: %d, asics: %d' % (c.numberOfRows(), c.numberOfColumns(), c.numberOfAsics()))
+        #print('config: digitalCardId0: %d, 1: %d' % (c.digitalCardId0(), c.digitalCardId1()))
+        #print('config: analogCardId0 : %d, 1: %d' % (c.analogCardId0(),  c.analogCardId1()))
+        #print('config: version: %d, asicMask: %d' % (c.version(), c.asicMask()))
 
         nda = d.frame()
         return nda if nda is not None else None
@@ -942,7 +942,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_timepix_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
@@ -957,7 +957,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_fli_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
@@ -972,7 +972,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_pimax_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
@@ -987,7 +987,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_pixis_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
@@ -1002,7 +1002,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_zyla_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
@@ -1017,7 +1017,7 @@ class PyDetectorAccess(object) :
         # configuration object
         #c = pda.get_uxi_config_object(env, self.source)
         #if c is None : return None
-        #print 'config: width: %d, height: %d' % (c.width(), c.height())
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.frames()
         return nda if nda is not None else None
@@ -1244,7 +1244,7 @@ class PyDetectorAccess(object) :
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()
 
-        #print 'd.TypeId: ', d.TypeId
+        #print('d.TypeId: ', d.TypeId)
         if self.pbits & 8 : print('nquads in data: %d and config: %d' % (nquads, nquads_c))
 
         arr = []
@@ -1504,7 +1504,7 @@ class PyDetectorAccess(object) :
         elif self.dettype == gu.STREAK :
             c = pda.get_streak_config_object(env, self.source)
 
-        #print c
+        #print(c)
         if c is None : return None
         return (c.Row_Pixels, c.Column_Pixels)
 

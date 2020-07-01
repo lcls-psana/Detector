@@ -16,11 +16,11 @@ if True:
         fname = '/reg/g/psdm/detector/data2_test/npy/epix10ka_0030_20200515204229_detdaq18_r0014_sp07_df.npz'
         npz=np.load(fname)
 
-        print 'Constants loaded from file: %s' % fname
+        print('Constants loaded from file: %s' % fname)
 
-        #print 'npz:', npz
-        print 'dir(npz):', dir(npz)
-        print 'npz.items():', npz.items()
+        #print('npz:', npz)
+        print('dir(npz):', dir(npz))
+        print('npz.items():', npz.items())
 
         darks  = getattr(npz.items(), 'darks', None)
         #darks  =npz['darks']

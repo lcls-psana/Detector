@@ -77,7 +77,7 @@ for ne,evt in enumerate(ds.events()):
     test = (pnccd.raw(evt) - peds)*gain
 
     #test = pnccd.common_mode_correction(evt, test)
-    #print 'mean common mode correction %.3f' % test.mean()
+    #print('mean common mode correction %.3f' % test.mean())
     #test = pnccd.calib(evt)
 
     #test = pnccd.photons(evt, adu_per_photon=1250)

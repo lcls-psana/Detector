@@ -83,7 +83,7 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100), nda_raw=None) :
     - nda_raw - if not None, substitutes evt.raw()
     """
 
-    #print 'XXX: ====================== det.name', det.name
+    #print('XXX: ====================== det.name', det.name)
 
     arr = det.raw(evt) if nda_raw is None else nda_raw # shape:(<npanels>, 512, 1024) dtype:uint16
     if arr is None : return None
@@ -147,7 +147,7 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100), nda_raw=None) :
     #print_ndarr(factor, 'XXX: calib_jungfrau factor')
     #print_ndarr(offset, 'XXX: calib_jungfrau offset')
 
-    #print 'XXX calib_jungfrau cmp:', cmp
+    #print('XXX calib_jungfrau cmp:', cmp)
 
     # Apply offset
     arrf -= offset
@@ -164,7 +164,7 @@ def calib_jungfrau(det, evt, src, cmpars=(7,3,100), nda_raw=None) :
           if mode & 2 :
             common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
 
-    #print '\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total
+    #print('\nXXX: CM consumed time (sec) =', time()-t0_sec # 90-100msec total)
 
     # Apply gain
     return arrf * factor
@@ -192,7 +192,7 @@ def common_mode_jungfrau(frame, cormax) :
                 cmode = np.median(frame[r, col0:col0+bsize][frame[r, col0:col0+bsize]<cormax])
                 if not np.isnan(cmode):
                     ## e.g. found no pixels below intmax
-                    ##                    print r, cmode, col0, b, bsize
+                    ##                    print(r, cmode, col0, b, bsize)
                     if cmode<cormax-1 :
                         frame[r, col0:col0+bsize] -= cmode
             except:
@@ -283,7 +283,7 @@ def psana_source(env, src) :
 
 def id_jungfrau(env, src, iseg=None) :
     """Returns (str) Id for jungfrau detector using env and psana.Source (or str) objects"""
-    #print 'XXX: id_jungfrau src:', type(src)
+    #print('XXX: id_jungfrau src:', type(src))
     source = psana_source(env, src)
     co = get_jungfrau_config_object(env, source)
     if co is None : return None

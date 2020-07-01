@@ -19,7 +19,7 @@ rnum = evt.run()
 src = psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
 det = Detector.DetectorAccess(src, env, 0) # , 0xffff)
 
-#print evt.keys()
+#print(evt.keys())
 
 ###-----------------------------
 print('\nInstrument: ', det.instrument(env))

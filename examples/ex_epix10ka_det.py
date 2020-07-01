@@ -137,13 +137,13 @@ def test_epix10ka_methods(tname) :
 #    nda_cdata*=mask_geo
     
     #mask_geo.shape = (32,185,388)
-    #print mask_geo
+    #print(mask_geo)
     
     pixel_size = det.pixel_size(par)
     print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
     
 #    ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-#    print 'Detector origin indexes: ix, iy:', ipx, ipy
+#    print('Detector origin indexes: ix, iy:', ipx, ipy)
     ##-----------------------------
     
     #img_arr = data_sub_peds

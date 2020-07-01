@@ -29,7 +29,7 @@ def test01(tname):
     #evt = ds.events().next()
     #nrun = evt.run()
 
-    #for key in evt.keys() : print key
+    #for key in evt.keys() : print(key)
 
     det = psana.Detector(src, env)
 
@@ -100,14 +100,14 @@ def detector(tname):
         
     #t0_sec = time()
     #nda_raw = det.raw(evt)
-    #print 'Consumed time = %9.6f sec' % (time()-t0_sec)
+    #print('Consumed time = %9.6f sec' % (time()-t0_sec))
 
     #i=0
     #if nda_raw is None :
     #    for i, evt in enumerate(ds.events()) :
     #        nda_raw = det.raw(evt)
     #        if nda_raw is not None :
-    #            print 'Detector data found in event %d' % i
+    #            print('Detector data found in event %d' % i)
     #        break
 
     #print_ndarr(nda_raw, 'raw data')

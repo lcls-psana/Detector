@@ -19,7 +19,7 @@ src = psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
 det = Detector.DetectorAccess(src, env, 0) # , 0xffff)
 calibdir = env.calibDir()
 
-#print evt.keys()
+#print(evt.keys())
 
 ###-----------------------------
 print('\nInstrument: ', det.instrument(env))

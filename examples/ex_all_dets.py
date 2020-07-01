@@ -234,7 +234,7 @@ mask_geo = det.mask_geo(par)
 print_ndarr(mask_geo, 'mask_geo')
 
 #mask_geo.shape = (32,185,388)
-#print mask_geo
+#print(mask_geo)
 
 pixel_size = det.pixel_size(par)
 print('%s\npixel size: %s' % (80*'_', str(pixel_size)))

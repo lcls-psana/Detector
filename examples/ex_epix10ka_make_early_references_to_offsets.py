@@ -40,7 +40,7 @@ source = psana.Source(src)
 confo = get_epix10ka_any_config_object(env, source)
 
 print('experiment %s' % env.experiment())
-#print 'run        %d' % runnum
+#print('run        %d' % runnum)
 print('dataset    %s' % (dsname)) 
 print('calibDir:', env.calibDir())
 

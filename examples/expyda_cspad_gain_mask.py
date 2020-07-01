@@ -23,7 +23,7 @@ calibdir = env.calibDir()
 src = psana.Source('CxiDs2.0:Cspad.0')
 pda = PyDetectorAccess(src, env, pbits=0)
 
-#print evt.keys()
+#print(evt.keys())
 
 ##-----------------------------
 

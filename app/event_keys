@@ -120,9 +120,9 @@ if __name__ == "__main__" :
         
     if opts.verbos :
         print('Command:', ' '.join(sys.argv))
-    #    print 'Options:'
-    #    for k,v in opts.__dict__.items() : print '  %s : %s' % (k, str(v))
-    #    print 'Arguments: ', args
+    #    print('Options:')
+    #    for k,v in opts.__dict__.items() : print('  %s : %s' % (k, str(v)))
+    #    print('Arguments: ', args)
 
     if opts.dsname is None : sys.exit('WARNING: Dataset must be specified.')
 

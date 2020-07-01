@@ -168,8 +168,8 @@ print(80*'_', '\nInstrument: ', ins)
 #shape_nda = det.shape(par)
 #print_ndarr(shape_nda, 'shape of ndarray')
 
-#print 'size of ndarray: %d' % det.size(par)
-#print 'ndim of ndarray: %d' % det.ndim(par)
+#print('size of ndarray: %d' % det.size(par))
+#print('ndim of ndarray: %d' % det.ndim(par))
 
 if False :
   peds = det.pedestals(par)
@@ -257,10 +257,10 @@ print_ndarr(coords_x, 'coords_x')
 #print_ndarr(mask_geo, 'mask_geo')
 
 #mask_geo.shape = (32,185,388)
-#print mask_geo
+#print(mask_geo)
 
 #pixel_size = det.pixel_size(par)
-#print '%s\npixel size: %s' % (80*'_', str(pixel_size))
+#print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
 
 ##-----------------------------
 img_arr = nda_raw

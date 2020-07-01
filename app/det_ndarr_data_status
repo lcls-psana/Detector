@@ -214,7 +214,7 @@ class DetNDArrDataProc(object) :
         cond_hi = ndaraw>self.gate_hi
         condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
 
-        #print 'XXX:' # shape:(1, 512, 1024)
+        #print('XXX:' # shape:(1, 512, 1024))
         #print_ndarr(self.arr1, 'arr1')
         #print_ndarr(self.arr_sum0, 'arr_sum0')
         #print_ndarr(self.arr_sum1, 'arr_sum1')
@@ -454,7 +454,7 @@ def detector_ndarr_data_proc():
 
     # Loop over runs
     #for irun, run in enumerate(ds.runs()):
-    #    print '%s\nRun %d' % (50*'=', run.run())
+    #    print('%s\nRun %d' % (50*'=', run.run()))
         
     #    # Loop over calibcycles
     #    nevclc = 0
@@ -485,10 +485,10 @@ def detector_ndarr_data_proc():
                       tdt  = tsec
                       print('  Event %4d,  time=%7.3f sec,  dt=%5.3f sec' % (i, time()-t0_sec, dt))
 
-#            print '  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
-#                  (run.run(), istep, nevclc, nevtot, gm.name)
-#        print '  Run %d, number of calibcycles processed %d' % (run.run(), istep+1)
-#    print 'Number of runs processed %d' % (irun+1)
+#            print('  Run %d, calibcycle %d, number of events processed %d, total %d, gain mode %s'%\
+#                  (run.run(), istep, nevclc, nevtot, gm.name))
+#        print('  Run %d, number of calibcycles processed %d' % (run.run(), istep+1))
+#    print('Number of runs processed %d' % (irun+1))
 
     if PROC_DATA : 
         for dpo in lst_dpo : dpo.end_of_proc(evt,env)

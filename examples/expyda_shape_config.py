@@ -23,8 +23,8 @@ def test_shape_config(ntest) :
     pda = PyDetectorAccess(src, env, pbits=0)
     print('shape_config =', pda.shape_config(env))
 
-    #print 'raw data imp =', pda.raw_data_imp(evt, env).shape
-    #print 'shape_data_camera =', pda.shape_data_camera(evt)
+    #print('raw data imp =', pda.raw_data_imp(evt, env).shape)
+    #print('shape_data_camera =', pda.shape_data_camera(evt))
 
     #for i, evt in enumerate(ds.events()):
     #    if i>10 : break

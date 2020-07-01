@@ -75,77 +75,77 @@ if DO_PLOT:
 #----------
 
 def info_quad(q):
-    print 'quad = cfg.quad(i)', q
-    print 'dir(cfg.quad(i))', dir(q)
-    print '\n'
+    print('quad = cfg.quad(i)', q)
+    print('dir(cfg.quad(i))', dir(q))
+    print('\n')
 
 
 def info_elemCfg(e):
-    print 'e = cfg.elemCfg(i)', e
-    print 'dir(e)', dir(e)
-    print 'e.asicMask', e.asicMask()
-    print 'e.asicPixelConfigArray\n', e.asicPixelConfigArray()
-    print 'e.asics(0)', e.asics(0)
-    print 'e.asics_shape', e.asics_shape()
-    print 'e.calibPixelConfigArray\n', e.calibPixelConfigArray()
-    print 'e.calibrationRowCountPerASIC', e.calibrationRowCountPerASIC()
-    print 'e.carrierId0', e.carrierId0()
-    print 'e.carrierId1', e.carrierId1()
-    print 'e.environmentalRowCountPerASIC', e.environmentalRowCountPerASIC()
-    print 'e.numberOfAsics', e.numberOfAsics()
-    print 'e.numberOfAsicsPerColumn', e.numberOfAsicsPerColumn()
-    print 'e.numberOfAsicsPerRow', e.numberOfAsicsPerRow()
-    print 'e.numberOfCalibrationRows', e.numberOfCalibrationRows()
-    print 'e.numberOfColumns', e.numberOfColumns()
-    print 'e.numberOfEnvironmentalRows', e.numberOfEnvironmentalRows()
-    print 'e.numberOfPixelsPerAsicRow', e.numberOfPixelsPerAsicRow()
-    print 'e.numberOfReadableRows', e.numberOfReadableRows()
-    print 'e.numberOfReadableRowsPerAsic', e.numberOfReadableRowsPerAsic()
-    print 'e.numberOfRows', e.numberOfRows()
-    print 'e.numberOfRowsPerAsic', e.numberOfRowsPerAsic()
-    print '\n'
+    print('e = cfg.elemCfg(i)', e)
+    print('dir(e)', dir(e))
+    print('e.asicMask', e.asicMask())
+    print('e.asicPixelConfigArray\n', e.asicPixelConfigArray())
+    print('e.asics(0)', e.asics(0))
+    print('e.asics_shape', e.asics_shape())
+    print('e.calibPixelConfigArray\n', e.calibPixelConfigArray())
+    print('e.calibrationRowCountPerASIC', e.calibrationRowCountPerASIC())
+    print('e.carrierId0', e.carrierId0())
+    print('e.carrierId1', e.carrierId1())
+    print('e.environmentalRowCountPerASIC', e.environmentalRowCountPerASIC())
+    print('e.numberOfAsics', e.numberOfAsics())
+    print('e.numberOfAsicsPerColumn', e.numberOfAsicsPerColumn())
+    print('e.numberOfAsicsPerRow', e.numberOfAsicsPerRow())
+    print('e.numberOfCalibrationRows', e.numberOfCalibrationRows())
+    print('e.numberOfColumns', e.numberOfColumns())
+    print('e.numberOfEnvironmentalRows', e.numberOfEnvironmentalRows())
+    print('e.numberOfPixelsPerAsicRow', e.numberOfPixelsPerAsicRow())
+    print('e.numberOfReadableRows', e.numberOfReadableRows())
+    print('e.numberOfReadableRowsPerAsic', e.numberOfReadableRowsPerAsic())
+    print('e.numberOfRows', e.numberOfRows())
+    print('e.numberOfRowsPerAsic', e.numberOfRowsPerAsic())
+    print('\n')
 
 
 def info_asic(a):
-    print 'a = cfg.elemCfg.asics(i)', a
-    print 'dir(a)', dir(a)
-    print 'a.Pulser', a.Pulser()
-    print 'a.trbit', a.trbit()
-    print 'a.pixelDummy', a.pixelDummy()
-    print 'a.chipID', a.chipID()
-    print 'a.PulserR', a.PulserR()
-    print 'a.PixelCB', a.PixelCB()
-    print 'a.PulserSync', a.PulserSync()
-    print '\n'
+    print('a = cfg.elemCfg.asics(i)', a)
+    print('dir(a)', dir(a))
+    print('a.Pulser', a.Pulser())
+    print('a.trbit', a.trbit())
+    print('a.pixelDummy', a.pixelDummy())
+    print('a.chipID', a.chipID())
+    print('a.PulserR', a.PulserR())
+    print('a.PixelCB', a.PixelCB())
+    print('a.PulserSync', a.PulserSync())
+    print('\n')
 
 
 def info_config_evr(evr):
-    print 'evr = cfg.evr():', evr
-    print 'dir(evr):', dir(evr)
-    print 'evr.daqCode', evr.daqCode()
-    print 'evr.enable', evr.enable()
-    print 'evr.runCode', evr.runCode()
-    print 'evr.runDelay', evr.runDelay()
-    print '\n'
+    print('evr = cfg.evr():', evr)
+    print('dir(evr):', dir(evr))
+    print('evr.daqCode', evr.daqCode())
+    print('evr.enable', evr.enable())
+    print('evr.runCode', evr.runCode())
+    print('evr.runDelay', evr.runDelay())
+    print('\n')
 
 
 def info_config(cfg):
-    print 'cfg:', cfg
-    print 'dir(cfg):', dir(cfg)
-    print 'cfg.TypeId', cfg.TypeId
-    print 'cfg.Version', cfg.Version
-    print 'cfg.elemCfg_shape', cfg.elemCfg_shape()
-    print 'cfg.numberOfAsics', cfg.numberOfAsics()
-    print 'cfg.numberOfCalibrationRows:', cfg.numberOfCalibrationRows()
-    print 'cfg.numberOfColumns', cfg.numberOfColumns()
-    print 'cfg.numberOfElements', cfg.numberOfElements()
-    print 'cfg.numberOfEnvironmentalRows', cfg.numberOfEnvironmentalRows()
-    print 'cfg.numberOfReadableRows', cfg.numberOfReadableRows()
-    print 'cfg.numberOfRows', cfg.numberOfRows()
-    print 'cfg.quad_shape', cfg.quad_shape()
-    print 'cfg.elemCfg(0)', cfg.elemCfg(0)
-    print 'cfg.quad(0)', cfg.quad(0)
-    print '\n'
+    print('cfg:', cfg)
+    print('dir(cfg):', dir(cfg))
+    print('cfg.TypeId', cfg.TypeId)
+    print('cfg.Version', cfg.Version)
+    print('cfg.elemCfg_shape', cfg.elemCfg_shape())
+    print('cfg.numberOfAsics', cfg.numberOfAsics())
+    print('cfg.numberOfCalibrationRows:', cfg.numberOfCalibrationRows())
+    print('cfg.numberOfColumns', cfg.numberOfColumns())
+    print('cfg.numberOfElements', cfg.numberOfElements())
+    print('cfg.numberOfEnvironmentalRows', cfg.numberOfEnvironmentalRows())
+    print('cfg.numberOfReadableRows', cfg.numberOfReadableRows())
+    print('cfg.numberOfRows', cfg.numberOfRows())
+    print('cfg.quad_shape', cfg.quad_shape())
+    print('cfg.elemCfg(0)', cfg.elemCfg(0))
+    print('cfg.quad(0)', cfg.quad(0))
+    print('\n')
 
     info_config_evr(cfg.evr())
 
@@ -166,14 +166,14 @@ def do_work():
     det = Detector(DETNAME)
     
     idx = 0
-    #print '=== cd:', dir(cd)
+    #print('=== cd:', dir(cd))
     
     nstep = -1
     for run in ds.runs():
       env = run.env()
       cfg = get_epix_config_object(env, det.source)
 
-      print '\n=== run:', run.run()
+      print('\n=== run:', run.run())
 
       if OBJINFO:
          info_config(cfg)
@@ -181,19 +181,19 @@ def do_work():
 
       for nstep_in_run, step in enumerate(run.steps()):
         nstep += 1
-        print '%s\nrun: %04d step: %03d/%03d (in run/total)' % (50*'=', run.run(), nstep, nstep_in_run), \
-              '    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(),cd().pvLabels(),cd().pvMonitors() # EMPTY: ,
+        print('%s\nrun: %04d step: %03d/%03d (in run/total)' % (50*'=', run.run(), nstep, nstep_in_run), \
+              '    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(),cd().pvLabels(),cd().pvMonitors() # EMPTY: ,)
 
         for pvl in cd().pvLabels():
-            print '  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value())
+            print('  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value()))
 
 
         if nstep<SKIPNCC : 
-            print '    skip calibcycles < %d' % SKIPNCC
+            print('    skip calibcycles < %d' % SKIPNCC)
             continue
 
         events = step.events()
-        #print 'dir(events)', dir(events)
+        #print('dir(events)', dir(events))
 
         nevgood=-1
         for nev,evt in enumerate(events):
@@ -203,7 +203,7 @@ def do_work():
           raw = det.raw(evt)
           
           if raw is None:
-              print 'Ev:%2d raw is None' % nev
+              print('Ev:%2d raw is None' % nev)
               continue
           else:
               nevgood += 1
@@ -229,7 +229,7 @@ def do_work():
                            (PREFIX, str(det.name).replace(':','-').replace('.','-'), run.run(), nstep, nevgood, idx)
                       gr.save_fig(fig, fname=ofname, verb=True)
     
-        print '%sstep: %03d contains %d/%d good/total events in run' % (10*' ', nstep, nevgood, nev)
+        print('%sstep: %03d contains %d/%d good/total events in run' % (10*' ', nstep, nevgood, nev))
     
         if PROC_EVENT and nevgood<0: nstep -= 1
 

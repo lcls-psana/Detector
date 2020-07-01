@@ -56,7 +56,7 @@ def test_multiruns() :
 #------------------------------
 
 if __name__ == "__main__" :
-    #if len(sys.argv)==1 : print '\n%s' % usage(2)
+    #if len(sys.argv)==1 : print('\n%s' % usage(2))
     test_multiruns()
     sys.exit(0)
 

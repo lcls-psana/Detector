@@ -471,7 +471,7 @@ if __name__ == "__main__":
   def test_config_data(tname):
     
     ssrc, dsname = ex_source_dsname(tname)
-    print 'Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc)
+    print('Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc))
 
     ds = psana.DataSource(dsname)
     det = psana.Detector(ssrc)
@@ -492,7 +492,7 @@ if __name__ == "__main__":
   def test_calib(tname):
     
     ssrc, dsname = ex_source_dsname(tname)
-    print 'Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc)
+    print('Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc))
 
     ds  = psana.DataSource(dsname)
     d   = psana.Detector(ssrc)

@@ -76,7 +76,7 @@ def common_mode_pnccd(data, mask, cmp=(8,1,500)) :
           if mode & 8 :
             common_mode_banks_512x128(sdata, smask, cormax)
 
-    #print 'Detector.common_mode_pnccd: CM consumed time (sec) =', time()-t0_sec
+    #print('Detector.common_mode_pnccd: CM consumed time (sec) =', time()-t0_sec)
 
 #------------------------------
 #------------------------------

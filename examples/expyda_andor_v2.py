@@ -31,7 +31,7 @@ for i,evt in enumerate(ds.events()) :
         print('Event %4d' % i, end=' ')
         print_ndarr(nda, 'raw data')
         break
-    #print evt.keys()
+    #print(evt.keys())
 
 ##-----------------------------
 t0_sec = time()

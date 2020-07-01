@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+>>>>>>> master
 
 from __future__ import print_function
 import sys
@@ -29,7 +30,7 @@ ds  = psana.DataSource(dsname)
 evt = next(ds.events())
 env = ds.env()
 
-#for key in evt.keys() : print key
+#for key in evt.keys() : print(key)
 
 ##-----------------------------
 

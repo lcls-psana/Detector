@@ -15,8 +15,8 @@ from pyimgalgos.GlobalUtils import print_ndarr
 ##-----------------------------
 
 ntest = int(sys.argv[1]) if len(sys.argv)>1 else 1
-print 'Test # %d' % ntest
-print 80*'_'
+print('Test # %d' % ntest)
+print(80*'_')
         
 fname = '/reg/g/psdm/detector/data2_test/misc/img-detdaq18-r23-epix10ka-raw-peds-for-cmtest.txt'
 print('load array from file: %s' % fname)
@@ -37,7 +37,7 @@ def print_comment(ntest=None) :
     if ntest in (4,None): s+='\n  4-transposed raw data'
     if ntest in (5,None): s+='\n  5-common_mode_rows for mask=None   (3 msec)'
     if ntest in (6,None): s+='\n  6-common_mode_rows for random mask (12 msec)'
-    print s
+    print(s)
 
 print_comment(ntest)
 
@@ -90,7 +90,7 @@ print_ndarr(img, 'img')
 import pyimgalgos.GlobalGraphics as gg
 
 ave, rms = img.mean(), img.std()
-print 'ave=%.3f rms=%.3f' % (ave, rms)
+print('ave=%.3f rms=%.3f' % (ave, rms))
 amp_range=(ave-1*rms, ave+2*rms)
 #amp_range=(-10, 25)
 gg.plotImageLarge(img, amp_range=amp_range, cmap='jet')

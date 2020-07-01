@@ -71,7 +71,7 @@ def plot_avsi(x,y,fname):
     plt.plot()
     plt.pause(3)
     plt.savefig(fname)
-    print 'saved file %s' % fname
+    print('saved file %s' % fname)
     #plt.ioff()
     plt.show()    
     #plt.ion()
@@ -81,7 +81,7 @@ def plot_avsi(x,y,fname):
 def plot_data_block(block, evnum, prefix):
     ts = str_tstamp(fmt='%Y%m%dT%H%M%S', time_sec=time())
     mf,my,mx=block.shape
-    print 'block shape:',mf,my,mx
+    print('block shape:',mf,my,mx)
     trace=block[:,0,0]
     x = np.arange(mf)
     print_ndarr(x,'x')
@@ -96,7 +96,7 @@ def plot_data_block(block, evnum, prefix):
                 trace=block[:,iy,ix]
                 logger.debug('==== saw_edge for %s-proc-ix%02d-iy%02d:' % (prefix, ix, iy))
                 for ixb, ixs, ixe in saw_edges(trace, evnum, do_debug=True):
-                    print '  saw edges:', ixb, ixs, ixe, 'period:', ixe-ixb+1
+                    print('  saw edges:', ixb, ixs, ixe, 'period:', ixe-ixb+1)
 
                 fname = '%s-dat-ix%02d-iy%02d.png' % (prefix, ix, iy)
                 plot_avsi(x,trace,fname)
@@ -137,7 +137,7 @@ def plot_fit_figaxis():
 #--------------------
 
 def plot_fit(x,y,pf0,pf1,fname):
-    print 'plot_fit %s' % fname
+    print('plot_fit %s' % fname)
     fig, ax = plot_fit_figaxis()
 
     #fig.clf()
@@ -157,7 +157,7 @@ def plot_fit(x,y,pf0,pf1,fname):
     plt.plot()
     plt.pause(3)
     plt.savefig(fname)
-    print 'saved file %s' % fname
+    print('saved file %s' % fname)
     #plt.ioff()
     plt.show()    
     #plt.ion()
@@ -340,10 +340,10 @@ def fit_old(block, evnum, itrim, display=True, prefix='fig-fit', period=1024):
             fits[iy,ix,1]=pf1
             
             if selected:  #display a subset of plots
-                #print '\b.',
-                print '==== ix%02d-iy%02d:' % (ix, iy)
-                print '  ixoff:', ixoff
-                print '  isp  :', isp
+                #print('\b.',)
+                print('==== ix%02d-iy%02d:' % (ix, iy))
+                print('  ixoff:', ixoff)
+                print('  isp  :', isp)
                 print_ndarr(idx0,  '    idx0') #idx0: [ True  True  True ..., False False False]
                 print_ndarr(idx1,  '    idx1') #idx1: [False False False ...,  True  True  True]
                 print_ndarr(x,     '    x')
@@ -938,7 +938,7 @@ def offset_calibration(*args, **opts):
 
         nstep_tot = -1
         for orun in ds.runs():
-          print '==== run:', orun.run()
+          print('==== run:', orun.run())
 
           for nstep_run, step in enumerate(orun.steps()):
             nstep_tot += 1
@@ -1261,7 +1261,7 @@ def pedestals_calibration(*args, **opts):
     ds = DataSource(dsname)
     det = Detector(detname)
 
-    #print 'det.shape', det.shape()
+    #print('det.shape', det.shape())
     shape_block = [nbs,] + list(det.shape()) # [1024, 16, 352, 384]
     print('Accumulate raw frames in block shape = %s' % str(shape_block))
 
@@ -1630,7 +1630,7 @@ def add_links_for_gainci_fixed_modes(dir_gain, fname_prefix, verbose=True):
     for k,v in dic_links.items() :
         fname_auto  = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, v)
         fname_fixed = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, k)
-        #print 'file %s existx %s' % (fname_auto, os.path.exists(fname_auto))
+        #print('file %s existx %s' % (fname_auto, os.path.exists(fname_auto)))
         if os.path.exists(fname_auto) and not os.path.lexists(fname_fixed): 
             
             os.symlink(os.path.abspath(fname_auto), fname_fixed)

@@ -75,17 +75,11 @@ def test_jungfrau_methods(dsname, src) :
     status = det.status(par)
     print_ndarr(status, 'status')
 
-<<<<<<< HEAD
     if False :
 
         statmask = det.status_as_mask(par)
         print_ndarr(statmask, 'statmask')
-        print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
-=======
-    statmask = det.status_as_mask(par)
-    print_ndarr(statmask, 'statmask')
-    print('number of bad status pixels: %d' % (len(statmask[statmask==0])))
->>>>>>> 2to3 print
+        print('number of bad status pixels: %d' % (len(statmask[statmask==0])))
 
         status_mask = det.status_as_mask(par)
         print_ndarr(status_mask, 'status_mask')
@@ -145,13 +139,13 @@ def test_jungfrau_methods(dsname, src) :
 #    nda_cdata*=mask_geo
     
     #mask_geo.shape = (32,185,388)
-    #print mask_geo
+    #print(mask_geo)
     
     pixel_size = det.pixel_size(par)
     print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
     
 #    ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-#    print 'Detector origin indexes: ix, iy:', ipx, ipy
+#    print('Detector origin indexes: ix, iy:', ipx, ipy)
     ##-----------------------------
     
     #img_arr = data_sub_peds
@@ -210,8 +204,7 @@ def test_jungfrau_methods(dsname, src) :
 
 if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
-<<<<<<< HEAD
-    print '%s\nTest %s' % (80*'_', tname)
+    print('%s\nTest %s' % (80*'_', tname))
 
     if   tname=='1' : test_jungfrau_methods('exp=xpptut15:run=410', 'Jungfrau512k')
     elif tname=='2' : test_jungfrau_methods('exp=xpptut15:run=430', 'Jungfrau1M')
@@ -223,11 +216,6 @@ if __name__ == "__main__" :
     #elif tname=='2': test_jungfrau_methods('exp=mfxls0816:run=193', 'MfxEndstation.0:Jungfrau.1')
     #elif tname=='3': test_jungfrau_methods('exp=mfxlr1716:run=1',   'MfxEndstation.0:Jungfrau.0')
     else : sys.exit('Not recognized test name: "%s"' % tname)
-=======
-    print('%s\nTest %s' % (80*'_', tname))
-    if tname in ('1', '2', '3') : test_jungfrau_methods(tname)
-    else : sys.exit ('Not recognized test name: "%s"' % tname)
->>>>>>> 2to3 print
     sys.exit ('End of %s' % sys.argv[0])
 
 #----------

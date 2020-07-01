@@ -245,7 +245,7 @@ class JungfrauNDArrDarkProc(object) :
         cond_hi = ndaraw>self.gate_hi
         condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
 
-        #print 'XXX:' # shape:(1, 512, 1024)
+        #print('XXX:' # shape:(1, 512, 1024))
         #print_ndarr(self.arr1, 'arr1')
         #print_ndarr(self.arr_sum0, 'arr_sum0')
         #print_ndarr(self.arr_sum1, 'arr_sum1')
@@ -412,7 +412,7 @@ class JungfrauNDArrDarkProc(object) :
             np.savetxt(template % 'cmo', cmod, fmt='%d', delimiter=' ', newline=' ')
             det.save_asdaq(template % 'cmm', cmod, cmts + ['ARR_TYPE  common_mode'],'%d', verbos, False)
 
-        #if verbos & 1 : print 'Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec)
+        #if verbos & 1 : print('Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec))
 
 
     def get_ndarrays(self) :
@@ -511,7 +511,7 @@ class JungfrauDarkProc(object) :
             ctypedir = '%s/%s/%s' % (clbdir, calibgrp, str_src) # jdp0.src)
             fname = '%d-end.data' % jdp0.runnum
 
-            #print 'Deploy files in %s' % clbdir
+            #print('Deploy files in %s' % clbdir)
             print('Deploy files in %s' % ctypedir)
 
             if savebw &  1 : gu.deploy_file(template % 'ave', ctypedir, 'pedestals',    fname, LOG_FILE, verbos)

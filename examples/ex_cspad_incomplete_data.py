@@ -33,7 +33,7 @@ env = ds.env()
 det = psana.Detector(src, env)
 #det.set_print_bits(8)
 
-#print ds.events().next().keys()
+#print(ds.events().next().keys())
 
 ##-----------------------------
 

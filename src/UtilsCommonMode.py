@@ -72,7 +72,7 @@ def common_mode_rows_v0(arr, mask=None, cormax=None, npix_min=10):
           npix = arr1[r,:][bmask].sum()
           if npix < npix_min: continue
           cmode = np.median(arr[r,:][bmask])
-          #if npix != 512: print '  XXX:row:%3d npix:%3d cmode:%.1f' % (r,npix,cmode)
+          #if npix != 512: print('  XXX:row:%3d npix:%3d cmode:%.1f' % (r,npix,cmode))
           if cormax is None or fabs(cmode) < cormax:
               #arr[r,:][bmask] -= cmode
               arr[r,:] -= cmode # apply correction to all pixels in the group

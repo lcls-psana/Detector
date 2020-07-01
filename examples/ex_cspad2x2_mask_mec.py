@@ -29,7 +29,7 @@ evt = next(ds.events())
 rnum = evt.run()
 
 calibdir = env.calibDir()
-#print evt.keys()
+#print(evt.keys())
 
 det = psana.Detector(src, env)
 
