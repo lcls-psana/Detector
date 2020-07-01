@@ -27,6 +27,9 @@ from Detector.PyDataAccess import get_epix_data_object, get_epix10ka_config_obje
                                   get_epix10kaquad_config_object, get_epix10ka2m_config_object,\
                                   get_epix10ka_any_config_object
 from Detector.GlobalUtils import print_ndarr, info_ndarr, divide_protected
+
+from Detector.UtilsCommonMode import common_mode_rows, common_mode_cols, common_mode_2d
+
 #from PSCalib.GlobalUtils import load_textfile, save_textfile
 
 # o = get_epix_data_object(evt, src)
@@ -47,8 +50,8 @@ M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 #--------------------
 
-class Storage(object) :
-    def __init__(self) :
+class Storage:
+    def __init__(self):
         self.arr1 = None
         self.gfac = None
         self.counter = -1
@@ -57,7 +60,7 @@ class Storage(object) :
 store = Storage() # singleton
 #--------------------
 
-def config_objects(env, src, idx=0) :
+def config_objects(env, src, idx=0):
     """ Returns configuration objects for detector, quad, element; 
         dco,qco,eco (or None depending on detector) of types
         psana.Epix.Config10ka2MV1
@@ -65,13 +68,13 @@ def config_objects(env, src, idx=0) :
         psana.Epix.Config10ka or psana.Epix.Config10kaV1
     """
     dco = get_epix10ka2m_config_object(env, src)
-    if dco is not None : return dco, dco.quad(idx//4), dco.elemCfg(idx)
+    if dco is not None: return dco, dco.quad(idx/4), dco.elemCfg(idx)
 
     qco = get_epix10kaquad_config_object(env, src)
-    if qco is not None : return None, qco, qco.elemCfg(idx)
+    if qco is not None: return None, qco, qco.elemCfg(idx)
 
     eco = get_epix10ka_config_object(env, src)
-    if eco is not None : return None, None, eco
+    if eco is not None: return None, None, eco
 
     logger.warning('None of epics10ka/quad/2m configuration objects found for env:%s src:%s idx:%s'%\
                     (str(env), str(src), str(idx)))
@@ -79,7 +82,7 @@ def config_objects(env, src, idx=0) :
 
 #--------------------
 
-def cbits_config_epix10ka(cob) :
+def cbits_config_epix10ka(cob):
     """Returns array of control bits shape=(352, 384) from psana.Epix.Config10ka object
        get epix10ka per panel 4-bit pixel config array with bit assignment]
           0001 = 1<<0 = 1 - T test bit
@@ -97,18 +100,18 @@ def cbits_config_epix10ka(cob) :
     cbits = np.bitwise_and(pca,12) # 014 (bin:1100)
 
     # add trbit
-    if all(trbits) : cbits = np.bitwise_or(cbits, B04) # for all pixels (352, 384)
-    elif not any(trbits) : return cbits
-    else : # set trbit per ASIC
-        if trbits[2] : cbits[:176,:192] = np.bitwise_or(cbits[:176,:192], B04)
-        if trbits[3] : cbits[176:,:192] = np.bitwise_or(cbits[176:,:192], B04)
-        if trbits[0] : cbits[176:,192:] = np.bitwise_or(cbits[176:,192:], B04)
-        if trbits[1] : cbits[:176,192:] = np.bitwise_or(cbits[:176,192:], B04)
+    if all(trbits): cbits = np.bitwise_or(cbits, B04) # for all pixels (352, 384)
+    elif not any(trbits): return cbits
+    else: # set trbit per ASIC
+        if trbits[2]: cbits[:176,:192] = np.bitwise_or(cbits[:176,:192], B04)
+        if trbits[3]: cbits[176:,:192] = np.bitwise_or(cbits[176:,:192], B04)
+        if trbits[0]: cbits[176:,192:] = np.bitwise_or(cbits[176:,192:], B04)
+        if trbits[1]: cbits[:176,192:] = np.bitwise_or(cbits[:176,192:], B04)
     return cbits
 
 #------------------------------
 
-def cbits_config_epix10kaquad(qcob) :
+def cbits_config_epix10kaquad(qcob):
     """Returns array of control bits shape=(4, 352, 384) from psana.Epix.Config10kaQuadV1
     """
     lst_cbits = [cbits_config_epix10ka(qcob.elemCfg(i)) for i in range(qcob.numberOfElements())]
@@ -119,7 +122,7 @@ def cbits_config_epix10kaquad(qcob) :
 
 #--------------------
 
-def cbits_config_epix10ka2m(dcob) :
+def cbits_config_epix10ka2m(dcob):
     """Returns array of control bits shape=(16, 352, 384) from psana.Epix.Config10ka2MV1 object
     """
     lst_cbits = [cbits_config_epix10ka(dcob.elemCfg(i)) for i in range(dcob.numberOfElements())]
@@ -130,30 +133,30 @@ def cbits_config_epix10ka2m(dcob) :
        
 #--------------------
 
-def cbits_config_epix10ka_any(env, src) :
+def cbits_config_epix10ka_any(env, src):
     """Returns array of control bits shape=(16, 352, 384) from any config object
     """
     cob = get_epix10ka2m_config_object(env, src)
-    if cob is not None : return cbits_config_epix10ka2m(cob)
+    if cob is not None: return cbits_config_epix10ka2m(cob)
 
     cob = get_epix10kaquad_config_object(env, src)
-    if cob is not None : return cbits_config_epix10kaquad(cob)
+    if cob is not None: return cbits_config_epix10kaquad(cob)
 
     cob = get_epix10ka_config_object(env, src)
-    if cob is not None : return cbits_config_epix10ka(cob)
+    if cob is not None: return cbits_config_epix10ka(cob)
 
     return None
 
 #--------------------
 
-def cbits_total_epix10ka_any(det, data=None) :
+def cbits_total_epix10ka_any(det, data=None):
     """Returns array of control bits shape=(16, 352, 384) 
        from any config object and data array.
     """
     cbits = cbits_config_epix10ka_any(det.env, det.source)
     #logger.debug(info_ndarr(cbits, 'cbits', first, last))
     
-    if cbits is None : return None
+    if cbits is None: return None
 
     #--------------------------------
     # get 5-bit pixel config array with bit assignments
@@ -165,7 +168,7 @@ def cbits_total_epix10ka_any(det, data=None) :
     # add data bit
     # 100000 = 1<<5 = 32 - data bit 14
     #--------------------------------
-    if data is not None :
+    if data is not None:
         #logger.debug(info_ndarr(data, 'data', first, last))
         # get array of data bit 14 and add it as a bit 5 to cbits
         databit14 = np.bitwise_and(data, B14)
@@ -177,11 +180,11 @@ def cbits_total_epix10ka_any(det, data=None) :
 
 #--------------------
 
-def gain_maps_epix10ka_any(det, data=None) :
+def gain_maps_epix10ka_any(det, data=None):
     """Returns maps of gain groups shape=(16, 352, 384) 
     """
     cbits = cbits_total_epix10ka_any(det, data)
-    if cbits is None : return None
+    if cbits is None: return None
 
     #--------------------------------
     # cbits - pixel control bit array
@@ -226,7 +229,7 @@ def gain_maps_epix10ka_any(det, data=None) :
 
 #--------------------
 
-def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5) :
+def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
     return 'gain range arrays:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s'%(\
         info_ndarr(gr0, 'gr0', first, last),\
         info_ndarr(gr1, 'gr1', first, last),\
@@ -238,7 +241,7 @@ def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5) :
 
 #--------------------
 
-def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6) :
+def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     """returns (str) with statistics of pixels in defferent gain modes in gain maps
     """
     t0_sec = time()
@@ -255,17 +258,17 @@ def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6) :
 
 #--------------------
 
-def info_pixel_gain_mode_statistics_for_raw(det, raw) :
+def info_pixel_gain_mode_statistics_for_raw(det, raw):
     """returns (str) with statistics of pixels in defferent gain modes in raw data
     """
     gmaps = gain_maps_epix10ka_any(det, raw)
-    if gmaps is None : return None
+    if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     return info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
 
 #--------------------
 
-def map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6) :
+def map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     """returns map of pixel gain modes shaped as (16/4, 352, 384)
        enumerated from 0 to 6 for 'FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L'
     """
@@ -275,15 +278,15 @@ def map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6) :
 
 #--------------------
 
-def map_pixel_gain_mode_for_raw(det, raw) :
+def map_pixel_gain_mode_for_raw(det, raw):
     gmaps = gain_maps_epix10ka_any(det, raw)
-    if gmaps is None : return None
+    if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     return map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
 
 #--------------------
 
-def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
+def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpars=(7,2,100)):
     """
     Returns calibrated epix10ka data
 
@@ -297,26 +300,33 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
 
     - det (psana.Detector) - Detector object
     - evt (psana.Event)    - Event object
-    - cmpars (tuple) - common mode parameters 
+    - cmpars (tuple) - common mode parameters
+          = None - use pars from calib directory
+          = cmpars=(<alg>, <mode>, <maxcorr>)
+            alg is not used
+            mode =0-correction is not applied, =1-in rows, =2-in cols-WORKS THE BEST
+            i.e: cmpars=(7,0,100) or (7,2,100)
+    - nda_raw - substitute for det.raw(evt)
     """
 
     logger.debug('In calib_epix10ka_any')
 
     t0_sec_tot = time()
 
-    raw = det.raw(evt) # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
-    if raw is None : return None
+    raw = det.raw(evt) if nda_raw is None else nda_raw # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
+    if raw is None: return None
 
+    cmp  = det.common_mode(evt) if cmpars is None else cmpars
     gain = det.gain(evt)      # - 4d gains  (7, <nsegs>, 352, 384)
     peds = det.pedestals(evt) # - 4d pedestals
-    if gain is None : return None # gain = np.ones_like(peds)  # - 4d gains
-    if peds is None : return None # peds = np.zeros_like(peds) # - 4d gains
+    if gain is None: return None # gain = np.ones_like(peds)  # - 4d gains
+    if peds is None: return None # peds = np.zeros_like(peds) # - 4d gains
 
     #gfac = gain 
     gfac = store.gfac
     arr1 = store.arr1 
 
-    if store.gfac is None : 
+    if store.gfac is None: 
         # do ONCE this initialization 
         logger.debug(info_ndarr(raw,  '\n  raw ')\
                     +info_ndarr(gain, '\n  gain')\
@@ -333,7 +343,7 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
         #store.gf6 = np.ones_like(raw, dtype=np.int32) * 1    # L - center
 
     gmaps = gain_maps_epix10ka_any(det, raw)
-    if gmaps is None : return None
+    if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
     factor = np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
@@ -350,7 +360,7 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
                         peds[4,:], peds[5,:], peds[6,:]), default=0)
 
     store.counter += 1
-    if not store.counter%100 :
+    if not store.counter%100:
         logger.debug(info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6))
         logger.debug(info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
@@ -361,6 +371,35 @@ def calib_epix10ka_any(det, evt, cmpars=None) : # cmpars=(7,3,100)) :
     #arr = np.array(raw, dtype=np.float32) # otherwice det.calib returns np.object....
 
     arrf = np.array(raw & M14, dtype=np.float32) - pedest
+
+
+    #if False:
+    logger.debug('common-mode correction pars cmp: %s' % str(cmp))
+
+    #print_ndarr(arrf[0], 'arrf[0]')
+    #np.savetxt('img-detdaq18-r23-epix10ka-raw-peds-for-cmtest.txt', arrf[0],\
+    #           fmt='%.2f', delimiter=' ', newline='\n', header=' 2-d array (352, 384) for cm test epix10ka raw-peds detdaq18 r23 seg0', footer='', comments='#')
+
+    t0_sec_cm = time()
+
+    if cmp is not None:
+      mode, cormax = int(cmp[1]), cmp[2]
+      if mode>0:
+        #common_mode_2d(arrf, mask=gr0, cormax=cormax)
+        for s in range(arrf.shape[0]):
+          if mode & 1:
+            #common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
+            common_mode_rows(arrf[s,], cormax=cormax)
+          if mode & 2:
+            #sh = (16, 352, 384)
+            hrows = 352/2
+            #common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
+            #common_mode_cols(arrf[s,], cormax=cormax)
+            common_mode_cols(arrf[s,:hrows,:], cormax=cormax)
+            common_mode_cols(arrf[s,hrows:,:], cormax=cormax)
+
+    logger.debug('common-mode correction consumed time (sec) = %.6f' % (time()-t0_sec_cm)) # 90-100msec total
+
     return arrf * factor
 
     #====================
@@ -373,12 +412,12 @@ calib_epix10ka = calib_epix10ka_any
 
 #--------------------
 
-def find_gain_mode(det, data=None) :
+def find_gain_mode(det, data=None):
     """Returns str gain mode from the list GAIN_MODES or None.
-       if data=None : distinguish 5-modes w/o data
+       if data=None: distinguish 5-modes w/o data
     """
     gmaps = gain_maps_epix10ka_any(det, data)
-    if gmaps is None : return None
+    if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
     arr1 = np.ones_like(gr0)
@@ -407,7 +446,7 @@ def find_gain_mode(det, data=None) :
 #--------------------
 #--------------------
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
 
   import sys
   import psana
@@ -418,21 +457,21 @@ if __name__ == "__main__" :
 #--------------------
 
   # See Detector.examples.ex_source_dsname
-  def ex_source_dsname(tname) : 
+  def ex_source_dsname(tname): 
     src, dsn = 'MfxEndstation.0:Epix10ka.0', 'exp=mfxx32516:run=346' # 'Epix10ka_0', run=377
     if   tname == '1': pass
     elif tname == '2': src, dsn = 'NoDetector.0:Epix10ka.3',\
                                   'exp=mfxx32516:run=1021:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     elif tname == '10': src, dsn = 'MfxEndstation.0:Epix10ka.1', 'exp=mfxx32516:run=377' 
-    else : sys.exit('Non-implemented sample for test number # %s' % tname)
+    else: sys.exit('Non-implemented sample for test number # %s' % tname)
     return src, dsn
 
 #--------------------
 
-  def test_config_data(tname) :
+  def test_config_data(tname):
     
     ssrc, dsname = ex_source_dsname(tname)
-    print('Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc))
+    print 'Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc)
 
     ds = psana.DataSource(dsname)
     det = psana.Detector(ssrc)
@@ -450,10 +489,10 @@ if __name__ == "__main__" :
 
 #--------------------
 
-  def test_calib(tname) :
+  def test_calib(tname):
     
     ssrc, dsname = ex_source_dsname(tname)
-    print('Test: %s\n  dataset: %s\n  source : %s' % (tname, dsname, ssrc))
+    print 'Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc)
 
     ds  = psana.DataSource(dsname)
     d   = psana.Detector(ssrc)
@@ -462,9 +501,9 @@ if __name__ == "__main__" :
 
     for nev,evt in enumerate(ds.events()):
     
-        if nev > EVENTS : break
+        if nev > EVENTS: break
         print('%s\nEvent %4d' % (50*'_', nev))
-        if evt is None : continue
+        if evt is None: continue
 
         raw = d.raw(evt)
         t0_sec = time()
@@ -487,13 +526,13 @@ if __name__ == "__main__" :
 
 #--------------------
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     print(80*'_')
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '1'
-    if tname == '1' : test_config_data(tname)
-    if tname == '2' : test_calib(tname)
-    else : sys.exit ('Not recognized test name: "%s"' % tname)
+    if tname == '1': test_config_data(tname)
+    if tname == '2': test_calib(tname)
+    else: sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit('End of %s' % sys.argv[0])
 
 #--------------------
