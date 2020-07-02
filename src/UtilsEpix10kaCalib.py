@@ -40,7 +40,7 @@ import matplotlib.pyplot as plt
 
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 #B14 = 0x4000 # 16384 or (1<<14)   - 14-bit (15-th bit starting from 1)
-B14 = 040000 # 16384 or 1<<14 (15-th bit starting from 1)
+B14 = 0o040000 # 16384 or 1<<14 (15-th bit starting from 1)
 #--------------------
 
 def plot_avsi_figaxis():
