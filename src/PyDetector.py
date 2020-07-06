@@ -179,7 +179,11 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
     """
 
     epics = env.epicsStore()
-    if source_string in epics.names(): # both names & aliases
+    epics_names = epics.pvNames()
+    epics_aliases = [epics.alias(pv) for pv in epics_names]
+    # don't use epics.names() since that includes aliases of
+    # variables that may not exist - cpo
+    if source_string in epics_names+epics_aliases:
         detector_class = EpicsDetector
 
     elif source_string in ['ControlData', 'ScanData']:
