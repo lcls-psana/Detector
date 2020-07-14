@@ -966,7 +966,7 @@ def offset_calibration(*args, **opts):
                         logger.warning('Ev:%04d rec:%04d panel:%02d raw=None' % (nevt,nrec,idx))
                         msg += 'none'
                         continue
-                    if nevt>=nbs:
+                    if nrec>nbs-2:
                         break
                     else:
                         nrec += 1
@@ -1014,7 +1014,7 @@ def offset_calibration(*args, **opts):
                         logger.warning('Ev:%04d rec:%04d panel:%02d AML raw=None' % (nevt,nrec,idx))
                         msg += 'none'
                         continue
-                    if nevt>=nbs:
+                    if nrec>nbs-2:
                         break
                     else:
                         nrec += 1
@@ -1063,7 +1063,7 @@ def offset_calibration(*args, **opts):
                         logger.warning('Ev:%04d rec:%04d panel:%02d AHL raw=None' % (nevt,nrec,idx))
                         msg+='None'
                         continue
-                    if nevt>=nbs:
+                    if nrec>nbs-2:
                         break
                     else:
                         nrec += 1
@@ -1213,6 +1213,7 @@ def pedestals_calibration(*args, **opts):
     irun       = opts.get('run', None)
     nbs        = opts.get('nbs', 1024)
     ccnum      = opts.get('ccnum', None)
+    ccmax      = opts.get('ccmax', 5)
     dirxtc     = opts.get('dirxtc', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
@@ -1271,6 +1272,8 @@ def pedestals_calibration(*args, **opts):
             if nstep < rank: continue
             if nstep > rank: break
 
+        elif nstep>=ccmax: break
+
         elif ccnum is not None:
             # process calibcycle ccnum ONLY if ccnum is specified and MPI is not used!!!
             if   nstep < ccnum: continue
@@ -1298,7 +1301,7 @@ def pedestals_calibration(*args, **opts):
             if raw is None: #skip empty frames
                 if do_print: logger.info('Ev:%04d rec:%04d raw=None' % (nevt,nrec))
                 continue
-            if nrec>=nbs:       # stop after collecting sufficient frames
+            if nrec>nbs-2:       # stop after collecting sufficient frames
                 break
             else:
                 #if raw.ndim > 2: raw=raw[idx,:]
