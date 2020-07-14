@@ -7,6 +7,19 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-83
+2020-07-14 Mikhail S. Dubrovin
+- fix nrec counter limit, add ccmax for pedestal calibration
+	modified:   ../app/epix10ka_pedestals_calibration
+	modified:   UtilsEpix10kaCalib.py
+- extend examples:
+	modified:   ../examples/ex_jungfrau_images.py
+	new file:   ../examples/test-2020-07-02-cspad-cm-issue-silke-aviad.py
+
+Tag: V01-00-82
+2020-07-06 crisvam
+- fix for case where epics alias name may be present even when pv is mi?
+
 Tag: V01-00-81
 2020-06-23 Mikhail S. Dubrovin
 - epix10ka_offset_calibration - new period-independent charge-injection fit and ped_L formulae from Gabriel

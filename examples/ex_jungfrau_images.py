@@ -21,7 +21,15 @@ PLOT_SPE = False #True #False #True #False
 
 #------------------------------
 
-def dsname_source(tname) :
+def usage():
+    return '\n    python %s <test-number>' % sys.argv[0]\
+         + '\n            where  <test-number> is one of 1,2,40,41,42,51,52,53,54'\
+         + '\n    python %s <experiment> <detector-name> <run-number>' % sys.argv[0]\
+         + '\n    python %s cxic00318 jungfrau4M 35' % sys.argv[0]
+
+#------------------------------
+
+def dsname_source(tname):
     if   tname=='1' : return 'exp=xpptut15:run=410', 'Jungfrau512k', 410
     elif tname=='2' : return 'exp=xpptut15:run=430', 'Jungfrau1M',   430
     elif tname=='40': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
@@ -30,6 +38,15 @@ def dsname_source(tname) :
     elif tname=='51': return 'exp=detdaq17:run=178', 'DetLab.0:Jungfrau.3', 178
     elif tname=='52': return 'exp=detdaq17:run=179', 'DetLab.0:Jungfrau.3', 179
     elif tname=='53': return 'exp=detdaq17:run=180', 'DetLab.0:Jungfrau.3', 180
+    elif tname=='54': return 'exp=cxic00318:run=35', 'CxiDs1.0:Jungfrau.0', 35
+    elif len(sys.argv)==4:
+        print 'command example: %s' % usage()
+        exp, detname, runnum = sys.argv[1], sys.argv[2], int(sys.argv[3])
+        return 'exp=%s:run=%d'%(exp, runnum), detname, runnum
+
+    else: sys.exit('Not recognized test name: "%s"\n  try command:%s' % (tname, usage()))
+
+
     # MISSING DATA
     #elif tname=='1' : return 'exp=cxi11216:run=9',    'CxiEndstation.0:Jungfrau.0', None # 9,11,12 - dark for gain modes
     #elif tname=='2' : return 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0', None # dark: 503, 504, 505
@@ -41,13 +58,12 @@ def dsname_source(tname) :
     #elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0', None
     #elif tname=='6' : return 'exp=mfx11116:run=689',  'MfxEndstation.0:Jungfrau.1', None # Philip test 0.5M constants
     #elif tname=='30': return 'exp=mfxls1016:run=369', 'MfxEndstation.0:Jungfrau.1', None # dark:369 test for clemens
-    else : sys.exit('Not recognized test name: "%s"' % tname)
 
 #------------------------------
     
-def test_jungfrau_methods(tname) :
+def test_jungfrau_methods(tname):
 
-    if tname in ('51','52','53') : psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib')
+    if tname in ('51','52','53'): psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib')
 
     dsname, src, rnum = dsname_source(tname)
     runnum = rnum if rnum is not None else int(dsname.split(':')[1].split('=')[1])
@@ -64,10 +80,10 @@ def test_jungfrau_methods(tname) :
 
     ##-----------------------------
     figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG else (None, None, None, None)
-    if figim is not None : gg.move_fig(figim, 300, 0)
+    if figim is not None: gg.move_fig(figim, 300, 0)
 
     fighi, axhi = None, None
-    if PLOT_SPE :
+    if PLOT_SPE:
         fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
         axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
 
@@ -150,7 +166,7 @@ def test_jungfrau_methods(tname) :
 
         t0_sec = time()
         nda_raw = det.raw(evt)
-        if nda_raw is None : 
+        if nda_raw is None: 
             print('raw is None')
             continue
 
@@ -159,13 +175,13 @@ def test_jungfrau_methods(tname) :
         raw_fake = None # 1000*np.ones((2, 512, 1024), dtype=np.uint16)
         nda = det.calib(evt, cmpars=(7,3,100), nda_raw=raw_fake) # cmpars=(7,1,100)
 
-        if nda is None : 
+        if nda is None: 
             print('det.calib() is None, so plot det.raw()')
             nda = nda_raw
-        else :
+        else:
             print_ndarr(nda, 'det.calib')
 
-        if tname=='42' :
+        if tname=='42':
             det_shape = nsegs, nrows, ncols = (8, 512, 1024)
             size = nsegs*nrows*ncols
             nda = np.arange(size, dtype=np.uint32)
@@ -182,7 +198,7 @@ def test_jungfrau_methods(tname) :
         ave,  rms  = None, None
         amin, amax = None, None
 
-        if PLOT_IMG :
+        if PLOT_IMG:
             ndarr = np.array(nda)
             ndarr *= mask_geo
     
@@ -196,7 +212,7 @@ def test_jungfrau_methods(tname) :
             #print_ndarr(img, 'img')
 
             axim.clear()
-            if imsh is not None : del imsh
+            if imsh is not None: del imsh
             imsh = None
 
             ave, rms = ndarr.mean(), ndarr.std()
@@ -214,7 +230,7 @@ def test_jungfrau_methods(tname) :
             gr.show(mode='do_not_hold')
             gg.save('img.png', True)
 
-        if PLOT_SPE :
+        if PLOT_SPE:
             #arrhi = ndarr # nda_raw
             #arrhi, range_x = nda_raw,(0,(1<<16)-1)
             #arrhi, range_x = ndarr, (-2,2)
@@ -228,13 +244,13 @@ def test_jungfrau_methods(tname) :
                                                                   ylabel='Entries', color='k')
             #gr.save_fig(fig, fname='spec-%02d.png'%i, verb=True)
 
-        if PLOT_IMG or PLOT_SPE :
+        if PLOT_IMG or PLOT_SPE:
             gr.show(mode='do_not_hold')
 
     dt_sec_tot = time()-t0_sec_tot
     print('Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS))
 
-    if PLOT_IMG or PLOT_SPE : gg.show()
+    if PLOT_IMG or PLOT_SPE: gg.show()
 
     ##-----------------------------
     #sys.exit('TEST EXIT')
@@ -246,6 +262,7 @@ if __name__ == "__main__" :
     tname = sys.argv[1] if len(sys.argv)>1 else '40'
     print('%s\nTest %s' % (80*'_', tname))
     test_jungfrau_methods(tname)
+    print 'command example: %s' % usage()
     sys.exit ('End of %s' % sys.argv[0])
 
 #------------------------------
