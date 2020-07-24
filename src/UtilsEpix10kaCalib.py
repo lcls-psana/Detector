@@ -11,6 +11,7 @@ import sys
 from time import time
 import logging
 logger = logging.getLogger(__name__)
+DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
 
 from time import sleep
 from psana import DataSource, Detector
@@ -107,20 +108,37 @@ def saw_edges(trace, evnums, gap=50, do_debug=True):
     """ Returns list of triplet indexes [(ibegin, iswitch, iend), ...]
         in the arrays trace and evnums for found full periods of the charge injection pulser.
     """
-    traceB14 = trace & B14
+    traceB14 = trace & B14 # np.bitwise_and(trace, B14)
     indsB14 = np.nonzero(traceB14)[0] # index [0] selects dimension in tuple
     evnumsB14 = evnums[indsB14]
-    ixoff = np.compress(np.diff(evnumsB14)>gap, indsB14[:-1], axis=0) + 1 # compress, because where keeps zeroes
+    ixoff = np.compress(np.diff(evnumsB14)>gap, indsB14[:-1], axis=0) + 1 # compress, because np.where keeps zeroes
 
     if do_debug:
         logger.debug(info_ndarr(trace, 'trace', last=10))
-        logger.debug(info_ndarr(np.bitwise_and(trace, B14), 'bitwise_and', last=10))
-        logger.debug(info_ndarr(trace & B14,                'trace & B14', last=10))
+        logger.debug(info_ndarr(traceB14, 'trace & B14', last=10))
         logger.debug(info_ndarr(indsB14, 'indsB14'))
         logger.debug(info_ndarr(evnumsB14, 'evnumsB14'))
         logger.debug(info_ndarr(ixoff, 'ixoff', last=15))
 
-    edges = [(ixb, ixb + np.nonzero(traceB14[ixb:ixe])[0][0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1)]
+    edges = [(ixb, ixb + np.nonzero(traceB14[ixb:ixe])[0][0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1) if any(traceB14[ixb:ixe])]
+
+    #try:
+    #  edges = [(ixb, ixb + np.nonzero(traceB14[ixb:ixe])[0][0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1)]
+    #except IndexError:
+    #  msg='IndexError:\n  %s\n  %s\n  compressed: %s\n  %s\n  %s\n  %s' % (
+    #       info_ndarr(trace, 'trace', last=10),
+    #       info_ndarr(traceB14, 'trace & B14', last=10),
+    #       info_ndarr(np.compress(traceB14>0,traceB14), 'compressed trace', last=10),
+    #       info_ndarr(indsB14, 'indsB14'),
+    #       info_ndarr(evnumsB14, 'evnumsB14'),
+    #       info_ndarr(ixoff, 'ixoff', last=15))
+    #  logger.warning(msg)
+    #
+    #  for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1):
+    #      #print('ixb,ixe: ',ixb,ixe,' np.nonzero(traceB14[ixb:ixe])', np.nonzero(traceB14[ixb:ixe]))
+    #      print('ixb,ixe: ',ixb,ixe,' traceB14[ixb:ixe]', traceB14[ixb:ixe])
+    #  sys.exit('IndexError')
+
     return edges
 
 #--------------------
@@ -869,6 +887,9 @@ def offset_calibration(*args, **opts):
     ixoff      = opts.get('ixoff', 10)
     nperiods   = opts.get('nperiods', True)
     skipncc    = opts.get('skipncc', 0)    
+    logmode    = opts.get('logmode', 'DEBUG')
+
+    logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
     run = runs if runs is not None else str(irun)
     if run != str(irun): irun = int(run.split(',',1)[0].split('-',1)[0])
@@ -878,7 +899,7 @@ def offset_calibration(*args, **opts):
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
- 
+
     save_log_record_on_start(dirrepo, _name, dirmode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
@@ -1225,6 +1246,9 @@ def pedestals_calibration(*args, **opts):
     dirmode    = opts.get('dirmode', 0777)
     filemode   = opts.get('filemode', 0666)
     usesmd     = opts.get('usesmd', False)
+    logmode    = opts.get('logmode', 'DEBUG')
+
+    logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     if usesmd: dsname += ':smd'
@@ -1502,6 +1526,8 @@ def deploy_constants(*args, **opts):
     low        = opts.get('low',    0.01)
     proc       = opts.get('proc', None)
     #do_gainci  = opts.get('gainci', False)
+
+    logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name

@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-84
+2020-07-24 Mikhail S. Dubrovin
+- fix indexing issue in algorithm
+	modified:   ../app/epix10ka_offset_calibration
+	modified:   UtilsEpix10kaCalib.py
+
 Tag: V01-00-83
 2020-07-14 Mikhail S. Dubrovin
 - fix nrec counter limit, add ccmax for pedestal calibration
