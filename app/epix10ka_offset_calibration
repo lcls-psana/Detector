@@ -75,7 +75,7 @@ def option_parser() :
     d_dirxtc  = None # '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo' 
     d_display = True
-    d_logmode = 'DEBUG'
+    d_logmode = 'INFO'
     d_dopeds  = True
     d_dooffs  = True
     d_usesmd  = True

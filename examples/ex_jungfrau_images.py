@@ -147,8 +147,8 @@ def test_jungfrau_methods(tname):
     pixel_size = det.pixel_size(par)
     print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
     
-    mask_geo = det.mask_geo(par, mbits=3, width=1)
-    print_ndarr(mask_geo, 'mask_geo')
+    #mask_geo = det.mask_geo(par, mbits=3, width=1)
+    #print_ndarr(mask_geo, 'mask_geo')
 
     ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
     print('Detector origin indexes: ix, iy:', ipx, ipy)
@@ -200,7 +200,7 @@ def test_jungfrau_methods(tname):
 
         if PLOT_IMG:
             ndarr = np.array(nda)
-            ndarr *= mask_geo
+            #ndarr *= mask_geo
     
             img = det.image(evt, ndarr)
             #img = ndarr; ndarr.shape = (1024,1024) # up and down pannels look flipped 
