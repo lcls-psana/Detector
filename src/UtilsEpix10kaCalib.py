@@ -1442,6 +1442,12 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
              nda_def*GAIN_FACTOR_DEF[igm] if ctype == 'gain' else\
              nda_def 
 
+       if fname is not None and ctype == 'gainci':
+           med_nda = np.median(nda)
+           if med_nda != 0:
+               f_adu_to_kev = GAIN_FACTOR_DEF[igm] / med_nda
+               nda = nda * f_adu_to_kev
+
        lstnda.append(nda if nda is not None else nda_def)
        #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
        #logger.info('%5s : %s' % (gm,fname))
@@ -1521,9 +1527,9 @@ def deploy_constants(*args, **opts):
     logmode    = opts.get('logmode', 'DEBUG')
     dirmode    = opts.get('dirmode',  0777)
     filemode   = opts.get('filemode', 0666)
-    high       = opts.get('high',   1.)
-    medium     = opts.get('medium', 0.33333) 
-    low        = opts.get('low',    0.01)
+    high       = opts.get('high',   16.40) # ADU/keV #High gain: 132 ADU / 8.05 keV = 16.40 ADU/keV
+    medium     = opts.get('medium', 5.466) # ADU/keV #Medium gain: 132 ADU / 8.05 keV / 3 = 5.466 ADU/keV
+    low        = opts.get('low',    0.164) # ADU/keV#Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
     proc       = opts.get('proc', None)
     #do_gainci  = opts.get('gainci', False)
 

@@ -67,11 +67,16 @@ def option_parser() :
     d_dircalib= None # './calib
     d_deploy  = False
     d_logmode = 'DEBUG'
-    d_high    = 1.
-    d_medium  = 0.33333 
-    d_low     = 0.01
     d_gainci  = False
     d_proc    = 'psrg'
+    d_high    = 16.40 # 1.
+    d_medium  = 5.466 # 0.33333
+    d_low     = 0.164 # 0.01
+    #Blaj, Gabriel <blaj@slac.stanford.edu> Mon 8/3/2020 6:52 PM
+    #Hi, Here are some good starting values for the ADC to keV conversion:
+    #High gain: 132 ADU / 8.05 keV = 16.40 ADU/keV
+    #Medium gain: 132 ADU / 8.05 keV / 3 = 5.466 ADU/keV
+    #Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
@@ -83,9 +88,9 @@ def option_parser() :
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
-    h_high    = 'default high   gain, default = %s' % str(d_high)
-    h_medium  = 'default medium gain, default = %s' % str(d_medium)
-    h_low     = 'default low    gain, default = %s' % str(d_low)
+    h_high    = 'default high   gain ADU/keV, default = %s' % str(d_high)
+    h_medium  = 'default medium gain ADU/keV, default = %s' % str(d_medium)
+    h_low     = 'default low    gain ADU/keV, default = %s' % str(d_low)
     h_gainci  = 'deploy gain constants evaluated in charge injection OVERRIDES regular gain, default = %s' % d_gainci
     h_proc    = '(str) keyword for processing of "p"-pedestals, "r"-rms, "s"-status, "g" or "c" - gain or charge-injection gain,'\
               + '  default = %s' % d_proc
