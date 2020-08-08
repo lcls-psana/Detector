@@ -7,6 +7,19 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-86
+2020-08-08 Mikhail S. Dubrovin
+- update epix10ka_* scripts
+  - in epix10ka_offset_calibration, epix10ka_pedestals_calibration - check if gain mode in meta coincides with config
+  - in epix10ka_deploy_constants - fix default for gainci
+	renamed:    app/epix10ka_ndarr_dark_proc -> app/deprecated_epix10ka_ndarr_dark_proc
+	modified:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_offset_calibration
+	modified:   app/epix10ka_pedestals_calibration
+	renamed:    examples/ex_epix10ka2m_test_calibcycles.py -> app/epix10ka_test_calibcycles
+	modified:   examples/ex_epix10ka_images.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-85
 2020-08-04 Mikhail S. Dubrovin
 - use default and average ADU/keV gain factors for epix10ka

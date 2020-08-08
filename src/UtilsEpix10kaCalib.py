@@ -699,7 +699,7 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0):
 
 #--------------------
 
-def save_log_record_on_start(dirrepo, fname, fac_mode=0777):
+def save_log_record_on_start(dirrepo, fname, fac_mode=0o777):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     rec = log_rec_on_start()
@@ -811,27 +811,28 @@ name: Epix10ka2M offset scan pvl.value: dark Auto Medium to Low
 name: Epix10ka2M offset scan pvl.value: position 0 trbit 0
 """
 
-def calibcycle_names(nspace=7):
-  if not hasattr(store, 'cc_names'):
-    store.cc_names = [\
+CALIBCYCLE_NAMES_DARK = [\
     'dark Fixed High Gain',\
     'dark Fixed Medium Gain',\
     'dark Fixed Low Gain',\
     'dark Auto High to Low',\
     'dark Auto Medium to Low',\
-     ]
+]
+
+def calibcycle_names(nspace=7):
+  if not hasattr(store, 'cc_names'):
+    store.cc_names = list(CALIBCYCLE_NAMES_DARK)
     for trbit in range(2):
       for pos in range(nspace*nspace):
         v = 'position %d trbit %d' % (pos, trbit)
         store.cc_names.append(v)
     s = [v for v in store.cc_names]
     logger.debug('Expected list of calib-cycles:\n%s' % '\n'.join(s))    
-
   return store.cc_names
 
 #--------------------
 
-def step_counter(cd, nstep_tot, nstep_run, nspace=7):
+def step_counter(cd, nstep_tot, nstep_run, nspace=None): #nspace=7 - for 103 charge injection calib-cycles, =None for 5 dark
     pvl = cd().pvLabels()
     if len(pvl)==0:
         logger.warning('CALIB-CYCLE METADATA IS NOT AVAILABLE nstep_tot:%d, nstep_run:%d' % (nstep_tot, nstep_run))
@@ -841,7 +842,8 @@ def step_counter(cd, nstep_tot, nstep_run, nspace=7):
     cc_value = pvl[0].value()
     logger.info('cc_name "%s" cc_value "%s"' % (cc_name, cc_value))
 
-    ind = calibcycle_names(nspace).index(cc_value)
+    cc_names = CALIBCYCLE_NAMES_DARK if nspace is None else calibcycle_names(nspace)
+    ind = cc_names.index(cc_value)
     if ind in list_of_cc_collected():
         logger.warning('CALIB-CYCLE %d: %s HAS ALREADY BEEN PROCESSED. SKIPPING' % (ind, cc_value))
         return None
@@ -866,8 +868,7 @@ def offset_calibration(*args, **opts):
 
     exp        = opts.get('exp', None)     
     detname    = opts.get('det', None)   
-    irun       = opts.get('run', None)    
-    runs       = opts.get('runs', None)    
+    run        = opts.get('run', None)    
     idx        = opts.get('idx', 0)    
     nbs        = opts.get('nbs', 4600)    
     nspace     = opts.get('nspace', 7)    
@@ -882,17 +883,19 @@ def offset_calibration(*args, **opts):
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
-    dirmode    = opts.get('dirmode', 0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode', 0o777)
+    filemode   = opts.get('filemode', 0o666)
     ixoff      = opts.get('ixoff', 10)
     nperiods   = opts.get('nperiods', True)
+    ccnum      = opts.get('ccnum', None)
+    ccmax      = opts.get('ccmax', 103)
     skipncc    = opts.get('skipncc', 0)    
     logmode    = opts.get('logmode', 'DEBUG')
+    errskip    = opts.get('errskip', False)
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
-    run = runs if runs is not None else str(irun)
-    if run != str(irun): irun = int(run.split(',',1)[0].split('-',1)[0])
+    irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
 
     dsname = 'exp=%s:run=%s'%(exp,run) if dirxtc is None else 'exp=%s:run=%s:dir=%s'%(exp, run, dirxtc)
     if usesmd: dsname += ':smd'
@@ -961,7 +964,6 @@ def offset_calibration(*args, **opts):
 
           for nstep_run, step in enumerate(orun.steps()):
             nstep_tot += 1
-
             logger.info('=============== calibcycle %02d ===============' % nstep_tot)
 
             nstep = step_counter(cd, nstep_tot, nstep_run, nspace)
@@ -973,6 +975,27 @@ def offset_calibration(*args, **opts):
             if nstep_tot<skipncc:
                 logger.info('skip %d consecutive calib-cycles' % skipncc)
                 continue
+
+            elif nstep_tot>=ccmax: 
+                logger.info('total number of calib-cycles %d exceeds ccmax %d' % (nstep_tot, ccmax))
+                break
+    
+            elif ccnum is not None:
+                # process calibcycle ccnum ONLY if ccnum is specified
+                if   nstep < ccnum: continue
+                elif nstep > ccnum: break
+
+            mode = find_gain_mode(det, data=None).upper()
+    
+            if mode in GAIN_MODES_IN and nstep < len(GAIN_MODES_IN):
+                mode_in_meta = GAIN_MODES_IN[nstep]
+                logger.info('========== calibcycle %d: dark run processing for gain mode in configuration %s and metadata %s'\
+                            %(nstep, mode, mode_in_meta))
+                if mode != mode_in_meta:
+                  logger.warning('INCONSISTENT GAIN MODES IN CONFIGURATION AND METADATA')
+                  if not errskip: sys.exit()
+                  logger.warning('FLAG ERRSKIP IS %s - keep processing next calib-cycle' % errskip)
+                  continue
 
             nrec,nevt = -1,0
             #First 5 Calib Cycles correspond to darks:
@@ -1231,7 +1254,7 @@ def pedestals_calibration(*args, **opts):
     """
     exp        = opts.get('exp', None)
     detname    = opts.get('det', None)
-    irun       = opts.get('run', None)
+    run        = opts.get('run', None)
     nbs        = opts.get('nbs', 1024)
     ccnum      = opts.get('ccnum', None)
     ccmax      = opts.get('ccmax', 5)
@@ -1240,17 +1263,18 @@ def pedestals_calibration(*args, **opts):
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
-    #mode       = opts.get('mode', None)
     idx_sel    = opts.get('idx', None)
-    #nspace     = opts.get('nspace', 7)
-    dirmode    = opts.get('dirmode', 0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode', 0o777)
+    filemode   = opts.get('filemode', 0o666)
     usesmd     = opts.get('usesmd', False)
     logmode    = opts.get('logmode', 'DEBUG')
+    errskip    = opts.get('errskip', False)
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
-    dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
+
+    dsname = 'exp=%s:run=%s'%(exp,run) if dirxtc is None else 'exp=%s:run=%s:dir=%s'%(exp, run, dirxtc)
     if usesmd: dsname += ':smd'
     _name = sys._getframe().f_code.co_name
 
@@ -1261,7 +1285,6 @@ def pedestals_calibration(*args, **opts):
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp      = cpdic.get('tstamp', None)
     panel_ids   = cpdic.get('panel_ids', None)
-    #gain_mode   = cpdic.get('gain_mode', None)
     expnum      = cpdic.get('expnum', None)
     dettype     = cpdic.get('dettype', None)
     shape       = cpdic.get('shape', None)
@@ -1274,15 +1297,16 @@ def pedestals_calibration(*args, **opts):
 
     #================= MPI
 
-    from mpi4py import MPI
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size() # number of MPI nodes; 1 for regular python command
+    #from mpi4py import MPI
+    #comm = MPI.COMM_WORLD
+    #rank = comm.Get_rank()
+    #size = comm.Get_size() # number of MPI nodes; 1 for regular python command
 
     #=================
 
     ds = DataSource(dsname)
     det = Detector(detname)
+    cd = Detector('ControlData')
 
     #print 'det.shape', det.shape()
     shape_block = [nbs,] + list(det.shape()) # [1024, 16, 352, 384]
@@ -1290,13 +1314,23 @@ def pedestals_calibration(*args, **opts):
 
     mode = None # gain_mode
 
-    for nstep, step in enumerate(ds.steps()): #(loop through calyb cycles, using only the first):
-        if size > 1:
-            # if MPI is on process all calibcycles, calibcycle per rank
-            if nstep < rank: continue
-            if nstep > rank: break
+    nstep_tot = -1
+    for orun in ds.runs():
+      print '==== run:', orun.run()
 
-        elif nstep>=ccmax: break
+      for nstep_run, step in enumerate(orun.steps()): #(loop through calyb cycles, using only the first):
+        nstep_tot += 1
+        logger.info('=============== calibcycle %02d ===============' % nstep_tot)
+
+        nstep = step_counter(cd, nstep_tot, nstep_run)
+        if nstep is None: continue
+
+        #if size > 1:
+        #    # if MPI is on process all calibcycles, calibcycle per rank
+        #    if nstep < rank: continue
+        #    if nstep > rank: break
+
+        if nstep_tot>=ccmax: break
 
         elif ccnum is not None:
             # process calibcycle ccnum ONLY if ccnum is specified and MPI is not used!!!
@@ -1306,7 +1340,14 @@ def pedestals_calibration(*args, **opts):
         mode = find_gain_mode(det, data=None).upper()
 
         if mode in GAIN_MODES_IN:
-            logger.info('========== rank %d calibcycle %d: dark run processing for gain mode %s' % (rank, nstep, mode))
+            mode_in_meta = GAIN_MODES_IN[nstep]
+            logger.info('========== calibcycle %d: dark run processing for gain mode in configuration %s and metadata %s'\
+                        %(nstep, mode, mode_in_meta))
+            if mode != mode_in_meta:
+              logger.warning('INCONSISTENT GAIN MODES IN CONFIGURATION AND METADATA')
+              if not errskip: sys.exit()
+              logger.warning('FLAG ERRSKIP IS %s - keep processing next calib-cycle' % errskip)
+              continue
         else:
             logger.warning('UNRECOGNIZED GAIN MODE: %s, DARKS NOT UPDATED...'%mode)
             sys.exit()
@@ -1341,7 +1382,7 @@ def pedestals_calibration(*args, **opts):
 
             if idx_sel is not None and idx_sel != idx: continue # skip panels if idx_sel is specified
 
-            logger.info('\n%s\npanel:%02d id:%s' % (100*'=', idx, panel_id))
+            logger.info('\n%s\nprocess panel:%02d id:%s' % (100*'=', idx, panel_id))
 
             #if mode is None:
             #    msg = 'Gain mode for dark processing is not defined "%s" try to set option -m <gain-mode>' % mode
@@ -1408,41 +1449,29 @@ def pedestals_calibration(*args, **opts):
                     fname = '%s_pedestals_AHL-L.dat' % prefix_peds
                     save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
 
-    logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
+    #logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
 
 #--------------------
 #--------------------
 #--------------------
 #--------------------
 
-def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0777):
+def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777):
 
-    logger.debug('In merge_panel_gain_ranges for\n  repo: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
-                 (dirrepo, panel_id, ctype, str(tstamp), str(shape)))
+    logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
+                 (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
 
-    dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
-
-    nda_def = np.ones(shape, dtype=np.float64) if ctype in ('gain', 'rms') else np.zeros(shape)
-    dir_ctype = None
-    if   ctype == 'pedestals': dir_ctype = dir_peds
-    elif ctype == 'gain'     : dir_ctype = dir_gain
-    elif ctype == 'gainci'   : dir_ctype = dir_gain
-    elif ctype == 'rms'      : dir_ctype = dir_rms
-    elif ctype == 'status'   : dir_ctype = dir_status
-    else:
-        dir_ctype = dir_peds
-        logger.warning('NON-DEFINED DEFAULT CONSTANTS AND DIRECTORY FOR ctype:%s' % ctype)
-    
-    logger.debug(info_ndarr(nda_def, 'dir_ctype: %s nda_def' % dir_ctype))
+    nda_def = np.ones(shape, dtype=np.float32) if ctype in ('gain', 'gainci', 'rms') else\
+              np.zeros(shape, dtype=np.float32)
 
     lstnda = []
     for igm,gm in enumerate(GAIN_MODES):
        fname = find_file_for_timestamp(dir_ctype, '%s_%s' % (ctype,gm), tstamp)
        nda = np.loadtxt(fname, dtype=np.float32) if fname is not None else\
-             nda_def*GAIN_FACTOR_DEF[igm] if ctype == 'gain' else\
+             nda_def*GAIN_FACTOR_DEF[igm] if ctype in ('gain', 'gainci') else\
              nda_def 
 
-       if fname is not None and ctype == 'gainci':
+       if fname is not None and ctype == 'gainci': # normalize gain factors
            med_nda = np.median(nda)
            if med_nda != 0:
                f_adu_to_kev = GAIN_FACTOR_DEF[igm] / med_nda
@@ -1453,17 +1482,13 @@ def merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, ofname, fmt
        #logger.info('%5s : %s' % (gm,fname))
 
     nda = np.stack(tuple(lstnda))
-    #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
     logger.debug('merge_panel_gain_ranges - merged with shape %s' % str(nda.shape))
 
     nda.shape = (7, 1, 352, 384)
-    #nda = nda.astype(dtype=np.float32)
-    #logger.warning('SINGLE PANEL %s ARRAY RE-SHAPED TO %s' % (ctype, str(nda.shape)))
-
     logger.debug(info_ndarr(nda, 'merged %s'%ctype))
     save_ndarray_in_textfile(nda, ofname, fac_mode, fmt)
 
-    nda.shape = (7, 1, 352, 384)
+    nda.shape = (7, 1, 352, 384) # because save_ndarray_in_textfile changes shape
     return nda
 
 #--------------------
@@ -1525,13 +1550,12 @@ def deploy_constants(*args, **opts):
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
     logmode    = opts.get('logmode', 'DEBUG')
-    dirmode    = opts.get('dirmode',  0777)
-    filemode   = opts.get('filemode', 0666)
+    dirmode    = opts.get('dirmode',  0o777)
+    filemode   = opts.get('filemode', 0o666)
     high       = opts.get('high',   16.40) # ADU/keV #High gain: 132 ADU / 8.05 keV = 16.40 ADU/keV
     medium     = opts.get('medium', 5.466) # ADU/keV #Medium gain: 132 ADU / 8.05 keV / 3 = 5.466 ADU/keV
     low        = opts.get('low',    0.164) # ADU/keV#Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
     proc       = opts.get('proc', None)
-    #do_gainci  = opts.get('gainci', False)
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
@@ -1553,14 +1577,14 @@ def deploy_constants(*args, **opts):
 
     global GAIN_FACTOR_DEF
     #GAIN_MODES     = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
-    GAIN_FACTOR_DEF = [high,medium,low,  high, medium,    low,    low]
+    GAIN_FACTOR_DEF = [high, medium, low, high, medium, low, low]
 
     CTYPE_FMT = {'pedestals'   : fmt_peds,
                  'pixel_gain'  : fmt_gain,
                  'pixel_rms'   : fmt_rms,
                  'pixel_status': fmt_status}
 
-    logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
+    logger.debug('detector %s panel ids:\n%s' % (detname, '\n'.join(panel_ids)))
 
     tstamp = tstamp_run if tstamp is None else\
              tstamp if int(tstamp)>9999 else\
@@ -1579,29 +1603,25 @@ def deploy_constants(*args, **opts):
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
 
-        #mpars = (('pedestals', 'pedestals',    prefix_peds),\
-        #         ('rms',       'pixel_rms',    prefix_rms),\
-        #         ('status',    'pixel_status', prefix_status),\
-        #         ('gain',      'pixel_gain',   prefix_gain))
+        #mpars = (('pedestals', 'pedestals',    prefix_peds,   dir_peds),\
+        #         ('rms',       'pixel_rms',    prefix_rms,    dir_rms),\
+        #         ('status',    'pixel_status', prefix_status, dir_status),\
+        #         ('gain',      'pixel_gain',   prefix_gain,   dir_gain))
 
         mpars = []
-        if 'p' in proc: mpars.append(('pedestals', 'pedestals',    prefix_peds))
-        if 'r' in proc: mpars.append(('rms',       'pixel_rms',    prefix_rms))
-        if 's' in proc: mpars.append(('status',    'pixel_status', prefix_status))
-        if 'g' in proc: mpars.append(('gain',      'pixel_gain',   prefix_gain))
-        if 'c' in proc: mpars.append(('gainci',    'pixel_gain',   prefix_gain))
+        if 'p' in proc: mpars.append(('pedestals', 'pedestals',    prefix_peds,   dir_peds))
+        if 'r' in proc: mpars.append(('rms',       'pixel_rms',    prefix_rms,    dir_rms))
+        if 's' in proc: mpars.append(('status',    'pixel_status', prefix_status, dir_status))
+        if 'g' in proc: mpars.append(('gain',      'pixel_gain',   prefix_gain,   dir_gain))
+        if 'c' in proc: mpars.append(('gainci',    'pixel_gain',   prefix_gain,   dir_gain))
         if 'c' in proc:
              add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
 
-        #if do_gainci:
-        #    add_links_for_gainci_fixed_modes(dir_gain, fname_prefix) # FH->AHL-H, FM->AML-M, FL->AML-L/AHL-L
-        #    mpars = (('gainci', 'pixel_gain',   prefix_gain),)
-
-        for (ctype, octype, prefix) in mpars:
+        for (ctype, octype, prefix, dir_ctype) in mpars:
             fmt = CTYPE_FMT.get(octype,'%.5f')
             logger.debug('begin merging for ctype:%s, octype:%s, fmt:%s,\n  prefix:%s' % (ctype, octype, fmt, prefix))
             fname = '%s_%s.txt' % (prefix, ctype)
-            nda = merge_panel_gain_ranges(dirrepo, panel_id, ctype, tstamp, shape, fname, fmt, filemode)
+            nda = merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, fname, fmt, filemode)
             if octype in dic_consts: dic_consts[octype].append(nda) # append for panel per ctype
             else:                    dic_consts[octype] = [nda,]
 
