@@ -68,7 +68,6 @@ def option_parser() :
     d_dircalib= None # './calib
     d_deploy  = False
     d_logmode = 'DEBUG'
-    d_gainci  = False
     d_proc    = 'psrg'
     d_high    = 16.40 # 1.
     d_medium  = 5.466 # 0.33333
@@ -92,7 +91,6 @@ def option_parser() :
     h_high    = 'default high   gain ADU/keV, default = %s' % str(d_high)
     h_medium  = 'default medium gain ADU/keV, default = %s' % str(d_medium)
     h_low     = 'default low    gain ADU/keV, default = %s' % str(d_low)
-    h_gainci  = 'deploy gain constants evaluated in charge injection OVERRIDES regular gain, default = %s' % d_gainci
     h_proc    = '(str) keyword for processing of "p"-pedestals, "r"-rms, "s"-status, "g" or "c" - gain or charge-injection gain,'\
               + '  default = %s' % d_proc
 
@@ -110,7 +108,6 @@ def option_parser() :
     parser.add_option(      '--medium',  default=d_medium,  action='store', type='float',  help=h_medium)
     parser.add_option(      '--low',     default=d_low,     action='store', type='float',  help=h_low)
     parser.add_option('-p', '--proc',    default=d_proc,    action='store', type='string', help=h_proc)
-    #parser.add_option('-g', '--gainci',  default=d_gainci,  action='store_true',           help=h_gainci)
 
     return parser
 
