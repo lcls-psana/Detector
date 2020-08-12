@@ -1316,7 +1316,7 @@ def pedestals_calibration(*args, **opts):
 
     nstep_tot = -1
     for orun in ds.runs():
-      print '==== run:', orun.run()
+      print('==== run:', orun.run())
 
       for nstep_run, step in enumerate(orun.steps()): #(loop through calyb cycles, using only the first):
         nstep_tot += 1
