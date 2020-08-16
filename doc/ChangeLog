@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-88
+2020-08-15 Mikhail S. Dubrovin
+- update UtilsEpix10kaCalib.py
+
+Tag: V01-00-87 ???
+
 Tag: V01-00-86
 2020-08-08 Mikhail S. Dubrovin
 - update epix10ka_* scripts
