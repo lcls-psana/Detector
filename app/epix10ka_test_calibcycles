@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 
+import logging
+logger = logging.getLogger(__name__)
+DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
+STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
+
 import sys
 from psana import DataSource, Detector
 from Detector.PyDataAccess import get_epix_config_object
 from Detector.GlobalUtils import info_ndarr, print_ndarr
 from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_objects,\
-                            get_epix10ka_any_config_object, find_gain_mode
+                            get_epix10ka_any_config_object, find_gain_mode,\
+     info_pixel_gain_mode_statistics_for_raw, info_pixel_gain_mode_fractions
 
 #----------
     #ds = DataSource('exp=detdaq18:run=14:smd')
@@ -26,11 +32,13 @@ def argument_parser():
     d_dsname  = 'exp=detdaq18:run=51:smd'
     d_detname = 'DetLab.0:Epix10ka2M.0'
     d_prefix  ='./img'
-    d_procev  = False
+    d_procev  = 10
     d_plot    = False
     d_save    = False
     d_skip    = 0
     d_objinfo = True
+    d_logmode = 'DEBUG'
+    h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
 
     scrname = sys.argv[0].rsplit('/')[-1]
     usage = 'E.g.: %s %s # brief info about content' % (scrname, d_dsname)\
@@ -40,17 +48,21 @@ def argument_parser():
     
     parser = argparse.ArgumentParser()
     parser.add_argument('dsname', type=str, default=d_dsname, help="dataset, default: %s"%d_dsname)
-    parser.add_argument('--detname', type=str, default=d_detname, help="detname, default: %s"%d_detname)
+    parser.add_argument('-d', '--detname', type=str, default=d_detname, help="detname, default: %s"%d_detname)
     parser.add_argument('-f', '--prefix', type=str, default=d_prefix, help='output file name prefix, default: %s'%d_prefix)
-    parser.add_argument('-e', '--procev', default=d_procev, help='process events in loop, default: %s'%d_procev, action='store_true')
-    parser.add_argument('-p', '--plot', default=d_plot, help='plot graphiocs, default: %s'%d_plot, action='store_true')
-    parser.add_argument('-s', '--save', default=d_save, help='save graphiocs, default: %s'%d_save, action='store_true')
+    #parser.add_argument('-e', '--procev', default=d_procev, help='process events in loop, default: %s'%d_procev, action='store_true')
+    parser.add_argument('-e', '--procev', type=int, default=d_procev, help='number of process events in calibcycle, default: %d'%d_procev)
+    parser.add_argument('-p', '--plot', default=d_plot, help='plot graphics, default: %s'%d_plot, action='store_true')
+    parser.add_argument('-s', '--save', default=d_save, help='save graphics, default: %s'%d_save, action='store_true')
     parser.add_argument('-i', '--objinfo', default=d_objinfo, help='print objcts info, default: %s'%d_objinfo, action='store_false')
     parser.add_argument('-S', '--skip', default=d_skip, type=int, help='skip initial number of calibcycles, default: %d'%d_skip)
-    
+    parser.add_argument('-L', '--logmode', type=str, default=d_logmode, help=h_logmode)    
+
     args = parser.parse_args()
     print('Arguments: %s\n' % str(args))
     for k,v in vars(args).items() : print('  %12s : %s' % (k, str(v)))
+ 
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[args.logmode])
 
     return args
 
@@ -198,7 +210,7 @@ def do_work():
         nevgood=-1
         for nev,evt in enumerate(events):
 
-          if not PROC_EVENT: continue
+          if nev > PROC_EVENT: continue
 
           raw = det.raw(evt)
           
@@ -206,11 +218,14 @@ def do_work():
               print 'Ev:%2d raw is None' % nev
               continue
           else:
+              print 'Ev:%2d' % nev
               nevgood += 1
               if nevgood%1000: continue
               #if raw.ndim > 2: raw=raw[idx,:]
-              msg = 'Ev:%2d ' % nevgood
+              msg = 'Good ev:%2d ' % nevgood
               for idx in range(16):
+                 #print('panel:%2d  %s' %(idx, info_pixel_gain_mode_statistics_for_raw(det,raw[idx,:])))
+                 print('panel:%2d  %s' %(idx, info_pixel_gain_mode_fractions(det, raw[idx,:])))
                  gmode = find_gain_mode(det,raw[idx,:])
                  msg += ' %d:%s' % (idx,gmode)
               print_ndarr(raw, '%s\n    '%msg)

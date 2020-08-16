@@ -14,8 +14,8 @@ import pyimgalgos.Graphics as gr
 
 #------------------------------
 
-EVSKIP  = 0
-EVENTS  = 100 + EVSKIP
+EVSKIP  = 100
+EVENTS  = 10 + EVSKIP
 PLOT_IMG      = True #False #True
 PLOT_GAIN_MAP = False #True #False #True
 PLOT_SPE      = False
@@ -47,9 +47,12 @@ def dsname_source(tname):
         return 'exp=xcsx35617:run=414',  'XcsEndstation.0:Epix10ka2M.0' # AHL
     elif tname=='9':
         # /reg/d/psdm/MFX/mfxc00118/calib/Epix10ka2M::CalibV1/MfxEndstation.0:Epix10ka2M.0/pedestals/
-        psana.setOption('psana.calib-dir', '/reg/d/psdm/MFX/mfxc00118/calib/')
         #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/gains/epix10k/calib/')
+        psana.setOption('psana.calib-dir', '/reg/d/psdm/MFX/mfxc00118/calib/')
         return 'exp=mfxc00118:run=41', 'MfxEndstation.0:Epix10ka2M.0' # silver behranate
+    elif tname=='10':
+        psana.setOption('psana.calib-dir', '/reg/d/psdm/MFX/mfxc00118/calib/')
+        return 'exp=mfxc00118:run=70:smd', 'MfxEndstation.0:Epix10ka2M.0' # run=70,71,72,73: Fe55 in Q0,Q1,Q2,Q3
     else:
         print 'Example for\n dataset: %s\n source: %s \nis not implemented' % (dsname, src)
         sys.exit(0)
@@ -236,18 +239,19 @@ def test_epix10ka_methods(tname):
         #arr_sel = ndarr[1, 5:170, 5:185].copy()
         #ndarr[1, 5:170, 5:185] -= 500
 
-        ave, rms = np.median(ndarr), ndarr.std()
-        print 'ave %.3f rms: %.3f' % (ave, rms)
+        #ave, rms = np.median(ndarr), ndarr.std()
+        #print 'ave %.3f rms: %.3f' % (ave, rms)
 
         ave = np.median(ndarr)
-        #rms = np.median(np.abs(ndarr-ave))
+        rms = np.median(np.abs(ndarr-ave))
         print 'med %.3f spr: %.3f' % (ave, rms)
 
         #amin, amax = (-1, 10) if tname=='4' else\
         #             (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
         #             (ave-2*rms, ave+6*rms)
-        amin, amax = (ave-0.1*rms, ave+0.5*rms)
-        if tname=='8': amin, amax = (0, 40000)
+        amin, amax = (ave-0.5*rms, ave+3*rms)
+        if   tname=='8' : amin, amax = (0, 40000)
+        elif tname=='10': amin, amax = (-2.5, 5)
 
         img = None
 

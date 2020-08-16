@@ -239,30 +239,57 @@ def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
 
 #--------------------
 
-def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
-    """returns (str) with statistics of pixels in defferent gain modes in gain maps
+def pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
+    """returns statistics of pixels in defferent gain modes in gain maps
     """
-    t0_sec = time()
     arr1 = np.ones_like(gr0, dtype=np.int32)
-    msg = 'gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
-     (np.sum(np.select((gr0,), (arr1,), default=0)),\
+    return\
+      np.sum(np.select((gr0,), (arr1,), default=0)),\
       np.sum(np.select((gr1,), (arr1,), default=0)),\
       np.sum(np.select((gr2,), (arr1,), default=0)),\
       np.sum(np.select((gr3,), (arr1,), default=0)),\
       np.sum(np.select((gr4,), (arr1,), default=0)),\
       np.sum(np.select((gr5,), (arr1,), default=0)),\
-      np.sum(np.select((gr6,), (arr1,), default=0))) # 3ms !!!
-    return '%s\n statistics processing time (sec) = %.6f' % (msg, time()-t0_sec)
+      np.sum(np.select((gr6,), (arr1,), default=0))
 
 #--------------------
 
-def info_pixel_gain_mode_statistics_for_raw(det, raw):
+#def pixel_gain_mode_fractions(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
+def pixel_gain_mode_fractions(det, data):
+    """returns fraction of pixels in defferent gain modes in gain maps
+    """
+    gmaps = gain_maps_epix10ka_any(det, data)
+    if gmaps is None: return None
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    pix_stat = pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    f = 1.0/gr0.size
+    return [npix*f for npix in pix_stat]
+
+#--------------------
+
+def info_pixel_gain_mode_fractions(det, raw, msg='pixel gain mode fractions : '):
+    """returns (str) with fraction of pixels in defferent gain modes in gain maps
+    """
+    grp_prob = pixel_gain_mode_fractions(det, raw)
+    return '%s%s' % (msg, ', '.join(['%.5f'%p for p in grp_prob]))
+
+#--------------------
+
+def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
+    """returns (str) with statistics of pixels in defferent gain modes in gain maps
+    """
+    grp_stat = pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    return ', '.join(['%7d' % npix for npix in grp_stat])
+
+#--------------------
+
+def info_pixel_gain_mode_statistics_for_raw(det, raw, msg='pixel gain mode statistics: '):
     """returns (str) with statistics of pixels in defferent gain modes in raw data
     """
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
-    return info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    return '%s%s' % (msg, info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
 #--------------------
 
@@ -414,27 +441,31 @@ def find_gain_mode(det, data=None):
     """Returns str gain mode from the list GAIN_MODES or None.
        if data=None: distinguish 5-modes w/o data
     """
-    gmaps = gain_maps_epix10ka_any(det, data)
-    if gmaps is None: return None
-    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    #gmaps = gain_maps_epix10ka_any(det, data)
+    #if gmaps is None: return None
+    #gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
-    arr1 = np.ones_like(gr0)
-    npix = arr1.size
-    pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
-                np.select((gr1,), (arr1,), 0).sum(),\
-                np.select((gr2,), (arr1,), 0).sum(),\
-                np.select((gr3,), (arr1,), 0).sum(),\
-                np.select((gr4,), (arr1,), 0).sum(),\
-                np.select((gr5,), (arr1,), 0).sum(),\
-                np.select((gr6,), (arr1,), 0).sum())
+    #arr1 = np.ones_like(gr0)
+    #npix = arr1.size
+    #pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
+    #            np.select((gr1,), (arr1,), 0).sum(),\
+    #            np.select((gr2,), (arr1,), 0).sum(),\
+    #            np.select((gr3,), (arr1,), 0).sum(),\
+    #            np.select((gr4,), (arr1,), 0).sum(),\
+    #            np.select((gr5,), (arr1,), 0).sum(),\
+    #            np.select((gr6,), (arr1,), 0).sum())
 
-    #logger.debug('Statistics in gain groups: %s' % str(pix_stat))
+    ##logger.debug('Statistics in gain groups: %s' % str(pix_stat))
 
-    f = 1.0/arr1.size
-    grp_prob = [npix*f for npix in pix_stat]
-    #logger.debug('grp_prob: %s' % str(grp_prob))
+    #f = 1.0/arr1.size
+    #grp_prob = [npix*f for npix in pix_stat]
+    #logger.debug('grp_prob: %s' % ', '.join(['%.4f'%p for p in grp_prob]))
 
-    ind = next(i for i,fr in enumerate(grp_prob) if fr>0.5)
+    #grp_prob = pixel_gain_mode_fractions(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    grp_prob = pixel_gain_mode_fractions(det, data)
+
+    ind = next((i for i,p in enumerate(grp_prob) if p>0.5), None)
+    if ind is None: return None
     gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None 
     #logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
 

@@ -1246,6 +1246,19 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
 #--------------------
 #--------------------
 
+def load_panel_constants(dir_ctype, pattern, tstamp):
+    fname = find_file_for_timestamp(dir_ctype, pattern, tstamp)
+    arr=None
+    if fname is not None and os.path.exists(fname):
+        arr=np.loadtxt(fname)
+        logger.info('Loaded: %s' % fname)
+    else:
+        logger.warning('file DOES NOT EXIST: %s' % fname)
+        logger.warning('DO NOT save save constants for missing files')
+    return arr
+
+#--------------------
+
 def pedestals_calibration(*args, **opts):
     """NEWS significant ACCELERATION is acheived:
        - accumulate data for entire epix10kam_2m/quad array
@@ -1421,34 +1434,34 @@ def pedestals_calibration(*args, **opts):
             save_2darray_in_textfile(status, fname, filemode, fmt_status)
 
             #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
-            if mode=='AML-M':
-                fname_offset_AML = find_file_for_timestamp(dir_offset, 'offset_AML', tstamp)
-                offset=None
-                if fname_offset_AML is not None and os.path.exists(fname_offset_AML):
-                    offset=np.loadtxt(fname_offset_AML)
-                    logger.info('Loaded: %s' % fname_offset_AML)
-                else:
-                    logger.warning('file with offsets DOES NOT EXIST: %s' % fname_offset_AML)
-                    logger.warning('DO NOT save AML-L pedestals w/o offsets')
 
-                if offset is not None:
-                    fname = '%s_pedestals_AML-L.dat' % prefix_peds
-                    save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
+            if mode=='AHL-H': # evaluate AHL_L from AHL_H
+                ped_hl_h = dark #[3,:,:]
 
-            elif mode=='AHL-H':
-                fname_offset_AHL = find_file_for_timestamp(dir_offset, 'offset_AHL', tstamp)
-                offset=None
-                if fname_offset_AHL is not None and os.path.exists(fname_offset_AHL):
-                    offset=np.loadtxt(fname_offset_AHL)
-                    logger.info('Loaded: %s' % fname_offset_AHL)
-                else:
-                    logger.warning('file with offsets DOES NOT EXIST: %s' % fname_offset_AHL)
-                    logger.warning('DO NOT save AHL-L pedestals w/o offsets')
+                offset_hl_h = load_panel_constants(dir_offset, 'offset_AHL-H', tstamp)
+                offset_hl_l = load_panel_constants(dir_offset, 'offset_AHL-L', tstamp)
+                gain_hl_h   = load_panel_constants(dir_gain,   'gainci_AHL-H', tstamp)
+                gain_hl_l   = load_panel_constants(dir_gain,   'gainci_AHL-L', tstamp)
 
-                if offset is not None:
+                #if offset is not None:
+                if not None in (offset_hl_h, offset_hl_l, gain_hl_h, gain_hl_l):
+                    ped_hl_l = offset_hl_l - (offset_hl_h - ped_hl_h) * divide_protected(gain_hl_l, gain_hl_h) #V3 Gabriel's
                     fname = '%s_pedestals_AHL-L.dat' % prefix_peds
-                    save_2darray_in_textfile(dark if offset is None else (dark-offset), fname, filemode, fmt_peds)
+                    save_2darray_in_textfile(ped_hl_l, fname, filemode, fmt_peds)
 
+            elif mode=='AML-M': # evaluate AML_L from AML_M
+                ped_ml_m = dark #[4,:,:]
+
+                offset_ml_m = load_panel_constants(dir_offset, 'offset_AML-M', tstamp)
+                offset_ml_l = load_panel_constants(dir_offset, 'offset_AML-L', tstamp)
+                gain_ml_m   = load_panel_constants(dir_gain,   'gainci_AML-M', tstamp)
+                gain_ml_l   = load_panel_constants(dir_gain,   'gainci_AML-L', tstamp)
+
+                #if offset is not None:
+                if not None in (offset_ml_m, offset_ml_l, gain_ml_m, gain_ml_l):
+                    ped_ml_l = offset_ml_l - (offset_ml_m - ped_ml_m) * divide_protected(gain_ml_l, gain_ml_m) #V3 Gabriel's
+                    fname = '%s_pedestals_AML-L.dat' % prefix_peds
+                    save_2darray_in_textfile(ped_ml_l, fname, filemode, fmt_peds)
     #logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
 
 #--------------------
