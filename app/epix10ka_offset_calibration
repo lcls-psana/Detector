@@ -83,6 +83,7 @@ def option_parser() :
     d_ccmax   = 103
     d_skipncc = 0
     d_errskip = False
+    d_savechi2= False
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
@@ -103,6 +104,7 @@ def option_parser() :
     h_ccmax   = 'maximal number of calib-cycles to process, default = %s' % str(d_ccmax)
     h_skipncc = 'skip number of first consecutive calibcycles for debugging, default = %s' % str(d_skipncc)
     h_errskip = 'flag to skip errors and keep processing (stop otherwise), default = %s' % d_errskip
+    h_savechi2= 'save chi2 files, default = %s' % d_savechi2
 
     parser = OptionParser(description=usage(1), usage = usage())
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
@@ -124,6 +126,7 @@ def option_parser() :
     parser.add_option('-m', '--ccmax',   default=d_ccmax,   action='store', type='int',    help=h_ccmax)
     parser.add_option('-s', '--skipncc', default=d_skipncc, action='store', type='int',    help=h_skipncc)
     parser.add_option('-E', '--errskip', default=d_errskip, action='store_true',           help=h_errskip)
+    parser.add_option('-C', '--savechi2',default=d_savechi2,action='store_true',           help=h_savechi2)
 
     return parser
 

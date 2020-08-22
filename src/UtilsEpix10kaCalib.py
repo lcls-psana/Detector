@@ -224,10 +224,11 @@ def imshow_cbar(fig, axim, axcb, img, amin=None, amax=None, extent=None,\
 #--------------------
 # 2020-06 development
 
-def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False):
+def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, savechi2=False, npmin=5):
 
     mf,my,mx=block.shape
     fits=np.zeros((my,mx,2,2))
+    chi2=np.zeros((my,mx,2))
     nsp=np.zeros((my,mx),dtype=np.int16)
     msg = ' fit '
 
@@ -265,12 +266,26 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False):
                  x1 = np.hstack((x1,  evnum[ixs+ixoff:ixe]-evnum[ixb]))
                  y1 = np.hstack((y1, tracem[ixs+ixoff:ixe]))
                  
-            pf0=np.polyfit(x0,y0,1)
-            pf1=np.polyfit(x1,y1,1)
+            if x0.size<npmin:
+                 logger.warning(info_ndarr(x0, '\n    too short array x0', last=10))
+                 continue
+            if x1.size<npmin:
+                 logger.warning(info_ndarr(x1, '\n    too short array x1', last=10))
+                 continue
 
-            fits[iy,ix,0]=pf0
-            fits[iy,ix,1]=pf1
+            pf0 = np.polyfit(x0,y0,1, full=savechi2)
+            pf1 = np.polyfit(x1,y1,1, full=savechi2)
+
+            if savechi2:
+                pf0, res0, _, _, _ = pf0
+                pf1, res1, _, _, _ = pf1
+
+                chisq0 = res0 / (x0.size - 3)
+                chisq1 = res1 / (x1.size - 3)
+                chi2[iy,ix,:] = (chisq0,chisq1)
             
+            fits[iy,ix,:] = (pf0, pf1)
+
             if selected: # for selected ix, iy
                 s = '==== ix%02d-iy%02d:' % (ix, iy)
                 for ixb, ixs, ixe in edges:
@@ -282,6 +297,11 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False):
                     s += info_ndarr(y1,     '\n    y1', last=10)
                     s += info_ndarr(pf0,    '\n    pf0', last=10)
                     s += info_ndarr(pf1,    '\n    pf1', last=10)
+
+                if savechi2:
+                    s += '\n    chi2/ndof H/M %.3f' % chisq0
+                    s += '\n    chi2/ndof L   %.3f' % chisq1
+
                 logger.debug(s)
 
                 msg+='.'
@@ -293,7 +313,7 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False):
                                + info_ndarr(y,'\n    y'))
                     plot_fit(x,y,pf0,pf1,fname)
 
-    return fits,nsp,msg
+    return fits,nsp,msg,chi2
 
 #--------------------
 #--------------------
@@ -880,6 +900,8 @@ def offset_calibration(*args, **opts):
     fmt_rms    = opts.get('fmt_rms',    '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
     fmt_gain   = opts.get('fmt_gain',   '%.6f')
+    fmt_chi2   = opts.get('fmt_chi2',   '%.3f')
+    savechi2   = opts.get('savechi2', False)
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
@@ -935,6 +957,11 @@ def offset_calibration(*args, **opts):
     create_directory(dir_rms,    mode=dirmode)
     create_directory(dir_status, mode=dirmode)
 
+    chi2_ml=np.zeros((ny,nx,2))
+    chi2_hl=np.zeros((ny,nx,2))
+    nsp_ml=np.zeros((ny,nx),dtype=np.int16)
+    nsp_hl=np.zeros((ny,nx),dtype=np.int16)
+
     try:
         npz=np.load(fname_work)
         logger.info('Charge-injection data loaded from file: %s' % fname_work)
@@ -951,8 +978,6 @@ def offset_calibration(*args, **opts):
         darks=np.zeros((7,ny,nx))
         fits_ml=np.zeros((ny,nx,2,2))
         fits_hl=np.zeros((ny,nx,2,2))
-        nsp_ml=np.zeros((ny,nx),dtype=np.int16)
-        nsp_hl=np.zeros((ny,nx),dtype=np.int16)
 
         ds = DataSource(dsname)
         det = Detector(detname)
@@ -1084,9 +1109,10 @@ def offset_calibration(*args, **opts):
                 jx=istep%nspace                    
                 block=block[:nrec,jy:ny:nspace,jx:nx:nspace]         # select only pulsed pixels
                 evnum=evnum[:nrec]                                   # list of non-empty events
-                fits0,nsp0,msgf=fit(block,evnum,display,figprefix,ixoff,nperiods) # fit offset, gain
+                fits0,nsp0,msgf,chi2=fit(block,evnum,display,figprefix,ixoff,nperiods,savechi2) # fit offset, gain
                 fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0             # collect results
                 nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0               # collect switching points
+                if savechi2: chi2_ml[jy:ny:nspace,jx:nx:nspace]=chi2 # collect chi2/dof
                 s = '\n  block fit results AML'\
                   + info_ndarr(fits0[:,:,0,0],'\n  M gain',   last=5)\
                   + info_ndarr(fits0[:,:,1,0],'\n  L gain',   last=5)\
@@ -1124,9 +1150,10 @@ def offset_calibration(*args, **opts):
                 jx=istep%nspace                    
                 block=block[:nrec,jy:ny:nspace,jx:nx:nspace]       # select only pulsed pixels
                 evnum=evnum[:nrec]                                 # list of non-empty events
-                fits0,nsp0,msgf=fit(block,evnum,display,figprefix,ixoff,nperiods) # fit offset, gain
+                fits0,nsp0,msgf,chi2=fit(block,evnum,display,figprefix,ixoff,nperiods,savechi2) # fit offset, gain
                 fits_hl[jy:ny:nspace,jx:nx:nspace]=fits0           # collect results
                 nsp_hl[jy:ny:nspace,jx:nx:nspace]=nsp0
+                if savechi2: chi2_hl[jy:ny:nspace,jx:nx:nspace]=chi2 # collect chi2/dof
                 s = '\n  block fit results AHL'\
                   + info_ndarr(fits0[:,:,0,0],'\n  H gain',   last=5)\
                   + info_ndarr(fits0[:,:,1,0],'\n  L gain',   last=5)\
@@ -1170,6 +1197,21 @@ def offset_calibration(*args, **opts):
     save_2darray_in_textfile(gain_ml_l, fname_gain_AML_L, filemode, fmt_gain)
     save_2darray_in_textfile(gain_hl_h, fname_gain_AHL_H, filemode, fmt_gain)
     save_2darray_in_textfile(gain_hl_l, fname_gain_AHL_L, filemode, fmt_gain)
+
+    if savechi2:
+        #Save chi2s:
+        chi2_ml_m = chi2_ml[:,:,0]
+        chi2_ml_l = chi2_ml[:,:,1]
+        chi2_hl_h = chi2_hl[:,:,0]
+        chi2_hl_l = chi2_hl[:,:,1]
+        fname_chi2_AML_M = '%s_chi2ci_AML-M.dat' % prefix_gain
+        fname_chi2_AML_L = '%s_chi2ci_AML-L.dat' % prefix_gain
+        fname_chi2_AHL_H = '%s_chi2ci_AHL-H.dat' % prefix_gain
+        fname_chi2_AHL_L = '%s_chi2ci_AHL-L.dat' % prefix_gain
+        save_2darray_in_textfile(chi2_ml_m, fname_chi2_AML_M, filemode, fmt_chi2)
+        save_2darray_in_textfile(chi2_ml_l, fname_chi2_AML_L, filemode, fmt_chi2)
+        save_2darray_in_textfile(chi2_hl_h, fname_chi2_AHL_H, filemode, fmt_chi2)
+        save_2darray_in_textfile(chi2_hl_l, fname_chi2_AHL_L, filemode, fmt_chi2)
 
     #Save offsets:
     offset_ml_m = fits_ml[:,:,0,1]

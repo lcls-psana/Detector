@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-89
+2020-08-21 Mikhail S. Dubrovin
+- add protection in charge-injection fit, add optional saving chi2/dof
+	modified:   app/epix10ka_offset_calibration
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-88
 2020-08-15 Mikhail S. Dubrovin
 - update UtilsEpix10kaCalib.py
