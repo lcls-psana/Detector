@@ -7,6 +7,21 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-90
+2020-08-25 Mikhail S. Dubrovin
+- keep polishing epix10ka2m scripts
+  - deploy_constants
+    - to prevent warnings do not open non-existent files for rms and status in AML-L and AHL-L
+    - check that per-panel file extension is .dat
+    - gainci normalize on single factor each of switching modes AML-L, AHL
+  - offset_calibration
+    - TODO: check c-i calibcycles by numberorder with metadata
+- add a couple of examples
+	new file:   examples/ex_epix10ka2m_replace_offset_calib_zeros.py
+	new file:   examples/ex_epix10ka2m_split_calib_for_7nda.py
+	modified:   src/UtilsEpix10kaCalib.py
+	modified:   src/UtilsJungfrau.py
+
 Tag: V01-00-89
 2020-08-21 Mikhail S. Dubrovin
 - add protection in charge-injection fit, add optional saving chi2/dof

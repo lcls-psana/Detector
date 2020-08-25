@@ -354,7 +354,7 @@ def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None) :
 
 def find_panel_calib_dirs(jfid, dname=DIRNAME, tstamp=None) :
 
-    msg = 'Find panel diretories for jungfrau %s\n      in repository %s' % (jfid, dname)
+    msg = 'Find panel directories for jungfrau %s\n      in repository %s' % (jfid, dname)
     logger.info(msg)
     msg = ''
     dnos = []
