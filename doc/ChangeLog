@@ -7,6 +7,20 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+
+Tag: V01-00-91 - add parameter cframe to coords_xyz, add a few default geometry files, update examples
+2020-08-25 Mikhail S. Dubrovin
+	new file:   data/geometry-def-epix10ka2m.data
+	new file:   data/geometry-def-jungfrau05m.data
+	new file:   data/geometry-def-jungfrau1m.data
+	new file:   data/geometry-def-jungfrau4m.data
+	modified:   examples/ex_epix10ka_images.py
+	new file:   examples/test-2020-08-25-epix10ka-panel-flatness-optmet.py
+	new file:   examples/test-2020-08-25-epix10ka2m-marc.py
+	new file:   examples/test-lab-pixel-coordinates-on-psana-frame-image.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V01-00-90
 2020-08-25 Mikhail S. Dubrovin
 - keep polishing epix10ka2m scripts

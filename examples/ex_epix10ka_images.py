@@ -257,13 +257,17 @@ def test_epix10ka_methods(tname):
 
         if PLOT_IMG:
             #shape = (16, 352, 384)
-            #ndarr[0,:] = 0
+            #ndarr[0,:] = 1
             img = det.image(evt, ndarr) # [600:1000, 600:1000] #[300:1300, 300:1300]
             #img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
 
             if img is None:
                 print 'Image is not available.'
                 continue
+ 
+            ofnnpy = 'img-ev%0002d.npy'%i
+            np.save(ofnnpy, img)
+            print 'saved image %s' % ofnnpy
 
             #print_ndarr(img, 'img')
 

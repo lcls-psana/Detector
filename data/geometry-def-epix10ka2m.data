@@ -1,0 +1,41 @@
+
+# COMMENT:00 detector:Epix10ka2M.1 experiment: mfxc00318 and other 
+# COMMENT:01 constants generated from 2020-02-25 optical metrology
+# COMMENT:02 processor version 1 - panels only, no quads
+# COMMENT:03 centered on nda-mfxc00318-r0013-lysozyme-max.txt
+# DATE_TIME 2020-08-26 16:33:41 PDT
+# USER dubrovin
+# CALIB_TYPE geometry
+# PARAM:01 PARENT     - name and version of the parent object
+# PARAM:02 PARENT_IND - index of the parent object
+# PARAM:03 OBJECT     - name and version of the object
+# PARAM:04 OBJECT_IND - index of the new object
+# PARAM:05 X0         - x-coordinate [um] of the object origin in the parent frame
+# PARAM:06 Y0         - y-coordinate [um] of the object origin in the parent frame
+# PARAM:07 Z0         - z-coordinate [um] of the object origin in the parent frame
+# PARAM:08 ROT_Z      - object design rotation angle [deg] around Z axis of the parent frame
+# PARAM:09 ROT_Y      - object design rotation angle [deg] around Y axis of the parent frame
+# PARAM:10 ROT_X      - object design rotation angle [deg] around X axis of the parent frame
+# PARAM:11 TILT_Z     - object tilt angle [deg] around Z axis of the parent frame
+# PARAM:12 TILT_Y     - object tilt angle [deg] around Y axis of the parent frame
+# PARAM:13 TILT_X     - object tilt angle [deg] around X axis of the parent frame
+
+# HDR PARENT IND     OBJECT IND    X0[um]   Y0[um]   Z0[um]   ROT-Z  ROT-Y  ROT-X     TILT-Z    TILT-Y    TILT-X
+
+      CAMERA  0  EPIX10KA:V1  0    -59032    23573        0     270      0      0   -0.01949   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  1    -59026    64317        0     270      0      0   -0.14725   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  2    -17405    23567        0     270      0      0   -0.38763   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  3    -17039    63692        0     270      0      0   -0.28908   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  4     23423    59147        0     180      0      0   -0.59396   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  5     64071    59039        0     180      0      0   -0.19920   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  6     23779    17334        0     180      0      0   -0.40785   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  7     63997    17181        0     180      0      0   -0.40771   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  8     59152   -23403        0      90      0      0   -0.36743   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1  9     58942   -64143        0      90      0      0   -0.53539   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1 10     17468   -23658        0      90      0      0   -0.33429   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1 11     17029   -63871        0      90      0      0   -0.24041   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1 12    -23591   -59310        0       0      0      0   -0.24184   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1 13    -64155   -59056        0       0      0      0   -0.54221   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1 14    -23622   -17240        0       0      0      0   -0.14729   0.00000   0.00000
+      CAMERA  0  EPIX10KA:V1 15    -63991   -17169        0       0      0      0   -0.14800   0.00000   0.00000
+          IP  0       CAMERA  0         0        0   118000      90      0      0    0.00000   0.00000   0.00000

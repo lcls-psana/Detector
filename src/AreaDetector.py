@@ -96,11 +96,13 @@ Usage::
 
     # access geometry information
     geo        = det.geometry(par)   # returns geometry object (top-most)
-    cx         = det.coords_x(par)   # returns array of pixel x coordinates
-    cy         = det.coords_y(par)   # returns array of pixel y coordinates
-    cz         = det.coords_z(par)   # returns array of pixel z coordinates
-    cx, cy     = det.coords_xy(par)  # returns arrays of pixel x and y coordinates
-    cx, cy, cz = det.coords_xyz(par) # returns arrays of pixel x, y, and z coordinates
+
+    cframe = gu.CFRAME_PSANA # or gu.CFRAME_LAB
+    cx         = det.coords_x(par, cframe)   # returns array of pixel x coordinates
+    cy         = det.coords_y(par, cframe)   # returns array of pixel y coordinates
+    cz         = det.coords_z(par, cframe)   # returns array of pixel z coordinates
+    cx, cy     = det.coords_xy(par, cframe)  # returns arrays of pixel x and y coordinates
+    cx, cy, cz = det.coords_xyz(par, cframe) # returns arrays of pixel x, y, and z coordinates
     areas      = det.areas(par)      # returns array of pixel areas relative smallest pixel
     mask_geo   = det.mask_geo(par, mbits=15, **kwargs) # returns mask of segment-specific pixels
                                              #  mbits = +1-edges; +2-wide central cols;
@@ -1092,7 +1094,7 @@ class AreaDetector(object):
         if unbondnbrs : mbits += 8
         if unbondnbrs8: mbits += 16
 
-        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits, **kwargs)) 
+        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits=mbits, **kwargs))
         return mask_nda
 
 ##-----------------------------
@@ -1161,7 +1163,7 @@ class AreaDetector(object):
         return self.pyda.geoaccess(par) 
 
 
-    def coords_x(self, par) :
+    def coords_x(self, par, cframe=gu.CFRAME_PSANA) :
         """Returns per-pixel array of x coordinates.
 
            Parameter
@@ -1172,10 +1174,10 @@ class AreaDetector(object):
 
            - np.array - array of pixel x coordinates.
         """
-        return self._shaped_array_(par, self.pyda.coords_x(par)) 
+        return self._shaped_array_(par, self.pyda.coords_x(par, cframe))
 
 
-    def coords_y(self, par) :
+    def coords_y(self, par, cframe=gu.CFRAME_PSANA) :
         """Returns per-pixel array of y coordinates.
 
            Parameter
@@ -1186,10 +1188,10 @@ class AreaDetector(object):
 
            - np.array - array of pixel y coordinates.
         """
-        return self._shaped_array_(par, self.pyda.coords_y(par)) 
+        return self._shaped_array_(par, self.pyda.coords_y(par, cframe))
 
 
-    def coords_z(self, par) :
+    def coords_z(self, par, cframe=gu.CFRAME_PSANA) :
         """Returns per-pixel array of z coordinates.
 
            Parameter
@@ -1200,10 +1202,10 @@ class AreaDetector(object):
 
            - np.array - array of pixel z coordinates.
         """
-        return self._shaped_array_(par, self.pyda.coords_z(par))
+        return self._shaped_array_(par, self.pyda.coords_z(par, cframe))
 
 
-    def coords_xy(self, par) :
+    def coords_xy(self, par, cframe=gu.CFRAME_PSANA) :
         """Returns per-pixel arrays of x and y coordinates.
 
            Parameter
@@ -1215,11 +1217,11 @@ class AreaDetector(object):
            - np.array - 2 arrays of pixel x and y coordinates, respectively.
         """
         rnum = self.runnum(par)
-        cx, cy = self.pyda.coords_xy(par)
+        cx, cy = self.pyda.coords_xy(par, cframe)
         return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy) 
 
 
-    def coords_xyz(self, par) :
+    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA) :
         """Returns per-pixel arrays of x, y, and z coordinates.
 
            Parameter
@@ -1231,7 +1233,7 @@ class AreaDetector(object):
            - np.array - 3 arrays of pixel x, y, and z coordinates, respectively.
         """
         rnum = self.runnum(par)
-        cx, cy, cz = self.pyda.coords_xyz(par)
+        cx, cy, cz = self.pyda.coords_xyz(par, cframe)
         return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy), self._shaped_array_(rnum, cz) 
 
 
@@ -1268,7 +1270,7 @@ class AreaDetector(object):
 
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
-        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits, **kwargs))
+        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits=mbits, **kwargs))
 
 
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :

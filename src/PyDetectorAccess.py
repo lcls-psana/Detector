@@ -132,7 +132,7 @@ class PyDetectorAccess :
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
-            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0377)
+            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0o377)
             if self.pbits & 1 : print 'PSCalib.CalibParsStore object is created for run %d' % runnum
 
         return self.cpst
@@ -143,10 +143,12 @@ class PyDetectorAccess :
         """Returns default geometry object for some of detectors"""
         import CalibManager.AppDataPath as apputils
 
-        defname = 'Detector/geometry-def-epix100a.data' if self.dettype == gu.EPIX100A\
-             else 'Detector/geometry-def-pnccd.data'    if self.dettype == gu.PNCCD\
-             else 'Detector/geometry-def-cspad.data'    if self.dettype == gu.CSPAD\
-             else 'Detector/geometry-def-cspad2x2.data' if self.dettype == gu.CSPAD2X2\
+        defname = 'Detector/geometry-def-epix100a.data'   if self.dettype == gu.EPIX100A\
+             else 'Detector/geometry-def-pnccd.data'      if self.dettype == gu.PNCCD\
+             else 'Detector/geometry-def-cspad.data'      if self.dettype == gu.CSPAD\
+             else 'Detector/geometry-def-cspad2x2.data'   if self.dettype == gu.CSPAD2X2\
+             else 'Detector/geometry-def-jungfrau4m.data' if self.dettype == gu.JUNGFRAU\
+             else 'Detector/geometry-def-epix10ka2m.data' if self.dettype == gu.EPIX10KA2M\
              else None
 
         if defname is None :
@@ -156,9 +158,9 @@ class PyDetectorAccess :
         fname = apputils.AppDataPath(defname).path()
         if self.pbits : print '%s: Load default geometry from file %s' % (self.__class__.__name__, fname)
          
-        self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+        self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
         if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT    
-        #return GeometryAccess(fname, 0377 if self.pbits else 0)
+        #return GeometryAccess(fname, 0o377 if self.pbits else 0)
 
 ##-----------------------------
 
@@ -187,9 +189,9 @@ class PyDetectorAccess :
         #fntmp = tempfile.NamedTemporaryFile(mode='r+b',suffix='.data')
         #print 'XXX Save constants in tmp file: %s' % fntmp.name
         #save_txt(fntmp.name, data, cmts='', fmt='%.1f')
-        #self.geo = GeometryAccess(fntmp.name, 0377 if self.pbits else 0)
+        #self.geo = GeometryAccess(fntmp.name, 0o377 if self.pbits else 0)
 
-        self.geo = GeometryAccess(pbits=0377 if self.pbits else 0)
+        self.geo = GeometryAccess(pbits=0o377 if self.pbits else 0)
         if self.geo is not None :
             self.geo.load_pars_from_str(data)
             #self.geo.print_list_of_geos()
@@ -201,10 +203,10 @@ class PyDetectorAccess :
         """Returns geometry object from calib store or None if can't load geometry.
         """
         group = gu.dic_det_type_to_calib_group[self.dettype]
-        cff = CalibFileFinder(self.env.calibDir(), group, 0377 if self.pbits else 0)
+        cff = CalibFileFinder(self.env.calibDir(), group, 0o377 if self.pbits else 0)
         fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
         if fname :
-            self.geo = GeometryAccess(fname, 0377 if self.pbits else 0)
+            self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
             if self.pbits & 1 : print 'PSCalib.GeometryAccess object is created for run %d' % runnum
             if self.geo.valid : self.geo_load_status = self.GEO_LOADED_CALIB
         else :
@@ -243,6 +245,7 @@ class PyDetectorAccess :
             self.coords_x_arr   = None 
             self.coords_y_arr   = None 
             self.coords_z_arr   = None
+            self.cframe_old     = None
             self.areas_arr      = None
             self.mask_geo_arr   = None
             self.mbits          = None
@@ -374,44 +377,45 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def _update_coord_arrays(self, par, do_update=False) :
+    def _update_coord_arrays(self, par, do_update=False, cframe=gu.CFRAME_PSANA) :
         """ Returns True if pixel index arrays are available, othervise False.
         """
         if self.geoaccess(par) is None : return False
         else :
-            if  self.coords_x_arr is None or do_update :
-                self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords()
+            if  self.coords_x_arr is None or do_update or cframe != self.cframe_old:
+                self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords(cframe=cframe)
+                self.cframe_old = cframe
             if  self.coords_x_arr is None : return False
         return True
 
 ##-----------------------------
 
-    def coords_x(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_x(self, par, cframe=gu.CFRAME_PSANA) :
+        if not self._update_coord_arrays(par, cframe=cframe) : return None
         return self._shaped_geo_array(self.coords_x_arr)
 
 ##-----------------------------
 
-    def coords_y(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_y(self, par, cframe=gu.CFRAME_PSANA) :
+        if not self._update_coord_arrays(par, cframe=cframe) : return None
         return self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
-    def coords_z(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_z(self, par, cframe=gu.CFRAME_PSANA) :
+        if not self._update_coord_arrays(par, cframe=cframe) : return None
         return self._shaped_geo_array(self.coords_z_arr)
 
 ##-----------------------------
 
-    def coords_xy(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_xy(self, par, cframe=gu.CFRAME_PSANA) :
+        if not self._update_coord_arrays(par, cframe=cframe) : return None
         return self._shaped_geo_array(self.coords_x_arr), self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
-    def coords_xyz(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA) :
+        if not self._update_coord_arrays(par, cframe=cframe) : return None
         return self._shaped_geo_array(self.coords_x_arr),\
                self._shaped_geo_array(self.coords_y_arr),\
                self._shaped_geo_array(self.coords_z_arr)
@@ -607,8 +611,8 @@ class PyDetectorAccess :
 
     def set_print_bits(self, pbits) :
         self.pbits  = pbits
-        if self.cpst is not None : self.cpst.set_print_bits(0177777)
-        if self.geo  is not None : self.geo.set_print_bits(0377 if pbits else 0)
+        if self.cpst is not None : self.cpst.set_print_bits(0o177777)
+        if self.geo  is not None : self.geo.set_print_bits(0o377 if pbits else 0)
 
 ##-----------------------------
 
@@ -731,7 +735,7 @@ class PyDetectorAccess :
             if self.pbits & 8 : print 'qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim)
     
             #roim = 0375 # for test only        
-            if roim == 0377 :
+            if roim == 0o377 :
                 arr[qnum,:] = qdata
 
             else :
@@ -812,8 +816,8 @@ class PyDetectorAccess :
         arr = d.data16()
         if arr is None : return None
 
-        arr_c = (arr>>13)&03
-        arr_v = arr&017777
+        arr_c = (arr>>13)&0o3
+        arr_v = arr&0o17777
         #print 'arr_c:\n', arr_c
         #print 'arr_v:\n', arr_v
 
@@ -1257,7 +1261,7 @@ class PyDetectorAccess :
     
             #roim = 0375 # for test only
         
-            if roim == 0377 : arr.append(qdata)
+            if roim == 0o377 : arr.append(qdata)
             else :
                 if self.pbits : print 'PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
