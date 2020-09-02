@@ -143,12 +143,14 @@ class PyDetectorAccess :
         """Returns default geometry object for some of detectors"""
         import CalibManager.AppDataPath as apputils
 
-        defname = 'Detector/geometry-def-epix100a.data'   if self.dettype == gu.EPIX100A\
-             else 'Detector/geometry-def-pnccd.data'      if self.dettype == gu.PNCCD\
-             else 'Detector/geometry-def-cspad.data'      if self.dettype == gu.CSPAD\
-             else 'Detector/geometry-def-cspad2x2.data'   if self.dettype == gu.CSPAD2X2\
-             else 'Detector/geometry-def-jungfrau4m.data' if self.dettype == gu.JUNGFRAU\
-             else 'Detector/geometry-def-epix10ka2m.data' if self.dettype == gu.EPIX10KA2M\
+        defname = 'Detector/geometry-def-epix100a.data'     if self.dettype == gu.EPIX100A\
+             else 'Detector/geometry-def-pnccd.data'        if self.dettype == gu.PNCCD\
+             else 'Detector/geometry-def-cspad.data'        if self.dettype == gu.CSPAD\
+             else 'Detector/geometry-def-cspad2x2.data'     if self.dettype == gu.CSPAD2X2\
+             else 'Detector/geometry-def-jungfrau4m.data'   if self.dettype == gu.JUNGFRAU\
+             else 'Detector/geometry-def-epix10ka2m.data'   if self.dettype == gu.EPIX10KA2M\
+             else 'Detector/geometry-def-epix10kaquad.data' if self.dettype == gu.EPIX10KAQUAD\
+             else 'Detector/geometry-def-epix10ka.data'     if self.dettype == gu.EPIX10KA\
              else None
 
         if defname is None :
