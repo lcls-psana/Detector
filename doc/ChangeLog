@@ -7,6 +7,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-93
+2020-09-11 Mikhail S. Dubrovin
+- add option -I in app/epix10ka_deploy_constants
+- fix issue to access EPIX100A and EPIX10KA shape from configuration
+	modified:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_test_calibcycles
+	modified:   src/PyDetectorAccess.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-92
 2020-09-02 Mikhail S. Dubrovin
 - add default constants for epix10ka and epix10kaquad

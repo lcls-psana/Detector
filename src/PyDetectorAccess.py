@@ -1526,7 +1526,7 @@ class PyDetectorAccess :
 
         if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
         elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
-        elif self.dettype == (gu.EPIX100A, gu.EPIX10KA)\
+        elif self.dettype in (gu.EPIX100A, gu.EPIX10KA)\
                                            : return self.shape_config_epix100(env)
         elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD)\
                                            : return self.shape_config_epix10ka_any(env)

@@ -1369,8 +1369,9 @@ def pedestals_calibration(*args, **opts):
     det = Detector(detname)
     cd = Detector('ControlData')
 
-    #print 'det.shape', det.shape()
-    shape_block = [nbs,] + list(det.shape()) # [1024, 16, 352, 384]
+    sh = det.shape()
+    if len(sh)==2: sh = (1,sh[0],sh[1]) # for epix10ka single panel detector
+    shape_block = [nbs,] + list(sh) # [1024, 16, 352, 384]
     print 'Accumulate raw frames in block shape = %s' % str(shape_block)
 
     mode = None # gain_mode
@@ -1656,6 +1657,8 @@ def deploy_constants(*args, **opts):
     medium     = opts.get('medium', 5.466) # ADU/keV #Medium gain: 132 ADU / 8.05 keV / 3 = 5.466 ADU/keV
     low        = opts.get('low',    0.164) # ADU/keV#Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
     proc       = opts.get('proc', None)
+    paninds    = opts.get('paninds', None)
+    if paninds is not None: panel_inds = [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3] 
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
@@ -1695,6 +1698,9 @@ def deploy_constants(*args, **opts):
     # dict_consts for constants octype: 'pixel_gain', 'pedestals', etc.
     dic_consts = {} 
     for ind, panel_id in enumerate(panel_ids):
+
+        if panel_inds is not None and not (ind in panel_inds): continue # skip non-selected panels
+
         logger.info('%s\nmerge constants for panel:%02d id: %s' % (110*'_', ind, panel_id))
 
         dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)

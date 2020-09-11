@@ -146,28 +146,28 @@ def info_config(cfg):
     print 'dir(cfg):', dir(cfg)
     print 'cfg.TypeId', cfg.TypeId
     print 'cfg.Version', cfg.Version
-    print 'cfg.elemCfg_shape', cfg.elemCfg_shape()
+    print 'cfg.elemCfg_shape', cfg.elemCfg_shape() if hasattr(cfg,'elemCfg_shape') else ' non available attribute elemCfg_shape'
     print 'cfg.numberOfAsics', cfg.numberOfAsics()
     print 'cfg.numberOfCalibrationRows:', cfg.numberOfCalibrationRows()
     print 'cfg.numberOfColumns', cfg.numberOfColumns()
-    print 'cfg.numberOfElements', cfg.numberOfElements()
+    print 'cfg.numberOfElements', cfg.numberOfElements() if hasattr(cfg,'numberOfElements') else ' non available attribute numberOfElements'
     print 'cfg.numberOfEnvironmentalRows', cfg.numberOfEnvironmentalRows()
     print 'cfg.numberOfReadableRows', cfg.numberOfReadableRows()
     print 'cfg.numberOfRows', cfg.numberOfRows()
-    print 'cfg.quad_shape', cfg.quad_shape()
-    print 'cfg.elemCfg(0)', cfg.elemCfg(0)
-    print 'cfg.quad(0)', cfg.quad(0)
+    print 'cfg.quad_shape', cfg.quad_shape() if hasattr(cfg,'quad_shape') else ' non available attribute quad_shape'
+    print 'cfg.elemCfg(0)', cfg.elemCfg(0) if hasattr(cfg,'elemCfg') else ' non available attribute elemCfg'
+    print 'cfg.quad(0)', cfg.quad(0) if hasattr(cfg,'quad') else ' non available attribute quad'
     print '\n'
 
-    info_config_evr(cfg.evr())
+    info_config_evr(cfg.evr()) if hasattr(cfg,'evr') else ' non available attribute evr'
 
-    q0 = cfg.quad(0)
-    e0 = cfg.elemCfg(0)
-    a0 = e0.asics(0)
+    q0 = cfg.quad(0) if hasattr(cfg,'quad') else None
+    e0 = cfg.elemCfg(0) if hasattr(cfg,'elemCfg') else None
+    a0 = e0.asics(0) if e0 is not None and hasattr(e0,'asics') else None
 
-    info_quad(q0)
-    info_elemCfg(e0)
-    info_asic(a0)
+    if q0 is not None: info_quad(q0)
+    if e0 is not None: info_elemCfg(e0)
+    if a0 is not None: info_asic(a0)
 
 #----------
 

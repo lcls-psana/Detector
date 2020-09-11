@@ -68,6 +68,7 @@ def option_parser() :
     d_deploy  = False
     d_logmode = 'DEBUG'
     d_proc    = 'psrg'
+    d_paninds = None
     d_high    = 16.40 # 1.
     d_medium  = 5.466 # 0.33333
     d_low     = 0.164 # 0.01
@@ -92,6 +93,7 @@ def option_parser() :
     h_low     = 'default low    gain ADU/keV, default = %s' % str(d_low)
     h_proc    = '(str) keyword for processing of "p"-pedestals, "r"-rms, "s"-status, "g" or "c" - gain or charge-injection gain,'\
               + '  default = %s' % d_proc
+    h_paninds = 'comma-separated panel indexds to generate constants for subset of panels (ex.: quad from 2M), default = %s' % d_paninds
 
     parser = OptionParser(description=usage(1), usage = usage())
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
@@ -107,6 +109,7 @@ def option_parser() :
     parser.add_option(      '--medium',  default=d_medium,  action='store', type='float',  help=h_medium)
     parser.add_option(      '--low',     default=d_low,     action='store', type='float',  help=h_low)
     parser.add_option('-p', '--proc',    default=d_proc,    action='store', type='string', help=h_proc)
+    parser.add_option('-I', '--paninds', default=d_paninds, action='store', type='string', help=h_paninds)
 
     return parser
 
