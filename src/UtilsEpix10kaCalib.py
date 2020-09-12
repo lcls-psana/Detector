@@ -1658,7 +1658,8 @@ def deploy_constants(*args, **opts):
     low        = opts.get('low',    0.164) # ADU/keV#Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
     proc       = opts.get('proc', None)
     paninds    = opts.get('paninds', None)
-    if paninds is not None: panel_inds = [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3] 
+
+    panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3] 
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 

@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-94
+2020-09-12 Mikhail S. Dubrovin
+- fix option for panel indices in epix10ka_deploy_constants, add new app/det_raw_calib_image
+#	new file:   app/det_raw_calib_image
+#	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-93
 2020-09-11 Mikhail S. Dubrovin
 - add option -I in app/epix10ka_deploy_constants
