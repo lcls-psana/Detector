@@ -7,6 +7,16 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-95
+2020-09-18 Mikhail S. Dubrovin
+- add app/det_calib_maxed, epix10ka2m_split_calib_for_7nda and cosmetics
+	new file:   app/det_calib_maxed
+	modified:   app/det_raw_calib_image
+	new file:   app/epix10ka2m_split_calib_for_7nda
+	deleted:    examples/ex_epix10ka2m_split_calib_for_7nda.py
+	modified:   src/GlobalUtils.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-94
 2020-09-12 Mikhail S. Dubrovin
 - fix option for panel indices in epix10ka_deploy_constants, add new app/det_raw_calib_image

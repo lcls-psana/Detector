@@ -804,9 +804,9 @@ def selected_record(nrec):
 
 def save_ndarray_in_textfile(nda, fname, fmode, fmt):
     fexists = os.path.exists(fname)
-    save_txt(fname, nda, fmt=fmt)
+    save_txt(fname=fname, arr=nda, fmt=fmt)
     if not fexists: set_file_access_mode(fname, fmode)
-    logger.debug('saved: %s' % fname)
+    logger.debug('saved: %s fmode: %s fmt: %s' % (fname, oct(fmode), fmt))
 
 #--------------------
 

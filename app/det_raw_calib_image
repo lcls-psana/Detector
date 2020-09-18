@@ -13,10 +13,10 @@ usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-t
 logging.info('%s\nusage: %s' % (50*'=', usage))
 
 nargs = len(sys.argv)
-dsname  = argv[1]      if nargs>1 else 'exp=detdaq18:run=272'
-detname = argv[2]      if nargs>2 else 'DetLab.0:Epix10ka.0'
-EVENTS  = int(argv[3]) if nargs>3 else 3
-EVSKIP  = int(argv[4]) if nargs>4 else 0
+dsname  = sys.argv[1]      if nargs>1 else 'exp=detdaq18:run=272'
+detname = sys.argv[2]      if nargs>2 else 'DetLab.0:Epix10ka.0'
+EVENTS  = int(sys.argv[3]) if nargs>3 else 3
+EVSKIP  = int(sys.argv[4]) if nargs>4 else 0
 
 if True:
     ds = DataSource('exp=detdaq18:run=272')
