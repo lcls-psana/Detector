@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.INFO)
+
+import sys
+import numpy as np
+from psana import DataSource, Detector
+from Detector.GlobalUtils import info_ndarr, selected_record
+
+SCRNAME = sys.argv[0].rsplit('/')[-1]
+usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-to-skip>'%SCRNAME\
+      + '\nexample: %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10'%SCRNAME\
+      + '\nexample: %s exp=mfxp17518:run=108 MfxEndstation.0:Epix10ka2M.0 10'%SCRNAME
+logging.info('%s\nusage: %s' % (50*'=', usage))
+
+nargs = len(sys.argv)
+dsname  = sys.argv[1]      if nargs>1 else 'exp=cxilv9518:run=8'
+detname = sys.argv[2]      if nargs>2 else 'CxiDs1.0:Jungfrau.0'
+EVENTS  = int(sys.argv[3]) if nargs>3 else 3
+EVSKIP  = int(sys.argv[4]) if nargs>4 else 0
+prefix   = 'det-calib'
+
+if nargs<3: sys.exit('NEED MORE ARGUMENTS')
+
+nev_sum = 0
+nda_sum = None
+nda_max = None
+
+if True:
+    ds = DataSource(dsname)
+    det = Detector(detname)
+    logging.info('det.shape:' + str(det.shape()))
+    
+    for i, evt in enumerate(ds.events()):
+
+        if selected_record(i):
+            logging.info('%s\nEvent %4d' % (50*'_', i))
+
+        if i<EVSKIP: continue
+        if i>EVENTS: break
+
+        raw = det.raw(evt)
+        logging.info(info_ndarr(raw, 'raw'))
+
+        if raw is None:
+            logging.warning('Event %4d raw is None' % i)
+            continue
+
+        calib = det.calib(evt)
+        logging.info(info_ndarr(calib, 'calib'))
+
+        if calib is None:
+            logging.warning('Event %4d calib is None' % i)
+            continue
+
+        if nda_max is None:
+            nev_sum = 1
+            nda_sum = np.array(calib)
+            nda_max = np.array(calib)
+        else:
+            np.maximum(calib, nda_max, out=nda_max)
+            nda_sum += calib
+            nev_sum += 1
+
+        #img = det.image(evt)
+        #logging.info(info_ndarr(img, 'img'))
+
+    fname = prefix + '-max.npy'
+    np.save(fname, nda_max)
+    if nda_max.ndim>2: nda_max.shape = (nda_max.size/nda_max.shape[-1], nda_max.shape[-1])
+    fname = prefix + '-max.txt'
+    np.savetxt(fname, nda_max, fmt='%.3f')
+    logging.info('saved files %s and *.npy'%fname)
+
+    if nev_sum: nda_sum /= nev_sum
+    if nda_sum.ndim>2: nda_sum.shape = nda_max.shape
+    fname = prefix + '-ave.txt'
+    np.savetxt(fname, nda_sum, fmt='%.3f')
+    logging.info('saved file %s'%fname)
+
+    sys.exit('END OF %s' % SCRNAME)

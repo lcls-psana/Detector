@@ -141,7 +141,7 @@ Usage::
     iy       = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
     ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
     ix, iy   = det.indexes_xy_at_z(par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None)
-    ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
+    ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False)
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
     xaxis    = det.image_xaxis(par, pix_scale_size_um=None, x0_off_pix=None)
     yaxis    = det.image_yaxis(par, pix_scale_size_um=None, y0_off_pix=None)
@@ -1163,7 +1163,7 @@ class AreaDetector(object):
         return self.pyda.geoaccess(par) 
 
 
-    def coords_x(self, par, cframe=gu.CFRAME_PSANA) :
+    def coords_x(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel array of x coordinates.
 
            Parameter
@@ -1177,7 +1177,7 @@ class AreaDetector(object):
         return self._shaped_array_(par, self.pyda.coords_x(par, cframe))
 
 
-    def coords_y(self, par, cframe=gu.CFRAME_PSANA) :
+    def coords_y(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel array of y coordinates.
 
            Parameter
@@ -1191,7 +1191,7 @@ class AreaDetector(object):
         return self._shaped_array_(par, self.pyda.coords_y(par, cframe))
 
 
-    def coords_z(self, par, cframe=gu.CFRAME_PSANA) :
+    def coords_z(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel array of z coordinates.
 
            Parameter
@@ -1205,7 +1205,7 @@ class AreaDetector(object):
         return self._shaped_array_(par, self.pyda.coords_z(par, cframe))
 
 
-    def coords_xy(self, par, cframe=gu.CFRAME_PSANA) :
+    def coords_xy(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel arrays of x and y coordinates.
 
            Parameter
@@ -1221,7 +1221,7 @@ class AreaDetector(object):
         return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy) 
 
 
-    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA) :
+    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel arrays of x, y, and z coordinates.
 
            Parameter
@@ -1346,8 +1346,8 @@ class AreaDetector(object):
         return self._shaped_array_(rnum, iX_at_Z), self._shaped_array_(rnum, iY_at_Z)
 
 
-    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :
-        """Returns (ix, iy) indexes of the point (x,y) specified in [um].
+    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False):
+        """Returns int of float (for fract) (ix, iy) indexes of the point (x,y) specified in [um].
 
            Parameters
 
@@ -1355,12 +1355,14 @@ class AreaDetector(object):
            - pxy_um            : list of two float values - coordinates of the point in the detector frame, default (0,0)
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
+           - fract             : bool - if True - force return fractional indexes.
+           - cframe            : int - coordinate frame 0=psana or 1=LAB frame.
 
            Returns
 
            - tuple - (ix, iy) tuple of two indexes associated with input point coordinates.
         """
-        ix, iy = self.pyda.point_indexes(par, pxy_um, pix_scale_size_um, xy0_off_pix)
+        ix, iy = self.pyda.point_indexes(par, pxy_um, pix_scale_size_um, xy0_off_pix, cframe, fract)
         return ix, iy
 
 

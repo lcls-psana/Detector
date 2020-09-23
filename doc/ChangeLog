@@ -7,6 +7,24 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-96
+2020-09-22 Mikhail S. Dubrovin
+- for Chuck add parameter fract to point_indexes
+- add old test*.py to examples
+- add app/det_calib_ave_and_max
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+	new file:   app/det_calib_ave_and_max
+	new file:   examples/test-2018-06-12-pnccd-xanthe-changed.py
+	new file:   examples/test-2018-11-29-epix10ka2m-shapes.py
+	new file:   examples/test-2019-04-05-jungfrau-shape.py
+	new file:   examples/test-2019-04-15-detector.py
+	new file:   examples/test-2020-02-04-philip-makeTuple.py
+	new file:   examples/test-2020-08-10-cpo-xcsc00118.py
+	new file:   examples/test-2020-08-18-cpo-xpplr8116-r27-py2-py3.py
+	new file:   examples/test-2020-08-23-cxic00318-epix10ka2m-mask-chuck-corr.py
+	new file:   examples/test-2020-09-18-cpo-meclv8018-epix100a-det-image.py
+
 Tag: V01-00-95
 2020-09-18 Mikhail S. Dubrovin
 - add app/det_calib_maxed, epix10ka2m_split_calib_for_7nda and cosmetics

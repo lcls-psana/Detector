@@ -379,10 +379,10 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def _update_coord_arrays(self, par, do_update=False, cframe=gu.CFRAME_PSANA) :
+    def _update_coord_arrays(self, par, do_update=False, cframe=gu.CFRAME_PSANA):
         """ Returns True if pixel index arrays are available, othervise False.
         """
-        if self.geoaccess(par) is None : return False
+        if self.geoaccess(par) is None: return False
         else :
             if  self.coords_x_arr is None or do_update or cframe != self.cframe_old:
                 self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords(cframe=cframe)
@@ -392,32 +392,32 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def coords_x(self, par, cframe=gu.CFRAME_PSANA) :
-        if not self._update_coord_arrays(par, cframe=cframe) : return None
+    def coords_x(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr)
 
 ##-----------------------------
 
-    def coords_y(self, par, cframe=gu.CFRAME_PSANA) :
-        if not self._update_coord_arrays(par, cframe=cframe) : return None
+    def coords_y(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
-    def coords_z(self, par, cframe=gu.CFRAME_PSANA) :
-        if not self._update_coord_arrays(par, cframe=cframe) : return None
+    def coords_z(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_z_arr)
 
 ##-----------------------------
 
-    def coords_xy(self, par, cframe=gu.CFRAME_PSANA) :
-        if not self._update_coord_arrays(par, cframe=cframe) : return None
+    def coords_xy(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr), self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
-    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA) :
-        if not self._update_coord_arrays(par, cframe=cframe) : return None
+    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr),\
                self._shaped_geo_array(self.coords_y_arr),\
                self._shaped_geo_array(self.coords_z_arr)
@@ -507,12 +507,12 @@ class PyDetectorAccess :
 
 ##-----------------------------
 
-    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :
+    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False):
         """Returns ix, iy indexes of the point p_um x,y coordinates in [um]"""
-        if self.geoaccess(par) is None : return None, None
+        if self.geoaccess(par) is None: return None, None
         ix, iy = self.geo.point_coord_indexes(p_um=pxy_um, oname=None, oindex=0,\
                                               pix_scale_size_um=pix_scale_size_um,\
-                                              xy0_off_pix=xy0_off_pix, do_tilt=True)
+                                              xy0_off_pix=xy0_off_pix, do_tilt=True, cframe=cframe, fract=fract)
         return ix, iy
 
 ##-----------------------------
