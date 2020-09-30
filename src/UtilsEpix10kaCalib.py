@@ -51,15 +51,21 @@ def plot_avsi_figaxis():
     return store.plot_avsi_figax
 
 def plot_avsi(x,y,fname):
+
+    #print 'XXX fname:', fname
+    #print info_ndarr(x, 'XXX x')
+    #print info_ndarr(y, 'XXX y')
+
     fig, ax = plot_avsi_figaxis()
     gbit = np.bitwise_and(y, B14) /8
+    _y = y & M14
     #gbit = 2048*(y & B14)
     #line0.set_ydata(y & M14) # (trace%16384)
     #line1.set_ydata(gbit)
     ax.cla()
-    ax.set_ylim(0,16384)
+    if _y.max()>2048: ax.set_ylim(0,16384)
     ax.set_yticks(np.arange(0,16385,2048))
-    line0,=ax.plot(x,y & M14,'b-',linewidth=1)
+    line0,=ax.plot(x,_y,'b-',linewidth=1)
     line1,=ax.plot(x,gbit,'r-',linewidth=1)
     #line1.set_ydata(np.polyval(pf0,xx))
     #line2.set_ydata(np.polyval(pf1,xx))
@@ -67,9 +73,10 @@ def plot_avsi(x,y,fname):
     fig.canvas.set_window_title(fname)
 
     fig.canvas.manager.window.move(650,200)
-    plt.plot()
+    #plt.plot()
+    fig.canvas.draw()
     plt.pause(3)
-    plt.savefig(fname)
+    fig.savefig(fname)
     print 'saved file %s' % fname
     #plt.ioff()
     plt.show()    
@@ -77,7 +84,7 @@ def plot_avsi(x,y,fname):
 
 #--------------------
 
-def plot_data_block(block, evnum, prefix):
+def plot_data_block(block, evnum, prefix, selpix=None):
     ts = str_tstamp(fmt='%Y%m%dT%H%M%S', time_sec=time())
     mf,my,mx=block.shape
     print 'block shape:',mf,my,mx
@@ -88,16 +95,18 @@ def plot_data_block(block, evnum, prefix):
 
     for iy in range(my):
         for ix in range(mx):
-            selected = (iy*mx+ix)%256==255
+            selected = (iy*mx+ix)%256==255 if selpix is None\
+                       else (iy==selpix[2] and ix==selpix[3])
 
             if selected:  #display a subset of plots
 
                 trace=block[:,iy,ix]
-                logger.debug('==== saw_edge for %s-proc-ix%02d-iy%02d:' % (prefix, ix, iy))
+                logger.debug('==== saw_edge for %s-proc-ibr%02d-ibc%02d:' % (prefix, iy, ix))
                 for ixb, ixs, ixe in saw_edges(trace, evnum, do_debug=True):
                     print '  saw edges:', ixb, ixs, ixe, 'period:', ixe-ixb+1
 
-                fname = '%s-dat-ix%02d-iy%02d.png' % (prefix, ix, iy)
+                fname = '%s-dat-ibr%02d-ibc%02d.png' % (prefix, iy, ix) if selpix is None else\
+                        '%s-dat-r%03d-c%03d-ibr%02d-ibc%02d.png' % (prefix, selpix[0], selpix[1], iy, ix)
                 plot_avsi(x,trace,fname)
 
     #sys.exit('TEST EXIT')
@@ -170,9 +179,10 @@ def plot_fit(x,y,pf0,pf1,fname):
     ax.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
     fig.canvas.set_window_title(fname)
     fig.canvas.manager.window.move(0,0)
-    plt.plot()
+    #plt.plot()
+    fig.canvas.draw()
     plt.pause(3)
-    plt.savefig(fname)
+    fig.savefig(fname)
     print 'saved file %s' % fname
     #plt.ioff()
     plt.show()    
@@ -192,7 +202,9 @@ def figure(figsize=(9,8), title='Image', dpi=80, facecolor='w', edgecolor='w', f
 def fig_img_cbar_axes(fig=None,\
                       win_axim=(0.05,  0.05, 0.87, 0.92),\
                       win_axcb=(0.923, 0.05, 0.02, 0.92), **kwargs):
-    _fig = figure(move=(650,0)) if fig is None else fig
+    dpi  = kwargs.get('dpi',80)
+    fsize = kwargs.get('figsize',(9,8))
+    _fig = figure(move=(650,0), dpi=dpi, figsize=fsize) if fig is None else fig
     axim = _fig.add_axes(win_axim, **kwargs)
     axcb = _fig.add_axes(win_axcb, **kwargs)
     return _fig, axim, axcb
@@ -224,7 +236,7 @@ def imshow_cbar(fig, axim, axcb, img, amin=None, amax=None, extent=None,\
 #--------------------
 # 2020-06 development
 
-def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, savechi2=False, npmin=5):
+def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, savechi2=False, selpix=None, npmin=5):
 
     mf,my,mx=block.shape
     fits=np.zeros((my,mx,2,2))
@@ -232,16 +244,18 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, 
     nsp=np.zeros((my,mx),dtype=np.int16)
     msg = ' fit '
 
+    logger.info('fit selpix:' + str(selpix)) #selpix=(20, 97, 2, 13)
     logger.debug(info_ndarr(evnum, 'in fit evnum:'))
     logger.debug(info_ndarr(block, 'in fit block:'))
     #ts = str_tstamp(fmt='%Y%m%dT%H%M%S', time_sec=time())
 
     if display:
-        plot_data_block(block, evnum, prefix)
+        plot_data_block(block, evnum, prefix, selpix)
 
     for iy in range(my):
         for ix in range(mx):
-            selected = (iy*mx+ix)%256==255
+            selected = (iy*mx+ix)%256==255 if selpix is None\
+                       else (iy==selpix[2] and ix==selpix[3])
 
             trace=block[:,iy,ix]
 
@@ -287,7 +301,8 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, 
             fits[iy,ix,:] = (pf0, pf1)
 
             if selected: # for selected ix, iy
-                s = '==== ix%02d-iy%02d:' % (ix, iy)
+                s = '==== ibr%02d-ibc%02d:' % (iy, ix)
+                if selpix is not None: s+=' === selected pixel panel r:%03d c:%03d' % (selpix[0], selpix[1])
                 for ixb, ixs, ixe in edges:
                     s += '\n  saw edges begin: %4d switch: %4d end: %4d period: %4d' % (ixb, ixs, ixe, ixe-ixb+1)
                     s += info_ndarr(tracem, '\n    tracem', last=10)
@@ -306,7 +321,9 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, 
 
                 msg+='.'
                 if display:
-                    fname = '%s-ix%02d-iy%02d.png' % (prefix, ix, iy)
+                    fname = '%s-fit-ibr%02d-ibc%02d.png' % (prefix, iy, ix) if selpix is None else\
+                            '%s-fit-r%03d-c%03d-ibr%02d-ibc%02d.png' % (prefix, selpix[0], selpix[1], iy, ix)
+
                     x = np.hstack((x0,x1))
                     y = np.hstack((y0,y1))
                     logger.debug(info_ndarr(x,'\n    x')\
@@ -315,89 +332,6 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, 
 
     return fits,nsp,msg,chi2
 
-#--------------------
-#--------------------
-#--------------------
-#--------------------
-
-def fit_old(block, evnum, itrim, display=True, prefix='fig-fit', period=1024):
-#def fit(block, evnum, itrim, display=True, prefix='fig-fit', period=1024):
-
-    mf,my,mx=block.shape
-    fits=np.zeros((my,mx,2,2))
-    nsp=np.zeros((my,mx),dtype=np.int16)
-    nsaw = 1
-    x=np.arange(nsaw*period)%period
-    #x=evnum%period
-    xx=np.linspace(period,0,100)
-    msg = ' fit '
-
-    logger.info(info_ndarr(evnum, 'in fit evnum:'))
-    logger.info(info_ndarr(block, 'in fit block:'))
-    #ts = str_tstamp(fmt='%Y%m%dT%H%M%S', time_sec=time())
-
-    if display:
-        plot_data_block(block, evnum, prefix)
-
-    for iy in range(my):
-        for ix in range(mx):
-            selected = (iy*mx+ix)%256==255
-
-            trace=block[:,iy,ix]
-
-            ixoff=np.argmin(np.diff(trace[:period+1],axis=0),axis=0)+1 #find pulser value 0
-
-            trace=trace[ixoff:ixoff+nsaw*period]
-            tracem = trace & M14
-            #x = x[ixoff:ixoff+nsaw*period] # NEW
-
-            isp = period
-            try:
-                isp=int(np.median(np.where(np.diff(trace)>1000)[0]%period))  #estimate median position of switching point
-                nsp[iy,ix]=isp
-            except ValueError:
-                testval=np.median(tracem) # %16384
-                ixoff=period if testval<0.5 else 0
-
-            idx0=x<isp-50; idx1=x>isp+50                           #select data to the left and right of switching point
-
-            if idx0.sum()>10:
-                pf0=np.polyfit(x[idx0],tracem[idx0],1) # %16384    #fit high/medium gain trace
-            else:
-                pf0=np.array([0,0])                                #or set to 0 if not enough data points
-            if idx1.sum()>10:
-                #pf1=np.polyfit(x[idx1],trace[idx1]%16384,1)       #this doesn't work!
-                gl=pf0[0]/(100.0 if itrim else 33.33)              #Medium to Low
-                ol=np.mean(tracem[idx1]-gl*x[idx1]) # %16384       #calculate offset
-                pf1=np.array([gl,ol])
-            else:
-                pf1=np.array([0,0])                                #ore st to zero if not enough data points
-            fits[iy,ix,0]=pf0
-            fits[iy,ix,1]=pf1
-            
-            if selected:  #display a subset of plots
-                #print '\b.',
-                print '==== ix%02d-iy%02d:' % (ix, iy)
-                print '  ixoff:', ixoff
-                print '  isp  :', isp
-                print_ndarr(idx0,  '    idx0') #idx0: [ True  True  True ..., False False False]
-                print_ndarr(idx1,  '    idx1') #idx1: [False False False ...,  True  True  True]
-                print_ndarr(x,     '    x')
-                print_ndarr(tracem,'    tracem')
-
-                msg+='.'
-                if display:
-                    #if store.handle is None: store.handle=init_plot(x,xx,itrim)
-                    #fname = 'fig-fit-%s-ix%02d-iy%02d.png' % (ts, ix, iy)
-                    fname = '%s-ix%02d-iy%02d.png' % (prefix, ix, iy)
-                    #update_plot(store.handle,trace,xx,pf0,pf1,fname)
-                    plot_fit(xx,trace,pf0,pf1,fname)
-
-    #fits[iy,ix,1,1] -= fits[iy,ix,0,1] # offset
-
-    return fits,nsp,msg
-
-#--------------------
 #--------------------
 #--------------------
 #--------------------
@@ -428,16 +362,6 @@ def find_file_for_timestamp(dirname, pattern, tstamp):
     logger.warning('directory %s\n         DOES NOT CONTAIN file for pattern %s and timestamp <= %s'%\
                    (dirname,pattern,tstamp))
     return None
-
-#--------------------
-
-#def shape_from_config(det):
-#    """DEPRICATED single-panel version
-#    """
-#    c = get_epix10ka_config_object(det.env, det.source)
-#    shape = (c.numberOfRows(), c.numberOfColumns())
-#    #logger.debug('shape_from_config: %s' % str(shape))
-#    return shape
 
 #--------------------
 
@@ -474,7 +398,6 @@ def get_panel_id(panel_ids, idx=0):
         sys.exit('ERROR EXIT')
     return panel_id
 
-#--------------------
 #--------------------
 #--------------------
 #--------------------
@@ -884,6 +807,23 @@ def list_of_cc_collected():
 
 #--------------------
 
+def selected_pixel(pixrow, pixcol, jy, jx, ny, nx, nspace):
+    """if pixel with panel indexes is in current block, returns tuple of its panel and block indexes,
+       None oterwice.
+    """
+    blkrows = range(jy,ny,nspace)
+    blkcols = range(jx,nx,nspace)
+    if pixrow not in blkrows\
+    or pixcol not in blkcols:
+        return None
+    ibr = blkrows.index(pixrow)
+    ibc = blkcols.index(pixcol)
+    msg = 'pixel panel r:%d c:%d    block r:%d c:%d' % (pixrow,pixcol,ibr,ibc) 
+    logger.info(msg)
+    return pixrow, pixcol, ibr, ibc # tuple of panel and block indexes
+
+#--------------------
+
 def offset_calibration(*args, **opts):
 
     exp        = opts.get('exp', None)     
@@ -914,6 +854,7 @@ def offset_calibration(*args, **opts):
     skipncc    = opts.get('skipncc', 0)    
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
+    pixrc      = opts.get('pixrc', None) # ex.: '23,123'
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
@@ -939,6 +880,16 @@ def offset_calibration(*args, **opts):
         #fig2.canvas.manager.window.move(500, 0)
         plt.ion() # do not hold control on plt.show()
         #plt.ioff() # hold control on plt.show()
+
+    selpix = None
+    pixrow, pixcol = None, None
+    if pixrc is not None:
+      try:
+        pixrow, pixcol = [int(v) for v in pixrc.split(',')]
+        logger.info('use pixel row:%d col:%d for graphics' % (pixrow, pixcol))
+      except:
+        logger.error('vaiable pixrc="%s" can not be converted to pixel row,col' % str(pixrc))
+        sys.exit()
 
     panel_id = get_panel_id(panel_ids, idx)
 
@@ -994,9 +945,6 @@ def offset_calibration(*args, **opts):
             nstep = step_counter(cd, nstep_tot, nstep_run, nspace)
             if nstep is None: continue
 
-            figprefix = 'fig-%s-r%04d-%s-seg%02d-cc%03d'%\
-                        (exp, orun.run(), detname.replace(':','-').replace('.','-'), idx, nstep)
-
             if nstep_tot<skipncc:
                 logger.info('skip %d consecutive calib-cycles' % skipncc)
                 continue
@@ -1022,6 +970,9 @@ def offset_calibration(*args, **opts):
                   logger.warning('FLAG ERRSKIP IS %s - keep processing next calib-cycle' % errskip)
                   continue
 
+            figprefix = 'fig-%s-r%04d-%s-seg%02d-cc%03d-%s'%\
+                        (exp, orun.run(), detname.replace(':','-').replace('.','-'), idx, nstep, mode)
+
             nrec,nevt = -1,0
             #First 5 Calib Cycles correspond to darks:
             if dopeds and nstep<5:
@@ -1045,10 +996,10 @@ def offset_calibration(*args, **opts):
                             imsh, cbar = imshow_cbar(fig2, axim2, axcb2, raw, amin=None, amax=None, extent=None,\
                                                      interpolation='nearest', aspect='auto', origin='upper',\
                                                      orientation='vertical', cmap='inferno')
-                            fig2.canvas.set_window_title('Run:%d calib-cycle:%d' % (orun.run(), nstep)) #, **kwargs)
+                            fig2.canvas.set_window_title('Run:%d calib-cycle:%d mode:%s panel:%02d' % (orun.run(), nstep, mode, idx))
                             fname = '%s-img-dark' % figprefix
                             axim2.set_title(fname, fontsize=10)
-                            plt.savefig(fname+'.png')
+                            fig2.savefig(fname+'.png')
                         block[nrec]=raw & M14
                         if nrec%200==0: msg += '.%s' % find_gain_mode(det, raw) 
 
@@ -1074,6 +1025,19 @@ def offset_calibration(*args, **opts):
             elif nstep>4 and nstep<5+nspace**2:
                 msg = ' AML %2d/%2d '%(nstep-5+1,nspace**2)
 
+                istep=nstep-5
+                jy=istep//nspace
+                jx=istep%nspace
+
+                if pixrc is not None:
+                    selpix = selected_pixel(pixrow, pixcol, jy, jx, ny, nx, nspace)
+                    if selpix is None:
+                        logger.info(msg + ' skip, due to pixrc=%s'%pixrc)
+                        continue
+                    else:
+                        logger.info(msg + ' process selected pixel:%s' % str(selpix))
+                        
+
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
@@ -1094,22 +1058,20 @@ def offset_calibration(*args, **opts):
                         if nevt%200==0: msg+='.'
 
                 if display:
-                    imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec][:100,:100], amin=None, amax=None, extent=None,\
+                    #imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec][:100,:100], amin=None, amax=None, extent=None,\
+                    imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec], amin=None, amax=None, extent=None,\
                                              interpolation='nearest', aspect='auto', origin='upper',\
                                              orientation='vertical', cmap='inferno')
                     fig2.canvas.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
                     fname = '%s-img-charge' % figprefix
                     axim2.set_title(fname, fontsize=10)
-                    plt.savefig(fname+'.png')
+                    fig2.savefig(fname+'.png')
 
                 print_statistics(nevt, nrec)
 
-                istep=nstep-5
-                jy=istep//nspace
-                jx=istep%nspace                    
                 block=block[:nrec,jy:ny:nspace,jx:nx:nspace]         # select only pulsed pixels
                 evnum=evnum[:nrec]                                   # list of non-empty events
-                fits0,nsp0,msgf,chi2=fit(block,evnum,display,figprefix,ixoff,nperiods,savechi2) # fit offset, gain
+                fits0,nsp0,msgf,chi2=fit(block,evnum,display,figprefix,ixoff,nperiods,savechi2,selpix) # fit offset, gain
                 fits_ml[jy:ny:nspace,jx:nx:nspace]=fits0             # collect results
                 nsp_ml[jy:ny:nspace,jx:nx:nspace]=nsp0               # collect switching points
                 if savechi2: chi2_ml[jy:ny:nspace,jx:nx:nspace]=chi2 # collect chi2/dof
@@ -1124,6 +1086,17 @@ def offset_calibration(*args, **opts):
             #Next nspace**2 Calib Cycles correspond to pulsing in Auto High-to-Low    
             elif nstep>4+nspace**2 and nstep<5+2*nspace**2:
                 msg = ' AHL %2d/%2d '%(nstep-5-nspace**2+1,nspace**2)
+
+                istep=nstep-5-nspace**2
+                jy=istep//nspace
+                jx=istep%nspace                    
+
+                if pixrc is not None:
+                    selpix = selected_pixel(pixrow, pixcol, jy, jx, ny, nx, nspace)
+                    if selpix is None:
+                        logger.info(msg + ' skip, due to pixrc=%s'%pixrc)
+                        continue
+
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
@@ -1143,14 +1116,21 @@ def offset_calibration(*args, **opts):
                         evnum[nrec]=nevt
                         if nevt%200==0: msg+='.'
 
+                if display:
+                    #imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec][:100,:100], amin=None, amax=None, extent=None,\
+                    imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec], amin=None, amax=None, extent=None,\
+                                             interpolation='nearest', aspect='auto', origin='upper',\
+                                             orientation='vertical', cmap='inferno')
+                    fig2.canvas.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
+                    fname = '%s-img-charge' % figprefix
+                    axim2.set_title(fname, fontsize=10)
+                    fig2.savefig(fname+'.png')
+
                 print_statistics(nevt, nrec)
 
-                istep=nstep-5-nspace**2
-                jy=istep//nspace
-                jx=istep%nspace                    
                 block=block[:nrec,jy:ny:nspace,jx:nx:nspace]       # select only pulsed pixels
                 evnum=evnum[:nrec]                                 # list of non-empty events
-                fits0,nsp0,msgf,chi2=fit(block,evnum,display,figprefix,ixoff,nperiods,savechi2) # fit offset, gain
+                fits0,nsp0,msgf,chi2=fit(block,evnum,display,figprefix,ixoff,nperiods,savechi2,selpix) # fit offset, gain
                 fits_hl[jy:ny:nspace,jx:nx:nspace]=fits0           # collect results
                 nsp_hl[jy:ny:nspace,jx:nx:nspace]=nsp0
                 if savechi2: chi2_hl[jy:ny:nspace,jx:nx:nspace]=chi2 # collect chi2/dof
@@ -1277,7 +1257,7 @@ def offset_calibration(*args, **opts):
 #--------------------
 
 def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles): 
-        plt.figure(ifig,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
+        fig = plt.figure(ifig,facecolor='w',figsize=(11,8.5),dpi=72.27);plt.clf()
         plt.suptitle(gm)
         for i in range(4):
             plt.subplot(2,2,i+1)
@@ -1287,7 +1267,7 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
             plt.title(gm+': '+titles[i])
         plt.pause(0.1)
         fexists = os.path.exists(fnameout)
-        plt.savefig(fnameout)
+        fig.savefig(fnameout)
         if not fexists: set_file_access_mode(fnameout, filemode)
 
 #--------------------
