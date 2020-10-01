@@ -7,6 +7,12 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-97
+2020-10-01 Mikhail S. Dubrovin
+- add -G option to plot charge injection graphics for specified pixel
+	modified:   app/epix10ka_offset_calibration
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V01-00-96
 2020-09-22 Mikhail S. Dubrovin
 - for Chuck add parameter fract to point_indexes

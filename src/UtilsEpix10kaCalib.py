@@ -328,6 +328,8 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, 
                     y = np.hstack((y0,y1))
                     logger.debug(info_ndarr(x,'\n    x')\
                                + info_ndarr(y,'\n    y'))
+
+                    #plt.ioff() # hold control on plt.show()
                     plot_fit(x,y,pf0,pf1,fname)
 
     return fits,nsp,msg,chi2
