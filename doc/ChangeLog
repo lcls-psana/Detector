@@ -7,6 +7,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-98
+2020-10-15 Mikhail S. Dubrovin
+- app/det_calib_ave_and_max - add calib derectory parameter
+- app/det_calib_maxed - deleted
+
 Tag: V01-00-97
 2020-10-01 Mikhail S. Dubrovin
 - add -G option to plot charge injection graphics for specified pixel
