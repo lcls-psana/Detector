@@ -168,4 +168,19 @@ asic(0) :
             asic.fastPP_enable      asic.RO_Monost          asic.S2D_DAC_Bias                        
 
 #------------------------------
+
+def ipython():
+    import psana
+    ds  = psana.DataSource('exp=xpplv3818:run=88')
+    env = ds.env()
+    det = psana.Detector('XppGon.0:Epix10ka2M.0', env)
+    cs = env.configStore()
+    keys = cs.keys()
+    key_data = keys[14]
+    key_conf = keys[15]
+    s = key_conf.src()
+    s.detName() # 'XcsEndstation'
+    s.detId() # 0
+    detname = '%s-%d-%s-%d' % (s.detName(), s.detId(), s.devName(), s.devId()) # 'XppGon.0:Epix10ka2M.0'
+
 #------------------------------

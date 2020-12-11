@@ -4,6 +4,9 @@ import sys
 import numpy as np
 from time import time
 
+import logging
+logger = logging.getLogger(__name__)
+
 import psana
 from Detector.GlobalUtils import print_ndarr
 import PSCalib.GlobalUtils as gu
@@ -13,9 +16,10 @@ import pyimgalgos.Graphics as gr
 
 #------------------------------
 EVSKIP  = 0
-EVENTS  = EVSKIP + 7
+EVENTS  = EVSKIP + 4
 PLOT_IMG = True #False #True #False
 PLOT_SPE = False #True #False #True #False
+OFNIMG   = '2020-12-10-figs-jf-cm/img'
 
 #------------------------------
 
@@ -58,44 +62,8 @@ def dsname_source(tname):
     #elif tname=='30': return 'exp=mfxls1016:run=369', 'MfxEndstation.0:Jungfrau.1', None # dark:369 test for clemens
 
 #------------------------------
-    
-def test_jungfrau_methods(tname):
 
-    if tname in ('51','52','53'): psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib')
-
-    dsname, src, rnum = dsname_source(tname)
-    runnum = rnum if rnum is not None else int(dsname.split(':')[1].split('=')[1])
-
-    ds  = psana.DataSource(dsname)
-    env = ds.env()
-    
-    print 'experiment %s' % env.experiment()
-    print 'run        %d' % runnum
-    print 'dataset    %s' % (dsname) 
-    print 'calibDir:', env.calibDir()
-
-    #for key in evt.keys(): print key
-
-    ##-----------------------------
-    figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG else (None, None, None, None)
-    if figim is not None: gg.move_fig(figim, 300, 0)
-
-    fighi, axhi = None, None
-    if PLOT_SPE:
-        fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
-        axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
-
-    ##-----------------------------
-
-    det = psana.Detector(src, env)
-
-    par = runnum
-    shape_nda = det.shape(par)
-    print 'det.source      : %s' % det.source
-    print 'shape of ndarray: %s' % str(det.shape(par))
-    print 'size of ndarray : %d' % det.size(par)
-    print 'ndim of ndarray : %d' % det.ndim(par)
-    
+def print_constants(det, par):
     peds = det.pedestals(par)
     print_ndarr(peds, 'pedestals')
     
@@ -153,7 +121,52 @@ def test_jungfrau_methods(tname):
 
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
+
     
+def test_jungfrau_methods(tname):
+
+    if tname in ('51','52','53'): psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib')
+
+    dsname, src, rnum = dsname_source(tname)
+    runnum = rnum if rnum is not None else int(dsname.split(':')[1].split('=')[1])
+
+    ds  = psana.DataSource(dsname)
+    env = ds.env()
+    
+    print 'experiment %s' % env.experiment()
+    print 'run        %d' % runnum
+    print 'dataset    %s' % (dsname) 
+    print 'calibDir:', env.calibDir()
+
+    #for key in evt.keys(): print key
+
+    ##-----------------------------
+    figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG else (None, None, None, None)
+    if figim is not None: gg.move_fig(figim, 300, 0)
+
+    fighi, axhi = None, None
+    if PLOT_SPE:
+        fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
+        axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
+
+    ##-----------------------------
+
+    det = psana.Detector(src, env)
+
+    par = runnum
+    shape_nda = det.shape(par)
+    print 'det.source      : %s' % det.source
+    print 'shape of ndarray: %s' % str(det.shape(par))
+    print 'size of ndarray : %d' % det.size(par)
+    print 'ndim of ndarray : %d' % det.ndim(par)
+
+    fnsuffix = '-%s-r%04d-%s' % (env.experiment(), runnum, src.replace(':','_').replace('.','_'))
+    print 'fnsuffix: %s' % fnsuffix
+
+
+    if not(tname in ('51','52','53','54')): print_constants(det, par)
+
+
     t0_sec_tot = time()
 
     for i, evt in enumerate(ds.events()):
@@ -171,7 +184,20 @@ def test_jungfrau_methods(tname):
         print_ndarr(nda_raw, 'nda_raw')
 
         raw_fake = None # 1000*np.ones((2, 512, 1024), dtype=np.uint16)
-        nda = det.calib(evt, cmpars=(7,3,100), nda_raw=raw_fake) # cmpars=(7,1,100)
+
+	#cmpars = (7,1,1000) # t_cm 275ms #python Detector/examples/ex_jungfrau_images.py 54
+ 	#cmpars = (7,2,1000) # t_cm 290ms 
+ 	#cmpars = (7,4,1000) # t_cm 100ms 
+ 	#cmpars = (7,3,400) #
+ 	#cmpars = (7,3,100) #
+ 	cmpars = (7,3,1000) #  t_cm 570ms 
+ 	#cmpars = (7,7,1000) # t_cm 680ms 
+        
+        ########################################################
+        nda = det.calib(evt, cmpars=cmpars, nda_raw=raw_fake)
+        ########################################################
+
+        FNTYPE = 'cmpars-'+'-'.join([str(v) for v in cmpars])
 
         if nda is None: 
             print('det.calib() is None, so plot det.raw()')
@@ -214,19 +240,26 @@ def test_jungfrau_methods(tname):
             imsh = None
 
             ave, rms = ndarr.mean(), ndarr.std()
+            med = np.median(ndarr)
+            spr = np.median(np.abs(ndarr-med))
+            print 'median, spread:', med, spr
+            print 'ave, rms:', ave, rms
 
-            print 'ave, rms=', ave, rms
             amin, amax = (-1, 10) if tname=='4' else\
                          (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
                          (-1, 1) if tname=='30' else\
                          (0,size) if tname=='42' else\
+                         (med-3*spr, med+3*spr) if tname=='54' else\
                          (ave-1*rms, ave+1*rms)
                          #(57000,57800) if tname in ('40','41') else\
-            gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='jet') # , cmap='inferno'
+
+            gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno') # 'jet, inferno
             #figim.canvas.draw()
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
             gr.show(mode='do_not_hold')
-            gg.save('img.png', True)
+
+            if OFNIMG: gg.save_fig(figim, fname=OFNIMG+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), pbits=1)
+            #gg.save('img.png', True)
 
         if PLOT_SPE:
             #arrhi = ndarr # nda_raw
@@ -257,6 +290,7 @@ def test_jungfrau_methods(tname):
 #------------------------------
 
 if __name__ == "__main__":
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '0'
     print '%s\nTest %s' % (80*'_', tname)
     test_jungfrau_methods(tname)

@@ -7,6 +7,22 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-00-99
+2020-12-10 Mikhail S. Dubrovin
+- implement full scale common mode correction for Jungfrau and epix10ka detectors
+	modified:   src/AreaDetector.py
+	modified:   src/UtilsCommonMode.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsJungfrau.py
+	modified:   app/det_images
+	new file:   app/epix10ka_images
+	modified:   examples/ex_epix10ka_cmod.py
+	modified:   examples/ex_epix10ka_cmod_direct_test.py
+	new file:   examples/ex_epix10ka_config_barebones.py
+	modified:   examples/ex_epix10ka_ipython.py
+	modified:   examples/ex_jungfrau_images.py
+	new file:   examples/test-2020-12-04-iris-polarization-corr.py
+
 Tag: V01-00-98
 2020-10-15 Mikhail S. Dubrovin
 - app/det_calib_ave_and_max - add calib derectory parameter

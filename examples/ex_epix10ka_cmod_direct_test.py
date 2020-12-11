@@ -35,8 +35,8 @@ def print_comment(ntest=None) :
     if ntest in (2,None): s+='\n  2-common_mode_cols for mask=None   (3 msec)'
     if ntest in (3,None): s+='\n  3-common_mode_cols for random mask (12 msec)'
     if ntest in (4,None): s+='\n  4-transposed raw data'
-    if ntest in (5,None): s+='\n  5-common_mode_rows for mask=None   (3 msec)'
-    if ntest in (6,None): s+='\n  6-common_mode_rows for random mask (12 msec)'
+    if ntest in (5,None): s+='\n  5-transposed -common_mode_rows for mask=None   (3 msec)'
+    if ntest in (6,None): s+='\n  6-transposed -common_mode_rows for random mask (12 msec)'
     print s
 
 print_comment(ntest)

@@ -12,23 +12,31 @@ import PSCalib.GlobalUtils as gu
 import pyimgalgos.GlobalGraphics as gg
 import pyimgalgos.Graphics as gr
 
-#------------------------------
+#----
 
 EVSKIP  = 0
-EVENTS  = 10 + EVSKIP
+EVENTS  = 4 + EVSKIP
 PLOT_IMG      = True #False #True
 PLOT_GAIN_MAP = False #True #False #True
 PLOT_SPE      = False
 PLOT_ANY      = PLOT_IMG or PLOT_SPE or PLOT_GAIN_MAP
+PRINT_CONSTS  = False
 
-#------------------------------
+#OFNIMG        = 'img-xpplv3818/img'
+OFNIMG        = '2020-12-10-figs-epix10ka2M-cm/img'
+OFNSPE        = None
+OFNANY        = None
+
+FNTYPE       = ''
+
+#----
 # /reg/d/psdm/det/detdaq17/e968-r0131   - source unmasked (up to ~ event 10000), then masked vertically after ~ event 15000 
 # /reg/d/psdm/det/detdaq17/e968-r0132   - source masked horizontally at bottom after ~ event 15000.
-#------------------------------
+#----
 
 def dsname_source(tname):
 
-    psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
+    if int(tname)<9: psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
     if   tname=='1': return 'exp=mfxx32516:run=377', 'MfxEndstation.0:Epix10ka.0' # Dark. Auto H to L, filter dac 1E, integration 50
     elif tname=='2': return 'exp=mfxx32516:run=368', 'MfxEndstation.0:Epix10ka.0' # Dark. fixed high, filter dac 11, integration 100
@@ -57,67 +65,26 @@ def dsname_source(tname):
     elif tname=='12': 
         psana.setOption('psana.calib-dir', '/reg/d/psdm/xpp/xpplv3818/calib/')
         return 'exp=xpplv3818:run=30', 'XppGon.0:Epix10ka2M.0'
+
+    #elif tname=='13': #xpplv3818 run 88, 160, 170 - examples from Vincent Esposito
+    #    #psana.setOption('psana.calib-dir', '/reg/d/psdm/XPP/xpplv3818/calib')
+    #    #return '/reg/d/psdm/xpp/xpplv3818/xtc/xpplv3818-r0088-s00-c00.xtc', 'XppGon.0:Epix10ka2M.0'
+    elif tname=='13': return 'exp=xpplv3818:run=88',  'XppGon.0:Epix10ka2M.0'
+    elif tname=='14': return 'exp=xpplv3818:run=160', 'XppGon.0:Epix10ka2M.0'
+    elif tname=='15': return 'exp=xpplv3818:run=170', 'XppGon.0:Epix10ka2M.0'
     else:
         print 'Example for test %s is not implemented' % tname
         sys.exit(0)
 
-#------------------------------
 
-def selected_record(nrec):
-    return nrec<5\
-       or (nrec<50 and not nrec%10)\
-       or (not nrec%100)
-       #or (nrec<500 and not nrec%100)\
-
-#------------------------------
-    
-def test_epix10ka_methods(tname):
-
-    dsname, src = dsname_source(tname)
-    runnum = int(dsname.split(':')[1].split('=')[1])
-
-    ds  = psana.DataSource(dsname)
-    env = ds.env()
-    pssrc = psana.Source(src)
-
-    print 'experiment %s' % env.experiment()
-    print 'run        %d' % runnum
-    print 'dataset    %s' % (dsname) 
-    print 'calibDir:', env.calibDir()
-
-    #for key in evt.keys(): print key
-
-    ##-----------------------------
-    figim,  axim,  axcb,  imsh  = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG      else (None, None, None, None)
-    figim2, axim2, axcb2, imsh2 = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_GAIN_MAP else (None, None, None, None)
-    if figim  is not None: gg.move_fig(figim,  300, 0)
-    if figim2 is not None: gg.move_fig(figim2, 200, 0)
-
-    fighi, axhi = None, None
-    if PLOT_SPE: 
-        fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
-        axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
-
-    ##-----------------------------
-
-    det = psana.Detector(src, env)
-
-    par = runnum
-    shape_nda = det.shape(par)
-    print 'det.source     : %s' % det.source
-    print 'shape of ndarray: %s' % str(det.shape(par))
-    print 'size of ndarray: %d' % det.size(par)
-    print 'ndim of ndarray: %d' % det.ndim(par)
+def print_constants(det, par):
 
     peds = det.pedestals(par)
     print_ndarr(peds, 'pedestals')
-    
+
     rms = det.rms(par)
     print_ndarr(rms, 'rms')
     
-    #mask = det.mask(par, calib=False, status=True,\
-    #       edges=False, central=False, unbond=False, unbondnbrs=False)
-
     # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
     mask = det.mask(par, calib=False, status=True, edges=True, central=True, width=1, wcentral=1, mode=0)
     print_ndarr(mask, 'mask')
@@ -173,10 +140,79 @@ def test_epix10ka_methods(tname):
 
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
+
+#----
+
+def selected_record(nrec):
+    return nrec<5\
+       or (nrec<50 and not nrec%10)\
+       or (not nrec%100)
+       #or (nrec<500 and not nrec%100)\
+
+#----
     
-    #=====================
-    #sys.exit ('TEST EXIT')
-    #=====================
+def test_epix10ka_methods(tname):
+
+    dsname, src = dsname_source(tname)
+    runnum = int(dsname.split(':')[1].split('=')[1])
+
+    ds  = psana.DataSource(dsname)
+    env = ds.env()
+    pssrc = psana.Source(src)
+
+    print 'experiment %s' % env.experiment()
+    print 'run        %d' % runnum
+    print 'dataset    %s' % (dsname) 
+    print 'calibDir:', env.calibDir()
+
+    #for key in evt.keys(): print key
+
+    ##-----------------------------
+    figim,  axim,  axcb,  imsh  = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG      else (None, None, None, None)
+    figim2, axim2, axcb2, imsh2 = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_GAIN_MAP else (None, None, None, None)
+    if figim  is not None: gg.move_fig(figim,  300, 0)
+    if figim2 is not None: gg.move_fig(figim2, 200, 0)
+
+    fighi, axhi = None, None
+    if PLOT_SPE: 
+        fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
+        axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
+
+    ##-----------------------------
+
+    det = psana.Detector(src, env)
+
+    print 'src     :', src
+    print 'det.name:', det.name
+
+    fnsuffix = '-%s-r%04d-%s' % (env.experiment(), runnum, src.replace(':','_').replace('.','_'))
+    print 'fnsuffix: %s' % fnsuffix
+
+    #exit('TEST EXIT')
+
+    par = runnum
+    shape_nda = det.shape(par)
+    print 'det.source     : %s' % det.source
+    print 'shape of ndarray: %s' % str(det.shape(par))
+    print 'size of ndarray: %d' % det.size(par)
+    print 'ndim of ndarray: %d' % det.ndim(par)
+
+    if PRINT_CONSTS: print_constants(det, par)
+
+    #peds = det.pedestals(par)
+    #print_ndarr(peds, 'pedestals')
+
+    # mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
+    #mask = det.mask(par, calib=False, status=True, edges=True, central=True, width=1, wcentral=1, mode=0)
+    #print_ndarr(mask, 'mask')
+
+    # mode 0/1/2 masks zero/four/eight neighbors around each bad pixel
+    mask_status = det.status_as_mask(par, mode=2, indexes=(0,1,2,3,4)) # indexes=(0,1,2)
+    print_ndarr(mask_status, 'mask_status')
+ 
+    # mbits = 1 - mask edges, +2 - mask central
+    #mask_geo = det.mask_geo(par, mbits=3, width=20, wcentral=5)
+    #print_ndarr(mask_geo, 'mask_geo')
 
     t0_sec_tot = time()
 
@@ -194,11 +230,23 @@ def test_epix10ka_methods(tname):
 
         if nda_raw is None: continue
 
-        #====================================
-
         t0_sec = time()
+
+	#cmpars = (7,0,10) # no cm corr - det.calib 30-70ms/ev
+	#cmpars = (7,1,10) # 190 ms
+	#cmpars = (7,2,10) # 150 ms
+	#cmpars = (7,4,10) #  65 ms
+	#cmpars = (7,3,100) # 320  ms
+	#cmpars = (7,7,100) # 380 ms
+	cmpars = (7,2,10)
+
+        ##################################################
+        nda = det.calib(evt, cmpars=cmpars)
+        #nda = calib_epix10ka_any(det, evt, cmpars=cmpars)
+        ##################################################
+
+        FNTYPE = 'cmpars-'+'-'.join([str(v) for v in cmpars])
         #nda = nda_raw
-        nda = calib_epix10ka_any(det, evt, cmpars=(7,2,10))
         #nda = mask_geo + 1
         #nda = mask_status + 1
         #nda = mask + 1
@@ -216,7 +264,7 @@ def test_epix10ka_methods(tname):
         #nda *=  mask_geo
         #nda *=  mask_status
 
-        #====================================
+        #====
 
         if nda is None: continue
         print_ndarr(nda, '%s\nEvent %4d, calib %7.3f sec, mask %7.3f sec' % (50*'_', i, t1_sec-t0_sec, t2_sec-t1_sec))
@@ -253,7 +301,13 @@ def test_epix10ka_methods(tname):
         #amin, amax = (-1, 10) if tname=='4' else\
         #             (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
         #             (ave-2*rms, ave+6*rms)
-        amin, amax = (ave-0.5*rms, ave+3*rms)
+        #amin, amax = (ave-0.5*rms, ave+3*rms)
+
+        med = np.median(ndarr)
+        spr = np.median(np.abs(ndarr-med))
+        print 'median, spread:', med, spr
+        amin, amax = (med-5*spr, med+5*spr)
+
         if   tname=='8' : amin, amax = (0, 40000)
         elif tname=='10': amin, amax = (-2.5, 5)
 
@@ -277,7 +331,7 @@ def test_epix10ka_methods(tname):
 
             gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno')
             #figim.canvas.draw()
-            #gg.save_fig(figim, fname=ofnimg, pbits=0)
+            if OFNIMG: gg.save_fig(figim, fname=OFNIMG+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), pbits=1)
 
         if PLOT_SPE:
             #arrhi = nda_raw
@@ -296,7 +350,7 @@ def test_epix10ka_methods(tname):
             hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=False)
             gr.add_title_labels_to_axes(axhi, title='Event %d'%i, xlabel='Raw data, ADU',\
                                                                   ylabel='Entries', color='k')
-            #gr.save_fig(fig, fname='spec-%02d.png'%i, verb=True)
+            if OFNSPE: gr.save_fig(fig, fname=OFNSPE+fnsuffix+'-%02d.png'%i, verb=True)
 
         if PLOT_GAIN_MAP:
     
@@ -314,7 +368,7 @@ def test_epix10ka_methods(tname):
             if imsh2 is not None: del imsh2
             imsh2 = None
 
-            gg.plot_imgcb(figim2, axim2, axcb2, imsh2, img2, amin=0, amax=7, origin='upper', title='Event %d'%i, cmap='inferno')
+            gg.plot_imgcb(figim2, axim2, axcb2, imsh2, img2, amin=0, amax=7, origin='upper', title='Event %d'%i, cmap='jet')#'inferno'
             #figim.canvas.draw()
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
 
@@ -336,17 +390,17 @@ def test_epix10ka_methods(tname):
     #sys.exit('TEST EXIT')
     ##-----------------------------
 
-#------------------------------
+#----
 
 if __name__ == "__main__":
 
     import logging
     logger = logging.getLogger(__name__)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG) #INFO) #DEBUG)
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
 
     tname = sys.argv[1] if len(sys.argv)>1 else '0'
     print '%s\nTest %s' % (80*'_', tname)
     test_epix10ka_methods(tname)
     sys.exit ('End of %s' % sys.argv[0])
 
-#------------------------------
+#----

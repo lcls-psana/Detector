@@ -25,8 +25,10 @@ from Detector.PyDataAccess import get_epix_data_object, get_epix10ka_config_obje
                                   get_epix10kaquad_config_object, get_epix10ka2m_config_object,\
                                   get_epix10ka_any_config_object
 from Detector.GlobalUtils import print_ndarr, info_ndarr, divide_protected
+from PSCalib.GlobalUtils import merge_masks
 
-from Detector.UtilsCommonMode import common_mode_rows, common_mode_cols, common_mode_2d
+from Detector.UtilsCommonMode import common_mode_cols,\
+                                     common_mode_rows_hsplit_nbanks, common_mode_2d_hsplit_nbanks
 
 #from PSCalib.GlobalUtils import load_textfile, save_textfile
 
@@ -52,6 +54,7 @@ class Storage:
     def __init__(self):
         self.arr1 = None
         self.gfac = None
+        self.mask = None
         self.counter = -1
 
 #--------------------
@@ -311,7 +314,8 @@ def map_pixel_gain_mode_for_raw(det, raw):
 
 #--------------------
 
-def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpars=(7,2,100)):
+#def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None):
+def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
     """
     Returns calibrated epix10ka data
 
@@ -331,13 +335,17 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
             alg is not used
             mode =0-correction is not applied, =1-in rows, =2-in cols-WORKS THE BEST
             i.e: cmpars=(7,0,100) or (7,2,100)
-    - nda_raw - substitute for det.raw(evt)
+    - **kwa
+      - nda_raw - substitute for det.raw(evt)
+      - mbits - parameter of the det.mask_comb(...)
+      - mask - user defined mask passed as optional parameter
     """
 
     logger.debug('In calib_epix10ka_any')
 
     t0_sec_tot = time()
 
+    nda_raw = kwa.get('nda_raw', None)
     raw = det.raw(evt) if nda_raw is None else nda_raw # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
     if raw is None: return None
 
@@ -349,7 +357,6 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
 
     #gfac = gain 
     gfac = store.gfac
-    arr1 = store.arr1 
 
     if store.gfac is None: 
         # do ONCE this initialization 
@@ -358,10 +365,9 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
                     +info_ndarr(peds, '\n  peds'))
 
         store.gfac = gfac = divide_protected(np.ones_like(gain), gain)
-        store.arr1 = arr1 = np.ones_like(raw, dtype=np.int32) # for counting
+        store.arr1 = np.ones_like(raw, dtype=np.int8)
 
-        logger.debug(info_ndarr(gfac,  '\n  gfac ')\
-                    +info_ndarr(arr1, '\n  arr1'))
+        logger.debug(info_ndarr(gfac,  '\n  gfac '))
 
         # 'FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L'
         #store.gf4 = np.ones_like(raw, dtype=np.int32) * 0.25 # 0.3333 # M - perefierial
@@ -405,31 +411,46 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
     #np.savetxt('img-detdaq18-r23-epix10ka-raw-peds-for-cmtest.txt', arrf[0],\
     #           fmt='%.2f', delimiter=' ', newline='\n', header=' 2-d array (352, 384) for cm test epix10ka raw-peds detdaq18 r23 seg0', footer='', comments='#')
 
-    t0_sec_cm = time()
+    if store.mask is None: 
+        mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
+        mask = det.mask_comb(evt, mbits, **kwa) if mbits > 0 else None
+        mask_opt = kwa.get('mask',None) # mask optional parameter in det.calib(...,mask=...)
+        if mask_opt is not None:
+           store.mask = mask_opt if mask is None else merge_masks(mask,mask_opt)
+    mask = store.mask        
 
     if cmp is not None:
       mode, cormax = int(cmp[1]), cmp[2]
       if mode>0:
-        #common_mode_2d(arrf, mask=gr0, cormax=cormax)
+        t0_sec_cm = time()
+        #t2_sec_cm = time()
+        arr1 = store.arr1 # np.ones_like(mask, dtype=np.uint8)
+        grhm = np.select((gr0,  gr1,  gr3,  gr4), (arr1, arr1, arr1, arr1), default=0)
+        gmask = np.bitwise_and(grhm, mask) if mask is not None else grhm
+        #logger.debug(info_ndarr(arr1, '\n  arr1'))
+        #logger.debug(info_ndarr(grhm, 'XXXX grhm'))
+        #logger.debug(info_ndarr(gmask, 'XXXX gmask'))
+        #logger.debug('common-mode mask massaging (sec) = %.6f' % (time()-t2_sec_cm)) # 5msec
+        logger.debug('per panel statistics of good pixels: %s' % str(np.sum(gmask, axis=(1,2), dtype=np.uint32)))
+
+        #sh = (nsegs, 352, 384)
+        hrows = 352/2
         for s in range(arrf.shape[0]):
-          if mode & 1:
-            #common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
-            common_mode_rows(arrf[s,], cormax=cormax)
-          if mode & 2:
-            #sh = (16, 352, 384)
-            hrows = 352/2
-            #common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
-            #common_mode_cols(arrf[s,], cormax=cormax)
-            common_mode_cols(arrf[s,:hrows,:], cormax=cormax)
-            common_mode_cols(arrf[s,hrows:,:], cormax=cormax)
 
-    logger.debug('common-mode correction consumed time (sec) = %.6f' % (time()-t0_sec_cm)) # 90-100msec total
+          if mode & 4: # in banks: (352/2,384/8)=(176,48) pixels
+            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=8, cormax=cormax)
+            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=8, cormax=cormax)
 
-    return arrf * factor
+          if mode & 1: # in rows per bank: 384/8 = 48 pixels # 190ms
+            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=8, cormax=cormax)
 
-    #====================
-    #sys.exit('TEST EXIT')
-    #====================
+          if mode & 2: # in cols per bank: 352/2 = 176 pixels # 150ms
+            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax)
+            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax)
+
+        logger.debug('TIME common-mode correction = %.6f sec' % (time()-t0_sec_cm))
+
+    return arrf * factor if mask is None else arrf * factor * mask # gain correction
 
 #--------------------
 
