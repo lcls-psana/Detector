@@ -7,7 +7,7 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-### Tag: V01-01-01
+Tag: V01-01-01
 2020-12-11 Mikhail S. Dubrovin
 - propagate npix_min=10, apply cm corr by mask only
 	modified:   src/UtilsCommonMode.py
