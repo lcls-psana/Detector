@@ -27,13 +27,11 @@ from Detector.PyDataAccess import get_epix_data_object, get_epix10ka_config_obje
                                   get_epix10kaquad_config_object, get_epix10ka2m_config_object,\
                                   get_epix10ka_any_config_object
 from Detector.GlobalUtils import print_ndarr, info_ndarr, divide_protected
+from PSCalib.GlobalUtils import merge_masks
 
-from Detector.UtilsCommonMode import common_mode_rows, common_mode_cols, common_mode_2d
+from Detector.UtilsCommonMode import common_mode_cols,\
+                                     common_mode_rows_hsplit_nbanks, common_mode_2d_hsplit_nbanks
 
-#from PSCalib.GlobalUtils import load_textfile, save_textfile
-
-# o = get_epix_data_object(evt, src)
-# co = get_epix_config_object(env, src)
 get_epix10ka_data_object = get_epix_data_object
 
 # CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
@@ -54,6 +52,7 @@ class Storage:
     def __init__(self):
         self.arr1 = None
         self.gfac = None
+        self.mask = None
         self.counter = -1
 
 #--------------------
@@ -241,30 +240,57 @@ def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
 
 #--------------------
 
-def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
-    """returns (str) with statistics of pixels in defferent gain modes in gain maps
+def pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
+    """returns statistics of pixels in defferent gain modes in gain maps
     """
-    t0_sec = time()
     arr1 = np.ones_like(gr0, dtype=np.int32)
-    msg = 'gain range statistics:\n  gr0 %d\n  gr1 %d\n  gr2 %d\n  gr3 %d\n  gr4 %d\n  gr5 %d\n  gr6 %d'%\
-     (np.sum(np.select((gr0,), (arr1,), default=0)),\
+    return\
+      np.sum(np.select((gr0,), (arr1,), default=0)),\
       np.sum(np.select((gr1,), (arr1,), default=0)),\
       np.sum(np.select((gr2,), (arr1,), default=0)),\
       np.sum(np.select((gr3,), (arr1,), default=0)),\
       np.sum(np.select((gr4,), (arr1,), default=0)),\
       np.sum(np.select((gr5,), (arr1,), default=0)),\
-      np.sum(np.select((gr6,), (arr1,), default=0))) # 3ms !!!
-    return '%s\n statistics processing time (sec) = %.6f' % (msg, time()-t0_sec)
+      np.sum(np.select((gr6,), (arr1,), default=0))
 
 #--------------------
 
-def info_pixel_gain_mode_statistics_for_raw(det, raw):
+#def pixel_gain_mode_fractions(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
+def pixel_gain_mode_fractions(det, data):
+    """returns fraction of pixels in defferent gain modes in gain maps
+    """
+    gmaps = gain_maps_epix10ka_any(det, data)
+    if gmaps is None: return None
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    pix_stat = pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    f = 1.0/gr0.size
+    return [npix*f for npix in pix_stat]
+
+#--------------------
+
+def info_pixel_gain_mode_fractions(det, raw, msg='pixel gain mode fractions : '):
+    """returns (str) with fraction of pixels in defferent gain modes in gain maps
+    """
+    grp_prob = pixel_gain_mode_fractions(det, raw)
+    return '%s%s' % (msg, ', '.join(['%.5f'%p for p in grp_prob]))
+
+#--------------------
+
+def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
+    """returns (str) with statistics of pixels in defferent gain modes in gain maps
+    """
+    grp_stat = pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    return ', '.join(['%7d' % npix for npix in grp_stat])
+
+#--------------------
+
+def info_pixel_gain_mode_statistics_for_raw(det, raw, msg='pixel gain mode statistics: '):
     """returns (str) with statistics of pixels in defferent gain modes in raw data
     """
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
-    return info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    return '%s%s' % (msg, info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
 #--------------------
 
@@ -286,7 +312,7 @@ def map_pixel_gain_mode_for_raw(det, raw):
 
 #--------------------
 
-def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpars=(7,2,100)):
+def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=1, mask=None, nda_raw=None and 
     """
     Returns calibrated epix10ka data
 
@@ -306,13 +332,17 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
             alg is not used
             mode =0-correction is not applied, =1-in rows, =2-in cols-WORKS THE BEST
             i.e: cmpars=(7,0,100) or (7,2,100)
-    - nda_raw - substitute for det.raw(evt)
+    - **kwa - used here and passed to det.mask_comb
+      - nda_raw - substitute for det.raw(evt)
+      - mbits - parameter of the det.mask_comb(...)
+      - mask - user defined mask passed as optional parameter
     """
 
     logger.debug('In calib_epix10ka_any')
 
     t0_sec_tot = time()
 
+    nda_raw = kwa.get('nda_raw', None)
     raw = det.raw(evt) if nda_raw is None else nda_raw # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
     if raw is None: return None
 
@@ -322,25 +352,22 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
     if gain is None: return None # gain = np.ones_like(peds)  # - 4d gains
     if peds is None: return None # peds = np.zeros_like(peds) # - 4d gains
 
-    #gfac = gain 
-    gfac = store.gfac
-    arr1 = store.arr1 
-
     if store.gfac is None: 
         # do ONCE this initialization 
         logger.debug(info_ndarr(raw,  '\n  raw ')\
                     +info_ndarr(gain, '\n  gain')\
                     +info_ndarr(peds, '\n  peds'))
 
-        store.gfac = gfac = divide_protected(np.ones_like(gain), gain)
-        store.arr1 = arr1 = np.ones_like(raw, dtype=np.int32) # for counting
+        store.gfac = divide_protected(np.ones_like(gain), gain)
+        store.arr1 = np.ones_like(raw, dtype=np.int8)
 
-        logger.debug(info_ndarr(gfac,  '\n  gfac ')\
-                    +info_ndarr(arr1, '\n  arr1'))
+        logger.debug(info_ndarr(store.gfac,  '\n  gfac '))
 
         # 'FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L'
         #store.gf4 = np.ones_like(raw, dtype=np.int32) * 0.25 # 0.3333 # M - perefierial
         #store.gf6 = np.ones_like(raw, dtype=np.int32) * 1    # L - center
+
+    gfac = store.gfac
 
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None: return None
@@ -349,7 +376,6 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
     factor = np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
                        (gfac[0,:], gfac[1,:], gfac[2,:], gfac[3,:],\
                         gfac[4,:], gfac[5,:], gfac[6,:]), default=1) # 2msec
-                        #store.gf4, gfac[5,:], store.gf6), default=1) # 2msec
 
     #==================== TEST RETURN MAP OF PIXEL GAIN MODES
     #return map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
@@ -368,43 +394,51 @@ def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None): # **kwargs): # cmpa
     logger.debug(info_ndarr(factor, 'calib_epix10ka factor'))
     logger.debug(info_ndarr(pedest, 'calib_epix10ka pedest'))
 
-    #arr = np.array(raw, dtype=np.float32) # otherwice det.calib returns np.object....
-
     arrf = np.array(raw & M14, dtype=np.float32) - pedest
 
-
-    #if False:
     logger.debug('common-mode correction pars cmp: %s' % str(cmp))
 
-    #print_ndarr(arrf[0], 'arrf[0]')
-    #np.savetxt('img-detdaq18-r23-epix10ka-raw-peds-for-cmtest.txt', arrf[0],\
-    #           fmt='%.2f', delimiter=' ', newline='\n', header=' 2-d array (352, 384) for cm test epix10ka raw-peds detdaq18 r23 seg0', footer='', comments='#')
-
-    t0_sec_cm = time()
+    if store.mask is None: 
+        mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
+        mask = det.mask_comb(evt, mbits, **kwa) if mbits > 0 else None
+        mask_opt = kwa.get('mask',None) # mask optional parameter in det.calib(...,mask=...)
+        if mask_opt is not None:
+           store.mask = mask_opt if mask is None else merge_masks(mask,mask_opt)
+    mask = store.mask        
 
     if cmp is not None:
       mode, cormax = int(cmp[1]), cmp[2]
+      npixmin = cmp[3] if len(cmp)>3 else 10
       if mode>0:
-        #common_mode_2d(arrf, mask=gr0, cormax=cormax)
+        t0_sec_cm = time()
+        #t2_sec_cm = time()
+        arr1 = store.arr1 # np.ones_like(mask, dtype=np.uint8)
+        grhm = np.select((gr0,  gr1,  gr3,  gr4), (arr1, arr1, arr1, arr1), default=0)
+        gmask = np.bitwise_and(grhm, mask) if mask is not None else grhm
+        #logger.debug(info_ndarr(arr1, '\n  arr1'))
+        #logger.debug(info_ndarr(grhm, 'XXXX grhm'))
+        #logger.debug(info_ndarr(gmask, 'XXXX gmask'))
+        #logger.debug('common-mode mask massaging (sec) = %.6f' % (time()-t2_sec_cm)) # 5msec
+        logger.debug('per panel statistics of good pixels: %s' % str(np.sum(gmask, axis=(1,2), dtype=np.uint32)))
+
+        #sh = (nsegs, 352, 384)
+        hrows = 352/2
         for s in range(arrf.shape[0]):
-          if mode & 1:
-            #common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
-            common_mode_rows(arrf[s,], cormax=cormax)
-          if mode & 2:
-            #sh = (16, 352, 384)
-            hrows = 352/2
-            #common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
-            #common_mode_cols(arrf[s,], cormax=cormax)
-            common_mode_cols(arrf[s,:hrows,:], cormax=cormax)
-            common_mode_cols(arrf[s,hrows:,:], cormax=cormax)
 
-    logger.debug('common-mode correction consumed time (sec) = %.6f' % (time()-t0_sec_cm)) # 90-100msec total
+          if mode & 4: # in banks: (352/2,384/8)=(176,48) pixels
+            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=8, cormax=cormax, npix_min=npixmin)
+            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=8, cormax=cormax, npix_min=npixmin)
 
-    return arrf * factor
+          if mode & 1: # in rows per bank: 384/8 = 48 pixels # 190ms
+            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=8, cormax=cormax, npix_min=npixmin)
 
-    #====================
-    #sys.exit('TEST EXIT')
-    #====================
+          if mode & 2: # in cols per bank: 352/2 = 176 pixels # 150ms
+            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax, npix_min=npixmin)
+            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax, npix_min=npixmin)
+
+        logger.debug('TIME common-mode correction = %.6f sec' % (time()-t0_sec_cm))
+
+    return arrf * factor if mask is None else arrf * factor * mask # gain correction
 
 #--------------------
 
@@ -416,27 +450,31 @@ def find_gain_mode(det, data=None):
     """Returns str gain mode from the list GAIN_MODES or None.
        if data=None: distinguish 5-modes w/o data
     """
-    gmaps = gain_maps_epix10ka_any(det, data)
-    if gmaps is None: return None
-    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    #gmaps = gain_maps_epix10ka_any(det, data)
+    #if gmaps is None: return None
+    #gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
 
-    arr1 = np.ones_like(gr0)
-    npix = arr1.size
-    pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
-                np.select((gr1,), (arr1,), 0).sum(),\
-                np.select((gr2,), (arr1,), 0).sum(),\
-                np.select((gr3,), (arr1,), 0).sum(),\
-                np.select((gr4,), (arr1,), 0).sum(),\
-                np.select((gr5,), (arr1,), 0).sum(),\
-                np.select((gr6,), (arr1,), 0).sum())
+    #arr1 = np.ones_like(gr0)
+    #npix = arr1.size
+    #pix_stat = (np.select((gr0,), (arr1,), 0).sum(),\
+    #            np.select((gr1,), (arr1,), 0).sum(),\
+    #            np.select((gr2,), (arr1,), 0).sum(),\
+    #            np.select((gr3,), (arr1,), 0).sum(),\
+    #            np.select((gr4,), (arr1,), 0).sum(),\
+    #            np.select((gr5,), (arr1,), 0).sum(),\
+    #            np.select((gr6,), (arr1,), 0).sum())
 
-    #logger.debug('Statistics in gain groups: %s' % str(pix_stat))
+    ##logger.debug('Statistics in gain groups: %s' % str(pix_stat))
 
-    f = 1.0/arr1.size
-    grp_prob = [npix*f for npix in pix_stat]
-    #logger.debug('grp_prob: %s' % str(grp_prob))
+    #f = 1.0/arr1.size
+    #grp_prob = [npix*f for npix in pix_stat]
+    #logger.debug('grp_prob: %s' % ', '.join(['%.4f'%p for p in grp_prob]))
 
-    ind = next(i for i,fr in enumerate(grp_prob) if fr>0.5)
+    #grp_prob = pixel_gain_mode_fractions(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
+    grp_prob = pixel_gain_mode_fractions(det, data)
+
+    ind = next((i for i,p in enumerate(grp_prob) if p>0.5), None)
+    if ind is None: return None
     gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None 
     #logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
 

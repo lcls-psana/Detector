@@ -96,11 +96,13 @@ Usage::
 
     # access geometry information
     geo        = det.geometry(par)   # returns geometry object (top-most)
-    cx         = det.coords_x(par)   # returns array of pixel x coordinates
-    cy         = det.coords_y(par)   # returns array of pixel y coordinates
-    cz         = det.coords_z(par)   # returns array of pixel z coordinates
-    cx, cy     = det.coords_xy(par)  # returns arrays of pixel x and y coordinates
-    cx, cy, cz = det.coords_xyz(par) # returns arrays of pixel x, y, and z coordinates
+
+    cframe = gu.CFRAME_PSANA # or gu.CFRAME_LAB
+    cx         = det.coords_x(par, cframe)   # returns array of pixel x coordinates
+    cy         = det.coords_y(par, cframe)   # returns array of pixel y coordinates
+    cz         = det.coords_z(par, cframe)   # returns array of pixel z coordinates
+    cx, cy     = det.coords_xy(par, cframe)  # returns arrays of pixel x and y coordinates
+    cx, cy, cz = det.coords_xyz(par, cframe) # returns arrays of pixel x, y, and z coordinates
     areas      = det.areas(par)      # returns array of pixel areas relative smallest pixel
     mask_geo   = det.mask_geo(par, mbits=15, **kwargs) # returns mask of segment-specific pixels
                                              #  mbits = +1-edges; +2-wide central cols;
@@ -139,7 +141,7 @@ Usage::
     iy       = det.indexes_y(par, pix_scale_size_um=None, xy0_off_pix=None)
     ix, iy   = det.indexes_xy(par, pix_scale_size_um=None, xy0_off_pix=None)
     ix, iy   = det.indexes_xy_at_z(par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None)
-    ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) 
+    ipx, ipy = det.point_indexes(par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False)
     img      = det.image(evt, img_nda, pix_scale_size_um=None, xy0_off_pix=None)
     xaxis    = det.image_xaxis(par, pix_scale_size_um=None, x0_off_pix=None)
     yaxis    = det.image_yaxis(par, pix_scale_size_um=None, y0_off_pix=None)
@@ -988,8 +990,12 @@ class AreaDetector(object):
 
            - np.array - per-pixel array of calibrated intensities from data.
         """
-        if self.is_jungfrau()     : return calib_jungfrau(self, evt, self.source, cmpars, **kwargs)
-        if self.is_epix10ka_any() : return calib_epix10ka_any(self, evt, cmpars, **kwargs)
+        if self.is_jungfrau():
+            kwargs['mbits']=mbits
+            return calib_jungfrau(self, evt, cmpars, **kwargs)
+        if self.is_epix10ka_any():
+            kwargs['mbits']=mbits
+            return calib_epix10ka_any(self, evt, cmpars, **kwargs)
 
         rnum = self.runnum(evt)
 
@@ -1094,7 +1100,7 @@ class AreaDetector(object):
         if unbondnbrs : mbits += 8
         if unbondnbrs8: mbits += 16
 
-        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits, **kwargs)) 
+        if mbits      : mask_nda = gu.merge_masks(mask_nda, self.mask_geo(rnum, mbits=mbits, **kwargs))
         return mask_nda
 
 ##-----------------------------
@@ -1163,7 +1169,7 @@ class AreaDetector(object):
         return self.pyda.geoaccess(par) 
 
 
-    def coords_x(self, par) :
+    def coords_x(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel array of x coordinates.
 
            Parameter
@@ -1174,10 +1180,10 @@ class AreaDetector(object):
 
            - np.array - array of pixel x coordinates.
         """
-        return self._shaped_array_(par, self.pyda.coords_x(par)) 
+        return self._shaped_array_(par, self.pyda.coords_x(par, cframe))
 
 
-    def coords_y(self, par) :
+    def coords_y(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel array of y coordinates.
 
            Parameter
@@ -1188,10 +1194,10 @@ class AreaDetector(object):
 
            - np.array - array of pixel y coordinates.
         """
-        return self._shaped_array_(par, self.pyda.coords_y(par)) 
+        return self._shaped_array_(par, self.pyda.coords_y(par, cframe))
 
 
-    def coords_z(self, par) :
+    def coords_z(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel array of z coordinates.
 
            Parameter
@@ -1202,10 +1208,10 @@ class AreaDetector(object):
 
            - np.array - array of pixel z coordinates.
         """
-        return self._shaped_array_(par, self.pyda.coords_z(par))
+        return self._shaped_array_(par, self.pyda.coords_z(par, cframe))
 
 
-    def coords_xy(self, par) :
+    def coords_xy(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel arrays of x and y coordinates.
 
            Parameter
@@ -1217,11 +1223,11 @@ class AreaDetector(object):
            - np.array - 2 arrays of pixel x and y coordinates, respectively.
         """
         rnum = self.runnum(par)
-        cx, cy = self.pyda.coords_xy(par)
+        cx, cy = self.pyda.coords_xy(par, cframe)
         return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy) 
 
 
-    def coords_xyz(self, par) :
+    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA):
         """Returns per-pixel arrays of x, y, and z coordinates.
 
            Parameter
@@ -1233,7 +1239,7 @@ class AreaDetector(object):
            - np.array - 3 arrays of pixel x, y, and z coordinates, respectively.
         """
         rnum = self.runnum(par)
-        cx, cy, cz = self.pyda.coords_xyz(par)
+        cx, cy, cz = self.pyda.coords_xyz(par, cframe)
         return self._shaped_array_(rnum, cx), self._shaped_array_(rnum, cy), self._shaped_array_(rnum, cz) 
 
 
@@ -1270,7 +1276,7 @@ class AreaDetector(object):
 
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
         """
-        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits, **kwargs))
+        return self._shaped_array_(par, self.pyda.mask_geo(par, mbits=mbits, **kwargs))
 
 
     def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
@@ -1346,8 +1352,8 @@ class AreaDetector(object):
         return self._shaped_array_(rnum, iX_at_Z), self._shaped_array_(rnum, iY_at_Z)
 
 
-    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :
-        """Returns (ix, iy) indexes of the point (x,y) specified in [um].
+    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False):
+        """Returns int of float (for fract) (ix, iy) indexes of the point (x,y) specified in [um].
 
            Parameters
 
@@ -1355,12 +1361,14 @@ class AreaDetector(object):
            - pxy_um            : list of two float values - coordinates of the point in the detector frame, default (0,0)
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
+           - fract             : bool - if True - force return fractional indexes.
+           - cframe            : int - coordinate frame 0=psana or 1=LAB frame.
 
            Returns
 
            - tuple - (ix, iy) tuple of two indexes associated with input point coordinates.
         """
-        ix, iy = self.pyda.point_indexes(par, pxy_um, pix_scale_size_um, xy0_off_pix)
+        ix, iy = self.pyda.point_indexes(par, pxy_um, pix_scale_size_um, xy0_off_pix, cframe, fract)
         return ix, iy
 
 

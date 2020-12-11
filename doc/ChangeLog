@@ -7,6 +7,133 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V01-01-01
+2020-12-11 Mikhail S. Dubrovin
+- propagate npix_min=10, apply cm corr by mask only
+	modified:   src/UtilsCommonMode.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsJungfrau.py
+	modified:   app/epix10ka_images
+	modified:   app/jungfrau_images
+
+Tag: V01-00-99
+2020-12-10 Mikhail S. Dubrovin
+- implement full scale common mode correction for Jungfrau and epix10ka detectors
+	modified:   src/AreaDetector.py
+	modified:   src/UtilsCommonMode.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsJungfrau.py
+	modified:   app/det_images
+	new file:   app/epix10ka_images
+	modified:   examples/ex_epix10ka_cmod.py
+	modified:   examples/ex_epix10ka_cmod_direct_test.py
+	new file:   examples/ex_epix10ka_config_barebones.py
+	modified:   examples/ex_epix10ka_ipython.py
+	modified:   examples/ex_jungfrau_images.py
+	new file:   examples/test-2020-12-04-iris-polarization-corr.py
+
+Tag: V01-00-98
+2020-10-15 Mikhail S. Dubrovin
+- app/det_calib_ave_and_max - add calib derectory parameter
+- app/det_calib_maxed - deleted
+
+Tag: V01-00-97
+2020-10-01 Mikhail S. Dubrovin
+- add -G option to plot charge injection graphics for specified pixel
+	modified:   app/epix10ka_offset_calibration
+	modified:   src/UtilsEpix10kaCalib.py
+
+Tag: V01-00-96
+2020-09-22 Mikhail S. Dubrovin
+- for Chuck add parameter fract to point_indexes
+- add old test*.py to examples
+- add app/det_calib_ave_and_max
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+	new file:   app/det_calib_ave_and_max
+	new file:   examples/test-2018-06-12-pnccd-xanthe-changed.py
+	new file:   examples/test-2018-11-29-epix10ka2m-shapes.py
+	new file:   examples/test-2019-04-05-jungfrau-shape.py
+	new file:   examples/test-2019-04-15-detector.py
+	new file:   examples/test-2020-02-04-philip-makeTuple.py
+	new file:   examples/test-2020-08-10-cpo-xcsc00118.py
+	new file:   examples/test-2020-08-18-cpo-xpplr8116-r27-py2-py3.py
+	new file:   examples/test-2020-08-23-cxic00318-epix10ka2m-mask-chuck-corr.py
+	new file:   examples/test-2020-09-18-cpo-meclv8018-epix100a-det-image.py
+
+Tag: V01-00-95
+2020-09-18 Mikhail S. Dubrovin
+- add app/det_calib_maxed, epix10ka2m_split_calib_for_7nda and cosmetics
+	new file:   app/det_calib_maxed
+	modified:   app/det_raw_calib_image
+	new file:   app/epix10ka2m_split_calib_for_7nda
+	deleted:    examples/ex_epix10ka2m_split_calib_for_7nda.py
+	modified:   src/GlobalUtils.py
+	modified:   src/UtilsEpix10kaCalib.py
+
+Tag: V01-00-94
+2020-09-12 Mikhail S. Dubrovin
+- fix option for panel indices in epix10ka_deploy_constants, add new app/det_raw_calib_image
+#	new file:   app/det_raw_calib_image
+#	modified:   src/UtilsEpix10kaCalib.py
+
+Tag: V01-00-93
+2020-09-11 Mikhail S. Dubrovin
+- add option -I in app/epix10ka_deploy_constants
+- fix issue to access EPIX100A and EPIX10KA shape from configuration
+	modified:   app/epix10ka_deploy_constants
+	modified:   app/epix10ka_test_calibcycles
+	modified:   src/PyDetectorAccess.py
+	modified:   src/UtilsEpix10kaCalib.py
+
+Tag: V01-00-92
+2020-09-02 Mikhail S. Dubrovin
+- add default constants for epix10ka and epix10kaquad
+	new file:   data/geometry-def-epix10ka.data
+	new file:   data/geometry-def-epix10kaquad.data
+	modified:   src/PyDetectorAccess.py
+
+Tag: V01-00-91
+2020-08-25 Mikhail S. Dubrovin
+- add parameter cframe to coords_xyz, add a few default geometry files, update examples
+	new file:   data/geometry-def-epix10ka2m.data
+	new file:   data/geometry-def-jungfrau05m.data
+	new file:   data/geometry-def-jungfrau1m.data
+	new file:   data/geometry-def-jungfrau4m.data
+	modified:   examples/ex_epix10ka_images.py
+	new file:   examples/test-2020-08-25-epix10ka-panel-flatness-optmet.py
+	new file:   examples/test-2020-08-25-epix10ka2m-marc.py
+	new file:   examples/test-lab-pixel-coordinates-on-psana-frame-image.py
+	modified:   src/AreaDetector.py
+	modified:   src/PyDetectorAccess.py
+
+Tag: V01-00-90
+2020-08-25 Mikhail S. Dubrovin
+- keep polishing epix10ka2m scripts
+  - deploy_constants
+    - to prevent warnings do not open non-existent files for rms and status in AML-L and AHL-L
+    - check that per-panel file extension is .dat
+    - gainci normalize on single factor each of switching modes AML-L, AHL
+  - offset_calibration
+    - TODO: check c-i calibcycles by numberorder with metadata
+- add a couple of examples
+	new file:   examples/ex_epix10ka2m_replace_offset_calib_zeros.py
+	new file:   examples/ex_epix10ka2m_split_calib_for_7nda.py
+	modified:   src/UtilsEpix10kaCalib.py
+	modified:   src/UtilsJungfrau.py
+
+Tag: V01-00-89
+2020-08-21 Mikhail S. Dubrovin
+- add protection in charge-injection fit, add optional saving chi2/dof
+	modified:   app/epix10ka_offset_calibration
+	modified:   src/UtilsEpix10kaCalib.py
+
+Tag: V01-00-88
+2020-08-15 Mikhail S. Dubrovin
+- update UtilsEpix10kaCalib.py
+
+Tag: V01-00-87 ???
+
 Tag: V01-00-86
 2020-08-08 Mikhail S. Dubrovin
 - update epix10ka_* scripts

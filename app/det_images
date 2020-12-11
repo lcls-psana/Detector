@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 ####!/usr/bin/env python
 
 import sys
@@ -16,7 +14,7 @@ import pyimgalgos.Graphics as gr
 
 #------------------------------
 
-EVSKIP  = 100
+EVSKIP  = 0
 EVENTS  = 10 + EVSKIP
 PLOT_IMG      = True #False #True
 PLOT_GAIN_MAP = False #True #False #True
@@ -55,8 +53,12 @@ def dsname_source(tname):
     elif tname=='10':
         psana.setOption('psana.calib-dir', '/reg/d/psdm/MFX/mfxc00118/calib/')
         return 'exp=mfxc00118:run=70:smd', 'MfxEndstation.0:Epix10ka2M.0' # run=70,71,72,73: Fe55 in Q0,Q1,Q2,Q3
+    elif tname=='11': return 'exp=meclv0818:run=252',  'MecTargetChamber.0:Uxi.0'
+    elif tname=='12': 
+        psana.setOption('psana.calib-dir', '/reg/d/psdm/xpp/xpplv3818/calib/')
+        return 'exp=xpplv3818:run=30', 'XppGon.0:Epix10ka2M.0'
     else:
-        print 'Example for\n dataset: %s\n source: %s \nis not implemented' % (dsname, src)
+        print 'Example for test %s is not implemented' % tname
         sys.exit(0)
 
 #------------------------------
@@ -78,10 +80,10 @@ def test_epix10ka_methods(tname):
     env = ds.env()
     pssrc = psana.Source(src)
 
-    print('experiment %s' % env.experiment())
-    print('run        %d' % runnum)
-    print('dataset    %s' % (dsname)) 
-    print('calibDir:', env.calibDir())
+    print 'experiment %s' % env.experiment()
+    print 'run        %d' % runnum
+    print 'dataset    %s' % (dsname) 
+    print 'calibDir:', env.calibDir()
 
     #for key in evt.keys(): print key
 
@@ -102,7 +104,6 @@ def test_epix10ka_methods(tname):
 
     par = runnum
     shape_nda = det.shape(par)
-
     print 'det.source     : %s' % det.source
     print 'shape of ndarray: %s' % str(det.shape(par))
     print 'size of ndarray: %d' % det.size(par)
@@ -138,7 +139,7 @@ def test_epix10ka_methods(tname):
 
     #statmask = det.status_as_mask(par)
     #print_ndarr(statmask, 'statmask')
-    #print('number of bad status pixels: %d' % (len(statmask[statmask==0])))
+    #print 'number of bad status pixels: %d' % (len(statmask[statmask==0]))
 
     # mode 0/1/2 masks zero/four/eight neighbors around each bad pixel
     mask_status = det.status_as_mask(par, mode=2, indexes=(0,1,2,3,4)) # indexes=(0,1,2)
@@ -146,7 +147,7 @@ def test_epix10ka_methods(tname):
     arr1 = np.ones_like(mask_status, dtype=np.uint8)
     print_ndarr(mask_status, 'mask_status')
     num1 = np.select((mask_status>0,), (arr1,), 0).sum()
-    print(' ====> mask of status number of 0s: %d and 1s: %d' % (arr1.size-num1, num1))
+    print ' ====> mask of status number of 0s: %d and 1s: %d' % (arr1.size-num1, num1)
     
     cmod = det.common_mode(par)
     print_ndarr(cmod, 'common_mod')
@@ -161,14 +162,14 @@ def test_epix10ka_methods(tname):
     print_ndarr(areas, 'area')
 
     pixel_size = det.pixel_size(par)
-    print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
+    print '%s\npixel size: %s' % (80*'_', str(pixel_size))
     
     # mbits = 1 - mask edges, +2 - mask central
     mask_geo = det.mask_geo(par, mbits=3, width=20, wcentral=5)
     print_ndarr(mask_geo, 'mask_geo')
 
     ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-    print('Detector origin indexes: ix, iy:', ipx, ipy)
+    print 'Detector origin indexes: ix, iy:', ipx, ipy
 
     print_ndarr(det.image_xaxis(par), 'image_xaxis')
     print_ndarr(det.image_yaxis(par), 'image_yaxis')
@@ -197,7 +198,7 @@ def test_epix10ka_methods(tname):
 
         t0_sec = time()
         #nda = nda_raw
-        nda = calib_epix10ka_any(det, evt)
+        nda = calib_epix10ka_any(det, evt, cmpars=(7,2,10))
         #nda = mask_geo + 1
         #nda = mask_status + 1
         #nda = mask + 1
@@ -260,17 +261,13 @@ def test_epix10ka_methods(tname):
 
         if PLOT_IMG:
             #shape = (16, 352, 384)
-            #ndarr[0,:] = 1
+            #ndarr[0,:] = 0
             img = det.image(evt, ndarr) # [600:1000, 600:1000] #[300:1300, 300:1300]
             #img = ndarr #; ndarr.shape = (1024,1024) # up and down pannels look flipped 
 
             if img is None:
                 print 'Image is not available.'
                 continue
- 
-            ofnnpy = 'img-ev%0002d.npy'%i
-            np.save(ofnnpy, img)
-            print 'saved image %s' % ofnnpy
 
             #print_ndarr(img, 'img')
 
@@ -293,7 +290,7 @@ def test_epix10ka_methods(tname):
             #range_x=(arrhi.min(), arrhi.max())
             range_x=(amin, amax)
 
-            print('range_x:', range_x)
+            print 'range_x:', range_x
             print_ndarr(arrhi, 'arrhi')
 
             hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=False)
@@ -324,7 +321,7 @@ def test_epix10ka_methods(tname):
         if PLOT_ANY: gr.show(mode='do_not_hold')
 
     dt_sec_tot = time()-t0_sec_tot
-    print('Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS))
+    print 'Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS)
 
     if PLOT_ANY: gg.show()
 
@@ -347,8 +344,8 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG) #INFO) #DEBUG)
 
-    tname = sys.argv[1] if len(sys.argv)>1 else '1'
-    print('%s\nTest %s' % (80*'_', tname))
+    tname = sys.argv[1] if len(sys.argv)>1 else '0'
+    print '%s\nTest %s' % (80*'_', tname)
     test_epix10ka_methods(tname)
     sys.exit ('End of %s' % sys.argv[0])
 

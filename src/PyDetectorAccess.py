@@ -145,10 +145,14 @@ class PyDetectorAccess(object) :
         """Returns default geometry object for some of detectors"""
         import CalibManager.AppDataPath as apputils
 
-        defname = 'Detector/geometry-def-epix100a.data' if self.dettype == gu.EPIX100A\
-             else 'Detector/geometry-def-pnccd.data'    if self.dettype == gu.PNCCD\
-             else 'Detector/geometry-def-cspad.data'    if self.dettype == gu.CSPAD\
-             else 'Detector/geometry-def-cspad2x2.data' if self.dettype == gu.CSPAD2X2\
+        defname = 'Detector/geometry-def-epix100a.data'     if self.dettype == gu.EPIX100A\
+             else 'Detector/geometry-def-pnccd.data'        if self.dettype == gu.PNCCD\
+             else 'Detector/geometry-def-cspad.data'        if self.dettype == gu.CSPAD\
+             else 'Detector/geometry-def-cspad2x2.data'     if self.dettype == gu.CSPAD2X2\
+             else 'Detector/geometry-def-jungfrau4m.data'   if self.dettype == gu.JUNGFRAU\
+             else 'Detector/geometry-def-epix10ka2m.data'   if self.dettype == gu.EPIX10KA2M\
+             else 'Detector/geometry-def-epix10kaquad.data' if self.dettype == gu.EPIX10KAQUAD\
+             else 'Detector/geometry-def-epix10ka.data'     if self.dettype == gu.EPIX10KA\
              else None
 
         if defname is None :
@@ -160,7 +164,7 @@ class PyDetectorAccess(object) :
          
         self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
         if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT    
-        #return GeometryAccess(fname, 0377 if self.pbits else 0)
+        #return GeometryAccess(fname, 0o377 if self.pbits else 0)
 
 ##-----------------------------
 
@@ -189,7 +193,7 @@ class PyDetectorAccess(object) :
         #fntmp = tempfile.NamedTemporaryFile(mode='r+b',suffix='.data')
         #print('XXX Save constants in tmp file: %s' % fntmp.name)
         #save_txt(fntmp.name, data, cmts='', fmt='%.1f')
-        #self.geo = GeometryAccess(fntmp.name, 0377 if self.pbits else 0)
+        #self.geo = GeometryAccess(fntmp.name, 0o377 if self.pbits else 0)
 
         self.geo = GeometryAccess(pbits=0o377 if self.pbits else 0)
         if self.geo is not None :
@@ -245,6 +249,7 @@ class PyDetectorAccess(object) :
             self.coords_x_arr   = None 
             self.coords_y_arr   = None 
             self.coords_z_arr   = None
+            self.cframe_old     = None
             self.areas_arr      = None
             self.mask_geo_arr   = None
             self.mbits          = None
@@ -376,44 +381,45 @@ class PyDetectorAccess(object) :
 
 ##-----------------------------
 
-    def _update_coord_arrays(self, par, do_update=False) :
+    def _update_coord_arrays(self, par, do_update=False, cframe=gu.CFRAME_PSANA):
         """ Returns True if pixel index arrays are available, othervise False.
         """
-        if self.geoaccess(par) is None : return False
+        if self.geoaccess(par) is None: return False
         else :
-            if  self.coords_x_arr is None or do_update :
-                self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords()
+            if  self.coords_x_arr is None or do_update or cframe != self.cframe_old:
+                self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords(cframe=cframe)
+                self.cframe_old = cframe
             if  self.coords_x_arr is None : return False
         return True
 
 ##-----------------------------
 
-    def coords_x(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_x(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr)
 
 ##-----------------------------
 
-    def coords_y(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_y(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
-    def coords_z(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_z(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_z_arr)
 
 ##-----------------------------
 
-    def coords_xy(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_xy(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr), self._shaped_geo_array(self.coords_y_arr)
 
 ##-----------------------------
 
-    def coords_xyz(self, par) :
-        if not self._update_coord_arrays(par) : return None
+    def coords_xyz(self, par, cframe=gu.CFRAME_PSANA):
+        if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr),\
                self._shaped_geo_array(self.coords_y_arr),\
                self._shaped_geo_array(self.coords_z_arr)
@@ -503,12 +509,12 @@ class PyDetectorAccess(object) :
 
 ##-----------------------------
 
-    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None) :
+    def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False):
         """Returns ix, iy indexes of the point p_um x,y coordinates in [um]"""
-        if self.geoaccess(par) is None : return None, None
+        if self.geoaccess(par) is None: return None, None
         ix, iy = self.geo.point_coord_indexes(p_um=pxy_um, oname=None, oindex=0,\
                                               pix_scale_size_um=pix_scale_size_um,\
-                                              xy0_off_pix=xy0_off_pix, do_tilt=True)
+                                              xy0_off_pix=xy0_off_pix, do_tilt=True, cframe=cframe, fract=fract)
         return ix, iy
 
 ##-----------------------------
@@ -816,6 +822,7 @@ class PyDetectorAccess(object) :
 
         arr_c = (arr>>13)&0o3
         arr_v = arr&0o17777
+
         #print('arr_c:\n', arr_c)
         #print('arr_v:\n', arr_v)
 
@@ -1522,7 +1529,7 @@ class PyDetectorAccess(object) :
 
         if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
         elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
-        elif self.dettype == (gu.EPIX100A, gu.EPIX10KA)\
+        elif self.dettype in (gu.EPIX100A, gu.EPIX10KA)\
                                            : return self.shape_config_epix100(env)
         elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD)\
                                            : return self.shape_config_epix10ka_any(env)

@@ -1,4 +1,4 @@
-#------------------------------
+#----
 
 """
 :py:class:`GlobalUtils` contains global utilities
@@ -12,12 +12,12 @@ Author Mikhail Dubrovin
 from __future__ import print_function
 from __future__ import division
 
-#------------------------------
+#----
 
 import sys
 import numpy as np
 
-#------------------------------
+#----
 
 def info_ndarr(nda, name='', first=0, last=5) :
     s = ''
@@ -30,7 +30,7 @@ def info_ndarr(nda, name='', first=0, last=5) :
                (name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last])
     return s
 
-#------------------------------
+#----
 
 def print_ndarr(nda, name='', first=0, last=5) :
     if nda is None : print('%s: %s' % (name, nda))
@@ -41,7 +41,7 @@ def print_ndarr(nda, name='', first=0, last=5) :
     else           : print('%s:  shape:%s  size:%d  dtype:%s %s...' % \
          (name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last]))
 
-#------------------------------
+#----
 
 def divide_protected(num, den, vsub_zero=0) :
     """Returns result of devision of numpy arrays num/den with substitution of value vsub_zero for zero den elements.
@@ -50,7 +50,7 @@ def divide_protected(num, den, vsub_zero=0) :
     pro_den = np.select((den!=0,), (den,), default=1)
     return pro_num / pro_den
 
-#------------------------------
+#----
 
 def info_command_line_parameters(parser) :
     """Prints input arguments and optional parameters"""
@@ -66,7 +66,12 @@ def info_command_line_parameters(parser) :
         s += '    %s %s %s\n' % (k.ljust(10), str(v).ljust(20), str(defs[k]).ljust(20))
     return s
 
-#------------------------------
-#------------------------------
-#------------------------------
+#----
 
+def selected_record(n):
+    return n<5\
+       or (n<50 and not n%10)\
+       or (n<500 and not n%100)\
+       or (not n%1000)
+
+#----
