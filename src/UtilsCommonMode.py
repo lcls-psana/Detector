@@ -54,7 +54,11 @@ def common_mode_rows(arr, mask=None, cormax=None, npix_min=10):
     
     #logger.debug(info_ndarr(cmode, 'cmode'))
     _,m2 = np.meshgrid(np.zeros(cols, dtype=np.int16), cmode) # stack cmode 1-d column to 2-d matrix
-    arr -= m2
+    if mask is None:
+        arr -= m2
+    else: 
+        bmask = mask>0
+        arr[bmask] -= m2[bmask]
 
 #------------------------------
 
@@ -68,7 +72,7 @@ def common_mode_cols(arr, mask=None, cormax=None, npix_min=10):
     """
     rows, cols = arr.shape
     if mask is None:
-        cmode = np.median(arr,axis=0) # row of median values
+        cmode = np.median(arr,axis=0)
     else:
         marr = np.ma.array(arr, mask=mask<1) # use boolean inverted mask (True for masked pixels)
         cmode = np.ma.median(marr,axis=0) # row of median values for masked array
@@ -80,7 +84,11 @@ def common_mode_cols(arr, mask=None, cormax=None, npix_min=10):
 
     #logger.debug(info_ndarr(cmode, 'cmode'))
     m1,_ = np.meshgrid(cmode, np.zeros(rows, dtype=np.int16)) # stack cmode 1-d row to 2-d matrix
-    arr -= m1
+    if mask is None:
+        arr -= m1
+    else:
+        bmask = mask>0
+        arr[bmask] -= m1[bmask]
 
 #------------------------------
 
@@ -98,12 +106,11 @@ def common_mode_2d(arr, mask=None, cormax=None, npix_min=10):
         if npix < npix_min: return
         cmode = np.median(arr[bmask])
         if cormax is None or fabs(cmode) < cormax:
-            #arr[bmask] -= cmode
-            arr -= cmode # apply correction to all pixels in the group
+            arr[bmask] -= cmode
 
 #------------------------------
 
-def common_mode_rows_hsplit_nbanks(data, mask=None, nbanks=4, cormax=None):
+def common_mode_rows_hsplit_nbanks(data, mask=None, nbanks=4, cormax=None, npix_min=10):
     """Works with 2-d data and mask numpy arrays,
        hsplits them for banks (df. nbanks=4),
        for each bank applies median common mode correction for pixels in rows,
@@ -113,16 +120,16 @@ def common_mode_rows_hsplit_nbanks(data, mask=None, nbanks=4, cormax=None):
 
     if mask is None:
         for b in bdata:
-            common_mode_rows(b, None, cormax)
+            common_mode_rows(b, None, cormax, npix_min)
     else:
         bmask = np.hsplit(mask, nbanks)
         for b,m in zip(bdata,bmask):
-            common_mode_rows(b, m, cormax)
+            common_mode_rows(b, m, cormax, npix_min)
     data[:] = np.hstack(bdata)[:]    
 
 #------------------------------
 
-def common_mode_2d_hsplit_nbanks(data, mask=None, nbanks=4, cormax=None):
+def common_mode_2d_hsplit_nbanks(data, mask=None, nbanks=4, cormax=None, npix_min=10):
     """Works with 2-d data and mask numpy arrays,
        hsplits them for banks (df. nbanks=4),
        for each bank applies median common mode correction for all pixels,
@@ -131,11 +138,11 @@ def common_mode_2d_hsplit_nbanks(data, mask=None, nbanks=4, cormax=None):
     bdata = np.hsplit(data, nbanks)
     if mask is None:
         for b in bdata:
-            common_mode_rows(b, None, cormax)
+            common_mode_rows(b, None, cormax, npix_min)
     else:
         bmask = np.hsplit(mask, nbanks) if mask is not None else None
         for b,m in zip(bdata,bmask):
-            common_mode_2d(b, m, cormax)
+            common_mode_2d(b, m, cormax, npix_min)
     data[:] = np.hstack(bdata)[:]    
 
 #------------------------------

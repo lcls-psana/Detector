@@ -33,7 +33,6 @@ import os
 
 import numpy as np
 from time import time
-#from math import fabs
 from Detector.GlobalUtils import print_ndarr, info_ndarr, divide_protected
 from Detector.UtilsCommonMode import common_mode_cols,\
                                      common_mode_rows_hsplit_nbanks, common_mode_2d_hsplit_nbanks
@@ -47,7 +46,6 @@ BW1 =  040000 # 16384 or 1<<14 (15-th bit starting from 1)
 BW2 = 0100000 # 32768 or 2<<14 or 1<<15
 BW3 = 0140000 # 49152 or 3<<14
 MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
-#MSK =  037777 # 16383 or (1<<14)-1
 
 #------------------------------
 
@@ -62,7 +60,7 @@ class Storage :
 store = Storage() # singleton
 #------------------------------
 
-def calib_jungfrau(det, evt, cmpars=(7,3,100), **kwa):
+def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     """
     Returns calibrated jungfrau data
 
@@ -80,13 +78,13 @@ def calib_jungfrau(det, evt, cmpars=(7,3,100), **kwa):
         - cmpars[0] - algorithm # 7-for jungfrau
         - cmpars[1] - control bit-word 1-in rows, 2-in columns
         - cmpars[2] - maximal applied correction 
-    - **kwa    
+    - **kwa - used here and passed to det.mask_comb   
       - nda_raw - if not None, substitutes evt.raw()
       - mbits - parameter of the det.mask_comb(...)
       - mask - user defined mask passed as optional parameter
     """
 
-    #print 'XXX: ====================== det.name', det.name
+    #print('XXX: ====================== det.name', det.name)
 
     src = det.source # - src (psana.Source)   - Source object
 
@@ -97,8 +95,6 @@ def calib_jungfrau(det, evt, cmpars=(7,3,100), **kwa):
     #arr  = np.array(det.raw(evt), dtype=np.float32)
     peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 512, 1024) dtype:float32
     if peds is None : return None
-
-    #mask = det.status_as_mask(evt, mode=0) # - 4d mask
 
     gain = det.gain(evt)      # - 4d gains
     offs = det.offset(evt)    # - 4d offset
@@ -166,6 +162,7 @@ def calib_jungfrau(det, evt, cmpars=(7,3,100), **kwa):
 
     if cmp is not None:
       mode, cormax = int(cmp[1]), cmp[2]
+      npixmin = cmp[3] if len(cmp)>3 else 10
       if mode>0:
         #arr1 = store.arr1
         #grhg = np.select((gr0,  gr1), (arr1, arr1), default=0)
@@ -177,17 +174,15 @@ def calib_jungfrau(det, evt, cmpars=(7,3,100), **kwa):
         hrows = 512/2
         for s in range(arrf.shape[0]):
           if mode & 4: # in banks: (512/2,1024/16) = (256,64) pixels # 100 ms
-            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=16, cormax=cormax)
-            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=16, cormax=cormax)
+            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=16, cormax=cormax, npix_min=npixmin)
+            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=16, cormax=cormax, npix_min=npixmin)
 
           if mode & 1: # in rows per bank: 1024/16 = 64 pixels # 275 ms
-            #common_mode_rows(arrf[s,], mask=gr0[s,], cormax=cormax)
-            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=16, cormax=cormax)
+            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=16, cormax=cormax, npix_min=npixmin)
 
           if mode & 2: # in cols per bank: 512/2 = 256 pixels  # 290 ms
-            #common_mode_cols(arrf[s,], mask=gr0[s,], cormax=cormax)
-            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax)
-            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax)
+            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax, npix_min=npixmin)
+            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax, npix_min=npixmin)
 
         logger.debug('TIME: common-mode correction time = %.6f sec' % (time()-t0_sec_cm))
 

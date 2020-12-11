@@ -30,10 +30,6 @@ from PSCalib.GlobalUtils import merge_masks
 from Detector.UtilsCommonMode import common_mode_cols,\
                                      common_mode_rows_hsplit_nbanks, common_mode_2d_hsplit_nbanks
 
-#from PSCalib.GlobalUtils import load_textfile, save_textfile
-
-# o = get_epix_data_object(evt, src)
-# co = get_epix_config_object(env, src)
 get_epix10ka_data_object = get_epix_data_object
 
 # CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
@@ -314,8 +310,7 @@ def map_pixel_gain_mode_for_raw(det, raw):
 
 #--------------------
 
-#def calib_epix10ka_any(det, evt, cmpars=None, nda_raw=None):
-def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
+def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=1, mask=None, nda_raw=None and 
     """
     Returns calibrated epix10ka data
 
@@ -335,7 +330,7 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
             alg is not used
             mode =0-correction is not applied, =1-in rows, =2-in cols-WORKS THE BEST
             i.e: cmpars=(7,0,100) or (7,2,100)
-    - **kwa
+    - **kwa - used here and passed to det.mask_comb
       - nda_raw - substitute for det.raw(evt)
       - mbits - parameter of the det.mask_comb(...)
       - mask - user defined mask passed as optional parameter
@@ -355,23 +350,22 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
     if gain is None: return None # gain = np.ones_like(peds)  # - 4d gains
     if peds is None: return None # peds = np.zeros_like(peds) # - 4d gains
 
-    #gfac = gain 
-    gfac = store.gfac
-
     if store.gfac is None: 
         # do ONCE this initialization 
         logger.debug(info_ndarr(raw,  '\n  raw ')\
                     +info_ndarr(gain, '\n  gain')\
                     +info_ndarr(peds, '\n  peds'))
 
-        store.gfac = gfac = divide_protected(np.ones_like(gain), gain)
+        store.gfac = divide_protected(np.ones_like(gain), gain)
         store.arr1 = np.ones_like(raw, dtype=np.int8)
 
-        logger.debug(info_ndarr(gfac,  '\n  gfac '))
+        logger.debug(info_ndarr(store.gfac,  '\n  gfac '))
 
         # 'FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L'
         #store.gf4 = np.ones_like(raw, dtype=np.int32) * 0.25 # 0.3333 # M - perefierial
         #store.gf6 = np.ones_like(raw, dtype=np.int32) * 1    # L - center
+
+    gfac = store.gfac
 
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None: return None
@@ -380,7 +374,6 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
     factor = np.select((gr0, gr1, gr2, gr3, gr4, gr5, gr6),\
                        (gfac[0,:], gfac[1,:], gfac[2,:], gfac[3,:],\
                         gfac[4,:], gfac[5,:], gfac[6,:]), default=1) # 2msec
-                        #store.gf4, gfac[5,:], store.gf6), default=1) # 2msec
 
     #==================== TEST RETURN MAP OF PIXEL GAIN MODES
     #return map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6)
@@ -399,17 +392,9 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
     logger.debug(info_ndarr(factor, 'calib_epix10ka factor'))
     logger.debug(info_ndarr(pedest, 'calib_epix10ka pedest'))
 
-    #arr = np.array(raw, dtype=np.float32) # otherwice det.calib returns np.object....
-
     arrf = np.array(raw & M14, dtype=np.float32) - pedest
 
-
-    #if False:
     logger.debug('common-mode correction pars cmp: %s' % str(cmp))
-
-    #print_ndarr(arrf[0], 'arrf[0]')
-    #np.savetxt('img-detdaq18-r23-epix10ka-raw-peds-for-cmtest.txt', arrf[0],\
-    #           fmt='%.2f', delimiter=' ', newline='\n', header=' 2-d array (352, 384) for cm test epix10ka raw-peds detdaq18 r23 seg0', footer='', comments='#')
 
     if store.mask is None: 
         mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
@@ -421,6 +406,7 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
 
     if cmp is not None:
       mode, cormax = int(cmp[1]), cmp[2]
+      npixmin = cmp[3] if len(cmp)>3 else 10
       if mode>0:
         t0_sec_cm = time()
         #t2_sec_cm = time()
@@ -438,15 +424,15 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10)
         for s in range(arrf.shape[0]):
 
           if mode & 4: # in banks: (352/2,384/8)=(176,48) pixels
-            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=8, cormax=cormax)
-            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=8, cormax=cormax)
+            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=8, cormax=cormax, npix_min=npixmin)
+            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=8, cormax=cormax, npix_min=npixmin)
 
           if mode & 1: # in rows per bank: 384/8 = 48 pixels # 190ms
-            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=8, cormax=cormax)
+            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=8, cormax=cormax, npix_min=npixmin)
 
           if mode & 2: # in cols per bank: 352/2 = 176 pixels # 150ms
-            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax)
-            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax)
+            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax, npix_min=npixmin)
+            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax, npix_min=npixmin)
 
         logger.debug('TIME common-mode correction = %.6f sec' % (time()-t0_sec_cm))
 

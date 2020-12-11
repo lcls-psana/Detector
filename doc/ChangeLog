@@ -7,6 +7,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+### Tag: V01-01-01
+2020-12-11 Mikhail S. Dubrovin
+- propagate npix_min=10, apply cm corr by mask only
+	modified:   src/UtilsCommonMode.py
+	modified:   src/UtilsEpix10ka.py
+	modified:   src/UtilsJungfrau.py
+	modified:   app/epix10ka_images
+	modified:   app/jungfrau_images
+
 Tag: V01-00-99
 2020-12-10 Mikhail S. Dubrovin
 - implement full scale common mode correction for Jungfrau and epix10ka detectors
