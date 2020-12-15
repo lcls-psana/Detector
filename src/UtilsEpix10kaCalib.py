@@ -54,9 +54,9 @@ def plot_avsi_figaxis():
 
 def plot_avsi(x,y,fname):
 
-    #print 'XXX fname:', fname
-    #print info_ndarr(x, 'XXX x')
-    #print info_ndarr(y, 'XXX y')
+    #print('XXX fname:', fname)
+    #print(info_ndarr(x, 'XXX x'))
+    #print(info_ndarr(y, 'XXX y'))
 
     fig, ax = plot_avsi_figaxis()
     gbit = np.bitwise_and(y, B14) /8
@@ -80,7 +80,7 @@ def plot_avsi(x,y,fname):
     plt.pause(3)
 
     fig.savefig(fname)
-    print 'saved file %s' % fname
+    print('saved file %s' % fname)
     #plt.ioff()
     plt.show()    
     #plt.ion()
@@ -1558,12 +1558,12 @@ def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, f
                     #V2
                     #nda = GAIN_FACTOR_DEF[4] * divide_protected(nda, gain_ml_m)
 
-                    #print 'XXXX gm',gm
-                    #print 'XXXX med_nda',med_nda
-                    #print 'XXXX med_ml_m',med_ml_m
-                    #print 'XXXX GAIN_FACTOR_DEF[4]',GAIN_FACTOR_DEF[4]
-                    #print 'XXXX ratio_lh',ratio_lh
-                    #print 'XXXX f_adu_to_kev',f_adu_to_kev
+                    #print('XXXX gm',gm)
+                    #print('XXXX med_nda',med_nda)
+                    #print('XXXX med_ml_m',med_ml_m)
+                    #print('XXXX GAIN_FACTOR_DEF[4]',GAIN_FACTOR_DEF[4])
+                    #print('XXXX ratio_lh',ratio_lh)
+                    #print('XXXX f_adu_to_kev',f_adu_to_kev)
 
         lstnda.append(nda if nda is not None else nda_def)
         #logger.debug(info_ndarr(nda, 'nda for %s' % gm))

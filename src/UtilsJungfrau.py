@@ -497,7 +497,7 @@ if __name__ == "__main__" :
 #------------------------------
 
 if __name__ == "__main__" :
-    print 80*'_'
+    print(80*'_')
     logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
     tname = sys.argv[1] if len(sys.argv)>1 else '5'
     if tname in ('1', '2', '3', '4', '5') : test_id_jungfrau(tname)
