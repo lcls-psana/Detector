@@ -7,6 +7,15 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-01
+2020-01-13 Mikhail Dubrovin
+- fix issue with float index, minor refactoring in parameters
+	modified:   src/UtilsEpix10ka.py
+	new file:   examples/test-2021-01-12-velerio-float-index.py
+
+Tag: V02-00-00 Valerio py2->py3
+Tag: V01-02-00 Valerio py2->py3
+
 Tag: V01-01-01
 2020-12-11 Mikhail S. Dubrovin
 - propagate npix_min=10, apply cm corr by mask only
