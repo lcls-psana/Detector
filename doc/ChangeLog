@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-02
+2020-01-14 Mikhail Dubrovin
+- updarte and rename examples/test-issues-2021.py
+
 Tag: V02-00-01
 2020-01-13 Mikhail Dubrovin
 - fix issue with float index, minor refactoring in parameters
