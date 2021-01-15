@@ -100,7 +100,7 @@ NDArrProducerAndor::print_config(PSEvt::Event& evt, PSEnv::Env& env)
       	  << "\n  readoutTime = " << frame1->readoutTime()
       	  << "\n  temperature = " << frame1->temperature()
       	  << "\n  data:";
-      for (int i=0; i<10; ++i) str << " " << nda_data(0,i); str << " ..."; 
+      for (int i=0; i<10; ++i) {str << " " << nda_data(0,i);} str << " ..."; 
     }
   }
   else MsgLog(name(), info, "Andor::FrameV1 is not found for source " << m_source);  

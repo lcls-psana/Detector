@@ -7,6 +7,11 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+2020-01-14 Mikhail Dubrovin
+- fix new c++ compiler minor complains
+	modified:   include/NDArrProducerAndor.h
+	modified:   src/NDArrProducerAndor.cpp
+
 Tag: V02-00-02
 2020-01-14 Mikhail Dubrovin
 - updarte and rename examples/test-issues-2021.py
