@@ -268,7 +268,7 @@ def pixel_gain_mode_fractions(det, data):
     """
     gmaps = gain_maps_epix10ka_any(det, data)
     if gmaps is None: return None
-    #gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     pix_stat = pixel_gain_mode_statistics1(gmaps)
     f = 1.0/gr0.size
     return [npix*f for npix in pix_stat]

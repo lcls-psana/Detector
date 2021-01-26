@@ -7,6 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-03
+2020-01-26 Mikhail Dubrovin
+- src/UtilsEpix10ka.py fix undefined gr0 - issue reported by Silke
+
 2020-01-14 Mikhail Dubrovin
 - fix new c++ compiler minor complains
 	modified:   include/NDArrProducerAndor.h
