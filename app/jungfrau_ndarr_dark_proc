@@ -746,7 +746,7 @@ def option_parser():
     parser.add_option('-c', '--evcode', dest='evcode', default=d_evcode, action='store', type='string', help=h_evcode)
     parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
     parser.add_option('-u', '--upload', dest='upload', default=d_upload, action='store_true',           help=h_upload)
-    parser.add_option('-c', '--ccnum',  dest='ccnum',  default=d_ccnum,  action='store', type='int',    help=h_ccnum)
+    parser.add_option('-N', '--ccnum',  dest='ccnum',  default=d_ccnum,  action='store', type='int',    help=h_ccnum)
 
     return parser
 
