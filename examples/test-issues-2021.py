@@ -33,6 +33,7 @@ def issue_2021_01_12():
         calib_array = det.calib(evt, cmpars=(7,2,20,10))
         print(calib_array.sum())
 
+
 def issue_2021_01_13():
     """Hi Mikhail,
        I think the script below works in the new release ana-4.0.9 (py2),
@@ -58,13 +59,65 @@ def issue_2021_01_13():
         else:                                 
             print('img2',img2.shape)          
 
+
+def id_epix10ka(co, ielem=0) :
+    """Returns Epix10ka2M Id as a string,
+       e.g., 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
+       co is psana.Epix.Config10kaQuadV1 or psana.Epix.Config10ka2MV1
+    """
+    quad_shape = getattr(co, "quad_shape", None)
+    eco = co.elemCfg(ielem)
+    qco = co.quad() if quad_shape is None else co.quad(ielem//4)
+
+    fmt2 = '%010d-%010d'
+    zeros = fmt2 % (0,0)
+    version = '%010d' % (co.Version) if getattr(co, "Version", None) is not None else '%010d' % 0
+    carrier = fmt2 % (eco.carrierId0(), eco.carrierId1())\
+              if getattr(eco, "carrierId0", None) is not None else zeros
+    digital = fmt2 % (qco.digitalCardId0(), qco.digitalCardId1())\
+              if getattr(qco, "digitalCardId0", None) is not None else zeros
+    #analog  = fmt2 % (qco.analogCardId0(), qco.analogCardId1())\
+    #          if getattr(o, "analogCardId0", None) is not None else zeros
+    analog  = zeros
+    return '%s-%s-%s-%s' % (version, carrier, digital, analog)
+
+
+def issue_2021_02_02():
+    """Bhavna Nayak reported that order of epix10ka2m panels is changing from exp to exp...
+    epix10ka_id exp=xcsx39618:run=10 epix10k2M
+    epix10ka_id exp=xpplv6818:run=10 epix10k2M
+    epix10ka_id exp=xpplu9818:run=10 epix10k2M
+    epix10ka_id exp=detdaq18:run=222 epix10k2M
+    """
+    #from Detector.AreaDetector import AreaDetector
+    #det = AreaDetector('XcsEndstation.0:Epix10ka2M.0', env)
+    #from Detector.UtilsEpix10ka2M import ids_epix10ka2m #, get_epix10ka_any_config_object
+    #from psana import DataSource, Detector #, Source
+    #import _psana
+
+    import psana
+    detname = 'epix10k2M' # 'XcsEndstation.0:Epix10ka2M.0'
+    for dsname in ('exp=xcsx39618:run=10',\
+                   'exp=xpplv6818:run=10',\
+                   'exp=xpplu9818:run=10'):
+        print('%s\n%s' % (50*'_',dsname))
+
+        ds = psana.DataSource(dsname)
+        env = ds.env()
+        det = psana.Detector(detname)
+        co = env.configStore().get(psana.Epix.Config10ka2MV1, det.source) # get_epix10ka_any_config_object(env, det.source)
+        ids = [id_epix10ka(co, ielem=i) for i in range(co.numberOfElements())] # ids_epix10ka2m(co)
+        msg = 'Config object: %s' % str(co)
+        for i,id in enumerate(ids) : msg += '\nelem %2d: %s' % (i,id)
+        print(msg)
+
+
 def issue_2021_MM_DD():
     """ docstring
     """
     metname = sys._getframe().f_code.co_name
     print('method: %s' % metname)
     print('docstring:', eval(metname).__doc__)
-
 #---
 
 USAGE = '\nUsage:'\
@@ -79,6 +132,7 @@ TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
 if   TNAME in  ('1',): issue_2021_01_12()
 elif TNAME in  ('2',): issue_2021_01_13()
+elif TNAME in  ('3',): issue_2021_02_02()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
