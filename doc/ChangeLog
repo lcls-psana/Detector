@@ -7,8 +7,10 @@ Package author: Mikhail S. Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-04
 2020-02-03 Mikhail Dubrovin
 - add issue_2021_02_02 in examples/test-issues-2021.py
+- src/UtilsEpix10kaCalib.py - fix issue with new python compiler
 
 Tag: V02-00-03
 2020-01-26 Mikhail Dubrovin
