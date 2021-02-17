@@ -173,7 +173,7 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
         t0_sec_cm = time()
         gmask = np.bitwise_and(gr0, mask) if mask is not None else gr0
         #sh = (nsegs, 512, 1024)
-        hrows = 512/2
+        hrows = 256 #512/2
         for s in range(arrf.shape[0]):
           if mode & 4: # in banks: (512/2,1024/16) = (256,64) pixels # 100 ms
             common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=16, cormax=cormax, npix_min=npixmin)

@@ -2,10 +2,15 @@
 # ChangeLog file for package Detector
 #------------------------------------------------------------------------
 
-Package author: Mikhail S. Dubrovin
+Package author: Mikhail Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+
+Tag: V02-00-05
+2020-02-17 Mikhail Dubrovin
+- examples/test-issues-2021.py - add issue_2021_02_16 from Silke common mode
+- UtilsJungfrau.pyhrows = 256 #512/2 -> float in new compiler
 
 Tag: V02-00-04
 2020-02-03 Mikhail Dubrovin
