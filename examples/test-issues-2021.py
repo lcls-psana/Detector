@@ -112,6 +112,28 @@ def issue_2021_02_02():
         print(msg)
 
 
+def issue_2021_02_16():
+    """ISSUE:
+
+       Hi Mikhail,
+       I was looking into using the common mode correction for the jungfrau1M ini XPP.
+       I wanted to start by comparing no common mode (7,0,10,10) to the ?optimum? (7,3,10,10).
+       This common mode works in the old psana, but not the new one. 
+       Can you look into this? Am I calling this wrong?
+       Best,
+       Silke
+
+       REASON:
+       in Python 2.7.15 a devision 512/2 returns float / not int
+    """
+    import psana
+    ds = psana.DataSource('exp=xpplw0018:run=7')
+    det = psana.Detector('jungfrau1M')
+    evt = ds.events().next()
+    p = det.calib(evt, cmpars=(7,3,10,10))
+    print('det.calib(evt,...):\n%s' % str(p))
+
+
 def issue_2021_MM_DD():
     """ docstring
     """
@@ -126,6 +148,8 @@ USAGE = '\nUsage:'\
       + '\n    0 - print usage'\
       + '\n    1 - issue_2021_01_12 - valerio, chuck earlier - fixing float index issue as 352/2'\
       + '\n    2 - issue_2021_01_13 - cpo'\
+      + '\n    3 - issue_2021_02_02 - Bhavna Nayak'\
+      + '\n    4 - issue_2021_02_16 - Silke'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -133,6 +157,7 @@ TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 if   TNAME in  ('1',): issue_2021_01_12()
 elif TNAME in  ('2',): issue_2021_01_13()
 elif TNAME in  ('3',): issue_2021_02_02()
+elif TNAME in  ('4',): issue_2021_02_16()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
