@@ -133,9 +133,33 @@ def issue_2021_02_16():
     p = det.calib(evt, cmpars=(7,3,10,10))
     print('det.calib(evt,...):\n%s' % str(p))
 
+def issue_2021_02_22():
+    """ISSUE: Silke & Lennart - epix100a geometry missing in calib and can't be loaded from h5 file
+       REASON:
+    /cds/home/d/dubrovin/LCLS/con-py2/arch/x86_64-rhel7-gcc48-opt/python/PSCalib/DCVersion.py:131: H5pyDeprecationWarning:
+    dataset.value has been deprecated. Use dataset[()] instead.
+    d = v.value -> v[()]
+
+    print_h5_structure.py <*.h5>
+    geometry is missing in
+    /reg/d/psdm/mec/meclv2518/calib/epix100a/epix100a-3925999620-0996432897-3590324234-1232100352-1154532875-2654088449-0033554455.h5
+    /reg/d/psdm/mec/meclv2518/calib/epix100a/epix100a-3925999620-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719.h5
+    geometry available in the same named files under
+    /reg/d/psdm/detector/calib/epix100a/...
+    """
+    #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
+    import psana
+    ds = psana.DataSource('exp=meclv2518:run=100')
+    evt = ds.events().next()
+    det = psana.Detector('epix100a_1_BXRTS')
+    #det.set_print_bits(0o377)
+    print('det.raw(evt).shape', det.raw(evt).shape)
+    print('det.image(evt).shape', det.image(evt).shape)
+
 
 def issue_2021_MM_DD():
-    """ docstring
+    """ISSUE:
+       REASON:
     """
     metname = sys._getframe().f_code.co_name
     print('method: %s' % metname)
@@ -149,7 +173,8 @@ USAGE = '\nUsage:'\
       + '\n    1 - issue_2021_01_12 - valerio, chuck earlier - fixing float index issue as 352/2'\
       + '\n    2 - issue_2021_01_13 - cpo'\
       + '\n    3 - issue_2021_02_02 - Bhavna Nayak'\
-      + '\n    4 - issue_2021_02_16 - Silke'\
+      + '\n    4 - issue_2021_02_16 - Silke - common mode correction for the jungfrau'\
+      + '\n    5 - issue_2021_02_16 - Silke & Lennart - epix100a geometry'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -158,6 +183,7 @@ if   TNAME in  ('1',): issue_2021_01_12()
 elif TNAME in  ('2',): issue_2021_01_13()
 elif TNAME in  ('3',): issue_2021_02_02()
 elif TNAME in  ('4',): issue_2021_02_16()
+elif TNAME in  ('5',): issue_2021_02_22()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
