@@ -156,6 +156,23 @@ def issue_2021_02_22():
     print('det.raw(evt).shape', det.raw(evt).shape)
     print('det.image(evt).shape', det.image(evt).shape)
 
+def issue_2021_02_23():
+    """Hi Mikhail,
+    Valerio made ana-4.0.16 (py2 and py3) but it looks like py3 is still broken (see below).
+    Now that Valerio has translated the pkl file from py2->py3,
+    can you try debugging with a test-release when you have a chance?
+    (note that the ued pedestal problem is higher priority, I believe).
+    chris
+    """
+    import psana
+    import sys
+    ds = psana.DataSource('exp=meclv2518:run=269')
+    det = psana.Detector("MecTargetChamber.0:Epix100a.1")
+    #det.set_print_bits(0o377)
+    for i,evt in enumerate(ds.events()):
+        print(i, det.image(evt).shape)
+        if i>50: break
+
 
 def issue_2021_MM_DD():
     """ISSUE:
@@ -175,6 +192,7 @@ USAGE = '\nUsage:'\
       + '\n    3 - issue_2021_02_02 - Bhavna Nayak'\
       + '\n    4 - issue_2021_02_16 - Silke - common mode correction for the jungfrau'\
       + '\n    5 - issue_2021_02_16 - Silke & Lennart - epix100a geometry'\
+      + '\n    6 - issue_2021_02_23 - cpo'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -184,6 +202,7 @@ elif TNAME in  ('2',): issue_2021_01_13()
 elif TNAME in  ('3',): issue_2021_02_02()
 elif TNAME in  ('4',): issue_2021_02_16()
 elif TNAME in  ('5',): issue_2021_02_22()
+elif TNAME in  ('6',): issue_2021_02_23()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
