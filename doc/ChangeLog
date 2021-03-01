@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-07
+2020-02-22 Mikhail Dubrovin
+- examples/test-issues-2021.py - add issue_2021_02_23 from cpo
+
 Tag: V02-00-06
 2020-02-22 Mikhail Dubrovin
 - examples/test-issues-2021.py - add issue_2021_02_22 from Silke & Lennart
