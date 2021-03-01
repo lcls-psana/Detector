@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import logging
 #logger = logging.getLogger(__name__)
-logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.INFO)
+#logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.INFO)
 
 import sys
 SCRNAME = sys.argv[0].rsplit('/')[-1]
@@ -114,7 +114,6 @@ def issue_2021_02_02():
 
 def issue_2021_02_16():
     """ISSUE:
-
        Hi Mikhail,
        I was looking into using the common mode correction for the jungfrau1M ini XPP.
        I wanted to start by comparing no common mode (7,0,10,10) to the ?optimum? (7,3,10,10).
@@ -132,6 +131,7 @@ def issue_2021_02_16():
     evt = ds.events().next()
     p = det.calib(evt, cmpars=(7,3,10,10))
     print('det.calib(evt,...):\n%s' % str(p))
+
 
 def issue_2021_02_22():
     """ISSUE: Silke & Lennart - epix100a geometry missing in calib and can't be loaded from h5 file
@@ -156,8 +156,9 @@ def issue_2021_02_22():
     print('det.raw(evt).shape', det.raw(evt).shape)
     print('det.image(evt).shape', det.image(evt).shape)
 
+
 def issue_2021_02_23():
-    """Hi Mikhail,
+    """ISSUE: Hi Mikhail,
     Valerio made ana-4.0.16 (py2 and py3) but it looks like py3 is still broken (see below).
     Now that Valerio has translated the pkl file from py2->py3,
     can you try debugging with a test-release when you have a chance?
@@ -172,6 +173,57 @@ def issue_2021_02_23():
     for i,evt in enumerate(ds.events()):
         print(i, det.image(evt).shape)
         if i>50: break
+
+
+def issue_2021_02_28():
+    """ISSUE: Nelson, Silke <snelson@slac.stanford.edu>
+    Sun 2/28/2021 1:28 AM
+    Hi Mikhail,
+    The following works in the old analysis release, but not in the new ones (only tried 4.0.12 and 4.0.15)
+    In [1]: import psana; ds = psana.DataSource('exp=xcsx39718:run=9')
+    In [2]: det = psana.Detector('epix10k135')
+    In [3]: for i in range(100): evt = ds.events().next()
+    In [4]: det.calib(evt)
+    Best,Silke
+    """
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
+    import psana
+    ds = psana.DataSource('exp=xcsx39718:run=9')
+    det = psana.Detector('epix10k135')
+    for i in range(10):
+        evt = ds.events().next()
+        calib = det.calib(evt)
+        if calib is None: continue
+        print('%2d:'%i, ' calib.shape', calib.shape)
+
+
+def issue_2021_03_01():
+    """ISSUE: Nelson, Silke
+    Sun 2/28/2021 1:57 PM
+    Hi all,
+    I have some trouble running my code on the epix10k135 and have traced it down to the shape of the data returned by det.coords_x(evt/run#).
+    This is a gain switching detectors with a single ?tile?, but with a geometry file.
+    I would have expected it to behave like the jungfrau512k which returns a pedestal of shape (3, 1, 512, 1024)
+    and a geometry of shape (1, 512, 1024) and data of shape  (1, 512, 1024).
+    The epix10k135 return pedestals of shape  (7, 1, 352, 384), data of shape  (1, 352, 384),
+    but coordinate arrays of shape  (352, 384). In an attempt to be generic, my code chokes on this.
+    It?s not like I can?t code around this, but I feel I should not have to and that the coordinate functions should return arrays of the same shape as the data.
+    Please let me know if this could be done and what, if any, arguments speak against that.
+    Thank you,Silke
+    REASON: in AreaDetector.py _shaped_array_ did not resaped EPIX10KA
+    FIXED: for EPIX10KA auto-reshape all 2d to 3d
+    """
+    import psana
+    runnum = 9
+    ds = psana.DataSource('exp=xcsx39718:run=%d'%runnum)
+    d1 = psana.Detector('epix10k135')
+    print('d1.pedestals(9).shape', d1.pedestals(runnum).shape) # (7, 1, 352, 384)
+    print('d1.coords_x(9).shape', d1.coords_x(runnum).shape) # (352, 384)
+    for i in range(10):
+        evt = ds.events().next()
+        calib = d1.calib(evt)
+        if calib is None: continue
+        print('%2d:'%i, ' calib.shape', calib.shape)
 
 
 def issue_2021_MM_DD():
@@ -190,9 +242,11 @@ USAGE = '\nUsage:'\
       + '\n    1 - issue_2021_01_12 - valerio, chuck earlier - fixing float index issue as 352/2'\
       + '\n    2 - issue_2021_01_13 - cpo'\
       + '\n    3 - issue_2021_02_02 - Bhavna Nayak'\
-      + '\n    4 - issue_2021_02_16 - Silke - common mode correction for the jungfrau'\
-      + '\n    5 - issue_2021_02_16 - Silke & Lennart - epix100a geometry'\
-      + '\n    6 - issue_2021_02_23 - cpo'\
+      + '\n    4 - issue_2021_02_16 - Silke - exp=xpplw0018:run=7 - common mode correction for the jungfrau'\
+      + '\n    5 - issue_2021_02_22 - Silke & Lennart exp=meclv2518:run=100- epix100a geometry'\
+      + '\n    6 - issue_2021_02_23 - cpo - exp=meclv2518:run=269 - Epix100a'\
+      + '\n    7 - issue_2021_02_28 - Silke - exp=xcsx39718:run=9 - epix10k135 - calib'\
+      + '\n    8 - issue_2021_03_01 - Silke - exp=xcsx39718:run=9 - epix10k135 - shape '\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -203,6 +257,8 @@ elif TNAME in  ('3',): issue_2021_02_02()
 elif TNAME in  ('4',): issue_2021_02_16()
 elif TNAME in  ('5',): issue_2021_02_22()
 elif TNAME in  ('6',): issue_2021_02_23()
+elif TNAME in  ('7',): issue_2021_02_28()
+elif TNAME in  ('8',): issue_2021_03_01()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
