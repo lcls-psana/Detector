@@ -2,7 +2,7 @@
 
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
+#logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.INFO) #DEBUG)
 
 import sys
 import numpy as np
@@ -10,13 +10,16 @@ from psana import DataSource, Detector, setOption
 from Detector.GlobalUtils import info_ndarr, selected_record
 
 SCRNAME = sys.argv[0].rsplit('/')[-1]
-usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-to-skip> <calib-dir>'%SCRNAME\
-      + '\nexample: %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10'%SCRNAME\
-      + '\nexample: %s exp=mfxp17518:run=108 MfxEndstation.0:Epix10ka2M.0 10'%SCRNAME\
-      + '\nexample: %s exp=meclv2518:run=99:dir=/reg/d/ffb/mec/meclv2518/xtc/:smd MecTargetChamber.0:Epix10kaQuad.0 10 0 /reg/neh/operator/mecopr/calib'%SCRNAME
+usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-to-skip> <calib-dir> <log-level-str>'%SCRNAME\
+      + '\n  Examples:'\
+      + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 0 10 None DEBUG'%SCRNAME\
+      + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10'%SCRNAME\
+      + '\n  %s exp=mfxp17518:run=108 MfxEndstation.0:Epix10ka2M.0 10'%SCRNAME\
+      + '\n  %s exp=meclv2518:run=99:dir=/reg/d/ffb/mec/meclv2518/xtc/:smd MecTargetChamber.0:Epix10kaQuad.0 10 0 /reg/neh/operator/mecopr/calib DEBUG'%SCRNAME
 
 #/reg/neh/operator/mecopr/calib/
-logging.info('%s\nusage: %s' % (50*'=', usage))
+#logging.info('%s\nusage: %s' % (50*'=', usage))
+print('%s\nusage: %s' % (50*'=', usage))
 
 nargs = len(sys.argv)
 dsname  = sys.argv[1]      if nargs>1 else 'exp=cxilv9518:run=8'
@@ -24,7 +27,14 @@ detname = sys.argv[2]      if nargs>2 else 'CxiDs1.0:Jungfrau.0'
 EVENTS  = int(sys.argv[3]) if nargs>3 else 3
 EVSKIP  = int(sys.argv[4]) if nargs>4 else 0
 CALIBDIR= sys.argv[5]      if nargs>5 else None
+LOGLEV  = sys.argv[6]      if nargs>6 else 'INFO'
 prefix   = 'det-calib'
+
+if CALIBDIR is 'None': CALIBDIR = None
+
+DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.items() if isinstance(k, str)}
+logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[LOGLEV])
+
 
 if nargs<3: sys.exit('NEED MORE ARGUMENTS')
 
