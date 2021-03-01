@@ -429,10 +429,13 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
         arr1 = store.arr1 # np.ones_like(mask, dtype=np.uint8)
         grhm = np.select((gr0,  gr1,  gr3,  gr4), (arr1, arr1, arr1, arr1), default=0)
         gmask = np.bitwise_and(grhm, mask) if mask is not None else grhm
+        if gmask.ndim == 2: gmask.shape = (1,gmask.shape[-2],gmask.shape[-1])
+
         #logger.debug(info_ndarr(arr1, '\n  arr1'))
         #logger.debug(info_ndarr(grhm, 'XXXX grhm'))
         logger.debug(info_ndarr(gmask, 'gmask')\
-                     + '\n  per panel statistics of cm-corrected pixels: %s' % str(np.sum(gmask, axis=(1,2), dtype=np.uint32)))
+                     + '\n  per panel statistics of cm-corrected pixels: %s'%
+                     str(np.sum(gmask, axis=(1,2), dtype=np.uint32) if gmask is not None else None))
         #logger.debug('common-mode mask massaging (sec) = %.6f' % (time()-t2_sec_cm)) # 5msec
 
         #sh = (nsegs, 352, 384)

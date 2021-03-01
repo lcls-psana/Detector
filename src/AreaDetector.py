@@ -539,7 +539,12 @@ class AreaDetector(object):
             #print(msg)
             #raise IOError(msg)
             return arr # return array as is, works for Jungfrau
-        if self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD, gu.EPIX10KA) : return arr # as is
+        if self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD): return arr # as is
+
+        if self.dettype == gu.EPIX10KA:
+            sh = arr.shape
+            if len(sh) == 2: arr.shape = (1,sh[-2],sh[-1])
+            return arr # all 2d re-shaped to 3d
 
         shape = self._shape_daq_(rnum)
 
