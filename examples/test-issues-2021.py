@@ -197,7 +197,7 @@ def issue_2021_02_28():
         print('%2d:'%i, ' calib.shape', calib.shape)
 
 
-def issue_2021_03_01():
+def issue_2021_02_28B():
     """ISSUE: Nelson, Silke
     Sun 2/28/2021 1:57 PM
     Hi all,
@@ -226,6 +226,45 @@ def issue_2021_03_01():
         print('%2d:'%i, ' calib.shape', calib.shape)
 
 
+def issue_2021_03_01():
+    """ISSUE: Nelson, Silke <snelson@slac.stanford.edu>
+    Mon 3/1/2021 9:59 PM
+    Hi Mikhail,
+    I would  like to explicitly code up the common mode algorithm for the jungfrau that currently corresponds to ?calib?.
+    For the epxi10k2m, using (7.2.10.10) did give me the same result as calib which corresponds to what you state on the common modeled page.
+    For the Jungfrau, I can?t quite figure out how to get to the same result. Can you help me?
+    Thank you,
+    Silk
+    xpplw0018, run 130 I think. Might have been xpplv0918, run 30, but the latter is likely only noise
+    """
+    from Detector.GlobalUtils import info_ndarr
+    import psana
+    runnum = 130
+    ds = psana.DataSource('exp=xpplw0018:run=%d'%runnum)
+    det = psana.Detector('XppEndstation.0:Jungfrau.0')
+    print(info_ndarr(det.pedestals(runnum),'  det.pedestals(run=%d)'%runnum))
+    print(info_ndarr(det.coords_x(runnum),'  det.coords_x (run=%d)'%runnum))
+    for i in range(2):
+        evt = ds.events().next()
+        calib = det.calib(evt)
+        print('==== Event %d' % i)
+        if calib is None:
+            print('  det.calib(evt) is None')
+            continue
+        print(info_ndarr(calib,'  calib      '))
+        calib701010 = det.calib(evt, cmpars=(7,0,10,10))
+        calib731010 = det.calib(evt, cmpars=(7,3,10,10))
+        calib721010 = det.calib(evt, cmpars=(7,2,10,10))
+        calib73100  = det.calib(evt, cmpars=(7,3,100))
+        calib701000 = det.calib(evt, cmpars=(7,1,100,0))
+        print(info_ndarr(calib731010,'  calib731010'))
+        print('  calib-calib701010', (calib-calib701010).sum()) #-260670.42 event 0
+        print('  calib-calib721010', (calib-calib721010).sum()) #-208380.22
+        print('  calib-calib731010', (calib-calib731010).sum()) #-181821.19
+        print('  calib-calib73100 ', (calib-calib73100).sum())  # 4698.788
+        print('  calib-calib701000', (calib-calib701000).sum()) # 0?
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -246,7 +285,8 @@ USAGE = '\nUsage:'\
       + '\n    5 - issue_2021_02_22 - Silke & Lennart exp=meclv2518:run=100- epix100a geometry'\
       + '\n    6 - issue_2021_02_23 - cpo - exp=meclv2518:run=269 - Epix100a'\
       + '\n    7 - issue_2021_02_28 - Silke - exp=xcsx39718:run=9 - epix10k135 - calib'\
-      + '\n    8 - issue_2021_03_01 - Silke - exp=xcsx39718:run=9 - epix10k135 - shape '\
+      + '\n    8 - issue_2021_02_28B- Silke - exp=xcsx39718:run=9 - epix10k135 - shape '\
+      + '\n    9 - issue_2021_03_01 - Silke - exp=xpplv0918:run=30 - default c ommon mode for Jungfrau'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -258,7 +298,8 @@ elif TNAME in  ('4',): issue_2021_02_16()
 elif TNAME in  ('5',): issue_2021_02_22()
 elif TNAME in  ('6',): issue_2021_02_23()
 elif TNAME in  ('7',): issue_2021_02_28()
-elif TNAME in  ('8',): issue_2021_03_01()
+elif TNAME in  ('8',): issue_2021_02_28B()
+elif TNAME in  ('9',): issue_2021_03_01()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
