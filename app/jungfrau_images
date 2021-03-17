@@ -22,15 +22,16 @@ EVSKIP  = 0
 EVENTS  = EVSKIP + 4
 PLOT_IMG = True #False #True #False
 PLOT_SPE = False #True #False #True #False
-OFNIMG   = '2020-12-10-figs-jf-cm/img'
+DIR      = 'figs-jf'
+FNPREFIX = DIR +'/img'
 
 #----
 
 def usage():
     return '\n    python %s <test-number -  one of 1,2,40,41,42,51,52,53,54>' % sys.argv[0]\
          + '\n    python %s <experiment> <detector-name> <run-number>' % sys.argv[0]\
-         + '\n    python %s cxic00318 jungfrau4M 35' % sys.argv[0]
-
+         + '\n    python %s cxic00318 jungfrau4M 35' % sys.argv[0]\
+         + '\n    python %s xpplw0018 XppEndstation.0:Jungfrau.0 130' % sys.argv[0]
 
 def dsname_source(tname):
     if   tname=='1' : return 'exp=xpptut15:run=410', 'Jungfrau512k', 410
@@ -42,6 +43,7 @@ def dsname_source(tname):
     elif tname=='52': return 'exp=detdaq17:run=179', 'DetLab.0:Jungfrau.3', 179
     elif tname=='53': return 'exp=detdaq17:run=180', 'DetLab.0:Jungfrau.3', 180
     elif tname=='54': return 'exp=cxic00318:run=35', 'CxiDs1.0:Jungfrau.0', 35
+    elif tname=='55': return 'exp=xpplw0018:run=130', 'XppEndstation.0:Jungfrau.0', 130
     elif len(sys.argv)==4:
         print('command example: %s' % usage())
         exp, detname, runnum = sys.argv[1], sys.argv[2], int(sys.argv[3])
@@ -142,12 +144,12 @@ def test_jungfrau_methods(tname):
     #for key in evt.keys(): print(key)
 
     ##-----------------------------
-    figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(13,12)) if PLOT_IMG else (None, None, None, None)
-    if figim is not None: gg.move_fig(figim, 300, 0)
+    figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(10,9)) if PLOT_IMG else (None, None, None, None)
+    #if figim is not None: gg.move_fig(figim, 300, 0)
 
     fighi, axhi = None, None
     if PLOT_SPE:
-        fighi = gr.figure(figsize=(10,6), title='Spectrum', move=(600,0))
+        fighi = gr.figure(figsize=(8,6), title='Spectrum', move=(600,0))
         axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
 
     ##-----------------------------
@@ -192,8 +194,10 @@ def test_jungfrau_methods(tname):
  	#cmpars = (7,3,400) #
  	#cmpars = (7,3,100) #
  	#cmpars = (7,3,1000) #  t_cm 570ms 
- 	cmpars = (7,3,1000,10) 
  	#cmpars = (7,7,1000) # t_cm 680ms 
+        #cmpars = (7,3,1000,10)
+        cmpars = (7,0,1000,10)
+        cmpars = (7,2,5,10)
         
         ########################################################
         nda = det.calib(evt, cmpars=cmpars, nda_raw=raw_fake)
@@ -252,7 +256,8 @@ def test_jungfrau_methods(tname):
                          (-1, 1) if tname=='30' else\
                          (0,size) if tname=='42' else\
                          (med-3*spr, med+3*spr) if tname=='54' else\
-                         (ave-1*rms, ave+1*rms)
+                         (med-3*spr, med+3*spr)
+                         #(ave-1*rms, ave+1*rms)
                          #(57000,57800) if tname in ('40','41') else\
 
             gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno') # 'jet, inferno
@@ -260,8 +265,10 @@ def test_jungfrau_methods(tname):
             #gg.save_fig(figim, fname=ofnimg, pbits=0)
             gr.show(mode='do_not_hold')
 
-            if OFNIMG: gg.save_fig(figim, fname=OFNIMG+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), pbits=1)
-            #gg.save('img.png', True)
+            if FNPREFIX:
+               gu.create_directory_with_mode(DIR, mode=0o770, verb=True)
+               gg.save_fig(figim, fname=FNPREFIX+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), pbits=1)
+            ##if FNPREFIX: gg.save(FNPREFIX+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), True)
 
         if PLOT_SPE:
             #arrhi = ndarr # nda_raw
