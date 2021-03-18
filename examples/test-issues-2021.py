@@ -265,9 +265,122 @@ def issue_2021_03_01():
         print('  calib-calib701000', (calib-calib701000).sum()) # 0?
 
 
+def issue_2021_03_17():
+    """ISSUE: Nelson, Silke <snelson@slac.stanford.edu>
+    jungfrau calibration using evcode
+    """
+    from Detector.GlobalUtils import info_ndarr
+    import psana
+
+    runnum = 238 #244
+    evcode = '162' #'120,162,-137' # None
+    counter = 0
+
+    from Detector.EvrDetector import EvrDetector
+    from Detector.EventCodeManager import EventCodeManager
+    ecm = EventCodeManager(evcode, 0o1)
+
+    ds = psana.DataSource('exp=cxilu9218:run=%d'%runnum)
+    det = psana.Detector('CxiDs1.0:Jungfrau.0')
+    #evrdet = EvrDetector(':Evr')
+
+    for i in range(1000):
+        evt = ds.events().next()
+        #raw = det.raw(evt)
+        #if raw is None: continue
+        #print('==== Event %2d '%i)
+        #print(info_ndarr(raw, '  raw '))
+        #if not ecm.select(evt): continue 
+        #evt_codes = evrdet.eventCodes(evt)
+        select = ecm.select(evt)
+        #evt_codes = ecm.event_codes(evt)
+        #print('==== Event %3d' % i, end='\r')
+        if i < 6 \
+        or i < 51 and not i%10 \
+        or not i%100: print('==== Event %3d   selected: %s evt_codes: %s' % (i, select, str(ecm.event_codes(evt))))
+        if not select: continue
+        counter += 1
+        raw = det.raw(evt)
+        print('==== Event %3d   selected: %s evt_codes: %s' % (i, select, str(ecm.event_codes(evt))))
+        print(info_ndarr(raw, '  raw %03d '%counter))
+
+
+def issue_2021_03_18():
+    """ISSUE:
+    pcds-ana-l@SLAC.STANFORD.EDU on behalf of Nelson, Silke <000001b5861c978b-dmarc-request@LISTSERV.SLAC.STANFORD.EDU>
+    Wed 3/17/2021 8:57 PM
+    Hi Chris & Mikhail,
+
+    We have an issue with the small epix10k in psana: 
+    The pedestal is the right shape and so is the raw data. 
+    In this experiment, I have both a 2M and a 135k. When my first call to calib(evt) goes out to the 135k, everthing looks fine. 
+    If I ask for the 2M first, calib(evt) for the 135k returns data of the 2M shape where the data for the first tiles is repeated 16 times. 
+    Something must be going wrong with the caching.
+    Best,
+    Silke
+
+    WORKS:
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', level=logging.INFO)
+
+    import psana
+    ds = psana.DataSource('exp=xcsx39718:run=222')
+    det2M = psana.Detector('epix10k2M')
+    det135k = psana.Detector('epix10k135')
+    evt = ds.events().next()
+    print('135k ped   shape: ', det135k.pedestals(evt).shape)
+    print('135k raw   shape: ', det135k.raw(evt).shape)
+    print('2M   ped   shape: ', det2M.pedestals(evt).shape)
+    print('2M   raw   shape: ', det2M.raw(evt).shape)
+    print('\nXXX NO problem below VVVVVV')
+    print('135k calib shape: ', det135k.calib(evt).shape)
+    print('\nXXX NO problem above ^^^^^^')
+    print('2M   calib shape: ', det2M.calib(evt).shape)
+
+
+def issue_2021_03_18B():
+    """
+    CONTINUE issue_2021_03_18
+    DID NOT WORK:
+    TESTED:
+    /reg/d/psdm/xcs/xcsx39718/calib
+    /reg/d/psdm/xcs/xcsx39718/calib/Epix10ka2M::CalibV1/XcsEndstation.0:Epix10ka2M.0/pedestals/167-end.data - ok
+    /reg/d/psdm/xcs/xcsx39718/calib/Epix10ka::CalibV1/XcsEndstation.0:Epix10ka.1/pedestals/167-end.data - ok
+    /reg/d/psdm/xcs/xcsx39718/calib/Epix10ka::CalibV1/XcsEndstation.0:Epix10ka.1/pedestals/223-end.data - ok
+    /reg/d/psdm/xcs/xcsx39718/calib/Epix10ka::CalibV1/XcsEndstation.0:Epix10ka.1/pixel_gain/167-end.data - ok
+    /reg/d/psdm/xcs/xcsx39718/calib/Epix10ka::CalibV1/XcsEndstation.0:Epix10ka.1/pixel_status/167-end.data - ok
+
+    REASON: store = Storage() # singleton is used for all detectors
+    FIXED: dic_store = {} # {detname:Storage()}
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', level=logging.INFO)
+
+    import psana
+    ds = psana.DataSource('exp=xcsx39718:run=222')
+    det2M = psana.Detector('epix10k2M')
+    det135k = psana.Detector('epix10k135')
+    evt = ds.events().next()
+    print('2M   ped   shape: ', det2M.pedestals(evt).shape)
+    print('2M   raw   shape: ', det2M.raw(evt).shape)
+    print('135k ped   shape: ', det135k.pedestals(evt).shape)
+    print('135k raw   shape: ', det135k.raw(evt).shape)
+    print('2M   calib shape: ', det2M.calib(evt).shape)
+    print('\nXXX problem is coming ======')
+    print('135k calib shape: ', det135k.calib(evt).shape) # RETURNED shape:(16, 352, 384)
+    #c135 = det135k.calib(evt)
+    #for tile in c135:
+    #    print(tile.sum())
+
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
+       FIXED:
     """
     metname = sys._getframe().f_code.co_name
     print('method: %s' % metname)
@@ -287,6 +400,9 @@ USAGE = '\nUsage:'\
       + '\n    7 - issue_2021_02_28 - Silke - exp=xcsx39718:run=9 - epix10k135 - calib'\
       + '\n    8 - issue_2021_02_28B- Silke - exp=xcsx39718:run=9 - epix10k135 - shape '\
       + '\n    9 - issue_2021_03_01 - Silke - exp=xpplv0918:run=30 - default c ommon mode for Jungfrau'\
+      + '\n   10 - issue_2021_03_17 - Silke - exp=cxilu9218:run=240 - Jungfrau dark processing using evcode'\
+      + '\n   11 - issue_2021_03_18 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M'\
+      + '\n   12 -                                                  epix10k2M and epix10k135'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -300,6 +416,9 @@ elif TNAME in  ('6',): issue_2021_02_23()
 elif TNAME in  ('7',): issue_2021_02_28()
 elif TNAME in  ('8',): issue_2021_02_28B()
 elif TNAME in  ('9',): issue_2021_03_01()
+elif TNAME in ('10',): issue_2021_03_17()
+elif TNAME in ('11',): issue_2021_03_18()
+elif TNAME in ('12',): issue_2021_03_18B()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
