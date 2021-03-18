@@ -7,6 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-09
+2020-03-18 Mikhail Dubrovin
+modified:
+   app/jungfrau_images
+   examples/test-issues-2021.py - add issue_2021_03_17,18,18B
+   ../src/UtilsEpix10ka.py - fix issue with singleton store
+   ../src/EventCodeManager.py - add methods event_codes, event_code_list
+
 Tag: V02-00-08
 2020-03-01 Mikhail Dubrovin
 - for EPIX10KA all 2d arrays are re-shaped to 3d
