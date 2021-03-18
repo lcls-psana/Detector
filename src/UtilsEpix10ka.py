@@ -53,7 +53,7 @@ class Storage:
         self.counter = -1
 
 #--------------------
-store = Storage() # singleton
+dic_store = {} # {det.name:Storage()} in stead of singleton
 #--------------------
 
 def config_objects(env, src, idx=0):
@@ -366,7 +366,12 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
     if gain is None: return None # gain = np.ones_like(peds)  # - 4d gains
     if peds is None: return None # peds = np.zeros_like(peds) # - 4d gains
 
-    if store.gfac is None: 
+    store = dic_store.get(det.name, None)
+
+    if store is None:
+        logger.debug('create store for detector %s' % det.name)
+        store = dic_store[det.name] = Storage()
+
         # do ONCE this initialization 
         logger.debug(info_ndarr(raw,  '\n  raw ')\
                     +info_ndarr(gain, '\n  gain')\
