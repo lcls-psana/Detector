@@ -704,6 +704,7 @@ class PyDetectorAccess(object) :
         elif self.dettype == gu.PIMAX      : return self.raw_data_pimax(evt, env)
         elif self.dettype == gu.PIXIS      : return self.raw_data_pixis(evt, env)
         elif self.dettype == gu.ZYLA       : return self.raw_data_zyla(evt, env)
+        elif self.dettype == gu.ISTAR      : return self.raw_data_istar(evt, env)
         elif self.dettype == gu.UXI        : return self.raw_data_uxi(evt, env)
         else                               : return None
 
@@ -1008,6 +1009,21 @@ class PyDetectorAccess(object) :
 
         # configuration object
         #c = pda.get_zyla_config_object(env, self.source)
+        #if c is None : return None
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
+
+        nda = d.data()
+        return nda if nda is not None else None
+
+##-----------------------------
+
+    def raw_data_istar(self, evt, env) :
+        # data object
+        d = pda.get_zyla_data_object(evt, self.source)
+        if d is None : return None
+
+        # configuration object
+        #c = pda.get_istar_config_object(env, self.source)
         #if c is None : return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
@@ -1451,6 +1467,14 @@ class PyDetectorAccess(object) :
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
+
+    def shape_config_istar(self, env) :
+        # configuration from data file
+        c = pda.get_istar_config_object(env, self.source)
+        if c is None : return None
+        return (c.numPixelsY(), c.numPixelsX())
+        #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
+
 ##-----------------------------
 
     def shape_config_epicscam(self, env) :
@@ -1547,6 +1571,7 @@ class PyDetectorAccess(object) :
         elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
         elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
         elif self.dettype == gu.ZYLA       : return self.shape_config_zyla(env)
+        elif self.dettype == gu.ISTAR      : return self.shape_config_istar(env)
         elif self.dettype == gu.EPICSCAM   : return self.shape_config_epicscam(env)
         elif self.dettype == gu.UXI        : return self.shape_config_uxi(env)
         elif self.dettype == gu.PIXIS      : return self.shape_config_pixis(env)

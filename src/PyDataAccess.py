@@ -531,6 +531,17 @@ def get_zyla_config_object(env, src) :
 
 ##-----------------------------
 
+def get_istar_config_object(env, src) :
+    """get istar config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.iStar.ConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
 def get_jungfrau_data_object(evt, src) :
     """get jungfrau data object
     """

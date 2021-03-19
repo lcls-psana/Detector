@@ -93,6 +93,9 @@ detectors = {
     "Uxi"         : AreaDetector,
     "StreakC7700" : AreaDetector,
     "Archon"      : AreaDetector,
+    "iStar"       : AreaDetector,
+    "QuadAdc"     : GenericWFDetector,
+
 }
 
 
@@ -191,4 +194,9 @@ bld_info = {
     "FEE-AIN-01"       : DdlDetector,
     "MEC-XT2-BMMON-02" : DdlDetector,
     "MEC-XT2-BMMON-03" : DdlDetector,
+    "XPP-USR-DIO"      : DdlDetector,
+    "XPP-ALC-DIO"      : DdlDetector,
+    "XCS-USR-DIO"      : DdlDetector,
+    "CXI-USR-DIO"      : DdlDetector,
+    "MEC-USR-DIO"      : DdlDetector,
 }

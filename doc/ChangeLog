@@ -7,6 +7,12 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag V02-00-10
+2020-03-18 Daniel Damiani
+- src/DetectorTypes.py - add support for new BLD, iStar, and QuadAdc
+- src/PyDataAccess.py - add support for iStar config
+- src/PyDetectorAccess.py - add support for iStar 
+
 Tag: V02-00-09
 2020-03-18 Mikhail Dubrovin
 modified:
