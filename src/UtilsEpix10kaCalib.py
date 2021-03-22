@@ -22,7 +22,7 @@ import numpy as np
 from PSCalib.DCUtils import env_time, dataset_time, str_tstamp
 from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES,\
                                alias_for_id, create_directory, set_file_access_mode
-from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_objects,\
+from Detector.UtilsEpix10ka import GAIN_MODES, GAIN_MODES_IN, config_objects,\
                             get_epix10ka_any_config_object, find_gain_mode
 
 from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix10ka, print_object_dir
@@ -44,13 +44,20 @@ M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 B14 = 0o040000 # 16384 or 1<<14 (15-th bit starting from 1)
 #--------------------
 
+class Storage:
+    def __init__(self):
+        pass
+
+STORE = Storage() # singleton
+
+
 def plot_avsi_figaxis():
-    if not hasattr(store, 'plot_avsi_figax'):
+    if not hasattr(STORE, 'plot_avsi_figax'):
         fig=plt.figure(101,facecolor='w')
         fig.clf()
         ax=fig.add_subplot(111)
-        store.plot_avsi_figax=fig,ax
-    return store.plot_avsi_figax
+        STORE.plot_avsi_figax=fig,ax
+    return STORE.plot_avsi_figax
 
 def plot_avsi(x,y,fname):
 
@@ -156,11 +163,11 @@ def saw_edges(trace, evnums, gap=50, do_debug=True):
 #--------------------
 
 def plot_fit_figaxis():
-    if not hasattr(store, 'plot_fit_figax'):
+    if not hasattr(STORE, 'plot_fit_figax'):
         fig=plt.figure(100,facecolor='w')
         ax=fig.add_subplot(111)
-        store.plot_fit_figax = fig, ax
-    return store.plot_fit_figax
+        STORE.plot_fit_figax = fig, ax
+    return STORE.plot_fit_figax
 
 #--------------------
 
@@ -770,26 +777,32 @@ CALIBCYCLE_NAMES_DARK = [\
 ]
 
 def calibcycle_names(nspace=7):
-  if not hasattr(store, 'cc_names'):
-    store.cc_names = list(CALIBCYCLE_NAMES_DARK)
+  if not hasattr(STORE, 'cc_names'):
+    STORE.cc_names = list(CALIBCYCLE_NAMES_DARK)
     for trbit in range(2):
       for pos in range(nspace*nspace):
         v = 'position %d trbit %d' % (pos, trbit)
-        store.cc_names.append(v)
-    s = [v for v in store.cc_names]
+        STORE.cc_names.append(v)
+    s = [v for v in STORE.cc_names]
     logger.debug('Expected list of calib-cycles:\n%s' % '\n'.join(s))    
-  return store.cc_names
+  return STORE.cc_names
 
 #--------------------
 
-def step_counter(cd, nstep_tot, nstep_run, nspace=None): #nspace=7 - for 103 charge injection calib-cycles, =None for 5 dark
+def step_counter(cd, det, nstep_tot, nstep_run, nspace=None): #nspace=7 - for 103 charge injection calib-cycles, =None for 5 dark
     pvl = cd().pvLabels()
+
     if len(pvl)==0:
         logger.warning('CALIB-CYCLE METADATA IS NOT AVAILABLE nstep_tot:%d, nstep_run:%d' % (nstep_tot, nstep_run))
         return nstep_tot
 
-    cc_name  = pvl[0].name()
-    cc_value = pvl[0].value()
+    detname = str(det.name).replace(':','|').replace('.','-')
+    cc_name, cc_value = None, None
+    for pvlbl in pvl:
+        if detname in pvlbl.name():
+            cc_name  = pvlbl.name()
+            cc_value = pvlbl.value()
+
     logger.info('cc_name "%s" cc_value "%s"' % (cc_name, cc_value))
 
     cc_names = CALIBCYCLE_NAMES_DARK if nspace is None else calibcycle_names(nspace)
@@ -808,9 +821,9 @@ def step_counter(cd, nstep_tot, nstep_run, nspace=None): #nspace=7 - for 103 cha
 #--------------------
 
 def list_of_cc_collected():
-  if not hasattr(store, 'cc_collected'):
-    store.cc_collected = []
-  return store.cc_collected
+  if not hasattr(STORE, 'cc_collected'):
+    STORE.cc_collected = []
+  return STORE.cc_collected
 
 #--------------------
 
@@ -949,7 +962,7 @@ def offset_calibration(*args, **opts):
             nstep_tot += 1
             logger.info('=============== calibcycle %02d ===============' % nstep_tot)
 
-            nstep = step_counter(cd, nstep_tot, nstep_run, nspace)
+            nstep = step_counter(cd, det, nstep_tot, nstep_run, nspace)
             if nstep is None: continue
 
             if nstep_tot<skipncc:
@@ -1371,7 +1384,7 @@ def pedestals_calibration(*args, **opts):
         nstep_tot += 1
         logger.info('=============== calibcycle %02d ===============' % nstep_tot)
 
-        nstep = step_counter(cd, nstep_tot, nstep_run)
+        nstep = step_counter(cd, det, nstep_tot, nstep_run)
         if nstep is None: continue
 
         #if size > 1:
