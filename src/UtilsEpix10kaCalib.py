@@ -790,20 +790,25 @@ def calibcycle_names(nspace=7):
 #--------------------
 
 def step_counter(cd, det, nstep_tot, nstep_run, nspace=None): #nspace=7 - for 103 charge injection calib-cycles, =None for 5 dark
-    pvl = cd().pvLabels()
+    pvlabels = cd().pvLabels()
 
-    if len(pvl)==0:
+    if len(pvlabels)==0:
         logger.warning('CALIB-CYCLE METADATA IS NOT AVAILABLE nstep_tot:%d, nstep_run:%d' % (nstep_tot, nstep_run))
         return nstep_tot
 
     detname = str(det.name).replace(':','|').replace('.','-')
-    cc_name, cc_value = None, None
-    for pvlbl in pvl:
-        if detname in pvlbl.name():
-            cc_name  = pvlbl.name()
-            cc_value = pvlbl.value()
+    shortname = detname.split('|')[-1]
+    logger.info('detname: %s alternative shortname: %s' % (detname, shortname))
 
-    logger.info('cc_name "%s" cc_value "%s"' % (cc_name, cc_value))
+    cc_name, cc_value = None, None
+    for pvl in pvlabels:
+        logger.info('ControlDataDetector.pvLabels() name: %s value: %s' % (pvl.name(), pvl.value()))
+        if detname in pvl.name() or shortname in pvl.name():
+            cc_name  = pvl.name()
+            cc_value = pvl.value()
+            #break
+
+    logger.info('matched name "%s" value "%s"' % (cc_name, cc_value))
 
     cc_names = CALIBCYCLE_NAMES_DARK if nspace is None else calibcycle_names(nspace)
     ind = cc_names.index(cc_value)
@@ -1367,7 +1372,7 @@ def pedestals_calibration(*args, **opts):
 
     ds = DataSource(dsname)
     det = Detector(detname)
-    cd = Detector('ControlData')
+    cd  = Detector('ControlData')
 
     sh = det.shape()
     if len(sh)==2: sh = (1,sh[0],sh[1]) # for epix10ka single panel detector
