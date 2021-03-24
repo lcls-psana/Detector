@@ -12,7 +12,7 @@ from Detector.GlobalUtils import info_ndarr, selected_record
 SCRNAME = sys.argv[0].rsplit('/')[-1]
 usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-to-skip> <calib-dir> <log-level-str>'%SCRNAME\
       + '\n  Examples:'\
-      + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 0 10 None DEBUG'%SCRNAME\
+      + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10 0 None DEBUG'%SCRNAME\
       + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10'%SCRNAME\
       + '\n  %s exp=mfxp17518:run=108 MfxEndstation.0:Epix10ka2M.0 10'%SCRNAME\
       + '\n  %s exp=meclv2518:run=99:dir=/reg/d/ffb/mec/meclv2518/xtc/:smd MecTargetChamber.0:Epix10kaQuad.0 10 0 /reg/neh/operator/mecopr/calib DEBUG'%SCRNAME
