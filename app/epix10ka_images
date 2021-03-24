@@ -1,4 +1,6 @@
-####!/usr/bin/env python
+#!/usr/bin/env python
+
+from __future__ import print_function
 
 import sys
 import numpy as np
@@ -23,7 +25,7 @@ PLOT_ANY      = PLOT_IMG or PLOT_SPE or PLOT_GAIN_MAP
 PRINT_CONSTS  = False
 
 #OFNIMG        = 'img-xpplv3818/img'
-OFNIMG        = '2020-12-10-figs-epix10ka2M-cm/img'
+OFNIMG        = 'img'
 OFNSPE        = None
 OFNANY        = None
 
@@ -34,15 +36,15 @@ FNTYPE       = ''
 # /reg/d/psdm/det/detdaq17/e968-r0132   - source masked horizontally at bottom after ~ event 15000.
 #----
 
-def usage():
-    return '\n    python %s <test-number - one of 1,2,...,15>' % sys.argv[0]\
-         + '\n    python %s <experiment> <detector-name> <run-number>' % sys.argv[0]\
-         + '\n    python %s xpplv3818 XppGon.0:Epix10ka2M.0 170' % sys.argv[0]
+USAGE = '\n    python %s <test-number - one of 1,2,...,15>' % sys.argv[0]\
+      + '\n    python %s <experiment> <detector-name> <run-number>' % sys.argv[0]\
+      + '\n    python %s xpplv3818 XppGon.0:Epix10ka2M.0 170' % sys.argv[0]\
+      + '\n    python %s xpplu8318 XppGon.0:Epix10ka2M.0 239' % sys.argv[0]
 
 def dsname_source(tname):
 
     if len(sys.argv)==4:
-        print('command example: %s' % usage())
+        print('command example: %s' % USAGE)
         exp, detname, runnum = sys.argv[1], sys.argv[2], int(sys.argv[3])
         return 'exp=%s:run=%d'%(exp, runnum), detname #, runnum
 
@@ -84,7 +86,7 @@ def dsname_source(tname):
     elif tname=='15': return 'exp=xpplv3818:run=170', 'XppGon.0:Epix10ka2M.0'
     else:
         print('Example for test %s is not implemented' % tname)
-        print('command example: %s' % usage())
+        print('command example: %s' % USAGE)
         sys.exit(0)
 
 
@@ -409,7 +411,7 @@ if __name__ == "__main__":
     tname = sys.argv[1] if len(sys.argv)>1 else '0'
     logger.info('%s\nTest %s' % (80*'_', tname))
     test_epix10ka_methods(tname)
-    logger.info('command example: %s' % usage())
+    logger.info('command example: %s' % USAGE)
     sys.exit('End of %s' % sys.argv[0])
 
 #----
