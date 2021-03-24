@@ -376,6 +376,36 @@ def issue_2021_03_18B():
     #    print(tile.sum())
 
 
+def issue_2021_03_24():
+    """Not predictable detector name in Detector('ControlData')().pvLabels()
+
+    OUTPUT:
+
+    det2M   name: XcsEndstation-0|Epix10ka2M-0
+    det135k name: XcsEndstation-0|Epix10ka-1
+    == run 4  step 00
+    cc_name: Epix10ka2M-0 scan cc_value: dark Fixed High Gain
+    cc_name: XcsEndstation-0|Epix10ka-1 scan cc_value: dark Fixed High Gain
+    cc_name: XcsEndstation-1|Opal1000-1 scan cc_value: pedestal
+
+    REASON: no matching between XcsEndstation-0|Epix10ka2M-0 and Epix10ka2M-0
+    """
+    from psana import DataSource, Detector
+    ds = DataSource('exp=xcslv9718:run=4:smd')
+    det2M   = Detector('epix10k2M')
+    det135k = Detector('epix10k135')
+    cd      = Detector('ControlData')
+
+    print('det2M   name: %s' % str(det2M.name).replace(':','|').replace('.','-'))
+    print('det135k name: %s' % str(det135k.name).replace(':','|').replace('.','-'))
+
+    for orun in ds.runs():
+      for istep, step in enumerate(orun.steps()): #(loop through calyb cycles, using only the first):
+        print('== run %d  step %02d' % (orun.run(), istep))
+
+        for pv in cd().pvLabels():
+            print('cc_name: %s cc_value: %s' % (pv.name(), pv.value()))
+
 
 def issue_2021_MM_DD():
     """ISSUE:
@@ -403,6 +433,7 @@ USAGE = '\nUsage:'\
       + '\n   10 - issue_2021_03_17 - Silke - exp=cxilu9218:run=240 - Jungfrau dark processing using evcode'\
       + '\n   11 - issue_2021_03_18 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M'\
       + '\n   12 -                                                  epix10k2M and epix10k135'\
+      + '\n   13 - issue_2021_03_24 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M configuration issue'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -419,6 +450,7 @@ elif TNAME in  ('9',): issue_2021_03_01()
 elif TNAME in ('10',): issue_2021_03_17()
 elif TNAME in ('11',): issue_2021_03_18()
 elif TNAME in ('12',): issue_2021_03_18B()
+elif TNAME in ('13',): issue_2021_03_24()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
