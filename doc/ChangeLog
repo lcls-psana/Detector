@@ -7,6 +7,13 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-12
+2020-03-24 Mikhail Dubrovin
+app/det_calib_ave_and_max - fix description in usage
+app/epix10ka_images - sage() -> USAGE
+examples/test-issues-2021.py - add issue_2021_03_24
+UtilsEpix10kaCalib.py - fix finding of the epix10ka gain mode in pvLabels
+
 Tag: V02-00-11
 2020-03-22 Mikhail Dubrovin
 - UtilsEpix10kaCalib.py - in step_counter use detector name to find pvlbl.value
