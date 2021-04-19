@@ -7,6 +7,23 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-13
+2020-04-19 Mikhail Dubrovin
+- code refactoring for app/jungfrau_dark_proc
+modified:
+	app/epix10ka_pedestals_calibration - change format in logging.basicConfig
+	examples/test-issues-2021.py - add issue_2021_04_08
+	src/GlobalUtils.py - upgrade info_ndarr, print_ndarr
+	src/UtilsEpix.py - move out methods set_file_access_mode, create_directory, alias_for_id, id_for_alias
+	                   moved to PSCalib.UtilsPanelAlias
+	src/UtilsEpix10kaCalib.py - move out methods evaluate_limits, tstamps_run_and_now, tstamp_for_dataset,
+	                            xsave_log_record_on_start
+	src/UtilsJungfrau.py - cosmetic code cleaning
+add new:
+	app/jungfrau_dark_proc
+	src/UtilsCalib.py
+	src/UtilsJungfrauCalib.py
+
 Tag: V02-00-12
 2020-03-24 Mikhail Dubrovin
 app/det_calib_ave_and_max - fix description in usage

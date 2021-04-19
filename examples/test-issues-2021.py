@@ -407,6 +407,18 @@ def issue_2021_03_24():
             print('cc_name: %s cc_value: %s' % (pv.name(), pv.value()))
 
 
+def issue_2021_04_08():
+    """too long run loop
+    """
+    from time import time
+    from psana import DataSource
+    ds = DataSource('exp=cxilu9218:run=238:smd')
+    t0_sec = time()
+    for irun, orun in enumerate(ds.runs()):
+        print('run[%d] %d' % (irun, orun.run()))
+    print('run empty loop takes %.3f sec' % (time()-t0_sec)) # 88 sec in smd
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -434,6 +446,7 @@ USAGE = '\nUsage:'\
       + '\n   11 - issue_2021_03_18 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M'\
       + '\n   12 -                                                  epix10k2M and epix10k135'\
       + '\n   13 - issue_2021_03_24 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M configuration issue'\
+      + '\n   13 - issue_2021_04_08 - my - exp=xcsx39718:run=222 too lonng run loop'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -451,6 +464,7 @@ elif TNAME in ('10',): issue_2021_03_17()
 elif TNAME in ('11',): issue_2021_03_18()
 elif TNAME in ('12',): issue_2021_03_18B()
 elif TNAME in ('13',): issue_2021_03_24()
+elif TNAME in ('14',): issue_2021_04_08()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)

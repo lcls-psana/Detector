@@ -19,31 +19,28 @@ import numpy as np
 
 #----
 
-def info_ndarr(nda, name='', first=0, last=5) :
+def info_ndarr(nda, name='', first=0, last=5):
+    _name = '%s '%name if name!='' else name
     s = ''
-    if nda is None : s = '%s: %s' % (name, nda)
-    elif isinstance(nda, tuple) : s += info_ndarr(np.array(nda), 'ndarray from tuple: %s' % name)
-    elif isinstance(nda, list)  : s += info_ndarr(np.array(nda), 'ndarray from list: %s' % name)
-    elif not isinstance(nda, np.ndarray) :
-                     s = '%s: %s' % (name, type(nda))
-    else : s = '%s:  shape:%s  size:%d  dtype:%s %s...'%\
-               (name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last])
+    gap = '\n' if (last-first)>10 else ' '
+    if nda is None : s = '%s%s' % (_name, nda)
+    elif isinstance(nda, tuple): s += info_ndarr(np.array(nda), 'ndarray from tuple: %s' % name)
+    elif isinstance(nda, list) : s += info_ndarr(np.array(nda), 'ndarray from list: %s' % name)
+    elif not isinstance(nda, np.ndarray):
+                     s = '%s%s' % (_name, type(nda))
+    else: s = '%sshape:%s size:%d dtype:%s%s%s%s'%\
+               (_name, str(nda.shape), nda.size, nda.dtype, gap, str(nda.ravel()[first:last]).rstrip(']'),\
+                ('...]' if nda.size>last else ']'))
     return s
 
 #----
 
-def print_ndarr(nda, name='', first=0, last=5) :
-    if nda is None : print('%s: %s' % (name, nda))
-    elif isinstance(nda, tuple) : print_ndarr(np.array(nda), 'print_ndarr: ndarray from tuple: %s' % name)
-    elif isinstance(nda, list)  : print_ndarr(np.array(nda), 'print_ndarr: ndarray from list: %s' % name)
-    elif not isinstance(nda, np.ndarray) :
-                     print('%s: %s' % (name, type(nda)))
-    else           : print('%s:  shape:%s  size:%d  dtype:%s %s...' % \
-         (name, str(nda.shape), nda.size, nda.dtype, nda.flatten()[first:last]))
+def print_ndarr(nda, name='', first=0, last=5):
+    print(info_ndarr(nda, name, first, last))
 
 #----
 
-def divide_protected(num, den, vsub_zero=0) :
+def divide_protected(num, den, vsub_zero=0):
     """Returns result of devision of numpy arrays num/den with substitution of value vsub_zero for zero den elements.
     """
     pro_num = np.select((den!=0,), (num,), default=vsub_zero)

@@ -19,17 +19,19 @@ from time import sleep
 from psana import DataSource, Detector
 import numpy as np
 
-from PSCalib.DCUtils import env_time, dataset_time, str_tstamp
-from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES,\
-                               alias_for_id, create_directory, set_file_access_mode
+from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES, alias_for_id
 from Detector.UtilsEpix10ka import GAIN_MODES, GAIN_MODES_IN, config_objects,\
                             get_epix10ka_any_config_object, find_gain_mode
 
 from Detector.UtilsEpix10ka2M import ids_epix10ka2m, print_object_dir # id_epix10ka, print_object_dir
 
-from PSCalib.GlobalUtils import log_rec_on_start, deploy_file, save_textfile,\
+from PSCalib.GlobalUtils import deploy_file, save_textfile, create_directory,\
                          EPIX10KA2M, EPIX10KAQUAD, EPIX10KA, dic_det_type_to_calib_group # str_tstamp, replace
 from Detector.GlobalUtils import info_ndarr, print_ndarr, divide_protected
+
+from Detector.UtilsCalib import evaluate_limits, tstamps_run_and_now, tstamp_for_dataset, str_tstamp,\
+       save_log_record_on_start
+
 
 import matplotlib.pyplot as plt
 
@@ -58,6 +60,7 @@ def plot_avsi_figaxis():
         ax=fig.add_subplot(111)
         STORE.plot_avsi_figax=fig,ax
     return STORE.plot_avsi_figax
+
 
 def plot_avsi(x,y,fname):
 
@@ -428,21 +431,6 @@ def mean_constrained(arr, lo, hi):
 
 #--------------------
 
-def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt=''):
-    """Evaluates low and high limit of the array, which are used to find bad pixels.
-    """
-    ave, std = (arr.mean(), arr.std()) if (nneg>0 or npos>0) else (None,None)
-    lo = ave-nneg*std if nneg>0 else lim_lo
-    hi = ave+npos*std if npos>0 else lim_hi
-    lo, hi = max(lo, lim_lo), min(hi, lim_hi)
-
-    logger.debug('  %s: %s ave, std = %.3f, %.3f  low, high limits = %.3f, %.3f'%\
-                 (sys._getframe().f_code.co_name, cmt, ave, std, lo, hi))
-
-    return lo, hi
-
-#--------------------
-
 def proc_dark_block(block, **opts):
     """Returns per-panel (352, 384) arrays of mean, rms, ...
        block.shape = (nrecs, 352, 384), where nrecs <= 1024
@@ -561,19 +549,19 @@ def proc_dark_block(block, **opts):
 
     logger.info ('Bad pixel status:'\
                 +'\n  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)\
-                +'\n  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
-                +'\n  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
-                +'\n  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)\
+                +'\n  status  2: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
+                +'\n  status  4: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
+                +'\n  status  8: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)\
                 +'\n  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)\
                 +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
                 )
 
-    #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
+    #0/1/2/4/8/16/32 for good/hot-rms/cold-rms/saturated/cold/average above limit/average below limit, 
     arr_sta = np.zeros(shape, dtype=np.int64)
     arr_sta += arr_sta_rms_hi    # hot rms
-    arr_sta += arr_sta_rms_lo*8  # cold rms
-    arr_sta += arr_sta_int_hi*2  # satturated
-    arr_sta += arr_sta_int_lo*4  # cold
+    arr_sta += arr_sta_rms_lo*2  # cold rms
+    arr_sta += arr_sta_int_hi*4  # satturated
+    arr_sta += arr_sta_int_lo*8  # cold
     arr_sta += arr_sta_ave_hi*16 # too large average
     arr_sta += arr_sta_ave_lo*32 # too small average
     
@@ -591,26 +579,6 @@ def proc_dark_block(block, **opts):
 #--------------------
 #--------------------
 #--------------------
-
-def tstamps_run_and_now(env):
-    """Returns tstamp_run, tstamp_now
-    """
-    time_run = env_time(env)
-    ts_run = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=time_run)
-    ts_now = str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=None)
-
-    logger.debug('tstamps_run_and_now:'
-                 + ('\n  run time stamp      : %s' % ts_run)\
-                 + ('\n  current time stamp  : %s' % ts_now))
-    return ts_run, ts_now
-#--------------------
-
-def tstamp_for_dataset(dsname):
-    """Returns tstamp_run for dataset dsname, e.g. "exp=xcsx35617:run=6".
-    """
-    tsec = dataset_time(dsname)
-    return str_tstamp(fmt='%Y%m%d%H%M%S', time_sec=tsec)
-
 #--------------------
 
 def ids_epix10ka_any_for_dataset_detname(dsname, detname):
@@ -653,25 +621,6 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0):
             break
     logger.info('configuration info for %s %s segment=%d:\n%s' % (dsname, detname, idx, str(cpdic)))
     return cpdic
-
-#--------------------
-
-def save_log_record_on_start(dirrepo, fname, fac_mode=0o777):
-    """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
-    """
-    rec = log_rec_on_start()
-    year = str_tstamp(fmt='%Y')
-    create_directory(dirrepo, fac_mode)
-    dirlog = '%s/logs' % dirrepo
-    create_directory(dirlog, fac_mode)
-    logfname = '%s/log_%s_%s.txt' % (dirlog, fname, year)
-
-    fexists = os.path.exists(logfname)
-    save_textfile(rec, logfname, mode='a')
-    if not fexists: set_file_access_mode(logfname, fac_mode)
-
-    logger.debug('Record on start: %s' % rec)
-    logger.info('Saved:  %s' % logfname)
 
 #--------------------
 
@@ -742,7 +691,7 @@ def selected_record(nrec):
 def save_ndarray_in_textfile(nda, fname, fmode, fmt):
     fexists = os.path.exists(fname)
     save_txt(fname=fname, arr=nda, fmt=fmt)
-    if not fexists: set_file_access_mode(fname, fmode)
+    if not fexists: os.chmod(fname, fmode)
     logger.debug('saved: %s fmode: %s fmt: %s' % (fname, oct(fmode), fmt))
 
 #--------------------
@@ -750,7 +699,7 @@ def save_ndarray_in_textfile(nda, fname, fmode, fmt):
 def save_2darray_in_textfile(nda, fname, fmode, fmt):
     fexists = os.path.exists(fname)
     np.savetxt(fname, nda, fmt=fmt)
-    if not fexists: set_file_access_mode(fname, fmode)
+    if not fexists: os.chmod(fname, fmode)
     logger.info('saved:  %s' % fname)
         
 #--------------------
@@ -1182,7 +1131,7 @@ def offset_calibration(*args, **opts):
         #save fitting results
         fexists = os.path.exists(fname_work)
         np.savez_compressed(fname_work, darks=darks, fits_hl=fits_hl, fits_ml=fits_ml, nsp_hl=nsp_hl, nsp_ml=nsp_ml)
-        if not fexists: set_file_access_mode(fname_work, filemode)
+        if not fexists: os.chmod(fname_work, filemode)
         logger.info('Saved:  %s' % fname_work)
 
     #--------------------
@@ -1293,7 +1242,7 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
         plt.pause(0.1)
         fexists = os.path.exists(fnameout)
         fig.savefig(fnameout)
-        if not fexists: set_file_access_mode(fnameout, filemode)
+        if not fexists: os.chmod(fnameout, filemode)
 
 #--------------------
 #--------------------
@@ -1447,7 +1396,9 @@ def pedestals_calibration(*args, **opts):
 
         for idx, panel_id in enumerate(panel_ids):
 
-            if idx_sel is not None and idx_sel != idx: continue # skip panels if idx_sel is specified
+            if idx_sel is not None and idx_sel != idx:
+                logger.warning('skip saving files, panel index %d is not equal to --idx=%d' % (idx, idx_sel))
+                continue # skip panels if idx_sel is specified
 
             logger.info('\n%s\nprocess panel:%02d id:%s' % (100*'=', idx, panel_id))
 
