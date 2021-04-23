@@ -246,6 +246,12 @@ def id_jungfrau_from_config(co, iseg=None):
     return '_'.join(modconfig_ids)
 
 
+def shape_from_config_jungfrau(co):
+    """Returns element/panel/sensor shape (N, 512, 1024) from  psana.Jungfrau.ConfigV3 object
+    """
+    return (co.numberOfModules(), co.numberOfRowsPerModule(), co.numberOfColumnsPerModule())
+
+
 def psana_source(env, src):
     """Returns psana.Source from string detector name or alias or psana.Source or psana.DetInfo."""
 

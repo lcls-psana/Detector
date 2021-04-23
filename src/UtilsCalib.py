@@ -14,6 +14,7 @@ Usage::
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
     save_log_record_on_start(dirrepo, fname, fac_mode=0o777)
+    fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
 If you use all or part of it, please give an appropriate acknowledgment.
@@ -27,9 +28,10 @@ import os
 import numpy as np
 from time import time, strftime, localtime
 from psana import EventId, DataSource
-from PSCalib.GlobalUtils import log_rec_on_start, create_directory, save_textfile
+from PSCalib.GlobalUtils import log_rec_on_start, create_directory, save_textfile, dic_det_type_to_calib_group
 from Detector.GlobalUtils import info_ndarr, divide_protected #reshape_to_2d#print_ndarr
 from PSCalib.UtilsPanelAlias import alias_for_id #, id_for_alias
+from PSCalib.NDArrIO import save_txt
 
 TSTAMP_FORMAT = '%Y%m%d%H%M%S'
 
@@ -128,9 +130,16 @@ def save_2darray_in_textfile(nda, fname, fmode, fmt):
     if not fexists: os.chmod(fname, fmode)
     logger.info('saved:  %s' % fname)
 
+
+def save_ndarray_in_textfile(nda, fname, fmode, fmt):
+    fexists = os.path.exists(fname)
+    save_txt(fname=fname, arr=nda, fmt=fmt)
+    if not fexists: os.chmod(fname, fmode)
+    logger.debug('saved: %s fmode: %s fmt: %s' % (fname, oct(fmode), fmt))
+
  
 def file_name_prefix(panel_type, panel_id, tstamp, exp, irun, fname_aliases):
-    panel_alias = alias_for_id(panel_id, fname=fname_aliases)
+    panel_alias = alias_for_id(panel_id, fname=fname_aliases, exp=exp, run=irun)
     return '%s_%s_%s_%s_r%04d' % (panel_type, panel_alias, tstamp, exp, irun), panel_alias
 
 
@@ -198,6 +207,14 @@ class RepoManager(object):
         """create and return directory <dirrepo>/logs/<year>
         """
         return self.makedir(self.dir_logs_year(year))
+
+
+    def dir_merge(self, dname='merge_tmp'):
+        return self.dir_in_repo(dname)
+
+
+    def makedir_merge(self, dname='merge_tmp'):
+        return self.makedir(self.dir_merge(dname))
 
 
     def dir_panel(self, panel_id):
@@ -272,7 +289,7 @@ def proc_dark_block(block, **kwa):
     nrecs1     = kwa.get('nrecs1', None)    # number of records for the 1st stage processing
 
     logger.debug('in proc_dark_block for exp=%s det=%s, block.shape=%s' % (exp, detname, str(block.shape)))
-    logger.info(info_ndarr(block, 'Begin pricessing of the data block:\n    ', first=100, last=105))
+    logger.info(info_ndarr(block, 'begin pricessing of the data block:\n    ', first=100, last=105))
     logger.debug('fraction of statistics for gate limits low: %.3f high: %.3f' % (fraclo, frachi))
 
     t0_sec = time()
@@ -296,17 +313,16 @@ def proc_dark_block(block, **kwa):
       to get better interpolation for median and quantile values
     - use nrecs1 (< nrecs) due to memory and time consumption
     """
-    #blockf64 = np.random.random(block.shape) - 0.5 + block
-    blockf64 = np.random.random((nrecs1, ny, nx)) - 0.5 + block[:nrecs1,:]
-    logger.debug(info_ndarr(blockf64, '1-st stage conversion uint16 to float64,'\
-                                     +' add random [0,1)-0.5 time = %.3f sec '%\
-                                      (time()-t1_sec), first=100, last=105))
+    #blockf64 = np.random.random((nrecs1, ny, nx)) - 0.5 + block[:nrecs1,:]
+    #logger.debug(info_ndarr(blockf64, '1-st stage conversion uint16 to float64,'\
+    #                                 +' add random [0,1)-0.5 time = %.3f sec '%\
+    #                                  (time()-t1_sec), first=100, last=105))
 
-    t1_sec = time()
+    blockf64 = block[:nrecs1,:]
     #arr_med = np.median(block, axis=0)
     arr_med = np.quantile(blockf64, frac05, axis=0, interpolation='linear')
-    arr_qlo = np.quantile(blockf64, fraclo, axis=0, interpolation='linear')
-    arr_qhi = np.quantile(blockf64, frachi, axis=0, interpolation='linear')
+    arr_qlo = np.quantile(blockf64, fraclo, axis=0, interpolation='lower')
+    arr_qhi = np.quantile(blockf64, frachi, axis=0, interpolation='higher')
     logger.debug('block array median/quantile(0.5) for med, qlo, qhi time = %.3f sec' % (time()-t1_sec))
 
     med_med = np.median(arr_med)
@@ -322,8 +338,8 @@ def proc_dark_block(block, **kwa):
     logger.info(info_ndarr(arr_qhi,     '    arr_qhi[100:105] ', first=100, last=105))
     logger.info(info_ndarr(arr_abs_dev, '    abs_dev[100:105] ', first=100, last=105))
 
-    s = 'Pre-processing time %.3f sec' % (time()-t0_sec)\
-      + '\nResults for median over pixels intensities:'\
+    s = 'data-block pre-processing time %.3f sec' % (time()-t0_sec)\
+      + '\nresults for median over pixels intensities:'\
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - pedestal estimator' % (frac05, med_med)\
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - gate low limit' % (fraclo, med_qlo)\
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - gate upper limit' % (frachi, med_qhi)\
@@ -339,7 +355,7 @@ def proc_dark_block(block, **kwa):
     #logger.debug('set gate_half=%.3f for intensity gated average, which is %.3f * abs_dev_med' % (gate_half,nsigma))
 
     # 2nd loop over recs in block to evaluate gated parameters
-    logger.debug('Begin 2nd iteration')
+    logger.debug('begin 2nd iteration')
 
     sta_int_lo = np.zeros(shape, dtype=np.uint64)
     sta_int_hi = np.zeros(shape, dtype=np.uint64)
@@ -448,16 +464,6 @@ def proc_dark_block(block, **kwa):
 #===
 #===
 #===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
 
 def proc_block(block, **kwa):
     """Dark data 1st stage processing to define gate limits.
@@ -482,8 +488,7 @@ def proc_block(block, **kwa):
     #nrecs1     = kwa.get('nrecs1', None)    # number of records for the 1st stage processing
 
     logger.debug('in proc_dark_block for exp=%s det=%s, block.shape=%s' % (exp, detname, str(block.shape)))
-    logger.info(info_ndarr(block, 'Begin pricessing of the data block', first=100, last=105))
-    logger.debug('fraction of statistics for gate limits low: %.3f high: %.3f' % (fraclo, frachi))
+    logger.info(info_ndarr(block, 'begin pricessing of the data block', first=100, last=105))
 
     t0_sec = time()
 
@@ -507,18 +512,18 @@ def proc_block(block, **kwa):
       to get better interpolation for median and quantile values
     - use nrecs1 (< nrecs) due to memory and time consumption
     """
-    blockf64 = np.random.random(block.shape) - 0.5 + block
-    #blockf64 = np.random.random((nrecs1, ny, nx)) - 0.5 + block[:nrecs1,:]
-    logger.debug(info_ndarr(blockf64, '1-st stage conversion uint16 to float64,'\
-                                     +' add random [0,1)-0.5 time = %.3f sec'%\
-                                      (time()-t1_sec), first=100, last=105))
+    #blockf64 = np.random.random(block.shape) - 0.5 + block
+    #logger.debug(info_ndarr(blockf64, '1-st stage conversion uint16 to float64,'\
+    #                                 +' add random [0,1)-0.5 time = %.3f sec'%\
+    #                                  (time()-t1_sec), first=100, last=105))
 
-    t1_sec = time()
+    blockf64 = block
     #arr_med = np.median(block, axis=0)
     arr_med = np.quantile(blockf64, frac05, axis=0, interpolation='linear')
-    arr_qlo = np.quantile(blockf64, fraclo, axis=0, interpolation='linear')
-    arr_qhi = np.quantile(blockf64, frachi, axis=0, interpolation='linear')
-    logger.debug('block array median/quantile(0.5) for med, qlo, qhi time = %.3f sec' % (time()-t1_sec))
+    arr_qlo = np.quantile(blockf64, fraclo, axis=0, interpolation='lower')
+    arr_qhi = np.quantile(blockf64, frachi, axis=0, interpolation='higher')
+
+    logger.debug('block array median/quantile(frac) for med, qlo, qhi time = %.3f sec' % (time()-t1_sec))
 
     med_med = np.median(arr_med)
     med_qlo = np.median(arr_qlo)
@@ -528,8 +533,8 @@ def proc_block(block, **kwa):
     arr_abs_dev = np.median(np.abs(arr_dev_3d), axis=0)
     med_abs_dev = np.median(arr_abs_dev)
 
-    s = 'Pre-processing time %.3f sec' % (time()-t0_sec)\
-      + '\n    Results for median over pixels intensities:'\
+    s = 'proc_block pre-processing time %.3f sec' % (time()-t0_sec)\
+      + '\n    results for median over pixels intensities:'\
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - pedestal estimator' % (frac05, med_med)\
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - gate low limit' % (fraclo, med_qlo)\
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - gate upper limit' % (frachi, med_qhi)\
@@ -587,11 +592,11 @@ class DarkProc(object):
     def proc_block(self):
         t0_sec = time()
         self.gate_lo, self.gate_hi, self.arr_med, self.abs_dev = proc_block(self.block, **self.kwa)
-        logger.info('data block processing time %.3f sec' % (time()-t0_sec)\
-              +info_ndarr(self.arr_med[100:105], '\n  arr_med[100:105]', first=100, last=105)\
-              +info_ndarr(self.abs_dev[100:105], '\n  abs_dev[100:105]', first=100, last=105)\
-              +info_ndarr(self.gate_lo[100:105], '\n  gate_lo[100:105]', first=100, last=105)\
-              +info_ndarr(self.gate_hi[100:105], '\n  gate_hi[100:105]', first=100, last=105))
+        logger.info('data block processing total time %.3f sec' % (time()-t0_sec)\
+              +info_ndarr(self.arr_med, '\n  arr_med[100:105]', first=100, last=105)\
+              +info_ndarr(self.abs_dev, '\n  abs_dev[100:105]', first=100, last=105)\
+              +info_ndarr(self.gate_lo, '\n  gate_lo[100:105]', first=100, last=105)\
+              +info_ndarr(self.gate_hi, '\n  gate_hi[100:105]', first=100, last=105))
 
 
     def init_proc(self):
@@ -627,7 +632,7 @@ class DarkProc(object):
         t0_sec = time()
 
         logger.info('summary')
-        logger.info('%s\nRaw data found/selected in %d events' % (80*'_', self.irec))
+        logger.info('%s\nraw data found/selected in %d events' % (80*'_', self.irec+1))
 
         if self.irec>0:
             logger.info('begin data summary stage')
@@ -669,7 +674,7 @@ class DarkProc(object):
         arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
         arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
 
-        logger.info('Bad pixel status:'\
+        logger.info('bad pixel status:'\
                +'\n  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)\
                +'\n  status  2: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
                +'\n  status  4: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
@@ -699,7 +704,7 @@ class DarkProc(object):
 
         self.block = None
         self.irec = -1
-        logger.info('Summary consumes %.3f sec' % (time()-t0_sec))
+        logger.info('summary consumes %.3f sec' % (time()-t0_sec))
 
 
     def add_event(self, raw, irec):
@@ -800,13 +805,13 @@ def plot_image(nda, tit=''):
     #img = det.image(evt, nda)
     img = reshape_to_2d(nda)
     if img is None:
-        print('plot_image - Image "%s" is not available.'%tit)
+        print('plot_image - image "%s" is not available.'%tit)
         return
 
     logger.info(info_ndarr(img, 'plot_image of %s' % tit))
 
-    amin = np.quantile(img, 0.01, interpolation='linear')
-    amax = np.quantile(img, 0.99, interpolation='linear')
+    amin = np.quantile(img, 0.01, interpolation='lower')
+    amax = np.quantile(img, 0.99, interpolation='higher')
     gg.plotImageLarge(img, amp_range=(amin, amax), title=tit)
     gg.show()
 
@@ -839,5 +844,58 @@ def common_mode_pars(src, arr_ave, arr_rms, arr_msk):
 
         else:
             return None
+
+
+def find_file_for_timestamp(dirname, pattern, tstamp):
+    # list of file names in directory, dirname, containing pattern
+    fnames = [name for name in os.listdir(dirname) if os.path.splitext(name)[-1]=='.dat' and pattern in name]
+
+    # list of int tstamps 
+    # !!! here we assume specific name structure generated by file_name_prefix
+    itstamps = [int(name.split('_',3)[2]) for name in fnames]
+
+    # reverse-sort int timestamps in the list
+    itstamps.sort(key=int,reverse=True)
+
+    # find the nearest to requested timestamp
+    for its in itstamps:
+        if its <= int(tstamp):
+            # find and return the full file name for selected timestamp
+            ts = str(its)
+
+            for name in fnames:
+                if ts in name: 
+                     fname = '%s/%s' % (dirname, name)
+                     logger.info('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
+                     return fname
+
+    logger.warning('directory %s\n         DOES NOT CONTAIN file for pattern %s and timestamp <= %s'%\
+                   (dirname,pattern,tstamp))
+    return None
+
+
+def merge_panels(lst):
+    """ stack of 16 (or 4 or 1) arrays from list shaped as (7, 1, 352, 384) to (7, 16, 352, 384)
+    """
+    npanels = len(lst)   # 16 or 4 or 1
+    shape = lst[0].shape # (7, 1, 352, 384)
+    ngmods = shape[0]    # 7
+
+    logger.debug('In merge_panels: number of panels %d number of gain modes %d' % (npanels,ngmods))
+
+    # make list for merging of (352,384) blocks in right order
+    mrg_lst = []
+    for igm in range(ngmods):
+        nda1gm = np.stack([lst[ind][igm,0,:] for ind in range(npanels)])
+        mrg_lst.append(nda1gm)
+    return np.stack(mrg_lst)
+
+
+def calib_group(dettype):
+    """Returns subdirecrory name under calib/<subdir>/... for 
+       dettype, which is one of EPIX10KA2M, EPIX10KAQUAD, EPIX10KA, 
+       i.g. 'Epix10ka::CalibV1'
+    """
+    return dic_det_type_to_calib_group.get(dettype, None)
 
 # EOF

@@ -22,15 +22,15 @@ import sys
 import psana
 import numpy as np
 from time import time #, localtime, strftime
-from pyimgalgos.GlobalUtils import info_command_line_parameters
+from Detector.GlobalUtils import info_command_line_parameters
+
 import PSCalib.GlobalUtils as gu
-from Detector.PyDataAccess import get_jungfrau_gain_mode_object #get_jungfrau_data_object, get_jungfrau_config_object, time_pars_evt
+from Detector.PyDataAccess import get_jungfrau_gain_mode_object #get_jungfrau_data_object, get_jungfrau_config_object
 from Detector.GlobalUtils import info_ndarr
-from Detector.UtilsCalib import DarkProc, save_log_record_on_start, RepoManager, TSTAMP_FORMAT,\
-                                save_2darray_in_textfile, tstamps_run_and_now, file_name_prefix,\
-                                is_single_run_dataset 
-from Detector.UtilsJungfrau import info_jungfrau, jungfrau_uniqueid
-from PSCalib.UtilsPanelAlias import alias_for_id #, id_for_alias
+import Detector.UtilsCalib as uc
+from Detector.UtilsJungfrau import info_jungfrau, jungfrau_uniqueid, jungfrau_config_object, shape_from_config_jungfrau
+
+SCRNAME = os.path.basename(sys.argv[0])
 
 NUMBER_OF_GAIN_MODES = 3
 
@@ -49,147 +49,12 @@ M14 =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 CALIB_REPO_JUNGFRAU = '/reg/g/psdm/detector/gains/jungfrau/panels'
 FNAME_PANEL_ID_ALIASES = '%s/.aliases_jungfrau.txt' % CALIB_REPO_JUNGFRAU
+JUNGFRAU_REPO_SUBDIRS = ('pedestals', 'rms', 'status', 'dark_min', 'dark_max', 'plots')
 
-JUNGFRAU_REPO_SUBDIRS = ('pedestals', 'rms', 'status', 'plots')
-
-
-# epix10ka file naming scheme:
-# /reg/g/psdm/detector/gains/epix10k/panels/logs/log_pedestals_calibration_2021.txt
-# /reg/g/psdm/detector/gains/epix10k/panels/logs/2020-08-19-r92-xcsc00118-epix10ka2m.0-offset-log10
-# /reg/g/psdm/detector/gains/epix10k/panels/0000000001-0172862721-2919235606-1014046789-0019435010-0000000000-0000000000/pedestals/
-# gain/  0 offset/  0 pedestals/  0 plots/  0 rms/  0 status/
-# 1188 epix10ka_0045_20210406054111_xcslu8918_r0057_pedestals_AHL-H.dat
-# 8320 epix10ka_0045_20210406054111_xcslu8918_r0057_pedestals.txt
-
-
-# /reg/g/psdm/detector/gains/jungfrau/panels/190408-181206-50c246df50010d-20200202020202
-LOG_FILE = '/reg/g/psdm/logs/calibman/#YYYY-MM/jungfrau_ndarr_dark_proc.txt'
-
-SCRNAME = os.path.basename(sys.argv[0])
-
-
-class JungfrauNDArrDarkProc(object):
-
-    # Jungfrau gain range coding
-    # bit: 15,14,...,0   Gain range, ind
-    #       0, 0       - Normal,       0
-    #       0, 1       - ForcedGain1,  1
-    #       1, 1       - FixedGain2,   2
-
-    def __init__(self, parser, igm):
-        self.gmind = igm
-
-    def save_ndarrays(self):
-        """Saves n-d array in text files"""
-
-        if self.counter:
-            print(' save_ndarrays()')
-        else:
-            print(' save_ndarrays(): counter=0 - do not save files')
-            return 
-
-        addmetad = True
-
-        det      = self.det
-        ofname   = self.ofname
-        verbos   = self.verbos
-        savebw   = self.savebw
-        counter  = self.counter
-
-        cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]        
-        template = gu.calib_fname_template(self.exp, self.runnum, self.tsec, self.tnsec, self.fid,\
-                                           self.tsdate, self.tstime, self.src, counter, ofname)
-
-        if savebw &  1: det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
-        if savebw &  2: det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
-        if savebw &  4: det.save_asdaq(template % 'sta', self.arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
-        if savebw &  8: det.save_asdaq(template % 'msk', self.arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
-        if savebw & 16: det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
-        if savebw & 32: det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
-        if savebw & 64:
-            cmod = self._common_mode_pars(self.arr_av1, self.arr_rms, self.arr_msk)
-            if cmod is None: return
-            np.savetxt(template % 'cmo', cmod, fmt='%d', delimiter=' ', newline=' ')
-            det.save_asdaq(template % 'cmm', cmod, cmts + ['ARR_TYPE  common_mode'],'%d', verbos, False)
-
-        #if verbos & 1: print('Data summary for %s is completed, dt=%7.3f sec' % (self.src, time()-t0_sec))
-
-
-class JungfrauDarkProc(object):
-    """Takes care about jungfrau dark data processing for a few (currently 3) gain modes.
-    """
-    def __init__(self, parser=None):
-        # make gain-mode processing modules:
-        self.lst_jdp = [JungfrauNDArrDarkProc(parser, igm) for igm in range(NUMBER_OF_GAIN_MODES)]
-        self.status = None
-
-
-    def stack_ndarrays(self):
-        self.arr_av1 = np.stack([o.arr_av1 for o in self.lst_jdp])
-        self.arr_rms = np.stack([o.arr_rms for o in self.lst_jdp])
-        self.arr_sta = np.stack([o.arr_sta for o in self.lst_jdp])
-        self.arr_msk = np.stack([o.arr_msk for o in self.lst_jdp])
-        self.arr_max = np.stack([o.arr_max for o in self.lst_jdp])
-        self.arr_min = np.stack([o.arr_min for o in self.lst_jdp])
-
-
-    def save_ndarrays(self, addmetad=True):
-        print('%s\nSave arrays:' % (80*'_'))
-
-        jdp0 = self.lst_jdp[0]
-
-        det      = jdp0.det
-        ofname   = jdp0.ofname
-        verbos   = jdp0.verbos
-        savebw   = jdp0.savebw
-        counter  = jdp0.counter
-        str_src  = gu.string_from_source(det.source) # 'CxiEndstation.0:Jungfrau.0'
-
-        cmts = ['DATASET  %s' % jdp0.dsname, 'STATISTICS  %d' % counter]        
-        template = gu.calib_fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
-                                           jdp0.tsdate, jdp0.tstime, str_src, counter, ofname)
-
-        if verbos: print('File name template: %s' % template)
-
-        gu.create_path(template, depth=0, mode=0o770, verb=True) # in case if template is work/...
-
-        if savebw &  1: det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
-        if savebw &  2: det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)
-        if savebw &  4: det.save_asdaq(template % 'sta', self.arr_sta, cmts + ['ARR_TYPE  status'],  '%d',    verbos, addmetad)
-        if savebw &  8: det.save_asdaq(template % 'msk', self.arr_msk, cmts + ['ARR_TYPE  mask'],    '%1d',   verbos, addmetad)
-        if savebw & 16: det.save_asdaq(template % 'max', self.arr_max, cmts + ['ARR_TYPE  max'],     '%d',    verbos, addmetad)
-        if savebw & 32: det.save_asdaq(template % 'min', self.arr_min, cmts + ['ARR_TYPE  min'],     '%d',    verbos, addmetad)
-
-        if verbos: print('All files saved')
-
-        if jdp0.upload:
-            calibgrp = gu.dic_det_type_to_calib_group[gu.JUNGFRAU] # 'Jungfrau::CalibV1'
-            clbdir = jdp0.clbdir if jdp0.clbdir is not None else '/reg/d/psdm/%s/%s/calib' % (jdp0.exp[:3], jdp0.exp)
-            ctypedir = '%s/%s/%s' % (clbdir, calibgrp, str_src) # jdp0.src)
-            fname = '%d-end.data' % jdp0.runnum
-
-            #print('Deploy files in %s' % clbdir)
-            print('Deploy files in %s' % ctypedir)
-
-            if savebw &  1: gu.deploy_file(template % 'ave', ctypedir, 'pedestals',    fname, LOG_FILE, verbos)
-            if savebw &  2: gu.deploy_file(template % 'rms', ctypedir, 'pixel_rms',    fname, LOG_FILE, verbos)
-            if savebw &  4: gu.deploy_file(template % 'sta', ctypedir, 'pixel_status', fname, LOG_FILE, verbos)
-            if savebw &  8: gu.deploy_file(template % 'msk', ctypedir, 'pixel_mask',   fname, LOG_FILE, verbos)
-            if savebw & 16: gu.deploy_file(template % 'max', ctypedir, 'pixel_max',    fname, LOG_FILE, verbos)
-            if savebw & 32: gu.deploy_file(template % 'min', ctypedir, 'pixel_min',    fname, LOG_FILE, verbos)
-
-
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
-#===
+# jungfrau repository naming scheme:
+# /reg/g/psdm/detector/gains/jungfrau/panels/logs/2021/2021-04-21T101714_log_jungfrau_dark_proc_dubrovin.txt
+# /reg/g/psdm/detector/gains/jungfrau/panels/logs/2021_log_jungfrau_dark_proc.txt
+# /reg/g/psdm/detector/gains/jungfrau/panels/190408-181206-50c246df50010d/pedestals/jungfrau_0001_20201201085333_cxilu9218_r0238_pedestals_gm0-Normal.dat
 
 
 def info_gain_modes(gm):
@@ -205,8 +70,6 @@ def selected_record(i, events):
        or not i%10\
        or i>events-5
     #   or (i<50 and not i%10)\
-    #   or not i%100\
-    #   or i>events-5
 
 
 def jungfrau_dark_proc(parser):
@@ -248,13 +111,8 @@ def jungfrau_dark_proc(parser):
     for k,v in DIC_GAIN_MODE.items(): s += '\n%16s: %d' % (k,v)
     logger.info(s)
 
-    #rec = gu.log_rec_on_start()
-    #logger.info('log_rec_on_start:\n  %s' % rec)
-    #gu.add_rec_to_log(LOG_FILE, rec, 0o377)
     _name = sys._getframe().f_code.co_name
-    save_log_record_on_start(dirrepo, _name, filemode)
-
-    #sys.exit('TEST EXIT')
+    uc.save_log_record_on_start(dirrepo, _name, filemode)
 
     ds  = psana.DataSource(dsname)
     det = psana.Detector(source)
@@ -262,7 +120,7 @@ def jungfrau_dark_proc(parser):
 
     dpo = None
     igm0 = None
-    is_single_run = is_single_run_dataset(dsname)
+    is_single_run = uc.is_single_run_dataset(dsname)
 
     nevtot = 0
     nevsel = 0
@@ -296,11 +154,11 @@ def jungfrau_dark_proc(parser):
             igm = DIC_GAIN_MODE[gmo.name]
 
             if dpo is None:
-               dpo = DarkProc(**kwargs)
+               dpo = uc.DarkProc(**kwargs)
                dpo.runnum = run.run()
                dpo.exp = env.experiment()
                dpo.calibdir = env.calibDir()
-               dpo.ts_run, dpo.ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
+               dpo.ts_run, dpo.ts_now = uc.tstamps_run_and_now(env, fmt=uc.TSTAMP_FORMAT)
                dpo.detid = jf_id
                dpo.gmindex = igm
                dpo.gmname = gmo.name
@@ -449,20 +307,20 @@ def save_results(dpo, **kwa):
 
     logger.info(dpo.info_results(cmt='dark data processing results to save'))
 
-    list_save = [\
-      ['pedestals', dpo.arr_av1, fmt_peds],\
-      ['rms',       dpo.arr_rms, fmt_rms],\
-      ['status',    dpo.arr_sta, fmt_status],\
-      ['dark_min',  dpo.arr_min, fmt_minmax],\
-      ['dark_max',  dpo.arr_max, fmt_minmax],\
-    ]
+    list_save = (\
+      ('pedestals', dpo.arr_av1, fmt_peds),\
+      ('rms',       dpo.arr_rms, fmt_rms),\
+      ('status',    dpo.arr_sta, fmt_status),\
+      ('dark_min',  dpo.arr_min, fmt_minmax),\
+      ('dark_max',  dpo.arr_max, fmt_minmax),\
+    )
     #  dpo.arr_msk
     #  dpo.gate_lo
     #  dpo.gate_hi
 
     #ctypes = list_save[:][0]
 
-    repoman = RepoManager(dirrepo)
+    repoman = uc.RepoManager(dirrepo)
     #dlog = repoman.dir_logs_year()
 
     panel_ids = detid.split('_')
@@ -475,13 +333,213 @@ def save_results(dpo, **kwa):
         dirpanel = repoman.dir_panel(panel_id)
         logger.info('panel %02d dir: %s' % (i, dirpanel))
 
-        fname_prefix, panel_alias = file_name_prefix(panel_type, panel_id, ts_run, exp, runnum, FNAME_PANEL_ID_ALIASES)
-        logger.info('fname_prefix: %s' % fname_prefix)
+        fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, ts_run, exp, runnum, FNAME_PANEL_ID_ALIASES)
+        logger.debug('fname_prefix: %s' % fname_prefix)
 
         for ctype, arr, fmt in list_save:
             dirname = repoman.makedir_type(panel_id, ctype)
             fname = '%s/%s_%s_gm%d-%s.dat' % (dirname, fname_prefix, ctype, gmindex, gmname)
             arr2d = arr[i,:] if segind is None else arr
-            save_2darray_in_textfile(arr2d, fname, filemode, fmt)
+            uc.save_2darray_in_textfile(arr2d, fname, filemode, fmt)
+
+
+def info_object_dir(o, sep=',\n  '):
+    return 'dir(%s):\n  %s' % (str(o), sep.join([v for v in dir(o) if v[:1]!='_']))
+
+
+def jungfrau_config_info(dsname, detname, idx=0):
+    from psana import DataSource, Detector
+    ds = DataSource(dsname)
+    det = Detector(detname)
+    env = ds.env()
+    co = jungfrau_config_object(env, det.source)
+
+    #print(info_object_dir(env))
+    #print(info_object_dir(co))
+    logger.debug('jungfrau config. object: %s' % str(co))
+
+    cpdic = {}
+    cpdic['expname'] = env.experiment()
+    cpdic['calibdir'] = env.calibDir()
+    cpdic['strsrc'] = det.pyda.str_src
+    cpdic['shape'] = shape_from_config_jungfrau(co)
+    cpdic['panel_ids'] = jungfrau_uniqueid(ds, detname).split('_')
+    cpdic['dettype'] = det.dettype
+    #cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
+    for nevt,evt in enumerate(ds.events()):
+        raw = det.raw(evt)
+        if raw is not None: 
+            tstamp, tstamp_now = uc.tstamps_run_and_now(env)
+            cpdic['tstamp'] = tstamp
+            del ds
+            del det
+            break
+    logger.info('configuration info for %s %s segment=%d:\n%s' % (dsname, detname, idx, str(cpdic)))
+    return cpdic
+
+
+def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777):
+
+    logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
+                 (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
+
+    # define default constants to substitute missing
+    nda_def = np.ones(shape, dtype=np.float32) if ctype in ('gain', 'rms', 'dark_max') else\
+              np.zeros(shape, dtype=np.float32) # 'pedestals', 'status', 'dark_min'
+    if ctype == 'dark_max': nda_def *= M14 
+
+    # fillout dict {igm:nda} of gain range constants for panel
+    dicnda = {0:None, 1:None, 2:None}
+    for gm, igm in DIC_GAIN_MODE.items():
+        pattern = '%s_gm%d-%s' % (ctype,igm,gm)
+        fname = uc.find_file_for_timestamp(dir_ctype, pattern, tstamp)
+        if fname is not None: dicnda[igm] = np.loadtxt(fname, dtype=np.float32)
+
+    # convert dict to list of gain range constants for panel
+    lstnda = []
+    for igm in range(NUMBER_OF_GAIN_MODES):
+        nda = dicnda[igm]
+        lstnda.append(nda if nda is not None else nda_def)
+        #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
+        #logger.info('%5s : %s' % (gm,fname))
+    
+    nda = np.stack(tuple(lstnda))
+    logger.debug('merge_panel_gain_ranges - merged with shape %s' % str(nda.shape))
+
+    nda.shape = (3, 1, 512, 1024)
+    logger.debug(info_ndarr(nda, 'merged %s'%ctype))
+    uc.save_ndarray_in_textfile(nda, ofname, fac_mode, fmt)
+
+    nda.shape = (3, 1, 512, 1024) # because save_ndarray_in_textfile changes shape
+    return nda
+
+
+def fname_prefix_merge(dmerge, detname, tstamp, exp, irun):
+    return '%s/%s-%s-%s-r%04d' % (dmerge, detname, tstamp, exp, irun)
+
+
+def jungfrau_deploy_constants(parser):
+    """jungfrau deploy constants
+    """
+    t0_sec = time()
+    logger.info(info_command_line_parameters(parser))
+
+    (popts, pargs) = parser.parse_args()
+    kwa = vars(popts) # dict of options
+
+    exp        = kwa.get('exp', None)     
+    detname    = kwa.get('det', None)   
+    irun       = kwa.get('run', None)    
+    tstamp     = kwa.get('tstamp', None)    
+    dirxtc     = kwa.get('dirxtc', None) 
+    dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
+    dircalib   = kwa.get('dircalib', None)
+    deploy     = kwa.get('deploy', False)
+    logmode    = kwa.get('logmode', 'DEBUG')
+    dirmode    = kwa.get('dirmode',  0o777)
+    filemode   = kwa.get('filemode', 0o664)
+    gain0      = kwa.get('gain0', 41.5)    # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g0_gain.npy
+    gain1      = kwa.get('gain1', -1.39)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g1_gain.npy
+    gain2      = kwa.get('gain2', -0.11)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g2_gain.npy
+    offset0    = kwa.get('offset0', 0.01)  # ADU
+    offset1    = kwa.get('offset1', 300.0) # ADU
+    offset2    = kwa.get('offset2', 50.0)  # ADU
+    proc       = kwa.get('proc', None)
+    paninds    = kwa.get('paninds', None)
+    panel_type = kwa.get('panel_type', 'jungfrau')
+    fmt_peds   = kwa.get('fmt_peds',   '%.3f')
+    fmt_rms    = kwa.get('fmt_rms',    '%.3f')
+    fmt_status = kwa.get('fmt_status', '%4i')
+    fmt_minmax = kwa.get('fmt_status', '%6i')
+    fmt_gain   = kwa.get('fmt_gain',   '%.6f')
+    fmt_offset = kwa.get('fmt_offset', '%.6f')
+
+    panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3] 
+    dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    _name = sys._getframe().f_code.co_name
+
+    logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
+
+    uc.save_log_record_on_start(dirrepo, _name, filemode)
+
+    cpdic = jungfrau_config_info(dsname, detname)
+    tstamp_run  = cpdic.get('tstamp',    None)
+    expname     = cpdic.get('expname',   None)
+    shape       = cpdic.get('shape',     None)
+    calibdir    = cpdic.get('calibdir',  None)
+    strsrc      = cpdic.get('strsrc',    None)
+    panel_ids   = cpdic.get('panel_ids', None)
+    dettype     = cpdic.get('dettype',   None)
+
+    shape_panel = shape[-2:]
+    print('XXX shape detector: %s panel: %s' % (str(shape), str(shape_panel)))
+
+    tstamp = tstamp_run if tstamp is None else\
+             tstamp if int(tstamp)>9999 else\
+             uc.tstamp_for_dataset('exp=%s:run=%d'%(exp,tstamp))
+
+    logger.debug('search for calibration files with tstamp <= %s' % tstamp)
+
+    repoman = uc.RepoManager(dirrepo)
+
+    mpars = {\
+      'pedestals':    ('pedestals', fmt_peds),\
+      'pixel_rms':    ('rms',       fmt_rms),\
+      'pixel_status': ('status',    fmt_status),\
+      'dark_min':     ('dark_min',  fmt_minmax),\
+      'dark_max':     ('dark_max',  fmt_minmax),\
+    }
+
+    # dict_consts for constants octype: 'pedestals','status', 'rms',  etc.
+    dic_consts = {}
+    for ind, panel_id in enumerate(panel_ids):
+
+        if panel_inds is not None and not (ind in panel_inds):
+            logger.info('skip panel %d due to -I or --paninds=%s' % (ind, panel_inds)),
+            continue # skip non-selected panels
+
+        dirpanel = repoman.dir_panel(panel_id)
+        logger.info('%s\nmerge constants for panel %02d dir: %s' % (110*'_', ind, dirpanel))
+
+        fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, tstamp, exp, irun, FNAME_PANEL_ID_ALIASES)
+        logger.debug('fname_prefix: %s' % fname_prefix)
+
+        for octype, (ctype, fmt) in mpars.items():
+            dir_ctype = repoman.dir_type(panel_id, ctype)
+            #logger.info('  dir_ctype: %s' % dir_ctype)
+            fname = '%s/%s_%s.txt' % (dir_ctype, fname_prefix, ctype)
+            logger.info('  fname: %s' % fname)
+            nda = merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape_panel, fname, fmt, filemode)
+
+            if octype in dic_consts: dic_consts[octype].append(nda) # append for panel per ctype
+            else:                    dic_consts[octype] = [nda,]
+
+    logger.info('\n%s\nmerge panel constants and deploy them' % (80*'_'))
+
+    dmerge = repoman.makedir_merge()
+    fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
+
+    logger.info('fmerge_prefix: %s' % fmerge_prefix)
+
+    for octype,lst in dic_consts.items():
+        lst_nda = uc.merge_panels(lst)
+        logger.info(info_ndarr(lst_nda, 'merged constants for %s' % octype))
+        fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
+        fmt = mpars[octype][1]
+        uc.save_ndarray_in_textfile(lst_nda, fmerge, filemode, fmt)
+
+        if dircalib is not None: calibdir = dircalib
+        #ctypedir = .../calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
+        calibgrp = uc.calib_group(dettype) # 'Epix10ka::CalibV1'
+        ctypedir = '%s/%s/%s' % (calibdir, calibgrp, strsrc)
+
+        if deploy:
+            ofname   = '%d-end.data' % irun
+            lfname   = None
+            verbos   = True
+            logger.info('deploy calib files under %s' % ctypedir)
+            gu.deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
+        else:
+            logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
 
 # EOF

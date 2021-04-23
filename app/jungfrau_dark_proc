@@ -1,30 +1,28 @@
 #!/usr/bin/env python
 
 import sys
-from Detector.UtilsJungfrauCalib import jungfrau_dark_proc, CALIB_REPO_JUNGFRAU, RepoManager, gu
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
-USAGE ='\n%s -d <dataset> [-s <source>] [-f <file-name-template>]' % SCRNAME\
-      +'\n       [-n <events-collect>] [-m <events-skip>] [-v <verbosity-bitword>] [-p <plot-bitword>] ...'\
-      +'\n       where -v, -S control bit-words stand for 1/2/4/8/16/32/... - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi'\
-      +'\nEx.1:  %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -f work/nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt -n 100' % SCRNAME\
-      +'\nEx.2:  %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 5000 -u' % SCRNAME\
-      +'\nEx.3:  %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 20 -m 0 -v 7 -p 1' % SCRNAME\
-      +'\nEx.4:  bsub -q psnehq -o log-%%J.txt %s -d exp=cxi11216:run=9,11,12:smd -s CxiEndstation.0:Jungfrau.0 -n 100 -u' % SCRNAME\
-      +'\nEx.5:  %s -d exp=xcsx22015:run=503,504,505:smd -s XcsEndstation.0:Jungfrau.0 -u' % SCRNAME\
-      +'\nEx.6:  %s -d exp=cxilu9218:run=230-232:smd -s CxiDs1.0:Jungfrau.0-u # regular 3-step/calib-cycle processing' % SCRNAME\
-      +'\nEx.7:  %s -d exp=cxilu9218:run=238:smd -s CxiDs1.0:Jungfrau.0 --evcode 162 # use drop-shots as dark event' % SCRNAME\
+DESCRIPTION = 'Proceses jungfrau dark data'
+
+USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
+      +'\nEx.1:  %s -d exp=cxilu9218:run=242,243,244:smd -s CxiDs1.0:Jungfrau.0 # regular dark processing' % SCRNAME\
+      +'\nEx.2:  %s -d exp=cxilu9218:run=242,243,244:smd -s CxiDs1.0:Jungfrau.0 -I1 # speed-up for single panel' % SCRNAME\
+      +'\nEx.3:  %s -d exp=cxilu9218:run=238:smd -s CxiDs1.0:Jungfrau.0 --evcode 162 # use drop-shots as dark events' % SCRNAME\
       +'\n\nHelp:  %s -h\n' % SCRNAME
+
+
+if len(sys.argv)<2:
+    print('%s\n%s\n%s' % (40*'_', DESCRIPTION, USAGE))
+    sys.exit('MISSING COMMAND LINE PARAMETERS')
 
 
 def option_parser():
     from optparse import OptionParser
-    d_dirrepo= './panels' #'/reg/g/psdm/detector/gains/epix10k/panels' CALIB_REPO_JUNGFRAU
-    d_dsname = 'exp=cxi11216:run=9,12,13:smd' # None
-    d_source = 'CxiEndstation.0:Jungfrau.0' # None 
-    #d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
-    d_ofname = 'work/nda-#exp-#run-#src-#evts-#type.txt'
+    d_dirrepo= CALIB_REPO_JUNGFRAU # './panels' '/reg/g/psdm/detector/gains/jungfrau/panels'
+    d_dsname = None # 'exp=cxi11216:run=9,12,13:smd' # None
+    d_source = None #'CxiEndstation.0:Jungfrau.0' # None 
     d_events = 100000
     d_evskip = 0
     d_int_lo = 1
@@ -37,7 +35,6 @@ def option_parser():
     d_rmsnhi = 6.0
     d_fraclm = 0.1
     d_plotim = 0      
-    d_savebw = 0o367 # do not save pixel_mask
     d_evcode = None
     d_clbdir = None
     d_upload = False
@@ -45,14 +42,13 @@ def option_parser():
     d_stepmax= None
     d_segind = None
     d_nrecs1 = 100
-    d_nrecs  = 200
+    d_nrecs  = 1000
     d_fraclo = 0.05    # fraction of statistics [0,1] below low limit
     d_frachi = 0.95    # fraction of statistics [0,1] below high limit
     d_logmode = 'INFO'
  
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
-    h_ofname='output file name template, default = %s' % d_ofname
     h_events='maximal number of events total (in runs, steps), default = %s' % d_events
     h_evskip='number of events to skip in the beginning of each step, default = %s' % d_evskip
     h_int_lo='intensity low limit, default = %s' % d_int_lo
@@ -65,8 +61,6 @@ def option_parser():
     h_rmsnhi='number of sigma from mean for high limit on RMS, default = %s' % d_rmsnhi
     h_fraclm='allowed fraction limit, default = %s' % d_fraclm
     h_plotim='control bit-word to plot images, default = %s' % d_plotim
-    h_savebw='control bit-word to save arrays: 1/2/4/8/16/32/...'\
-             ' - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi, default = (oct) %s' % oct(d_savebw)
     h_evcode='comma separated event codes for selection as OR combination, any negative %s'%\
              'code inverts selection, default = %s'%str(d_evcode)
     h_clbdir='calib directory for deployment of calibration files, default = %s' % d_clbdir
@@ -80,11 +74,12 @@ def option_parser():
     h_frachi= 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    #h_savebw='control bit-word to save arrays: 1/2/4/8/16/32/...'\
+    #         ' - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi, default = (oct) %s' % oct(d_savebw)
 
-    parser = OptionParser(description='Proceses jungfrau dark data', usage = USAGE)
+    parser = OptionParser(description=DESCRIPTION, usage = USAGE)
     parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
     parser.add_option('-s', '--source', dest='source', default=d_source, action='store', type='string', help=h_source)
-    parser.add_option('-f', '--ofname', dest='ofname', default=d_ofname, action='store', type='string', help=h_ofname)
     parser.add_option('-n', '--events', dest='events', default=d_events, action='store', type='int',    help=h_events)
     parser.add_option('-m', '--evskip', dest='evskip', default=d_evskip, action='store', type='int',    help=h_evskip)
     parser.add_option('-b', '--int_lo', dest='int_lo', default=d_int_lo, action='store', type='float',  help=h_int_lo)
@@ -93,7 +88,6 @@ def option_parser():
     parser.add_option('-T', '--rms_hi', dest='rms_hi', default=d_rms_hi, action='store', type='float',  help=h_rms_hi)
     parser.add_option('-F', '--fraclm', dest='fraclm', default=d_fraclm, action='store', type='float',  help=h_fraclm)
     parser.add_option('-p', '--plotim', dest='plotim', default=d_plotim, action='store', type='int',    help=h_plotim)
-    parser.add_option('-S', '--savebw', dest='savebw', default=d_savebw, action='store', type='int',    help=h_savebw)
     parser.add_option('-D', '--intnlo', dest='intnlo', default=d_intnlo, action='store', type='float',  help=h_intnlo)
     parser.add_option('-U', '--intnhi', dest='intnhi', default=d_intnhi, action='store', type='float',  help=h_intnhi)
     parser.add_option('-L', '--rmsnlo', dest='rmsnlo', default=d_rmsnlo, action='store', type='float',  help=h_rmsnlo)
@@ -110,57 +104,24 @@ def option_parser():
     parser.add_option('--frachi',       dest='frachi', default=d_frachi, action='store', type='float',  help=h_frachi)
     parser.add_option('-o', '--dirrepo',dest='dirrepo',default=d_dirrepo,action='store', type='string', help=h_dirrepo)
     parser.add_option('--logmode',      dest='logmode',default=d_logmode,action='store', type='string', help=h_logmode)
+    #parser.add_option('-S', '--savebw', dest='savebw', default=d_savebw, action='store', type='int',    help=h_savebw)
 
     return parser
 
 
-
-def init_logger(parser):
-        (popts, pargs) = parser.parse_args()
-
-        loglevel = DICT_NAME_TO_LEVEL[popts.logmode]
-
-        repoman = RepoManager(popts.dirrepo)
-        logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-
-        #print('XXX logname', logname)
-        #sys.exit('TEST_EXIT')
-
-        logger = logging.getLogger()
-        logger.setLevel(loglevel) # logging.DEBUG
-        formatter = logging.Formatter('[%(levelname).1s] L%(lineno)04d %(message)s')
-
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setLevel(loglevel)
-        stdout_handler.setFormatter(formatter)
-
-        file_handler = logging.FileHandler(logname) #'log-in-file-test.log'
-        file_handler.setLevel(loglevel) # logging.DEBUG
-        file_handler.setFormatter(formatter)
-
-        logger.addHandler(file_handler)
-        logger.addHandler(stdout_handler)
-
-
 if __name__ == "__main__":
-    if len(sys.argv)==1: print('%s\nProceses jungfrau dark data\n%s' % (40*'_', USAGE))
-    else:
 
-        import logging
-        logger = logging.getLogger(__name__)
-        #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(filename)s %(message)s', level=logging.INFO)
-        #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(message)s', level=logging.INFO)
-        DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
-        STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
+    from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger # logging
+    #logger = logging.getLogger(__name__)
 
-        parser = option_parser()
-        from Detector.GlobalUtils import info_command_line_parameters
-        print(info_command_line_parameters(parser))
+    from Detector.UtilsJungfrauCalib import jungfrau_dark_proc, CALIB_REPO_JUNGFRAU, uc, gu
 
-        init_logger(parser)
+    parser = option_parser()
+    (popts, pargs) = parser.parse_args()
+    logfname = uc.RepoManager(popts.dirrepo).logname('%s_%s' % (SCRNAME, gu.get_login()))
+    init_logger(loglevel=popts.logmode, logfname=logfname) # (loglevel='DEBUG', logfname=None)
 
-        jungfrau_dark_proc(parser)
-
+    jungfrau_dark_proc(parser)
     sys.exit(0)
 
 # EOF

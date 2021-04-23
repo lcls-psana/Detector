@@ -7,6 +7,19 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-14
+2020-04-23 Mikhail Dubrovin
+modified:
+   app/jungfrau_dark_proc - clean-up, set correct default parameters
+   src/UtilsCalib.py - add more method from UtilsEpix10kaCalib
+   src/UtilsEpix10kaCalib.py - move find_file_for_timestamp, calib_group, save_ndarray_in_textfile,
+	                       save_2darray_in_textfile to UtilsCalib.py
+   src/UtilsJungfrau.py - add shape_from_config_jungfrau
+   src/UtilsJungfrauCalib.py - clean-up code for working version
+add new:
+   app/jungfrau_deploy_constants
+   src/UtilsLogging.py - move here initialization of logger
+
 Tag: V02-00-13
 2020-04-19 Mikhail Dubrovin
 - code refactoring for app/jungfrau_dark_proc
