@@ -7,6 +7,12 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-15
+2020-04-26 Mikhail Dubrovin
+modified:
+	UtilsCalib.py - logger.info -> debug
+	UtilsJungfrauCalib.py - tune logging messages for production
+
 Tag: V02-00-14
 2020-04-23 Mikhail Dubrovin
 modified:

@@ -729,7 +729,7 @@ class DarkProc(object):
 
 
     def add_block(self):
-        logger.info(info_ndarr(self.block, 'add_block data to gated average'))
+        logger.info(info_ndarr(self.block, 'add to gated average statistics the block of initial data'))
         for i,raw in enumerate(self.block): self.add_event(raw,i)
 
 
@@ -866,10 +866,10 @@ def find_file_for_timestamp(dirname, pattern, tstamp):
             for name in fnames:
                 if ts in name: 
                      fname = '%s/%s' % (dirname, name)
-                     logger.info('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
+                     logger.debug('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
                      return fname
 
-    logger.warning('directory %s\n         DOES NOT CONTAIN file for pattern %s and timestamp <= %s'%\
+    logger.debug('directory %s\n          DOES NOT CONTAIN file for pattern %s and timestamp <= %s'%\
                    (dirname,pattern,tstamp))
     return None
 

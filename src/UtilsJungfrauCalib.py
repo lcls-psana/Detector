@@ -67,9 +67,9 @@ def info_gain_modes(gm):
 
 def selected_record(i, events):
     return i<5\
-       or not i%10\
+       or (i<200 and not i%10)\
+       or not i%100\
        or i>events-5
-    #   or (i<50 and not i%10)\
 
 
 def jungfrau_dark_proc(parser):
@@ -127,8 +127,7 @@ def jungfrau_dark_proc(parser):
     nsteptot = 0
     ss = ''
 
-    logger.info('dsname : %s' % dsname)
-    logger.info('detname: %s' % det.name)
+    logger.info('dsname: %s  detname: %s' % (dsname, det.name))
 
     #info_jungfrau(ds, source)
     jf_id = jungfrau_uniqueid(ds, source)
@@ -137,8 +136,6 @@ def jungfrau_dark_proc(parser):
         s += '\n  %02d panel id %s' % (i, pname)
         if i == segind: s += '  <-- selected for processing'
     logger.info(s)
-
-    #sys.exit('TEST EXIT')
 
     terminate_runs = False
 
@@ -198,7 +195,7 @@ def jungfrau_dark_proc(parser):
                 if ievt<evskip:
                     s = 'skip event %d < --evskip=%d' % (ievt, evskip)
                     #print(s, end='\r')
-                    if (selected_record(ievt, events) and ievt<evskip-1)\
+                    if (selected_record(ievt+1, events) and ievt<evskip-1)\
                     or ievt==evskip-1: logger.info(s)
                     continue
 
@@ -213,7 +210,7 @@ def jungfrau_dark_proc(parser):
                   if not ecm.select(evt):
                     print('    skip event %d due to --evcode=%s selected %d ' % (ievt, evcode, nevsel), end='\r')
                     continue
-                  else: print()
+                  #else: print()
 
                 raw = det.raw(evt)
                 if raw is None:
@@ -227,10 +224,10 @@ def jungfrau_dark_proc(parser):
                 tsec = time()
                 dt   = tsec - tdt
                 tdt  = tsec
-                ss = 'run[%d] %d  step %d  events total/run/step/selected: %4d/%4d/%4d/%4d  time=%7.3f sec dt=%5.3f sec'%\
-                     (irun, run.run(), istep, nevtot, nevrun, ievt+1, nevsel, time()-t0_sec, dt)
-                if selected_record(ievt, events):
+                if selected_record(ievt+1, events):
                     #print()
+                    ss = 'run[%d] %d  step %d  events total/run/step/selected: %4d/%4d/%4d/%4d  time=%7.3f sec dt=%5.3f sec'%\
+                         (irun, run.run(), istep, nevtot, nevrun, ievt+1, nevsel, time()-t0_sec, dt)
                     if ecm:
                        print()
                        ss += ' event codes: %s' % str(ecm.event_codes(evt))
@@ -246,11 +243,12 @@ def jungfrau_dark_proc(parser):
                         break # evt loop
 
             print()
-            logger.info('end of step %d in run[%d] %d number of events total/run/step/selected: %4d/%4d/%4d/%4d'%\
-                  (istep, irun, run.run(), nevtot, nevrun, ievt+1, nevsel)) #, gmo.name))
+            ss = 'run[%d] %d  end of step %d  events total/run/step/selected: %4d/%4d/%4d/%4d'%\
+                 (irun, run.run(), istep, nevtot, nevrun, ievt+1, nevsel)
+            logger.info(ss)
 
             if ecm:
-                logger.info('keep accumulate statistics, due to --evcode=%s' % evcode)
+                logger.info('continue to accumulate statistics, due to --evcode=%s' % evcode)
             else:
                 logger.info('reset statistics for next step')
                 
@@ -390,15 +388,19 @@ def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname
 
     # fillout dict {igm:nda} of gain range constants for panel
     dicnda = {0:None, 1:None, 2:None}
+    dic_fnames = {}
     for gm, igm in DIC_GAIN_MODE.items():
         pattern = '%s_gm%d-%s' % (ctype,igm,gm)
         fname = uc.find_file_for_timestamp(dir_ctype, pattern, tstamp)
-        if fname is not None: dicnda[igm] = np.loadtxt(fname, dtype=np.float32)
+        if fname is not None:
+            dicnda[igm] = np.loadtxt(fname, dtype=np.float32)
+            dic_fnames[igm] = fname
 
     # convert dict to list of gain range constants for panel
     lstnda = []
     for igm in range(NUMBER_OF_GAIN_MODES):
         nda = dicnda[igm]
+        logger.info('merge gm:%d %s' % (igm, dic_fnames[igm]))
         lstnda.append(nda if nda is not None else nda_def)
         #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
         #logger.info('%5s : %s' % (gm,fname))
@@ -472,7 +474,7 @@ def jungfrau_deploy_constants(parser):
     dettype     = cpdic.get('dettype',   None)
 
     shape_panel = shape[-2:]
-    print('XXX shape detector: %s panel: %s' % (str(shape), str(shape_panel)))
+    logger.info('shape of the detector: %s panel: %s' % (str(shape), str(shape_panel)))
 
     tstamp = tstamp_run if tstamp is None else\
              tstamp if int(tstamp)>9999 else\
@@ -508,8 +510,8 @@ def jungfrau_deploy_constants(parser):
             dir_ctype = repoman.dir_type(panel_id, ctype)
             #logger.info('  dir_ctype: %s' % dir_ctype)
             fname = '%s/%s_%s.txt' % (dir_ctype, fname_prefix, ctype)
-            logger.info('  fname: %s' % fname)
             nda = merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape_panel, fname, fmt, filemode)
+            logger.info('-- save merged gain ranges: %s' % fname)
 
             if octype in dic_consts: dic_consts[octype].append(nda) # append for panel per ctype
             else:                    dic_consts[octype] = [nda,]
@@ -537,7 +539,7 @@ def jungfrau_deploy_constants(parser):
             ofname   = '%d-end.data' % irun
             lfname   = None
             verbos   = True
-            logger.info('deploy calib files under %s' % ctypedir)
+            logger.info('deploy calib files under %s/%s' % (ctypedir, octype))
             gu.deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
         else:
             logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
