@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-16
+2020-04-27 Mikhail Dubrovin
+- UtilsJungfrauCalib.py - fix loger.info for missing constants replaced by default
+
 Tag: V02-00-15
 2020-04-26 Mikhail Dubrovin
 modified:

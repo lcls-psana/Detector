@@ -400,7 +400,8 @@ def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname
     lstnda = []
     for igm in range(NUMBER_OF_GAIN_MODES):
         nda = dicnda[igm]
-        logger.info('merge gm:%d %s' % (igm, dic_fnames[igm]))
+        fname = dic_fnames.get(igm, 'use default')
+        logger.info('merge gm:%d %s' % (igm, fname))
         lstnda.append(nda if nda is not None else nda_def)
         #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
         #logger.info('%5s : %s' % (gm,fname))
