@@ -52,9 +52,9 @@ from pyimgalgos.cm_epix import cm_epix
 
 #from pypdsdata.xtc import TypeId  # types from pdsdata/xtc/TypeId.hh, ex: TypeId.Type.Id_CspadElement
 
-##-----------------------------
 
-class PyDetectorAccess(object) :
+
+class PyDetectorAccess(object):
     """Class :py:class:`PyDetectorAccess` - python access to detector data.
     """
     GEO_NOT_LOADED     = 0
@@ -62,9 +62,9 @@ class PyDetectorAccess(object) :
     GEO_LOADED_DEFAULT = 2
     GEO_LOADED_DCS     = 3
 
-##-----------------------------
 
-    def __init__(self, source, env, pbits=0) :
+
+    def __init__(self, source, env, pbits=0):
         """Class :py:class:`PyDetectorAccess` constructor parameters:
 
            - source - data source, ex: _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
@@ -81,7 +81,7 @@ class PyDetectorAccess(object) :
         self.do_offset = False # works for camera
         self.correct_time = True # works for acqiris
         self.do_calib_imp = False # works for imp 
-        if self.pbits & 1 : self.print_attributes()
+        if self.pbits & 1: self.print_attributes()
 
         self.cpst = None 
         self.runnum_cps = -1
@@ -97,9 +97,9 @@ class PyDetectorAccess(object) :
         self.counter_cspad2x2_msg = 0
         self.reshape_to_3d = False
 
-##-----------------------------
 
-    def runnum(self, par) :
+
+    def runnum(self, par):
         """Returns integer run number from different options of input parameter.
         
            Parameter
@@ -112,16 +112,16 @@ class PyDetectorAccess(object) :
         """
         return par if isinstance(par, int) else par.run() if isinstance(par, _psana.Event) else 0 
 
-##-----------------------------
 
-    def time_par(self, par) :
+
+    def time_par(self, par):
         """Returns parameter which can be used to define dataset time, _psana.Event or _psana.Env.object.
         """
         return par if isinstance(par,_psana.Event) else self.env
 
-##-----------------------------
 
-    def cpstore(self, par) : # par = evt or runnum
+
+    def cpstore(self, par): # par = evt or runnum
 
         runnum = self.runnum(par)
         #print(80*'_')
@@ -130,18 +130,18 @@ class PyDetectorAccess(object) :
         #print('XXX  isinstance(par, psana.Event)', isinstance(par, _psana.Event))
 
         # for 1st entry and when runnum is changing:
-        if runnum != self.runnum_cps or self.cpst is None :
+        if runnum != self.runnum_cps or self.cpst is None:
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
             self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0o377)
-            if self.pbits & 1 : print('PSCalib.CalibParsStore object is created for run %d' % runnum)
+            if self.pbits & 1: print('PSCalib.CalibParsStore object is created for run %d' % runnum)
 
         return self.cpst
 
-##-----------------------------
 
-    def default_geometry(self) :
+
+    def default_geometry(self):
         """Returns default geometry object for some of detectors"""
         import CalibManager.AppDataPath as apputils
 
@@ -155,20 +155,20 @@ class PyDetectorAccess(object) :
              else 'Detector/geometry-def-epix10ka.data'     if self.dettype == gu.EPIX10KA\
              else None
 
-        if defname is None :
+        if defname is None:
             self.geo = None
             return
 
         fname = apputils.AppDataPath(defname).path()
-        if self.pbits : print('%s: Load default geometry from file %s' % (self.__class__.__name__, fname))
+        if self.pbits: print('%s: Load default geometry from file %s' % (self.__class__.__name__, fname))
          
         self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
-        if self.geo is not None : self.geo_load_status = self.GEO_LOADED_DEFAULT    
+        if self.geo is not None: self.geo_load_status = self.GEO_LOADED_DEFAULT    
         #return GeometryAccess(fname, 0o377 if self.pbits else 0)
 
-##-----------------------------
 
-    def geoaccess_dcs(self, tpar) :
+
+    def geoaccess_dcs(self, tpar):
         """Returns geometry object.
 
         Parameter
@@ -186,45 +186,46 @@ class PyDetectorAccess(object) :
         data = dcm.get_constants(tpar, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None,\
                                  verb=self.pbits & 16, use_repo=True)
 
-        if data is None : return
+        if data is None: return
 
-        #for s in data : print('XXX: %s' % s)
+        #for s in data: print('XXX: %s' % s)
         #import tempfile
         #fntmp = tempfile.NamedTemporaryFile(mode='r+b',suffix='.data')
         #print('XXX Save constants in tmp file: %s' % fntmp.name)
         #save_txt(fntmp.name, data, cmts='', fmt='%.1f')
         #self.geo = GeometryAccess(fntmp.name, 0o377 if self.pbits else 0)
+        #print('XXX geoaccess_dcs data:\n%s' % str(data))
 
         self.geo = GeometryAccess(pbits=0o377 if self.pbits else 0)
-        if self.geo is not None :
+        if self.geo is not None:
             self.geo.load_pars_from_str(data)
             #self.geo.print_list_of_geos()
             self.geo_load_status = self.GEO_LOADED_DCS
 
-##-----------------------------
 
-    def geoaccess_calib(self, runnum) :
+
+    def geoaccess_calib(self, runnum):
         """Returns geometry object from calib store or None if can't load geometry.
         """
         group = gu.dic_det_type_to_calib_group[self.dettype]
         cff = CalibFileFinder(self.env.calibDir(), group, 0o377 if self.pbits else 0)
         fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
-        if fname :
+        if fname:
             self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)
-            if self.pbits & 1 : print('PSCalib.GeometryAccess object is created for run %d' % runnum)
-            if self.geo.valid : self.geo_load_status = self.GEO_LOADED_CALIB
-        else :
+            if self.pbits & 1: print('PSCalib.GeometryAccess object is created for run %d' % runnum)
+            if self.geo.valid: self.geo_load_status = self.GEO_LOADED_CALIB
+        else:
             self.geo = None
-            if self.pbits & 1 : print('WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum)
+            if self.pbits & 1: print('WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum)
 
-##-----------------------------
 
-    def geoaccess(self, par) : # par = _psana.Event | int runnum
+
+    def geoaccess(self, par): # par = _psana.Event | int runnum
         """Returns geometry or None if can't load.
         """
         runnum = self.runnum(par)
 
-        if  runnum != self.runnum_geo :
+        if  runnum != self.runnum_geo:
             # for 1st entry and when run is changing:
             self.runnum_geo = runnum
             self.geo_load_status = self.GEO_NOT_LOADED
@@ -234,11 +235,11 @@ class PyDetectorAccess(object) :
             self.geoaccess_calib(runnum)
 
             # 2) fallback load file from DCS
-            if self.geo is None :
+            if self.geo is None:
                 self.geoaccess_dcs(self.time_par(par))
 
             # 3) load default geometry if it is still unavailable. Implemented for a few detectors.
-            if self.geo is None :
+            if self.geo is None:
                 self.default_geometry()
 
             # arrays for caching
@@ -257,71 +258,71 @@ class PyDetectorAccess(object) :
 
         return self.geo
 
-##-----------------------------
 
-    def print_attributes(self) :
-        print('PyDetectorAccess attributes:\n  source: %s\n  dtype : %d\n  pbits : %d' % \
+
+    def print_attributes(self):
+        print('PyDetectorAccess attributes:\n  source: %s\n  dtype: %d\n  pbits: %d' % \
               (self.source, self.dettype, self.pbits), \
               '\n  do_offset (Camera): %s\n  correct_time (Acqiris): %s\n  do_calib_imp (Imp): %s' % \
               (self.do_offset, self.correct_time, self.do_calib_imp))
 
-##-----------------------------
 
-    def set_env(self, env) :
+
+    def set_env(self, env):
         self.env = env
 
-##-----------------------------
 
-    def set_source(self, source) :
+
+    def set_source(self, source):
         self.source = source
         self.str_src = gu.string_from_source(source)
 
-##-----------------------------
 
-    def pedestals(self, par) : # par: evt or runnum(int)
+
+    def pedestals(self, par): # par: evt or runnum(int)
         return self.cpstore(par).pedestals()
     
-##-----------------------------
 
-    def pixel_rms(self, par) :
+
+    def pixel_rms(self, par):
         return self.cpstore(par).pixel_rms()
 
-##-----------------------------
 
-    def pixel_gain(self, par) :
+
+    def pixel_gain(self, par):
         return self.cpstore(par).pixel_gain()
 
-##-----------------------------
 
-    def pixel_offset(self, par) :
+
+    def pixel_offset(self, par):
         return self.cpstore(par).pixel_offset()
 
-##-----------------------------
 
-    def pixel_mask(self, par) :
+
+    def pixel_mask(self, par):
         return self.cpstore(par).pixel_mask()
 
-##-----------------------------
 
-    def pixel_bkgd(self, par) :
+
+    def pixel_bkgd(self, par):
         return self.cpstore(par).pixel_bkgd()
 
-##-----------------------------
 
-    def pixel_status(self, par) :
+
+    def pixel_status(self, par):
         return self.cpstore(par).pixel_status()
 
-##-----------------------------
 
-    def pixel_datast(self, par) :
+
+    def pixel_datast(self, par):
         return self.cpstore(par).pixel_datast()
 
-##-----------------------------
 
-    def common_mode(self, par) :
+
+    def common_mode(self, par):
         return self.cpstore(par).common_mode()
 
-##-----------------------------
+
 
     def common_mode_apply(self, cmpars, nda, **kwargs):
         alg_num = cmpars[0]
@@ -333,90 +334,90 @@ class PyDetectorAccess(object) :
             mask = kwargs.get('mask', None)
             shape0 = (4,512,512) #pnccd
             nda.shape = shape0 
-            if mask is not None : mask.shape = shape0
+            if mask is not None: mask.shape = shape0
             common_mode_pnccd(nda, mask, cmp=cmpars)
 
         else:
             raise IOError('algoritm %d is not implemented' % alg_num)
 
-##-----------------------------
 
-    def ndim(self, par=0, ctype=gu.PEDESTALS) :
+
+    def ndim(self, par=0, ctype=gu.PEDESTALS):
         sh = np.array(self.shape())
-        if sh is not None : return sh.size
+        if sh is not None: return sh.size
         return self.cpstore(par).ndim(ctype)
 
-##-----------------------------
 
-    def size(self, par=0, ctype=gu.PEDESTALS) :
+
+    def size(self, par=0, ctype=gu.PEDESTALS):
         sh = np.array(self.shape())
-        if sh is not None : return sh.prod()
+        if sh is not None: return sh.prod()
         return self.cpstore(par).size(ctype)
 
-##-----------------------------
 
-    def shape_calib(self, par, ctype=gu.PEDESTALS) :
+
+    def shape_calib(self, par, ctype=gu.PEDESTALS):
         return self.cpstore(par).shape(ctype)
 
-##-----------------------------
 
-    def status(self, par, ctype=gu.PEDESTALS) :
+
+    def status(self, par, ctype=gu.PEDESTALS):
         return self.cpstore(par).status(ctype)
 
-##-----------------------------
-##-----------------------------
-##-----------------------------
 
-    def _shaped_geo_array(self, arr) :
-        if arr is None : return None
-        if self.dettype == gu.EPIX100A : arr.shape = (704, 768)
-        elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD) : 
+
+
+
+    def _shaped_geo_array(self, arr):
+        if arr is None: return None
+        if self.dettype == gu.EPIX100A: arr.shape = (704, 768)
+        elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD): 
             sh = arr.shape
-            arr.shape = (arr.size//sh[-2]//sh[-1], sh[-2],sh[-1]) # 3d : (16/4,352,384)
-        elif self.dettype == gu.EPIX10KA :
+            arr.shape = (arr.size//sh[-2]//sh[-1], sh[-2],sh[-1]) # 3d: (16/4,352,384)
+        elif self.dettype == gu.EPIX10KA:
             sh = arr.shape
-            arr.shape = (sh[-2],sh[-1]) # 2d : (352,384)
-        #if self.dettype == gu.CSPAD    : arr.shape = (32, 185, 388)
+            arr.shape = (sh[-2],sh[-1]) # 2d: (352,384)
+        #if self.dettype == gu.CSPAD   : arr.shape = (32, 185, 388)
         return arr
 
-##-----------------------------
+
 
     def _update_coord_arrays(self, par, do_update=False, cframe=gu.CFRAME_PSANA):
         """ Returns True if pixel index arrays are available, othervise False.
         """
         if self.geoaccess(par) is None: return False
-        else :
+        else:
             if  self.coords_x_arr is None or do_update or cframe != self.cframe_old:
                 self.coords_x_arr, self.coords_y_arr, self.coords_z_arr = self.geo.get_pixel_coords(cframe=cframe)
                 self.cframe_old = cframe
-            if  self.coords_x_arr is None : return False
+            if  self.coords_x_arr is None: return False
         return True
 
-##-----------------------------
+
 
     def coords_x(self, par, cframe=gu.CFRAME_PSANA):
         if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr)
 
-##-----------------------------
+
 
     def coords_y(self, par, cframe=gu.CFRAME_PSANA):
         if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_y_arr)
 
-##-----------------------------
+
 
     def coords_z(self, par, cframe=gu.CFRAME_PSANA):
         if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_z_arr)
 
-##-----------------------------
+
 
     def coords_xy(self, par, cframe=gu.CFRAME_PSANA):
         if not self._update_coord_arrays(par, cframe=cframe): return None
         return self._shaped_geo_array(self.coords_x_arr), self._shaped_geo_array(self.coords_y_arr)
 
-##-----------------------------
+
 
     def coords_xyz(self, par, cframe=gu.CFRAME_PSANA):
         if not self._update_coord_arrays(par, cframe=cframe): return None
@@ -424,90 +425,93 @@ class PyDetectorAccess(object) :
                self._shaped_geo_array(self.coords_y_arr),\
                self._shaped_geo_array(self.coords_z_arr)
 
-##-----------------------------
 
-    def areas(self, par) :
-        if self.geoaccess(par) is None : return None
-        else :
-            if  self.areas_arr is None : 
+
+    def areas(self, par):
+        if self.geoaccess(par) is None: return None
+        else:
+            if  self.areas_arr is None: 
                 self.areas_arr = self.geo.get_pixel_areas()
         return  self._shaped_geo_array(self.areas_arr)
 
-##-----------------------------
+
 
     # mbits = +1-edges; +2-wide central cols; +4-non-bond; +8/+16-four/eight non-bond neighbors
-    def mask_geo(self, par, mbits=15, **kwargs) :
+    def mask_geo(self, par, mbits=15, **kwargs):
 
-        if mbits != self.mbits : # check if update is required
+        if mbits != self.mbits: # check if update is required
             self.mbits = mbits
             self.mask_geo_arr = None
 
-        if self.geoaccess(par) is None : return None
-        else :
-            if  self.mask_geo_arr is None : 
+        if self.geoaccess(par) is None: return None
+        else:
+            if  self.mask_geo_arr is None: 
                 self.mask_geo_arr = self.geo.get_pixel_mask(mbits=mbits, **kwargs)
         return  self._shaped_geo_array(self.mask_geo_arr)
 
-##-----------------------------
 
-    def _update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+    def _update_index_arrays(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
         """ Returns True if pixel index arrays are available, othervise False.
         """
-        if self.geoaccess(par) is None : return False
-        else :
-            if  self.iX is None or do_update :
+        if self.geoaccess(par) is None: return False
+        else:
+            if  self.iX is None or do_update:
                 self.iX, self.iY = self.geo.get_pixel_coord_indexes(oname=None, oindex=0,\
                                                        pix_scale_size_um=pix_scale_size_um,\
                                                        xy0_off_pix=xy0_off_pix, do_tilt=True)
-            if  self.iX is None : return False
+            #self.geo.print_list_of_geos()
+            #print('XXX self.geo', str(self.geo))
+            #print('XXX self.iX', self.iX)
+            if  self.iX is None: return False
         return True
 
-##-----------------------------
 
-    def _update_index_at_z_arrays(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+    def _update_index_at_z_arrays(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
         """ Returns True if pixel index at z arrays are available, othervise False.
         """
-        if self.geoaccess(par) is None : return False
-        else :
-            if  self.iX_at_Z is None or do_update :
+        if self.geoaccess(par) is None: return False
+        else:
+            if  self.iX_at_Z is None or do_update:
                 self.iX_at_Z, self.iY_at_Z =\
                       self.geo.get_pixel_xy_inds_at_z(zplane=zplane, oname=None, oindex=0,\
                                                       pix_scale_size_um=pix_scale_size_um,\
                                                       xy0_off_pix=xy0_off_pix, do_tilt=True)
-            if  self.iX_at_Z is None : return False
+            if  self.iX_at_Z is None: return False
         return True
 
-##-----------------------------
 
-    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+    def indexes_x(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
         """Returns pixel index array iX."""
-        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update): return None
         return self._shaped_geo_array(self.iX)
 
-##-----------------------------
 
-    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+    def indexes_y(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
         """Returns pixel index array iY."""
-        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update): return None
         return self._shaped_geo_array(self.iY)
 
-##-----------------------------
 
-    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+    def indexes_xy(self, par, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
         """Returns two pixel index arrays iX and iY."""
-        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
-        if self.iX is None : return None, None # single None is not the same as (None, None) !
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update): return None
+        if self.iX is None: return None, None # single None is not the same as (None, None) !
         return self._shaped_geo_array(self.iX), self._shaped_geo_array(self.iY)
 
-##-----------------------------
 
-    def indexes_xy_at_z(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
+
+    def indexes_xy_at_z(self, par, zplane=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
         """Returns two pixel index arrays iX_at_Z and iY_at_Z."""
-        if not self._update_index_at_z_arrays(par, zplane, pix_scale_size_um, xy0_off_pix, do_update) : return None
-        if self.iX_at_Z is None : return None, None # single None is not the same as (None, None) !
+        if not self._update_index_at_z_arrays(par, zplane, pix_scale_size_um, xy0_off_pix, do_update): return None
+        if self.iX_at_Z is None: return None, None # single None is not the same as (None, None) !
         return self._shaped_geo_array(self.iX_at_Z), self._shaped_geo_array(self.iY_at_Z)
 
-##-----------------------------
+
 
     def point_indexes(self, par, pxy_um=(0,0), pix_scale_size_um=None, xy0_off_pix=None, cframe=gu.CFRAME_PSANA, fract=False):
         """Returns ix, iy indexes of the point p_um x,y coordinates in [um]"""
@@ -517,309 +521,309 @@ class PyDetectorAccess(object) :
                                               xy0_off_pix=xy0_off_pix, do_tilt=True, cframe=cframe, fract=fract)
         return ix, iy
 
-##-----------------------------
 
-    def pixel_size_rayonix(self) :
+
+    def pixel_size_rayonix(self):
         """Dan can't guarantee that pixel size in the rayonix_config_object is sufficiently precise.
         """
         c = pda.get_rayonix_config_object(self.env, self.source)
-        if c is None : return None
+        if c is None: return None
         return c.pixelWidth() #  ? c.pixelHeight() # available in confic since 2018-10-29 ana-1.3.73
 
-##-----------------------------
 
-    def pixel_size(self, par) :
-        #if self.dettype == gu.RAYONIX : return self.pixel_size_rayonix()
-        if self.geoaccess(par) is None : return None
-        else :
-            if  self.pixel_size_val is None : 
+
+    def pixel_size(self, par):
+        #if self.dettype == gu.RAYONIX: return self.pixel_size_rayonix()
+        if self.geoaccess(par) is None: return None
+        else:
+            if  self.pixel_size_val is None: 
                 self.pixel_size_val = self.geo.get_pixel_scale_size()
         return  self.pixel_size_val
 
-##-----------------------------
 
-    def move_geo(self, par, dx, dy, dz) :
-        if self.geoaccess(par) is None : pass
-        else : return self.geo.move_geo(None, 0, dx, dy, dz)
 
-##-----------------------------
+    def move_geo(self, par, dx, dy, dz):
+        if self.geoaccess(par) is None: pass
+        else: return self.geo.move_geo(None, 0, dx, dy, dz)
 
-    def tilt_geo(self, par, dtx, dty, dtz) :
-        if self.geoaccess(par) is None : pass
-        else : return self.geo.tilt_geo(None, 0, dtx, dty, dtz)
 
-##-----------------------------
 
-    def image_xaxis(self, par, pix_scale_size_um=None, x0_off_pix=None) :
+    def tilt_geo(self, par, dtx, dty, dtz):
+        if self.geoaccess(par) is None: pass
+        else: return self.geo.tilt_geo(None, 0, dtx, dty, dtz)
+
+
+
+    def image_xaxis(self, par, pix_scale_size_um=None, x0_off_pix=None):
         pix_size = pix_scale_size_um if pix_scale_size_um is not None else self.pixel_size(par)
         carr = self.coords_x(par)
-        if carr is None : return None
+        if carr is None: return None
         cmin, cmax = carr.min(), carr.max() + 0.5*pix_size
-        if x0_off_pix is None :
+        if x0_off_pix is None:
             return np.arange(cmin, cmax, pix_size)
-        else :
+        else:
             return np.arange(cmin-pix_size*x0_off_pix, cmax, pix_size)
 
-##-----------------------------
 
-    def image_yaxis(self, par, pix_scale_size_um=None, y0_off_pix=None) :
+
+    def image_yaxis(self, par, pix_scale_size_um=None, y0_off_pix=None):
         pix_size = pix_scale_size_um if pix_scale_size_um is not None else self.pixel_size(par)
         carr = self.coords_y(par)
-        if carr is None : return None
+        if carr is None: return None
         cmin, cmax = carr.min(), carr.max() + 0.5*pix_size
-        if y0_off_pix is None :
+        if y0_off_pix is None:
             return np.arange(cmin, cmax, pix_size)
-        else :
+        else:
             return np.arange(cmin-pix_size*y0_off_pix, cmax, pix_size)
 
-##-----------------------------
 
-    def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
-        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+
+    def image(self, par, img_nda, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update): return None
         return img_from_pixel_arrays(self.iX, self.iY, img_nda)
 
-##-----------------------------
 
-    def do_reshape_2d_to_3d(self, flag=False) :
+
+    def do_reshape_2d_to_3d(self, flag=False):
         self.reshape_to_3d = flag
 
-##-----------------------------
 
-    def ndarray_from_image(self, par, image, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
 
-        if image is None : return None
-        if len(image.shape) != 2 : return None
+    def ndarray_from_image(self, par, image, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
+
+        if image is None: return None
+        if len(image.shape) != 2: return None
 
         # 2016-06-05 return image if reshaping to 3d is requested and geometry is missing
         # !!! there is no check that original array is 2d or specific detector type. 
-        if self.reshape_to_3d and self.geoaccess(par) is None : 
+        if self.reshape_to_3d and self.geoaccess(par) is None: 
             return np.array(image, copy=True)
 
-        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update) : return None
+        if not self._update_index_arrays(par, pix_scale_size_um, xy0_off_pix, do_update): return None
         return self._shaped_geo_array(np.array([image[r,c] for r,c in zip(self.iX, self.iY)]))
 
-##-----------------------------
-##-----------------------------
-##-----------------------------
-##-----------------------------
 
-    def inst(self) :
+
+
+
+
+    def inst(self):
         return self.env.instrument()
 
-##-----------------------------
 
-    def print_config(self, evt) :
+
+    def print_config(self, evt):
         print('%s:print_config(evt) - is not implemented in pythonic version' % self.__class__.__name__)
 
-##-----------------------------
 
-    def set_print_bits(self, pbits) :
+
+    def set_print_bits(self, pbits):
         self.pbits  = pbits
-        if self.cpst is not None : self.cpst.set_print_bits(0o177777)
-        if self.geo  is not None : self.geo.set_print_bits(0o377 if pbits else 0)
+        if self.cpst is not None: self.cpst.set_print_bits(0o177777)
+        if self.geo  is not None: self.geo.set_print_bits(0o377 if pbits else 0)
 
-##-----------------------------
 
-    def set_do_offset(self, do_offset=False) :
+
+    def set_do_offset(self, do_offset=False):
         """On/off application of offset in raw_data_camera(...)
         """
         self.do_offset = do_offset
 
-##-----------------------------
 
-    def set_correct_acqiris_time(self, correct_time=True) :
+
+    def set_correct_acqiris_time(self, correct_time=True):
         """On/off correction of time for acqiris
         """
         self.correct_time = correct_time
 
-##-----------------------------
 
-    def set_calib_imp(self, do_calib_imp=False) :
+
+    def set_calib_imp(self, do_calib_imp=False):
         """On/off imp calibration
         """
         self.do_calib_imp = do_calib_imp
 
-##-----------------------------
 
-    def gain_mask(self, par, gain=None) :
+
+    def gain_mask(self, par, gain=None):
         """Returns a gain map extracted from detector configuration data.
            Currently implemented for CSPAD only.
            Returns None for other detectors or missing configuration for CSPAD.
         """
         runnum = self.runnum(par)
 
-        if runnum == self.runnum_cfg :
-            if self.cfg_gain_mask_is_loaded :
+        if runnum == self.runnum_cfg:
+            if self.cfg_gain_mask_is_loaded:
                 return self._gain_mask
-        else :
+        else:
             self.runnum_cfg = runnum
             self.cfg_gain_mask_is_loaded = False
 
-        if   self.dettype == gu.CSPAD    : self._gain_mask = self.cspad_gain_mask(gain) 
-        elif self.dettype == gu.CSPAD2X2 : self._gain_mask = self.cspad2x2_gain_mask(gain) 
-        else :
+        if   self.dettype == gu.CSPAD   : self._gain_mask = self.cspad_gain_mask(gain) 
+        elif self.dettype == gu.CSPAD2X2: self._gain_mask = self.cspad2x2_gain_mask(gain) 
+        else:
             self.cfg_gain_mask_is_loaded = True
             self._gain_mask = None
         return self._gain_mask
 
-##-----------------------------
 
-    def gain_mask_non_zero(self, par, gain=None) :
+
+    def gain_mask_non_zero(self, par, gain=None):
         """The same as gain_mask, but returns None if ALL pixels have high gain"""
 
         gm = self.gain_mask(par, gain)
 
-        if gm is not None :
-            if not gm.any() : return None 
+        if gm is not None:
+            if not gm.any(): return None 
 
         return gm
 
-##-----------------------------
 
-    def raw_data(self, evt, env) :
+
+    def raw_data(self, evt, env):
 
         #print('XXXX dettype', dettype)
         #print('TypeId.Type.Id_CspadElement: ', TypeId.Type.Id_CspadElement)
         #print('TypeId.Type.Id_CspadConfig: ',  TypeId.Type.Id_CspadConfig)
 
-        if   self.dettype == gu.CSPAD      : return self.raw_data_cspad(evt, env)     # 3   ms
-        elif self.dettype == gu.CSPAD2X2   : return self.raw_data_cspad2x2(evt, env)  # 0.6 ms
-        elif self.dettype == gu.PRINCETON  : return self.raw_data_princeton(evt, env) # 0.7 ms
-        elif self.dettype == gu.PNCCD      : return self.raw_data_pnccd(evt, env)     # 0.8 ms
-        elif self.dettype == gu.ANDOR      : return self.raw_data_andor(evt, env)     # 0.1 ms
-        elif self.dettype == gu.ANDOR3D    : return self.raw_data_andor(evt, env)
-        elif self.dettype == gu.JUNGFRAU   : return self.raw_data_jungfrau(evt, env)
+        if   self.dettype == gu.CSPAD     : return self.raw_data_cspad(evt, env)     # 3   ms
+        elif self.dettype == gu.CSPAD2X2  : return self.raw_data_cspad2x2(evt, env)  # 0.6 ms
+        elif self.dettype == gu.PRINCETON : return self.raw_data_princeton(evt, env) # 0.7 ms
+        elif self.dettype == gu.PNCCD     : return self.raw_data_pnccd(evt, env)     # 0.8 ms
+        elif self.dettype == gu.ANDOR     : return self.raw_data_andor(evt, env)     # 0.1 ms
+        elif self.dettype == gu.ANDOR3D   : return self.raw_data_andor(evt, env)
+        elif self.dettype == gu.JUNGFRAU  : return self.raw_data_jungfrau(evt, env)
         elif self.dettype in (gu.EPIX100A, gu.EPIX10K, gu.EPIX10KA,
                               gu.EPIX10KA2M, gu.EPIX10KAQUAD, gu.EPIX)\
-                                           : return self.raw_data_epix(evt, env)
+                                          : return self.raw_data_epix(evt, env)
         elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
                               gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150, gu.RAYONIX,
                               gu.FCCD, gu.EPICSCAM, gu.STREAK, gu.ARCHON)\
-                                           : return self.raw_data_camera(evt, env)
-        elif self.dettype == gu.FCCD960    : return self.raw_data_fccd960(evt, env)   # 11  ms
-        elif self.dettype == gu.ACQIRIS    : return self.raw_data_acqiris(evt, env)
-        elif self.dettype == gu.IMP        : return self.raw_data_imp(evt, env)
-        elif self.dettype == gu.TIMEPIX    : return self.raw_data_timepix(evt, env)
-        elif self.dettype == gu.FLI        : return self.raw_data_fli(evt, env)
-        elif self.dettype == gu.PIMAX      : return self.raw_data_pimax(evt, env)
-        elif self.dettype == gu.PIXIS      : return self.raw_data_pixis(evt, env)
-        elif self.dettype == gu.ZYLA       : return self.raw_data_zyla(evt, env)
-        elif self.dettype == gu.ISTAR      : return self.raw_data_istar(evt, env)
-        elif self.dettype == gu.UXI        : return self.raw_data_uxi(evt, env)
-        else                               : return None
+                                          : return self.raw_data_camera(evt, env)
+        elif self.dettype == gu.FCCD960   : return self.raw_data_fccd960(evt, env)   # 11  ms
+        elif self.dettype == gu.ACQIRIS   : return self.raw_data_acqiris(evt, env)
+        elif self.dettype == gu.IMP       : return self.raw_data_imp(evt, env)
+        elif self.dettype == gu.TIMEPIX   : return self.raw_data_timepix(evt, env)
+        elif self.dettype == gu.FLI       : return self.raw_data_fli(evt, env)
+        elif self.dettype == gu.PIMAX     : return self.raw_data_pimax(evt, env)
+        elif self.dettype == gu.PIXIS     : return self.raw_data_pixis(evt, env)
+        elif self.dettype == gu.ZYLA      : return self.raw_data_zyla(evt, env)
+        elif self.dettype == gu.ISTAR     : return self.raw_data_istar(evt, env)
+        elif self.dettype == gu.UXI       : return self.raw_data_uxi(evt, env)
+        else                              : return None
 
-##-----------------------------
 
-    def raw_data_cspad(self, evt, env) :
+
+    def raw_data_cspad(self, evt, env):
 
         # data object
         d = pda.get_cspad_data_object(evt, self.source)        
-        if d is None :
-            if self.pbits & 1 : print('cspad data object is not found')
+        if d is None:
+            if self.pbits & 1: print('cspad data object is not found')
             return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
-        if c is None :
-            if self.pbits & 1 : print('cspad config object is not found')
+        if c is None:
+            if self.pbits & 1: print('cspad config object is not found')
             return None
     
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()
 
         #print('d.TypeId: ', d.TypeId)
-        if self.pbits & 8 : print('nquads in data: %d and config: %d' % (nquads, nquads_c))
+        if self.pbits & 8: print('nquads in data: %d and config: %d' % (nquads, nquads_c))
 
         arr = np.zeros((4,8,185,388), dtype=np.int16) if nquads<4 else np.empty((4,8,185,388), dtype=np.int16)
 
-        for iq in range(nquads) :
+        for iq in range(nquads):
             q = d.quads(iq)
             qnum = q.quad()
             qdata = q.data()
             roim = c.roiMask(qnum)
-            if self.pbits & 8 : print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
+            if self.pbits & 8: print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
     
             #roim = 0375 # for test only        
-            if roim == 0o377 :
+            if roim == 0o377:
                 arr[qnum,:] = qdata
 
-            else :
-                if self.pbits : print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
+            else:
+                if self.pbits: print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
                 i = 0
-                for s in range(8) :
-                    if roim & (1<<s) :
+                for s in range(8):
+                    if roim & (1<<s):
                         qdata_full[s,:] = qdata[i,:]
                         i += 1
                 arr[qnum,:,:] = qdata_full
     
-        if self.pbits & 8 : print('arr.shape: ', arr.shape)
+        if self.pbits & 8: print('arr.shape: ', arr.shape)
         arr.shape = (32,185,388)
         return arr
     
-##-----------------------------
 
-    def raw_data_cspad2x2(self, evt, env) :
+
+    def raw_data_cspad2x2(self, evt, env):
         # data object
         d = pda.get_cspad2x2_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         c = pda.get_cspad2x2_config_object(env, self.source)
-        if c is None :
-            if self.pbits and self.counter_cspad2x2_msg <3 :
+        if c is None:
+            if self.pbits and self.counter_cspad2x2_msg <3:
                 print('WARNING PyDetectorAccess: missing configuration object for source %s' % (self.str_src))
-                if self.counter_cspad2x2_msg == 2 : print('Stop WARNING messages for %s configuration' % self.str_src)
+                if self.counter_cspad2x2_msg == 2: print('Stop WARNING messages for %s configuration' % self.str_src)
                 self.counter_cspad2x2_msg += 1
             #return None
 
-        if c.roiMask() != 3 :
-            if self.pbits and self.counter_cspad2x2_msg <3 :
+        if c.roiMask() != 3:
+            if self.pbits and self.counter_cspad2x2_msg <3:
                 print('WARNING PyDetectorAccess: configuration of %s has non-complete mask=%d of included 2x1' % (self.str_src, c.roiMask()))
-                if self.counter_cspad2x2_msg == 2 : print('Stop WARNING messages for %s configuration' % self.str_src)
+                if self.counter_cspad2x2_msg == 2: print('Stop WARNING messages for %s configuration' % self.str_src)
                 self.counter_cspad2x2_msg += 1
 
         return d.data()
 
-##-----------------------------
 
-    def raw_data_camera(self, evt, env) :
+
+    def raw_data_camera(self, evt, env):
         # data object
         d = pda.get_camera_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
     
         # configuration object
         #c = pda.get_camera_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
 
         #print('data width: %d, height: %d, depth: %d, offset: %f' % (d.width(), d.height(), d.depth(), d.offset()))
         offset = d.offset()
         
         d16 = d.data16()
-        if d16 is not None and d16 != [] :
-            if self.do_offset : return np.array(d16, dtype=np.int32) - d.offset()        
-            else              : return d16
+        if d16 is not None and d16 != []:
+            if self.do_offset: return np.array(d16, dtype=np.int32) - d.offset()        
+            else             : return d16
         
         d8 = d.data8()
-        if d8 is not None and d8 != [] : 
-            if self.do_offset : return np.array(d8, dtype=np.int32) - d.offset() 
-            else              : return d8
+        if d8 is not None and d8 != []: 
+            if self.do_offset: return np.array(d8, dtype=np.int32) - d.offset() 
+            else             : return d8
 
         return None
 
-##-----------------------------
 
-    def raw_data_fccd960(self, evt, env) :
+
+    def raw_data_fccd960(self, evt, env):
         # data object
         d = pda.get_camera_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
     
         # configuration object
         #c = pda.get_camera_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
 
         arr = d.data16()
-        if arr is None : return None
+        if arr is None: return None
 
         arr_c = (arr>>13)&0o3
         arr_v = arr&0o17777
@@ -830,38 +834,38 @@ class PyDetectorAccess(object) :
         return np.select([arr_c==0, arr_c==1, arr_c==3], \
                          [arr_v,    arr_v<<2, arr_v<<3])
 
-##-----------------------------
 
-    def raw_data_princeton(self, evt, env) :
+
+    def raw_data_princeton(self, evt, env):
         # data object
         d = pda.get_princeton_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_princeton_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_pnccd(self, evt, env) :
+
+    def raw_data_pnccd(self, evt, env):
         # data object
         #print('=== in raw_data_pnccd')
         #d = evt.get(_psana.PNCCD.FullFrameV1, self.source)
         #d = evt.get(_psana.PNCCD.FramesV1, self.source)
         d = pda.get_pnccd_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         #c = pda.get_pnccd_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: numLinks: %d, payloadSizePerLink: %d' % (d.numLinks(), c.payloadSizePerLink()))
 
         arr = []
         nlinks = d.numLinks()
-        for i in range(nlinks) :
+        for i in range(nlinks):
             frame = d.frame(i)
             fdata = frame.data()
             arr.append(fdata)
@@ -871,14 +875,14 @@ class PyDetectorAccess(object) :
         #print('nda.shape: ', nda.shape)
         return nda
 
-##-----------------------------
 
-    def raw_data_andor(self, evt, env) :
+
+    def raw_data_andor(self, evt, env):
 
         d = pda.get_andor_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
-        if self.pbits & 4 :
+        if self.pbits & 4:
             print('Data object:', d)
             print('shotIdStart = ', d.shotIdStart()) 
             print('readoutTime = ', d.readoutTime())
@@ -886,7 +890,7 @@ class PyDetectorAccess(object) :
 
         c = pda.get_andor_config_object(env, self.source)                
 
-        if c is not None and self.pbits & 4 :
+        if c is not None and self.pbits & 4:
             print('Configuration object:', c)
             print('width              = ', c.width())            
             print('height             = ', c.height())            
@@ -914,152 +918,152 @@ class PyDetectorAccess(object) :
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_jungfrau(self, evt, env) :
+
+    def raw_data_jungfrau(self, evt, env):
         d = pda.get_jungfrau_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
         return d.frame()
 
-##-----------------------------
 
-    def raw_data_epix(self, evt, env) :
+
+    def raw_data_epix(self, evt, env):
         # data object
         d = pda.get_epix_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_epix_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
 
         #print('config: rows: %d, cols: %d, asics: %d' % (c.numberOfRows(), c.numberOfColumns(), c.numberOfAsics()))
         #print('config: digitalCardId0: %d, 1: %d' % (c.digitalCardId0(), c.digitalCardId1()))
-        #print('config: analogCardId0 : %d, 1: %d' % (c.analogCardId0(),  c.analogCardId1()))
+        #print('config: analogCardId0: %d, 1: %d' % (c.analogCardId0(),  c.analogCardId1()))
         #print('config: version: %d, asicMask: %d' % (c.version(), c.asicMask()))
 
         nda = d.frame()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_timepix(self, evt, env) :
+
+    def raw_data_timepix(self, evt, env):
         # data object
         d = pda.get_timepix_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_timepix_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_fli(self, evt, env) :
+
+    def raw_data_fli(self, evt, env):
         # data object
         d = pda.get_fli_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_fli_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_pimax(self, evt, env) :
+
+    def raw_data_pimax(self, evt, env):
         # data object
         d = pda.get_pimax_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_pimax_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_pixis(self, evt, env) :
+
+    def raw_data_pixis(self, evt, env):
         # data object
         d = pda.get_pixis_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_pixis_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_zyla(self, evt, env) :
+
+    def raw_data_zyla(self, evt, env):
         # data object
         d = pda.get_zyla_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_zyla_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_istar(self, evt, env) :
+
+    def raw_data_istar(self, evt, env):
         # data object
         d = pda.get_zyla_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_istar_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.data()
         return nda if nda is not None else None
 
-##-----------------------------
 
-    def raw_data_uxi(self, evt, env) :
+
+    def raw_data_uxi(self, evt, env):
         # data object
         d = pda.get_uxi_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         #c = pda.get_uxi_config_object(env, self.source)
-        #if c is None : return None
+        #if c is None: return None
         #print('config: width: %d, height: %d' % (c.width(), c.height()))
 
         nda = d.frames()
         return nda if nda is not None else None
 
-##-----------------------------
-##-----------------------------
-##-----------------------------
-##-----------------------------
 
-    def raw_data_acqiris(self, evt, env) :
+
+
+
+
+    def raw_data_acqiris(self, evt, env):
         """returns two 2-d ndarrays wf,wt with shape=(nbrChannels, nbrSamples) or None
         """
         # data object
         d = pda.get_acqiris_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
         # configuration object
         c = pda.get_acqiris_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
 
         #nchan = d.data_shape()[0]
         nbrChannels = c.nbrChannels()
@@ -1068,14 +1072,14 @@ class PyDetectorAccess(object) :
         sampInterval = h.sampInterval()
         nbrSamples = h.nbrSamples()
 
-        if self.pbits & 4 : print('  nbrChannels: %d, H-nbrSamples: %d, H-sampInterval: %g' \
+        if self.pbits & 4: print('  nbrChannels: %d, H-nbrSamples: %d, H-sampInterval: %g' \
            % (nbrChannels, nbrSamples, sampInterval))
 
         shape = (nbrChannels, nbrSamples)
         wf = np.zeros(shape, dtype=np.float)
         wt = np.zeros(shape, dtype=np.float)
 
-        for chan in range(nbrChannels) :
+        for chan in range(nbrChannels):
             elem = d.data(chan)
             vert = c.vert()[chan]
 
@@ -1088,41 +1092,41 @@ class PyDetectorAccess(object) :
             tstamps         = elem.timestamp()
             wforms          = elem.waveforms()
 
-            if self.pbits & 4 :
+            if self.pbits & 4:
                 print('    chan: %d,  nbrSegments: %d,  nbrSamplesInSeg: %d,  indexFirstPoint: %d,' \
                   % (chan, nbrSegments, nbrSamplesInSeg, indexFirstPoint), \
                   '  V-slope: %f,  V-offset: %f,  H-pos[seg=0]: %g' % (slope,  offset, tstamps[0].pos()))
 
-            for seg in range(nbrSegments) :
+            for seg in range(nbrSegments):
                 raw = wforms[seg]
                 pos = tstamps[seg].pos()       
                 i0_seg = seg * nbrSamplesInSeg + int(pos/sampInterval) if self.correct_time else seg * nbrSamplesInSeg
                 size = nbrSamplesInSeg if (i0_seg + nbrSamplesInSeg) <= nbrSamples else nbrSamples - i0_seg
 
-                if self.correct_time :
-                    if (indexFirstPoint + size) > nbrSamplesInSeg : size = nbrSamplesInSeg - indexFirstPoint
+                if self.correct_time:
+                    if (indexFirstPoint + size) > nbrSamplesInSeg: size = nbrSamplesInSeg - indexFirstPoint
 
                     wf[chan, i0_seg:i0_seg+size] = raw[indexFirstPoint:indexFirstPoint+size]*slope - offset
-                else :
+                else:
                     wf[chan, i0_seg:i0_seg+size] = raw[0:size]*slope - offset
 
                 wt[chan, i0_seg:i0_seg+size] = np.arange(size)*sampInterval + pos
 
         return wf, wt
 
-##-----------------------------
 
-    def raw_data_imp(self, evt, env) :
+
+    def raw_data_imp(self, evt, env):
         """returns ndarray with shape=(4, 1023) or None
         """
         # data object
         d = pda.get_imp_data_object(evt, self.source)
-        if d is None : return None
+        if d is None: return None
 
-        if self.pbits & 4 :
+        if self.pbits & 4:
             # configuration object
             c = pda.get_imp_config_object(env, self.source)
-            if c is None : return None
+            if c is None: return None
 
             print("Configuration object for %s" % self.source)
             print("  range =",           c.range())
@@ -1157,24 +1161,24 @@ class PyDetectorAccess(object) :
         # Transpose converts (1023, 4) to (4, 1023)
         a = np.transpose(a)
 
-        if self.do_calib_imp :
+        if self.do_calib_imp:
             c = pda.get_imp_config_object(env, self.source)
-            if c is None : return None
+            if c is None: return None
             bias = c.biasData()
             return np.array(a, dtype=np.int32) - bias
 
         return a
 
-##-----------------------------
 
-    def cspad_gain_mask(self, gain=None) :
+
+    def cspad_gain_mask(self, gain=None):
         """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(32,185,388), dtype=uint8.
             If gain is set, method returns a map of (float) gain/1 values for low/high gain pixels, respectively.
             None is returned if configuration data is missing.
         """
         # configuration from data
         c = pda.get_cspad_config_object(self.env, self.source)
-        if c is None :
+        if c is None:
             msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
             #raise IOError(msg)
             print(msg)
@@ -1193,29 +1197,29 @@ class PyDetectorAccess(object) :
                 gm = np.right_shift(gm, asic1)
                 gm2x1 = np.hstack((gmasic0, gm & 1))
                 self.gm[i2x1+iquad*8][:][:] = np.logical_not(gm2x1)
-                if i2x1 < 7 : gm = np.right_shift(gm, asic1) # do not shift for last asic
+                if i2x1 < 7: gm = np.right_shift(gm, asic1) # do not shift for last asic
 
         self.cfg_gain_mask_is_loaded = True
 
-        if gain is None :
+        if gain is None:
             return self.gm
-        else :
+        else:
             f=float(gain-1.)
             return np.array(self.gm,dtype=np.float) * f + 1
 
-##-----------------------------
 
-    def cspad2x2_gain_mask(self, gain=None) :
+
+    def cspad2x2_gain_mask(self, gain=None):
         """ Returns the gain mask of 1/0 for low/high gain pixels as a numpy array of shape=(2,185,388), dtype=uint8.
             If gain is set, method returns a map of (float) gain/1 values for low/high gain pixels, respectively.
             None is returned if configuration data is missing.
         """
         # configuration from data
         c = pda.get_cspad2x2_config_object(self.env, self.source)
-        if c is None :
+        if c is None:
             msg = '%s.cspad_gain_mask - config object is not available' % self.__class__.__name__
             #raise IOError(msg)
-            if self.pbits : print(msg)
+            if self.pbits: print(msg)
             return None
 
         #self.gm = np.empty((2,185,388), dtype=np.uint8)
@@ -1238,152 +1242,152 @@ class PyDetectorAccess(object) :
             gm = np.right_shift(gm, asic1)
             gm2x1 = np.hstack((gmasic0, gm & 1))
             self.gm[i2x1][:][:] = np.logical_not(gm2x1)
-            if i2x1 < 1 : gm = np.right_shift(gm, asic1) # do not shift for last asic
+            if i2x1 < 1: gm = np.right_shift(gm, asic1) # do not shift for last asic
 
         self.cfg_gain_mask_is_loaded = True
 
-        if gain is None :
+        if gain is None:
             return self.gm
-        else :
+        else:
             f=float(gain-1.)
             return np.array(self.gm,dtype=np.float) * f + 1
 
-##-----------------------------
 
-    def raw_data_cspad_v0(self, evt, env) :
+
+    def raw_data_cspad_v0(self, evt, env):
 
         # data object
         d = pda.get_cspad_data_object(evt, self.source)        
-        if d is None :
-            if self.pbits & 1 : print('cspad data object is not found')
+        if d is None:
+            if self.pbits & 1: print('cspad data object is not found')
             return None
     
         # configuration from data
         c = pda.get_cspad_config_object(env, self.source)
-        if c is None :
-            if self.pbits & 1 : print('cspad config object is not found')
+        if c is None:
+            if self.pbits & 1: print('cspad config object is not found')
             return None
     
         nquads   = d.quads_shape()[0]
         nquads_c = c.numQuads()
 
         #print('d.TypeId: ', d.TypeId)
-        if self.pbits & 8 : print('nquads in data: %d and config: %d' % (nquads, nquads_c))
+        if self.pbits & 8: print('nquads in data: %d and config: %d' % (nquads, nquads_c))
 
         arr = []
-        for iq in range(nquads) :
+        for iq in range(nquads):
             q = d.quads(iq)
             qnum = q.quad()
             qdata = q.data()
             #n2x1stored = qdata.shape[0]
             roim = c.roiMask(qnum)
-            if self.pbits & 8 : print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
+            if self.pbits & 8: print('qnum: %d  qdata.shape: %s, mask: %d' % (qnum, str(qdata.shape), roim))
             #     '  n2x1stored: %d' % (n2x1stored)
     
             #roim = 0375 # for test only
         
-            if roim == 0o377 : arr.append(qdata)
-            else :
-                if self.pbits : print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
+            if roim == 0o377: arr.append(qdata)
+            else:
+                if self.pbits: print('PyDetectorAccessr: quad configuration has non-complete mask = %d of included 2x1' % roim)
                 qdata_full = np.zeros((8,185,388), dtype=qdata.dtype)
                 i = 0
-                for s in range(8) :
-                    if roim & (1<<s) :
+                for s in range(8):
+                    if roim & (1<<s):
                         qdata_full[s,:] = qdata[i,:]
                         i += 1
                 arr.append(qdata_full)
     
         nda = np.array(arr)
-        if self.pbits & 8 : print('nda.shape: ', nda.shape)
+        if self.pbits & 8: print('nda.shape: ', nda.shape)
         nda.shape = (32,185,388)
         return nda
 
-##-----------------------------
-##-----------------------------
 
-    def shape_config_cspad(self, env) :
+
+
+    def shape_config_cspad(self, env):
         # configuration from data file
         # config object for cspad contains a number of used 2x1-s numSect()
         c = pda.get_cspad_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         #c.numQuads()
         #return (c.numSect(), 185, 388)
         return (32, 185, 388)
 
-##-----------------------------
 
-    def shape_config_cspad2x2(self, env) :
+
+    def shape_config_cspad2x2(self, env):
         c = pda.get_cspad2x2_config_object(env, self.source)
         #c.numAsicsStored(), o.payloadSize()
         return (185, 388, 2) # no other choice
 
-##-----------------------------
 
-    def shape_config_epix100(self, env) :
+
+    def shape_config_epix100(self, env):
         c = pda.get_epix_config_object(env, self.source) # works for all epix detectors
-        if c is None : return None
+        if c is None: return None
         return (c.numberOfRows(), c.numberOfColumns()) 
         # returns 2-d array, ex: (704, 768) for 100a or (352, 384) for 10ka
 
-##-----------------------------
 
-    def shape_config_epix10ka_any(self, env) :
+
+    def shape_config_epix10ka_any(self, env):
         c = pda.get_epix10ka_any_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numberOfElements(), c.numberOfRows(), c.numberOfColumns()) # (16, 352, 384)
 
-##-----------------------------
 
-    def shape_config_pnccd(self, env) :
+
+    def shape_config_pnccd(self, env):
         c = pda.get_pnccd_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numSubmodules(), c.numSubmoduleRows(), c.numSubmoduleChannels())
         #c.numRows(), c.numChannels(), c.numLinks()
         #return (4, 512, 512) # no other choice
 
-##-----------------------------
 
-    def shape_config_princeton(self, env) :
+
+    def shape_config_princeton(self, env):
         c = pda.get_princeton_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())
         #return (1300, 1340)
 
-##-----------------------------
 
-    def print_config_rayonix(self, c) :
+
+    def print_config_rayonix(self, c):
         print('XXX:shape_config_rayonix', dir(c))
-        print('DeviceIDMax() :', c.DeviceIDMax)
-        print('ReadoutMode() :', c.ReadoutMode)
-        print('TypeId()      :', c.TypeId)
-        print('Version()     :', c.Version)
-        print('deviceID()    :', c.deviceID())   # MX340-HS:125
-        print('binning_f()   :', c.binning_f())  # 4
-        print('binning_s()   :', c.binning_s())  # 4
-        print('darkFlag()    :', c.darkFlag())
-        print('exposure()    :', c.exposure())
-        print('rawMode()     :', c.rawMode())
-        print('readoutMode() :', c.readoutMode())
-        print('testPattern() :', c.testPattern())
-        print('trigger()     :', c.trigger())     
+        print('DeviceIDMax():', c.DeviceIDMax)
+        print('ReadoutMode():', c.ReadoutMode)
+        print('TypeId()     :', c.TypeId)
+        print('Version()    :', c.Version)
+        print('deviceID()   :', c.deviceID())   # MX340-HS:125
+        print('binning_f()  :', c.binning_f())  # 4
+        print('binning_s()  :', c.binning_s())  # 4
+        print('darkFlag()   :', c.darkFlag())
+        print('exposure()   :', c.exposure())
+        print('rawMode()    :', c.rawMode())
+        print('readoutMode():', c.readoutMode())
+        print('testPattern():', c.testPattern())
+        print('trigger()    :', c.trigger())     
         print('NEW STUFF IN Rayonix.ConfigV2 since 2018-10-29 ana-1.3.73')
-        print('width()       :', c.width())
-        print('height()      :', c.height())
-        print('maxWidth()    :', c.maxWidth())
-        print('maxHeight()   :', c.maxHeight())
-        print('pixelWidth()  :', c.pixelWidth())
-        print('pixelHeight() :', c.pixelHeight())
+        print('width()      :', c.width())
+        print('height()     :', c.height())
+        print('maxWidth()   :', c.maxWidth())
+        print('maxHeight()  :', c.maxHeight())
+        print('pixelWidth() :', c.pixelWidth())
+        print('pixelHeight():', c.pixelHeight())
 
-##-----------------------------
 
-    def shape_config_rayonix(self, env) :
+
+    def shape_config_rayonix(self, env):
         # configuration from data file
         # config object for rayonix has a number of pixel in the bin for both dimansions
         # maximal detector size is 3840x3840, pixel size is 44.5um for old models
         # maximal detector size is 7680x7680 for MX340-HS:125
         c = pda.get_rayonix_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
 
         return (c.height(), c.width()) # available in confic since 2018-10-29 ana-1.3.73
 
@@ -1392,43 +1396,43 @@ class PyDetectorAccess(object) :
         #npix_row_max, npix_col_max = (7680,7680) if 'MX340' in c.deviceID() else (3840,3840)
         #npix_in_colbin = c.binning_f()
         #npix_in_rowbin = c.binning_s()
-        #if npix_in_rowbin>0 and npix_in_colbin>0 : 
+        #if npix_in_rowbin>0 and npix_in_colbin>0: 
         #    return (npix_row_max/npix_in_rowbin, npix_col_max/npix_in_colbin)
         #return None
 
-##-----------------------------
 
-    def shape_config_andor(self, env) :
+
+    def shape_config_andor(self, env):
         # configuration from data file
         c = pda.get_andor_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         nsegs = None
-        try    : nsegs = c.numSensors()
-        except : pass
+        try   : nsegs = c.numSensors()
+        except: pass
         #npixx = c.numPixelsY() # for Andor3D only
         #npixy = c.numPixelsX() # for Andor3D only
         npixx = c.width() // c.binX()
         npixy = c.height() // c.binY()
 
-        if npixx and npixy :
+        if npixx and npixy:
             return (npixy, npixx) if nsegs is None else (nsegs, npixy, npixx)
         return None
 
-##-----------------------------
 
-    def shape_config_jungfrau(self, env) :
+
+    def shape_config_jungfrau(self, env):
         """Shape of jungfrau data array. Returns tuple like (nsegs,512,1024)
         """
         c = pda.get_jungfrau_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         nsegs = c.numberOfModules()
         nrows = c.numberOfRowsPerModule()
         ncols = c.numberOfColumnsPerModule()
         return (nsegs, nrows, ncols)
 
-##-----------------------------
 
-    def shape_config_timepix(self, env) :
+
+    def shape_config_timepix(self, env):
         # configuration from data file
         #c = pda.get_timepix_config_object(env, self.source)
         # config object does not have shape parameters,
@@ -1436,155 +1440,155 @@ class PyDetectorAccess(object) :
         return (512, 512)
 
 
-    def shape_config_fli(self, env) :
+    def shape_config_fli(self, env):
         # configuration from data file
         c = pda.get_fli_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX()) # (4096, 4096)
 
 
-    def shape_config_pimax(self, env) :
+    def shape_config_pimax(self, env):
         # configuration from data file
         c = pda.get_pimax_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
 
-    def shape_config_pixis(self, env) :
+    def shape_config_pixis(self, env):
         # configuration from data file
         c = pda.get_pixis_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
 
-    def shape_config_zyla(self, env) :
+    def shape_config_zyla(self, env):
         # configuration from data file
         c = pda.get_zyla_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
 
-    def shape_config_istar(self, env) :
+    def shape_config_istar(self, env):
         # configuration from data file
         c = pda.get_istar_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX())
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
-##-----------------------------
 
-    def shape_config_epicscam(self, env) :
+
+    def shape_config_epicscam(self, env):
         c = pda.get_epicscam_config_object(env, self.source)
         return (c.height(), c.width())
 
-##-----------------------------
 
-    def shape_config_uxi(self, env) :
+
+    def shape_config_uxi(self, env):
         c = pda.get_uxi_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         #return (c.numSubmodules(), c.numSubmoduleRows(), c.numSubmoduleChannels())
         #print('XXXXXXXXXXXXX: TBD shape_config_uxi')
         return (c.numberOfFrames(), c.height(), c.width())
         #c.numRows(), c.numChannels(), c.numLinks()
         #return (4, 512, 512) # no other choice
 
-##-----------------------------
 
-    def shape_config_archon(self, env) :
+
+    def shape_config_archon(self, env):
         # configuration from data file
         c = pda.get_archon_config_object(env, self.source)
-        if c is None : return None
+        if c is None: return None
         return (c.numPixelsY(), c.numPixelsX()) # 300, 4800
 
-##-----------------------------
 
-    #def shape_config_imp(self, env) :
+
+    #def shape_config_imp(self, env):
     #    #Waveform detector
     #    # configuration from data file
     #    #c = pda.get_imp_config_object(env, self.source)
     #    # config object does not have shape parameters,
     #    return (4, 1023) # ???
 
-##-----------------------------
 
-    def shape_config_camera(self, env) :
+
+    def shape_config_camera(self, env):
         # configuration from data file
         c = None
-        if self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000) :
+        if self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000):
             c = pda.get_opal1k_config_object(env, self.source)
 
-        elif self.dettype == gu.FCCD :
+        elif self.dettype == gu.FCCD:
             c = pda.get_fccd_config_object(env, self.source)     
 
-        elif self.dettype == gu.FCCD960 :
+        elif self.dettype == gu.FCCD960:
             c = pda.get_fccd_config_object(env, self.source)
 
-        elif self.dettype == gu.ORCAFL40 :
+        elif self.dettype == gu.ORCAFL40:
             c = pda.get_orca_config_object(env, self.source)
 
-        elif self.dettype == gu.TM6740 :
+        elif self.dettype == gu.TM6740:
             c = pda.get_tm6740_config_object(env, self.source)
 
-        elif self.dettype == gu.QUARTZ4A150 :
+        elif self.dettype == gu.QUARTZ4A150:
             c = pda.get_quartz_config_object(env, self.source)
 
-        elif self.dettype == gu.STREAK :
+        elif self.dettype == gu.STREAK:
             c = pda.get_streak_config_object(env, self.source)
 
         #print(c)
-        if c is None : return None
+        if c is None: return None
         return (c.Row_Pixels, c.Column_Pixels)
 
-##-----------------------------
 
-    def shape_data_camera(self, evt) :
+
+    def shape_data_camera(self, evt):
         # camera shape from data object
         o = pda.get_camera_data_object(evt, self.source)
-        if o is None : return None
+        if o is None: return None
         return (o.width(),o.height())
 
-##-----------------------------
 
-    def shape_config(self, env) :
 
-        if   self.dettype == gu.CSPAD      : return self.shape_config_cspad(env)
-        elif self.dettype == gu.CSPAD2X2   : return self.shape_config_cspad2x2(env)
+    def shape_config(self, env):
+
+        if   self.dettype == gu.CSPAD     : return self.shape_config_cspad(env)
+        elif self.dettype == gu.CSPAD2X2  : return self.shape_config_cspad2x2(env)
         elif self.dettype in (gu.EPIX100A, gu.EPIX10KA)\
-                                           : return self.shape_config_epix100(env)
+                                          : return self.shape_config_epix100(env)
         elif self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD)\
-                                           : return self.shape_config_epix10ka_any(env)
-        elif self.dettype == gu.PRINCETON  : return self.shape_config_princeton(env)
-        elif self.dettype == gu.PNCCD      : return self.shape_config_pnccd(env)
-        elif self.dettype == gu.ANDOR      : return self.shape_config_andor(env)
-        elif self.dettype == gu.ANDOR3D    : return self.shape_config_andor(env)
-        elif self.dettype == gu.JUNGFRAU   : return self.shape_config_jungfrau(env)
-        elif self.dettype == gu.RAYONIX    : return self.shape_config_rayonix(env)
+                                          : return self.shape_config_epix10ka_any(env)
+        elif self.dettype == gu.PRINCETON : return self.shape_config_princeton(env)
+        elif self.dettype == gu.PNCCD     : return self.shape_config_pnccd(env)
+        elif self.dettype == gu.ANDOR     : return self.shape_config_andor(env)
+        elif self.dettype == gu.ANDOR3D   : return self.shape_config_andor(env)
+        elif self.dettype == gu.JUNGFRAU  : return self.shape_config_jungfrau(env)
+        elif self.dettype == gu.RAYONIX   : return self.shape_config_rayonix(env)
         elif self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000,
                               gu.ORCAFL40, gu.TM6740, gu.QUARTZ4A150,
                               gu.FCCD, gu.FCCD960, gu.STREAK)\
-                                           : return self.shape_config_camera(env)       
-        elif self.dettype == gu.TIMEPIX    : return self.shape_config_timepix(env)
-        elif self.dettype == gu.FLI        : return self.shape_config_fli(env)
-        elif self.dettype == gu.PIMAX      : return self.shape_config_pimax(env)
-        elif self.dettype == gu.ZYLA       : return self.shape_config_zyla(env)
-        elif self.dettype == gu.ISTAR      : return self.shape_config_istar(env)
-        elif self.dettype == gu.EPICSCAM   : return self.shape_config_epicscam(env)
-        elif self.dettype == gu.UXI        : return self.shape_config_uxi(env)
-        elif self.dettype == gu.PIXIS      : return self.shape_config_pixis(env)
-        elif self.dettype == gu.ARCHON     : return self.shape_config_archon(env)
+                                          : return self.shape_config_camera(env)       
+        elif self.dettype == gu.TIMEPIX   : return self.shape_config_timepix(env)
+        elif self.dettype == gu.FLI       : return self.shape_config_fli(env)
+        elif self.dettype == gu.PIMAX     : return self.shape_config_pimax(env)
+        elif self.dettype == gu.ZYLA      : return self.shape_config_zyla(env)
+        elif self.dettype == gu.ISTAR     : return self.shape_config_istar(env)
+        elif self.dettype == gu.EPICSCAM  : return self.shape_config_epicscam(env)
+        elif self.dettype == gu.UXI       : return self.shape_config_uxi(env)
+        elif self.dettype == gu.PIXIS     : return self.shape_config_pixis(env)
+        elif self.dettype == gu.ARCHON    : return self.shape_config_archon(env)
 
         # waveform detectors:
-        #elif self.dettype == gu.ACQIRIS    : return self.shape_config_acqiris(env)
-        #elif self.dettype == gu.IMP        : return self.shape_config_imp(env)
-        else                               : return None
+        #elif self.dettype == gu.ACQIRIS   : return self.shape_config_acqiris(env)
+        #elif self.dettype == gu.IMP       : return self.shape_config_imp(env)
+        else                              : return None
 
-##-----------------------------
 
-    def shape(self, par=0) :
+
+    def shape(self, par=0):
         """Returns the detector shape.
 
         Shape is retrieved from configuration object and
@@ -1593,27 +1597,27 @@ class PyDetectorAccess(object) :
         shc = self.shape_config(self.env)
         return shc if shc is not None else self.shape_calib(par, ctype=gu.PEDESTALS)
 
-##-----------------------------
-# Static methods
-##-----------------------------
 
-    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True) :
+# Static methods
+
+
+    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True):
         save_txt(fname, ndarr, cmts, fmt, verbos, addmetad)
 
-##-----------------------------
 
-    def load_txtnda(self, fname) :
+
+    def load_txtnda(self, fname):
         nda = load_txt(fname)
-        if len(nda.shape)>2 : return nda
+        if len(nda.shape)>2: return nda
         shape = self.shape()
-        if shape is not None : nda.shape = shape
+        if shape is not None: nda.shape = shape
         return nda
 
-##-----------------------------
+
 
 from time import time
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
 
     ds, src = _psana.DataSource('exp=cxif5315:run=169'), _psana.Source('DetInfo(CxiDs2.0:Cspad.0)')
     #ds, src = _psana.DataSource('exp=xcsi0112:run=15'),  _psana.Source('DetInfo(XcsBeamline.0:Princeton.0)')
@@ -1623,13 +1627,13 @@ if __name__ == "__main__" :
     evts = ds.events()
     evt  = next(evts)
 
-    for key in evt.keys() : print(key)
+    for key in evt.keys(): print(key)
 
     det = PyDetectorAccess(src, env, pbits=255)
 
     nda = det.pedestals(evt)
     print('\npedestals nda:', nda)
-    if nda is not None : print('nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape))
+    if nda is not None: print('nda.dtype: %s nda.shape: %s' % (nda.dtype, nda.shape))
 
     t0_sec = time()
     nda = det.raw_data(evt, env)
@@ -1639,4 +1643,4 @@ if __name__ == "__main__" :
 
     sys.exit ('Self test is done')
 
-##-----------------------------
+# EOF
