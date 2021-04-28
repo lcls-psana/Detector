@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import logging
+#import logging
 #logger = logging.getLogger(__name__)
 #logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.INFO)
 
@@ -419,6 +419,39 @@ def issue_2021_04_08():
     print('run empty loop takes %.3f sec' % (time()-t0_sec)) # 88 sec in smd
 
 
+def issue_2021_04_27():
+    """Nelson, Silke <snelson@slac.stanford.edu>
+       Tue 4/27/2021 9:10 PM
+       Hi, I am looking at old epix100 data to prepare for the upcoming MEC experiment.
+       I have noticed that the ?geometry? for the epix100 is currently broken
+       and have determined that this change from ana-4.0.16 to ana-4.0.17.
+       Calls to e.g. det.coords_x(evt/run) currently return an error and det.image no longer works
+       (it is supposed to change the geometry in a predefined way for the epix100.
+       Can you look at this?
+       Thank you,
+       Silke
+       (ana-4.0.16) snelson@psanagpu106:/reg/d/psdm/mec/meclq8515/results/smalldata_tools$ python junk.py
+       ...
+
+    REASON: GeometryAccess.load_pars_from_str(s) began receive str s as unicode...
+    FIXED:  if isinstance(s, unicode): s = s.encode('utf-8') #str(s)
+    """
+    #import logging
+    #logger = logging.getLogger(__name__)
+    #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', level=logging.DEBUG)
+
+    import psana
+    ds = psana.DataSource('exp=meclq8515:run=266')
+    det = psana.Detector('epix100a')
+    #det.set_print_bits(0o377) # add for debugging
+    evt = ds.events().next()
+    print('calib')
+    print(det.calib(evt).shape)
+    print('image')
+    img = det.image(evt)
+    print(img.shape)
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -446,7 +479,8 @@ USAGE = '\nUsage:'\
       + '\n   11 - issue_2021_03_18 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M'\
       + '\n   12 -                                                  epix10k2M and epix10k135'\
       + '\n   13 - issue_2021_03_24 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M configuration issue'\
-      + '\n   13 - issue_2021_04_08 - my - exp=xcsx39718:run=222 too lonng run loop'\
+      + '\n   14 - issue_2021_04_08 - my - exp=xcsx39718:run=222 too lonng run loop'\
+      + '\n   15 - issue_2021_04-27 - Silke - exp=meclq8515:run=266 epix100a - det.image does not work'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -465,6 +499,7 @@ elif TNAME in ('11',): issue_2021_03_18()
 elif TNAME in ('12',): issue_2021_03_18B()
 elif TNAME in ('13',): issue_2021_03_24()
 elif TNAME in ('14',): issue_2021_04_08()
+elif TNAME in ('15',): issue_2021_04_27()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
