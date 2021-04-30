@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+=======
+Tag: V02-00-18
+2020-04-30 Mikhail Dubrovin
+- src/UtilsEpix10kaCalib.py fix issues with matplotlib move, save plots under <panel-id>/plots (Philip)
+
 Tag: V02-00-17
 2021-04-29 Daniel Damiani
 - PyDataAccess.py - add support for new ddl config versions for epix10ka

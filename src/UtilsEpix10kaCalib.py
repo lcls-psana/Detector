@@ -33,6 +33,7 @@ from Detector.UtilsCalib import evaluate_limits, tstamps_run_and_now, tstamp_for
        save_log_record_on_start, find_file_for_timestamp, save_ndarray_in_textfile, save_2darray_in_textfile,\
        calib_group
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 # supress matplotlib deprication warnings
@@ -84,13 +85,13 @@ def plot_avsi(x,y,fname):
     ax.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
     fig.canvas.set_window_title(fname)
 
-    fig.canvas.manager.window.move(650,200)
+    move_fig(fig,650,200)
     #plt.plot()
     fig.canvas.draw()
     plt.pause(3)
 
     fig.savefig(fname)
-    print('saved file %s' % fname)
+    logger.info('saved: %s' % fname)
     #plt.ioff()
     plt.show()    
     #plt.ion()
@@ -191,13 +192,13 @@ def plot_fit(x,y,pf0,pf1,fname):
 
     ax.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
     fig.canvas.set_window_title(fname)
-    fig.canvas.manager.window.move(0,0)
+    move_fig(fig,10,10)
     #plt.plot()
     fig.canvas.draw()
     plt.pause(3)
 
     plt.savefig(fname)
-    print('saved file %s' % fname)
+    logger.info('saved: %s' % fname)
 
     #plt.ioff()
     plt.show()    
@@ -205,11 +206,24 @@ def plot_fit(x,y,pf0,pf1,fname):
 
 #--------------------
 
+def move_fig(fig, x0=200, y0=100) :
+    logger.debug('matplotlib.get_backend() %s' % str(matplotlib.get_backend()))
+    backend = matplotlib.get_backend()
+    if backend == 'TkAgg': # this is our case
+        fig.canvas.manager.window.wm_geometry("+%d+%d" % (x0, y0))
+    elif backend == 'WXAgg':
+        fig.canvas.manager.window.SetPosition((x0, y0))
+    else:
+        # This works for QT and GTK
+        # You can also use window.setGeometry
+        fig.canvas.manager.window.move(x0, y0)
+
+
 def figure(figsize=(9,8), title='Image', dpi=80, facecolor='w', edgecolor='w', frameon=True, move=None, **kwargs):
     fig = plt.figure(figsize=figsize, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor, frameon=frameon, **kwargs)
     fig.canvas.set_window_title(title, **kwargs)
     if move is not None:
-        fig.canvas.manager.window.move(move[0], move[1])
+        move_fig(fig,move[0], move[1])
     return fig
 
 #--------------------
@@ -219,7 +233,7 @@ def fig_img_cbar_axes(fig=None,\
                       win_axcb=(0.923, 0.05, 0.02, 0.92), **kwargs):
     dpi  = kwargs.get('dpi',80)
     fsize = kwargs.get('figsize',(9,8))
-    _fig = figure(move=(650,0), dpi=dpi, figsize=fsize) if fig is None else fig
+    _fig = figure(move=(650,10), dpi=dpi, figsize=fsize) if fig is None else fig
     axim = _fig.add_axes(win_axim, **kwargs)
     axcb = _fig.add_axes(win_axcb, **kwargs)
     return _fig, axim, axcb
@@ -820,7 +834,7 @@ def offset_calibration(*args, **opts):
 
     if display:
         fig2, axim2, axcb2 = fig_img_cbar_axes()
-        #fig2.canvas.manager.window.move(500, 0)
+        move_fig(fig2, 500, 10)
         plt.ion() # do not hold control on plt.show()
         #plt.ioff() # hold control on plt.show()
 
@@ -913,8 +927,8 @@ def offset_calibration(*args, **opts):
                   logger.warning('FLAG ERRSKIP IS %s - keep processing next calib-cycle' % errskip)
                   continue
 
-            figprefix = 'fig-%s-r%04d-%s-seg%02d-cc%03d-%s'%\
-                        (exp, orun.run(), detname.replace(':','-').replace('.','-'), idx, nstep, mode)
+            figprefix = '%s-%s-seg%02d-cc%03d-%s'%\
+                        (prefix_plots, detname.replace(':','-').replace('.','-'), idx, nstep, mode)
 
             nrec,nevt = -1,0
             #First 5 Calib Cycles correspond to darks:
@@ -940,9 +954,11 @@ def offset_calibration(*args, **opts):
                                                      interpolation='nearest', aspect='auto', origin='upper',\
                                                      orientation='vertical', cmap='inferno')
                             fig2.canvas.set_window_title('Run:%d calib-cycle:%d mode:%s panel:%02d' % (orun.run(), nstep, mode, idx))
-                            fname = '%s-img-dark' % figprefix
+                            fname = '%s-ev%02d-img-dark' % (figprefix, nevt)
                             axim2.set_title(fname, fontsize=10)
                             fig2.savefig(fname+'.png')
+                            logger.info('saved: %s' % fname+'.png')
+
                         block[nrec]=raw & M14
                         if nrec%200==0: msg += '.%s' % find_gain_mode(det, raw) 
 
@@ -1009,6 +1025,7 @@ def offset_calibration(*args, **opts):
                     fname = '%s-img-charge' % figprefix
                     axim2.set_title(fname, fontsize=10)
                     fig2.savefig(fname+'.png')
+                    logger.info('saved: %s' % fname+'.png')
 
                 print_statistics(nevt, nrec)
 
@@ -1068,6 +1085,7 @@ def offset_calibration(*args, **opts):
                     fname = '%s-img-charge' % figprefix
                     axim2.set_title(fname, fontsize=10)
                     fig2.savefig(fname+'.png')
+                    logger.info('saved: %s' % fname+'.png')
 
                 print_statistics(nevt, nrec)
 
@@ -1187,11 +1205,11 @@ def offset_calibration(*args, **opts):
         
     if display:
         plt.close("all")
-        fnameout='%s_plot_AML.pdf' % prefix_plots
+        fnameout='%s_plot_AML.png' % prefix_plots
         gm='AML'; titles=['M Gain','M Pedestal', 'L Gain', 'M-L Offset']
         plot_fit_results(0, fits_ml, fnameout, filemode, gm, titles)
 
-        fnameout='%s_plot_AHL.pdf' % prefix_plots
+        fnameout='%s_plot_AHL.png' % prefix_plots
         gm='AHL'; titles=['H Gain','H Pedestal', 'L Gain', 'H-L Offset']
         plot_fit_results(1, fits_hl, fnameout, filemode, gm, titles)
 
@@ -1211,6 +1229,7 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
         plt.pause(0.1)
         fexists = os.path.exists(fnameout)
         fig.savefig(fnameout)
+        logger.info('saved: %s' % fnameout)
         if not fexists: os.chmod(fnameout, filemode)
 
 #--------------------
