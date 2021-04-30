@@ -59,9 +59,9 @@ dic_store = {} # {det.name:Storage()} in stead of singleton
 def config_objects(env, src, idx=0):
     """ Returns configuration objects for detector, quad, element; 
         dco,qco,eco (or None depending on detector) of types
-        psana.Epix.Config10ka2MV1
-        psana.Epix.Config10kaQuad
-        psana.Epix.Config10ka or psana.Epix.Config10kaV1
+        psana.Epix.Config10ka2MV1 or psana.Epix.Config10ka2MV1
+        psana.Epix.Config10kaQuadV1 or psana.Epix.Config10kaQuadV2
+        psana.Epix.Config10ka, psana.Epix.Config10kaV1, or psana.Epix.Config10kaV2
     """
     dco = get_epix10ka2m_config_object(env, src)
     if dco is not None: return dco, dco.quad(idx/4), dco.elemCfg(idx)
