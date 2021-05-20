@@ -1,0 +1,254 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import sys
+from time import time
+
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.INFO)
+#logging.getLogger('PSXtcInput').setLevel(logging.NOTSET) # FATAL, CRITICAL
+#logging.disable(logging.NOTSET)
+DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.items() if isinstance(k, str)}
+STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
+
+SCRNAME = sys.argv[0].rsplit('/')[-1]
+
+USAGE = '\n  %s -d <detector> -e <experiment> -r <run-number(s)> [kwargs]' % SCRNAME\
+      + '\nCOMMAND EXAMPLES:'\
+      + '\n  %s -d MecTargetChamber.0:Epix100a.1 -e meclu9418 -r 342' % SCRNAME\
+      + '\nHELP: %s -h' % SCRNAME
+
+from psana import DataSource, Detector
+from Detector.GlobalUtils import info_ndarr, info_kwargs, info_command_line # info_command_line_parameters
+
+
+def info_evt_keys(evt, fmt=' %s', sep='\n  ', title='evt.keys:'):
+    return title + sep + sep.join([fmt % str(k) for k in evt.keys()])
+
+
+def ds_det(**kwa):
+    dsname   = kwa.get('dsname',  None) # 'exp=meclu9418:run=342:smd' or xtc file name
+    dssuffix = kwa.get('dssuffix', ':smd')
+    expname  = kwa.get('expname', None) #meclu9418
+    detname  = kwa.get('detname', None) #MecTargetChamber.0:Epix100a.1
+    runs     = kwa.get('runs', None) #342,343
+
+    if dsname is None: dsname = 'exp=%s:run=%s%s' % (expname, runs, dssuffix)
+    logger.info('dsname: %s' % dsname)
+    logger.info('detname: %s' % detname)
+
+    ds = DataSource(dsname)
+    det = Detector(detname) if detname is not None else None
+
+    return ds, det
+
+
+def info_det(det, par=None, env=None):
+    import PSCalib.GlobalUtils as gu
+
+    s = 'info_det'
+
+    if det is None: return s + ' DETECTOR IS NOT DEFINED IN --detname or -d'
+
+    dettype = gu.det_type_from_source(det.source)
+ 
+    s +='\n  det.src: %s' % str(det.source)\
+      + '\n  dettype: %s' % str(dettype)
+
+    if   dettype == gu.PNCCD: pass
+    elif dettype == gu.EPIX100A:
+        from Detector.UtilsEpix import id_epix, is_trbit_high
+        from Detector.PyDataAccess import get_epix_config_object
+        co = get_epix_config_object(env, det.source)
+        s += '\n  id_epix: %s' % str(id_epix(co))
+        #s += '\n  is_trbit_high: %s' % str(is_trbit_high(co))
+      
+    elif dettype == gu.EPIX10KA:
+        from Detector.UtilsEpix import id_epix, is_trbit_high
+        from Detector.UtilsEpix10ka import get_epix10ka_config_object
+        co = get_epix10ka_config_object(env, det.source)
+        s += '\n  id_epix10ka: %s' % str(id_epix(co))
+
+    elif dettype == gu.CSPAD: pass
+    elif dettype == gu.CSPAD2X2: pass
+    elif dettype == gu.JUNGFRAU:
+        #from Detector.PyDataAccess import get_jungfrau_data_object, get_jungfrau_config_object
+        #co = get_jungfrau_config_object(env, source)
+        from Detector.UtilsJungfrau import id_jungfrau #, id_jungfrau_from_config
+        s += '\n  id_jungfrau: %s' % str(id_jungfrau(env, source))
+    else: pass
+
+    if par is not None:
+      geo = det.geometry(par)
+      X, Y, Z = geo.get_pixel_coords() if geo else (None, None, None)
+      s += '\ncalibration constants for par(run or evt): %s' % str(par)
+      s += info_ndarr(det.pedestals(par),   '\n  pedestals')
+      s += info_ndarr(det.rms(par),         '\n  rms      ')
+      s += info_ndarr(det.status(par),      '\n  status   ')
+      s += info_ndarr(det.common_mode(par), '\n  common_mode')
+      s += info_ndarr(X, '\n  pixel X')
+      s += info_ndarr(Y, '\n  pixel Y')
+      s += info_ndarr(Z, '\n  pixel Z')
+      #s += '\n  geometry:\n%s' % (geo if geo else 'GEOMETRY IS MISSING') 
+    return s
+
+
+def loop_run_step_evt(**kwa):
+
+    ds,det = ds_det(**kwa)
+    cd = Detector('ControlData')
+    runs = kwa.get('runs', None) #342,343
+    events  = kwa.get('events', 10000000)
+    evskip  = kwa.get('evskip', 0)
+    steps   = kwa.get('steps', 1000)
+    stskip  = kwa.get('stskip', 0)
+    stepnum = kwa.get('stepnum', None)
+    runnum = int(runs.replace(',',' ').replace('-',' ').replace(':',' ').split(' ')[0])
+
+    logger.info('runnum: %s' % runnum)
+    logger.info('info_det: %s' % info_det(det, runnum, ds.env()))
+
+    str_evt_keys = None
+
+    stat = {}
+    for orun in ds.runs():
+      runnum = orun.run()
+      print('==== run %04d ====' % runnum)
+
+      stat_run = {}
+
+      for istep, step in enumerate(orun.steps()):
+
+        print('\n==== istep %d\n ControlData.pvLabels:' % istep)
+        for pv in cd().pvLabels():
+            print('     pv.name: %s pv.value: %s' % (pv.name(), pv.value()))
+
+        if stepnum is not None:
+          if istep<stepnum:
+            print('  == istep %d - SKIP due to --stepnum %d' % (istep, stepnum))
+            continue
+          elif istep>stepnum:
+            print('  == istep %d - BREAK LOOP due to --stepnum %d' % (istep, stepnum))
+            break
+        if istep<stskip:
+            print('  == istep %d - SKIP due to --stskip %d' % (istep, stskip))
+            continue
+        if istep>steps:
+            print('  == istep %d - BREAK LOOP due to --steps %d' % (istep, steps))
+            break
+
+        ngood = 0
+        s=''
+        for ievt, evt in enumerate(step.events()):
+          logger.debug(' ievt: %04d' % ievt)
+
+          if ievt<evskip:
+            s = '  ievt %04d - SKIP EVENT due to --evskip %d' % (ievt, evskip)
+            print(s, end='\r')
+            continue
+
+          if ievt>events:
+            print('  ievt %04d - BREAK EVENT LOOP due to --evskip %d' % (ievt, events))
+            break
+
+          if det is None:
+              msg = '\nTO LOOK AT DATA DEFINE ONE OF THE DETECTORS IN OPTION --detname or -d' 
+              sys.exit(msg)
+
+          raw = det.raw(evt)
+          if raw is not None: 
+              ngood+=1
+
+              if str_evt_keys is None:
+                str_evt_keys = info_evt_keys(evt, fmt=' %s', sep='\n  ', title='\n evt.keys:')
+                print('%s\n' % str_evt_keys)
+
+          s = info_ndarr(raw,' ievt: %04d raw'%ievt)
+          print(s, end='\r')
+
+          if not ievt%100: print(s)
+        print(s)
+        stat_run[istep] = (ievt+1, ngood)
+
+      stat[runnum] = stat_run
+
+    print('==== Summary')
+    for irun,v in stat.items():
+        print('run:%04d step:(events total, good):' % irun)
+        for istep,v in v.items():
+             print('%2d: %s' % (istep,str(v)))
+
+
+def do_main():
+
+    t0_sec = time()
+    if len(sys.argv)<2:
+        print('Usage:%s\n' % USAGE)
+        exit('EXIT - MISSING ARGUMENT(S)')
+
+    args = argument_parser().parse_args() # namespace
+    kwargs = vars(args) # dict
+
+    fmt = '[%(levelname).1s] %(name)s %(message)s' if args.logmode=='DEBUG' else\
+          '[%(levelname).1s] %(message)s'
+    logging.basicConfig(format=fmt, level=DICT_NAME_TO_LEVEL[args.logmode])
+
+    logger.info('command: %s' % info_command_line())
+    logger.info('**kwargs\n%s' % info_kwargs(**kwargs))
+
+    loop_run_step_evt(**kwargs)
+
+    logger.info('DONE, consumed time %.3f sec' % (time() - t0_sec))
+
+
+
+def argument_parser():
+    from argparse import ArgumentParser
+
+    d_detname = None # 'MecTargetChamber.0:Epix100a.1'
+    d_expname = None # 'meclu9418' #None # 'ueddaq02'
+    d_runs    = None # 342 # None # '66' # 1021 or 1021,1022-1025
+    d_events  = 1000000
+    d_evskip  = 0
+    d_steps   = 1000
+    d_stskip  = 0
+    d_stepnum = None
+    d_logmode = 'INFO'
+    d_dssuffix= ':smd'
+    #d_typeinfo= 'DRSE'
+
+    h_detname = 'detector name, e.g. %s' % d_detname
+    h_expname = 'experiment name, e.g. %s' % d_expname
+    h_runs    = 'run number or list of runs e.g. 12,14,18 or 12, default = %s' % str(d_runs)
+    h_events  = 'maximal number of events total (in runs, steps), default = %s' % d_events
+    h_evskip  = 'number of events to skip in the beginning of each step, default = %s' % d_evskip
+    h_steps   = 'number of steps in each run, default = %s' % d_steps
+    h_stskip  = 'number of steps to skip in the beginning of each run, default = %s' % d_stskip
+    h_stepnum = 'step index (int)[0:...] to show details, default = %s' % d_stepnum
+    h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    h_dssuffix= 'suffix added to the DataSource argument, default = %s' % d_dssuffix
+    #h_typeinfo= 'type of information for output D-detector, R-run-loop, S-stepnum-loop, E-event-loop, default = %s' % d_typeinfo
+
+    parser = ArgumentParser(description='Print info about experiment detector and run')
+    parser.add_argument('-d', '--detname', type=str, help=h_detname)
+    parser.add_argument('-e', '--expname', type=str, help=h_expname)
+    parser.add_argument('-r', '--runs',    type=str, help=h_runs)
+    parser.add_argument('-n', '--events', default=d_events, type=int, help=h_events)
+    parser.add_argument('-m', '--evskip', default=d_evskip, type=int, help=h_evskip)
+    parser.add_argument('-L', '--logmode', default=d_logmode, type=str, help=h_logmode)
+    parser.add_argument('--dssuffix', default=d_dssuffix, type=str, help=h_dssuffix)
+    parser.add_argument('--steps', default=d_steps, type=int, help=h_steps)
+    parser.add_argument('--stskip', default=d_stskip, type=int, help=h_stskip)
+    parser.add_argument('--stepnum', default=d_stepnum, type=int, help=h_stepnum)
+    #parser.add_argument('-t', '--typeinfo', default=d_typeinfo, type=str, help=h_typeinfo)
+
+    return parser
+
+
+if __name__ == "__main__":
+    do_main()
+    exit('End of %s'%SCRNAME)
+
+# EOF
