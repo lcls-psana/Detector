@@ -8,6 +8,13 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V02-00-19
+2020-05-19 Mikhail Dubrovin
+- refactoring in UtilsEpix10kaCalib.py
+- GlobalUtils.py - add info_command_line and info_kwargs
+  new file:   app/datinfo
+  new file:   examples/test_load_npy.py
+
 Tag: V02-00-18
 2020-04-30 Mikhail Dubrovin
 - src/UtilsEpix10kaCalib.py fix issues with matplotlib move, save plots under <panel-id>/plots (Philip)
