@@ -577,8 +577,10 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0):
     ds = DataSource(dsname)
     det = Detector(detname)
     env = ds.env()
-    dco,qco,eco = config_objects(env, det.source, idx)
-    co = next(o for o in (dco,qco,eco) if o is not None)
+    dco,qco,eco = listco = config_objects(env, det.source, idx)
+    if all(o is None for o in listco): return {}
+
+    co = next(o for o in listco if o is not None)
 
     #print_object_dir(dco)
     #print('dco', dco)
@@ -1233,8 +1235,6 @@ def plot_fit_results(ifig, fitres, fnameout, filemode, gm, titles):
         if not fexists: os.chmod(fnameout, filemode)
 
 #--------------------
-#--------------------
-#--------------------
 
 def load_panel_constants(dir_ctype, pattern, tstamp):
     fname = find_file_for_timestamp(dir_ctype, pattern, tstamp)
@@ -1247,7 +1247,17 @@ def load_panel_constants(dir_ctype, pattern, tstamp):
         logger.warning('DO NOT save save constants for missing files')
     return arr
 
-#--------------------
+
+def config_info_for_pedestals(dsname, detname):
+    cpdic = get_config_info_for_dataset_detname(dsname, detname)
+    tstamp      = cpdic.get('tstamp', None)
+    panel_ids   = cpdic.get('panel_ids', None)
+    expnum      = cpdic.get('expnum', None)
+    dettype     = cpdic.get('dettype', None)
+    shape       = cpdic.get('shape', None)
+    #ny,nx = shape
+    return cpdic, tstamp, panel_ids, expnum, dettype, shape
+
 
 def pedestals_calibration(*args, **opts):
     """NEWS significant ACCELERATION is acheived:
@@ -1285,16 +1295,7 @@ def pedestals_calibration(*args, **opts):
 
     save_log_record_on_start(dirrepo, _name, dirmode)
 
-    cpdic = get_config_info_for_dataset_detname(dsname, detname)
-    tstamp      = cpdic.get('tstamp', None)
-    panel_ids   = cpdic.get('panel_ids', None)
-    expnum      = cpdic.get('expnum', None)
-    dettype     = cpdic.get('dettype', None)
-    shape       = cpdic.get('shape', None)
-    ny,nx = shape
-
-    #panel_id = get_panel_id(panel_ids, idx)
-    logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
+    cpdic, tstamp, panel_ids, expnum, dettype, shape = config_info_for_pedestals(dsname, detname)
 
     #read input xtc file and accumulate block of data
 
@@ -1365,6 +1366,15 @@ def pedestals_calibration(*args, **opts):
         nrec,nevt = -1,0
 
         for nevt,evt in enumerate(step.events()):
+
+            if cpdic=={}:
+                cpdic, tstamp, panel_ids, expnum, dettype, shape = config_info_for_pedestals(dsname, detname)
+                if cpdic=={}:
+                    print('XXX Ev:%04d - configuration info is not available' % nevt, end='\r')
+                else:
+                    #panel_id = get_panel_id(panel_ids, idx)
+                    logger.debug('Found panel ids:\n%s' % ('\n'.join(panel_ids)))
+
             raw = det.raw(evt)
             do_print = selected_record(nevt)
             if raw is None: #skip empty frames
