@@ -78,7 +78,7 @@ def option_parser() :
     d_dopeds  = True
     d_dooffs  = True
     d_usesmd  = True
-    d_nperiods= True
+    d_nperiods= False
     d_ixoff   = 10
     d_ccnum   = None
     d_ccmax   = 103
