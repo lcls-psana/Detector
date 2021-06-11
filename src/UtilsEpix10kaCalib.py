@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
 
 from time import sleep
-from psana import DataSource, Detector
+from psana import DataSource, Detector, EventId
 import numpy as np
 
 from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES, alias_for_id
@@ -45,6 +45,7 @@ import matplotlib.pyplot as plt
 M14 = 0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 #B14 = 0x4000 # 16384 or (1<<14)   - 14-bit (15-th bit starting from 1)
 B14 = 0o040000 # 16384 or 1<<14 (15-th bit starting from 1)
+ASAT = 16000 # 16384 or 1<<14 (15-th bit starting from 1)
 #--------------------
 
 class Storage:
@@ -82,7 +83,7 @@ def plot_avsi(x,y,fname):
     line1,=ax.plot(x,gbit,'r-',linewidth=1)
     #line1.set_ydata(np.polyval(pf0,xx))
     #line2.set_ydata(np.polyval(pf1,xx))
-    ax.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
+    ax.set_title(fname.rstrip('.png').rsplit('/',1)[-1], fontsize=6)#, color=color, fontsize=fstit, **kwargs)
     fig.canvas.set_window_title(fname)
 
     move_fig(fig,650,200)
@@ -98,7 +99,7 @@ def plot_avsi(x,y,fname):
 
 #--------------------
 
-def plot_data_block(block, evnum, prefix, selpix=None):
+def plot_data_block(block, evnums, prefix, selpix=None):
     ts = str_tstamp(fmt='%Y%m%dT%H%M%S', time_sec=time())
     mf,my,mx=block.shape
     print('block shape:',mf,my,mx)
@@ -115,24 +116,24 @@ def plot_data_block(block, evnum, prefix, selpix=None):
             if selected:  #display a subset of plots
 
                 trace=block[:,iy,ix]
-                logger.debug('==== saw_edge for %s-proc-ibr%02d-ibc%02d:' % (prefix, iy, ix))
-                for ixb, ixs, ixe in saw_edges(trace, evnum, do_debug=True):
-                    print('  saw edges:', ixb, ixs, ixe, 'period:', ixe-ixb+1)
+                logger.info('==== saw_edge for %s-proc-ibr%02d-ibc%02d:' % (prefix, iy, ix))
+                logger.info(' saw_edges: %s' % str(saw_edges(trace, evnums, gap=50, do_debug=True)))
+                #for ixb, ixs, ixe in saw_edges(trace, evnums, gap=50, do_debug=True):
+                #    print('  saw edges:', ixb, ixs, ixe, 'period:', ixe-ixb+1)
 
                 fname = '%s-dat-ibr%02d-ibc%02d.png' % (prefix, iy, ix) if selpix is None else\
                         '%s-dat-r%03d-c%03d-ibr%02d-ibc%02d.png' % (prefix, selpix[0], selpix[1], iy, ix)
-                plot_avsi(x,trace,fname)
+                plot_avsi(evnums,trace,fname)
 
     #sys.exit('TEST EXIT')
 
 #--------------------
-
-def saw_edges(trace, evnums, gap=50, do_debug=True):
+def saw_edges_v0(trace, evnums, gap=50, do_debug=True):
     """ Returns list of triplet indexes [(ibegin, iswitch, iend), ...]
         in the arrays trace and evnums for found full periods of the charge injection pulser.
     """
     traceB14 = trace & B14 # np.bitwise_and(trace, B14)
-    indsB14 = np.nonzero(traceB14)[0] # index [0] selects dimension in tuple
+    indsB14 = np.flatnonzero(traceB14)
     evnumsB14 = evnums[indsB14]
     ixoff = np.compress(np.diff(evnumsB14)>gap, indsB14[:-1], axis=0) + 1 # compress, because np.where keeps zeroes
 
@@ -143,24 +144,42 @@ def saw_edges(trace, evnums, gap=50, do_debug=True):
         logger.debug(info_ndarr(evnumsB14, 'evnumsB14'))
         logger.debug(info_ndarr(ixoff, 'ixoff', last=15))
 
-    edges = [(ixb, ixb + np.nonzero(traceB14[ixb:ixe])[0][0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1) if any(traceB14[ixb:ixe])]
+    #edges = [(ixb, ixb + np.nonzero(traceB14[ixb:ixe])[0][0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1) if any(traceB14[ixb:ixe])]
+    edges = [(ixb, ixb + np.flatnonzero(traceB14[ixb:ixe])[0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1) if any(traceB14[ixb:ixe])]
+    return edges
 
-    #try:
-    #  edges = [(ixb, ixb + np.nonzero(traceB14[ixb:ixe])[0][0], ixe) for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1)]
-    #except IndexError:
-    #  msg='IndexError:\n  %s\n  %s\n  compressed: %s\n  %s\n  %s\n  %s' % (
-    #       info_ndarr(trace, 'trace', last=10),
-    #       info_ndarr(traceB14, 'trace & B14', last=10),
-    #       info_ndarr(np.compress(traceB14>0,traceB14), 'compressed trace', last=10),
-    #       info_ndarr(indsB14, 'indsB14'),
-    #       info_ndarr(evnumsB14, 'evnumsB14'),
-    #       info_ndarr(ixoff, 'ixoff', last=15))
-    #  logger.warning(msg)
-    #
-    #  for ixb,ixe in zip(ixoff[:-1],ixoff[1:]-1):
-    #      #print('ixb,ixe: ',ixb,ixe,' np.nonzero(traceB14[ixb:ixe])', np.nonzero(traceB14[ixb:ixe]))
-    #      print('ixb,ixe: ',ixb,ixe,' traceB14[ixb:ixe]', traceB14[ixb:ixe])
-    #  sys.exit('IndexError')
+
+def saw_edges(trace, evnums, gap=50, do_debug=True):
+    """
+        2021-06-11 privious version neds at least two saw-tooth full cycles to find edgese...
+        Returns list of triplet indexes [(ibegin, iswitch, iend), ...]
+        in the arrays trace and evnums for found full periods of the charge injection pulser.
+    """
+    traceB14 = trace & B14 # np.bitwise_and(trace, B14)
+    indsB14 = np.flatnonzero(traceB14) #shape:(604,) size:604 dtype:int64 [155 156 157 158 159...]
+    evnumsB14 = evnums[indsB14]
+    ixoff = np.where(np.diff(evnumsB14)>gap)[0]+1
+
+    if do_debug:
+        logger.debug(info_ndarr(trace, 'trace', last=10))
+        logger.debug(info_ndarr(traceB14, 'trace & B14', last=10))
+        logger.debug(info_ndarr(indsB14, 'indsB14'))
+        logger.debug(info_ndarr(evnumsB14, 'evnumsB14'))
+        logger.debug(info_ndarr(ixoff, 'ixoff', last=15))
+
+    if len(ixoff)<1: return []
+
+    grinds = np.split(indsB14, ixoff)
+    edges_sw = [(g[0],g[-1]) for g in grinds]  #[(678, 991), (1702, 2015), (2725, 3039), (3751, 4063)]
+    #print('XXX edges_sw:', str(edges_sw))
+
+    edges = [] if len(edges_sw)<2 else\
+            [((g0[1]+1,) + g1) for g0,g1 in zip(edges_sw[:-1],edges_sw[1:])]
+
+    #print('XXX saw_edges:', str(edges))
+    #np.save('trace.npy', trace)
+    #np.save('evnums.npy', evnums)
+    #sys.exit('TEST EXIT')
 
     return edges
 
@@ -190,7 +209,7 @@ def plot_fit(x,y,pf0,pf1,fname):
     ax.plot(x,np.polyval(pf0,x),'b-',linewidth=1)
     ax.plot(x,np.polyval(pf1,x),'r-',linewidth=1)
 
-    ax.set_title(fname.rstrip('.png'), fontsize=10)#, color=color, fontsize=fstit, **kwargs)
+    ax.set_title(fname.rstrip('.png').rsplit('/',1)[-1], fontsize=6)#, color=color, fontsize=fstit, **kwargs)
     fig.canvas.set_window_title(fname)
     move_fig(fig,10,10)
     #plt.plot()
@@ -299,6 +318,12 @@ def fit(block, evnum, display=True, prefix='fig-fit', ixoff=10, nperiods=False, 
 
             x0 =  evnum[ixb:ixs-ixoff]-evnum[ixb]
             y0 = tracem[ixb:ixs-ixoff]
+            # 2021-067-11 protection against overflow
+            nonsaturated = np.where(y0<ASAT)[0] # [0] because where returns tuple of arrays - for dims?
+            if nonsaturated.size != y0.size:
+                x0 = x0[nonsaturated]
+                y0 = y0[nonsaturated]
+
             x1 =  evnum[ixs+ixoff:ixe]-evnum[ixb]
             y1 = tracem[ixs+ixoff:ixe]           
             
@@ -814,6 +839,7 @@ def offset_calibration(*args, **opts):
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
     pixrc      = opts.get('pixrc', None) # ex.: '23,123'
+    nbs_half   = int(nbs/2)
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
@@ -957,7 +983,7 @@ def offset_calibration(*args, **opts):
                                                      orientation='vertical', cmap='inferno')
                             fig2.canvas.set_window_title('Run:%d calib-cycle:%d mode:%s panel:%02d' % (orun.run(), nstep, mode, idx))
                             fname = '%s-ev%02d-img-dark' % (figprefix, nevt)
-                            axim2.set_title(fname, fontsize=10)
+                            axim2.set_title(fname.rsplit('/',1)[-1], fontsize=6)
                             fig2.savefig(fname+'.png')
                             logger.info('saved: %s' % fname+'.png')
 
@@ -998,7 +1024,7 @@ def offset_calibration(*args, **opts):
                     else:
                         logger.info(msg + ' process selected pixel:%s' % str(selpix))
                         
-
+                fid_old=None
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
@@ -1011,6 +1037,23 @@ def offset_calibration(*args, **opts):
                     if nrec>nbs-2:
                         break
                     else:
+                        #---- 2021-06-10: check fiducial for consecutive events
+                        fid = evt.get(EventId).fiducials()
+                        if fid_old is not None:
+                            dfid = fid-fid_old
+                            if dfid != 3:
+                                logger.warning('TIME SYSTEM FAULT dfid!=3: Ev:%04d rec:%04d panel:%02d AML raw=None fiducials:%7d dfid:%d'%\
+                                            (nevt,nrec,idx,fid,dfid))
+                                if nrec < nbs_half:
+                                   logger.info('reset statistics in block and keep accumulation')
+                                   nrec = -1
+                                else:
+                                   logger.info('terminate event loop and process block data')
+                                   break
+                        fid_old = fid
+                        #print('nevt, nrec, fid: %04d %04d %d ' % (nevt, nrec, evt.get(EventId).fiducials()))
+                        #----
+
                         nrec += 1
                         if raw.ndim > 2: raw=raw[idx,:]
                         if do_print: logger.info(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AML raw' % (nevt,nrec,idx)))
@@ -1025,7 +1068,7 @@ def offset_calibration(*args, **opts):
                                              orientation='vertical', cmap='inferno')
                     fig2.canvas.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
                     fname = '%s-img-charge' % figprefix
-                    axim2.set_title(fname, fontsize=10)
+                    axim2.set_title(fname.rsplit('/',1)[-1], fontsize=6)
                     fig2.savefig(fname+'.png')
                     logger.info('saved: %s' % fname+'.png')
 
@@ -1059,6 +1102,7 @@ def offset_calibration(*args, **opts):
                         logger.info(msg + ' skip, due to pixrc=%s'%pixrc)
                         continue
 
+                fid_old=None
                 block=np.zeros((nbs,ny,nx),dtype=np.int16)
                 evnum=np.zeros((nbs,),dtype=np.int16)
                 for nevt,evt in enumerate(step.events()):   #read all frames
@@ -1071,6 +1115,23 @@ def offset_calibration(*args, **opts):
                     if nrec>nbs-2:
                         break
                     else:
+                        #---- 2021-06-10: check fiducial for consecutive events
+                        fid = evt.get(EventId).fiducials()
+                        if fid_old is not None:
+                            dfid = fid-fid_old
+                            if dfid != 3:
+                                logger.warning('TIME SYSTEM FAULT dfid!=3: Ev:%04d rec:%04d panel:%02d AML raw=None fiducials:%7d dfid:%d'%\
+                                            (nevt,nrec,idx,fid,dfid))
+                                if nrec < nbs_half:
+                                   logger.info('reset statistics in block and keep accumulation')
+                                   nrec = -1
+                                else:
+                                   logger.info('terminate event loop and process block data')
+                                   break
+                        fid_old = fid
+                        #print('nevt, nrec, fid: %04d %04d %d ' % (nevt, nrec, evt.get(EventId).fiducials()))
+                        #----
+
                         nrec += 1
                         if raw.ndim > 2: raw=raw[idx,:]
                         if do_print: logger.info(info_ndarr(raw, 'Ev:%04d rec:%04d panel:%02d AHL raw' % (nevt,nrec,idx)))
@@ -1085,7 +1146,7 @@ def offset_calibration(*args, **opts):
                                              orientation='vertical', cmap='inferno')
                     fig2.canvas.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
                     fname = '%s-img-charge' % figprefix
-                    axim2.set_title(fname, fontsize=10)
+                    axim2.set_title(fname.rsplit('/',1)[-1], fontsize=6)
                     fig2.savefig(fname+'.png')
                     logger.info('saved: %s' % fname+'.png')
 
@@ -1278,7 +1339,7 @@ def pedestals_calibration(*args, **opts):
     fmt_status = opts.get('fmt_status', '%4i')
     idx_sel    = opts.get('idx', None)
     dirmode    = opts.get('dirmode', 0o777)
-    filemode   = opts.get('filemode', 0o666)
+    filemode   = opts.get('filemode', 0o664)
     usesmd     = opts.get('usesmd', False)
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
@@ -1487,6 +1548,11 @@ def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, f
         nda = np.loadtxt(fname, dtype=np.float32) if fname is not None else\
               nda_def*GAIN_FACTOR_DEF[igm] if ctype in ('gain', 'gainci') else\
               nda_def 
+
+        # 2021-05-11 by Philip request use pedestals_FL for AHL-L, AML-L
+        if fname is not None and ctype == 'pedestals':
+            if gm in ('AHL-L', 'AML-L'):
+                nda = load_panel_constants(dir_ctype, 'pedestals_FL', tstamp)
 
         # normalize gains for ctype 'gainci'
         if fname is not None and ctype == 'gainci':
