@@ -18,6 +18,8 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(levelname)s: %(name)s %(message)s', level=logging.DEBUG) # INFO #DEBUG
 
+logging.getLogger('matplotlib').setLevel(logging.INFO)
+
 ##-----------------------------
 
 tname = sys.argv[1] if len(sys.argv)>1 else '1'
@@ -123,6 +125,11 @@ elif tname=='18' :
 elif tname=='101' :
     dsname = 'exp=meclu5717:run=3'
     src = 'MecTargetChamber.0:Jungfrau.0'
+    #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
+
+elif tname=='102' :
+    dsname = 'exp=xcslw6819:run=72'
+    src = 'XcsEndstation.0:iStar.0'
     #psana.setOption('psana.calib-dir', '/reg/g/psdm/detector/data_test/calib/')
 
 #dsname, src = 'exp=cxii8715:run=15', 'CxiEndstation.0:Quartz4A150.0' # alias='Sc1Questar'

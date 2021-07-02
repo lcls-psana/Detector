@@ -102,6 +102,7 @@ def loop_run_step_evt(**kwa):
     runs = kwa.get('runs', None) #342,343
     events  = kwa.get('events', 10000000)
     evskip  = kwa.get('evskip', 0)
+    evtkeys = kwa.get('evtkeys', 3)
     steps   = kwa.get('steps', 1000)
     stskip  = kwa.get('stskip', 0)
     stepnum = kwa.get('stepnum', None)
@@ -109,6 +110,7 @@ def loop_run_step_evt(**kwa):
 
     logger.info('runnum: %s' % runnum)
     logger.info('info_det: %s' % info_det(det, runnum, ds.env()))
+    logger.info('calibDir: %s' % ds.env().calibDir())
 
     str_evt_keys = None
 
@@ -153,6 +155,10 @@ def loop_run_step_evt(**kwa):
             print('  ievt %04d - BREAK EVENT LOOP due to --evskip %d' % (ievt, events))
             break
 
+          if ievt<evskip+evtkeys or str_evt_keys is None:
+            str_evt_keys = info_evt_keys(evt, fmt=' %s', sep='\n  ', title='\n evt.keys:')
+            print('%s\n' % str_evt_keys)
+
           if det is None:
               msg = '\nTO LOOK AT DATA DEFINE ONE OF THE DETECTORS IN OPTION --detname or -d' 
               sys.exit(msg)
@@ -160,10 +166,6 @@ def loop_run_step_evt(**kwa):
           raw = det.raw(evt)
           if raw is not None: 
               ngood+=1
-
-              if str_evt_keys is None:
-                str_evt_keys = info_evt_keys(evt, fmt=' %s', sep='\n  ', title='\n evt.keys:')
-                print('%s\n' % str_evt_keys)
 
           s = info_ndarr(raw,' ievt: %04d raw'%ievt)
           print(s, end='\r')
@@ -212,6 +214,7 @@ def argument_parser():
     d_runs    = None # 342 # None # '66' # 1021 or 1021,1022-1025
     d_events  = 1000000
     d_evskip  = 0
+    d_evtkeys = 2
     d_steps   = 1000
     d_stskip  = 0
     d_stepnum = None
@@ -224,6 +227,7 @@ def argument_parser():
     h_runs    = 'run number or list of runs e.g. 12,14,18 or 12, default = %s' % str(d_runs)
     h_events  = 'maximal number of events total (in runs, steps), default = %s' % d_events
     h_evskip  = 'number of events to skip in the beginning of each step, default = %s' % d_evskip
+    h_evtkeys  = 'number of events to print event keys, default = %s' % d_evtkeys
     h_steps   = 'number of steps in each run, default = %s' % d_steps
     h_stskip  = 'number of steps to skip in the beginning of each run, default = %s' % d_stskip
     h_stepnum = 'step index (int)[0:...] to show details, default = %s' % d_stepnum
@@ -237,6 +241,7 @@ def argument_parser():
     parser.add_argument('-r', '--runs',    type=str, help=h_runs)
     parser.add_argument('-n', '--events', default=d_events, type=int, help=h_events)
     parser.add_argument('-m', '--evskip', default=d_evskip, type=int, help=h_evskip)
+    parser.add_argument('-k', '--evtkeys', default=d_evtkeys, type=int, help=h_evtkeys)
     parser.add_argument('-L', '--logmode', default=d_logmode, type=str, help=h_logmode)
     parser.add_argument('--dssuffix', default=d_dssuffix, type=str, help=h_dssuffix)
     parser.add_argument('--steps', default=d_steps, type=int, help=h_steps)
