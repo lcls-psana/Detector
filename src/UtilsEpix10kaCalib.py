@@ -1550,9 +1550,15 @@ def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, f
               nda_def 
 
         # 2021-05-11 by Philip request use pedestals_FL for AHL-L, AML-L
+        # 2021-07-04 by Philip request use pedestals_FL + offsetph_AML for AML-L
         if fname is not None and ctype == 'pedestals':
             if gm in ('AHL-L', 'AML-L'):
                 nda = load_panel_constants(dir_ctype, 'pedestals_FL', tstamp)
+                dir_offset = dir_ctype.rsplit('/',1)[0] + '/offset'
+                offset = load_panel_constants(dir_offset, 'offsetph_AML', tstamp) if gm == 'AML-L' else\
+                         load_panel_constants(dir_offset, 'offsetph_AHL', tstamp) if gm == 'AHL-L' else\
+                         None
+                if offset is not None: nda += offset
 
         # normalize gains for ctype 'gainci'
         if fname is not None and ctype == 'gainci':
@@ -1785,6 +1791,85 @@ def deploy_constants(*args, **opts):
 
 #--------------------
 
+CTYPES = ('offset', 'offsetph', 'gain', 'gainci', 'pedestals', 'rms', 'status')
+
+def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
+    """2021-07-04 added by Philip request.
+       Splits and saves input numpy array of the detector calibration constants for specified ctype and gain mode in the repository for panels.
+       Parameters
+       - nda (np.ndarray) - array of calibration constants for entire detector (<number-of-panels>, 352, 384)
+       - exp (str) - experiment name
+       - runnum (int) - run number to access info from dataset
+       - detname (str) - detector name, e.g.: 'MfxEndstation.0:Epix10ka2M.0'
+       - gmode (str) - switching gain mode 'AML' or 'AHL'
+       - kwargs: (**dict)
+           - dirrepo (str) - top directory for constants repository
+           - ctype (str) - type of calibration constants, default 'offset'
+           - fmt (str) - data format in output file, e.g.: '%.6f'
+           - filemode (int) - file access mode
+           - dirmode (int) - directory access mode
+           - tstamp (str) - time stamp added to the deployed file name, overrides the time stamp from dataset
+           - rundepl (int) - run number added to the deployed file name, overrides the run number from dataset
+    """
+    assert isinstance(nda, np.ndarray), 'input array of offsets type:%s is not a numpy array' % type(nda)
+
+    dirrepo    = kwargs.get('dirrepo', CALIB_REPO_EPIX10KA)
+    ctype      = kwargs.get('ctype', 'offset')
+    fmt        = kwargs.get('fmt', '%.6f')
+    filemode   = kwargs.get('filemode', 0o666)
+    dirmode    = kwargs.get('dirmode', 0o777)
+
+    dsname = 'exp=%s:run=%d'%(exp,runnum)
+
+    cpdic = get_config_info_for_dataset_detname(dsname, detname) #, idx=0
+    panel_ids = cpdic.get('panel_ids', None)
+    tstamp_ds = cpdic.get('tstamp', None)
+    #dettype  = cpdic.get('dettype', None)
+    #shape    = cpdic.get('shape', None)
+    tstamp  = kwargs.get('tstamp', tstamp_ds)
+    rundepl = kwargs.get('rundepl', runnum)
+
+    assert nda.shape[0]==len(panel_ids), 'shape of input array %s is inconsistent with length=%d of the list of panels in data'%\
+       (str(nda.shape), len(panel_ids))
+
+    assert ctype in CTYPES
+
+    valid_gmodes = ('AML', 'AHL') if ctype in ('offset', 'offsetph') else GAIN_MODES
+    assert gmode in valid_gmodes, 'wrong name of the gain mode: %s'% str(gmode)
+
+    ict = CTYPES.index(ctype) # index of the selected ctype in the tuple of CTYPES
+
+    logging.info('dsname:  %s'% dsname)
+    logging.info('detname: %s'% detname)
+    logging.info('ctype:   %s'% ctype)
+    logging.info('tstamp:  %s'% tstamp)
+
+    for idx, panel_id in enumerate(panel_ids):
+
+        arr2d = nda[idx,:]
+
+        dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
+        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, rundepl)
+        prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
+                path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
+
+        cdir   = (dir_offset,    dir_offset,    dir_gain,    dir_gain,    dir_peds,    dir_rms,    dir_status)[ict]
+        prefix = (prefix_offset, prefix_offset, prefix_gain, prefix_gain, prefix_peds, prefix_rms, prefix_status)[ict]
+        logging.debug('cdir: %s'% cdir)
+        logging.debug('prefix: %s'% prefix)
+
+        create_directory(dir_panel,  mode=dirmode)
+        create_directory(cdir, mode=dirmode)
+
+        fname= '%s_%s_%s.dat' % (prefix, ctype, gmode)
+
+        logging.info('%s\n  panel %02d: %s'% (78*'_', idx, panel_id)\
+          + info_ndarr(arr2d, '\n  arr2d'))
+
+        save_2darray_in_textfile(arr2d, fname, filemode, fmt)
+
+#--------------------
+
 if __name__ == "__main__":
 
     DIR_XTC_TEST = '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
@@ -1839,6 +1924,22 @@ if __name__ == "__main__":
                            #dirxtc  = DIR_XTC_TEST,\
                            dirrepo = './work',\
                            display = True)
+#--------------------
+
+    def test_save_epix10ka_ctype_in_repo(tname):
+        #nda = np.load('/reg/d/psdm/mfx/mfxlx4219/results/ePix10k2m/hockey/FL/hockeyOffsetInAdu.npy')
+        nda = np.load('/reg/g/psdm/detector/data_test/npy/offsetph-mfxlx4219-r0356-epix10ka2m-16-352-384.npy')
+        logging.info(info_ndarr(nda, 'nda'))
+        exp = 'mfxlx4219'
+        detname = 'MfxEndstation.0:Epix10ka2M.0'
+        runnum = 356
+        rundepl = 111
+        tstamp = '20210516000000'
+        ctype, gmode, fmt = 'offsetph', 'AML', '%.6f'
+        #ctype, gmode, fmt = 'pedestals', 'FL', '%.3f'
+        dirrepo = './panels'
+        save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, ctype=ctype, dirrepo=dirrepo, fmt=fmt, rundepl=rundepl, tstamp=tstamp)
+
 
 #--------------------
 
@@ -1865,6 +1966,7 @@ if __name__ == "__main__":
     elif tname == '4': test_offset_calibration_epix10ka2m(tname)
     elif tname == '5': test_pedestals_calibration_epix10ka2m(tname)
     elif tname == '6': test_deploy_constants_epix10ka2m(tname)
+    elif tname == '7': test_save_epix10ka_ctype_in_repo(tname)
     else: sys.exit('Not recognized test name: "%s"' % tname)
     sys.exit('End of %s' % sys.argv[0])
 

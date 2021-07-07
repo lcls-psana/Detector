@@ -8,6 +8,12 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V02-00-22
+2021-07-04 Mikhail Dubrovin
+- by Philip request add method save_epix10ka_ctype_in_repo with tests
+	new file:   examples/ex_epix10ka_save_ctype_in_repo.py
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V02-00-21
 2021-07-01 Mikhail Dubrovin
 - app/datinfo - add printing of event_keys - need it for unknown detector name
