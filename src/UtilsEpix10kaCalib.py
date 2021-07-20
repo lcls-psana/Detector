@@ -1305,7 +1305,6 @@ def load_panel_constants(dir_ctype, pattern, tstamp):
         logger.info('Loaded: %s' % fname)
     else:
         logger.warning('file DOES NOT EXIST: %s' % fname)
-        logger.warning('DO NOT save save constants for missing files')
     return arr
 
 
@@ -1551,14 +1550,18 @@ def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, f
 
         # 2021-05-11 by Philip request use pedestals_FL for AHL-L, AML-L
         # 2021-07-04 by Philip request use pedestals_FL + offsetph_AML for AML-L
-        if fname is not None and ctype == 'pedestals':
-            if gm in ('AHL-L', 'AML-L'):
+        if fname is None and ctype == 'pedestals':
+            if gm in GAIN_MODES[5:]: #('AHL-L', 'AML-L'):
+                logger.info('try to use pedestals_FL + offsetph_AML/AHL files for gain mode %s'%gm)
                 nda = load_panel_constants(dir_ctype, 'pedestals_FL', tstamp)
                 dir_offset = dir_ctype.rsplit('/',1)[0] + '/offset'
                 offset = load_panel_constants(dir_offset, 'offsetph_AML', tstamp) if gm == 'AML-L' else\
                          load_panel_constants(dir_offset, 'offsetph_AHL', tstamp) if gm == 'AHL-L' else\
                          None
                 if offset is not None: nda += offset
+                else:
+                    logger.warning('USE DEFAULT constants for missing file of type offsetph_AML/AHL for gain mode %s'%gm)
+                    nda = nda_def
 
         # normalize gains for ctype 'gainci'
         if fname is not None and ctype == 'gainci':

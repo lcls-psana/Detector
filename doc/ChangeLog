@@ -8,6 +8,10 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V02-00-23
+2021-07-19 Mikhail Dubrovin
+- UtilsEpix10kaCalib.py - fix algorithm for saving pedestals with offsetph
+
 Tag: V02-00-22
 2021-07-04 Mikhail Dubrovin
 - by Philip request add method save_epix10ka_ctype_in_repo with tests
