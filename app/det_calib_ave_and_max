@@ -26,11 +26,9 @@ dsname  = sys.argv[1]      if nargs>1 else 'exp=cxilv9518:run=8'
 detname = sys.argv[2]      if nargs>2 else 'CxiDs1.0:Jungfrau.0'
 EVENTS  = int(sys.argv[3]) if nargs>3 else 3
 EVSKIP  = int(sys.argv[4]) if nargs>4 else 0
-CALIBDIR= sys.argv[5]      if nargs>5 else None
+CALIBDIR= sys.argv[5]      if nargs>5 else 'None'
 LOGLEV  = sys.argv[6]      if nargs>6 else 'INFO'
 prefix   = 'det-calib'
-
-if CALIBDIR is 'None': CALIBDIR = None
 
 DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.items() if isinstance(k, str)}
 logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[LOGLEV])
@@ -44,7 +42,9 @@ nda_max = None
 
 if True:
 
-    if CALIBDIR is not None: setOption('psana.calib-dir', CALIBDIR)
+    if CALIBDIR != 'None':
+        setOption('psana.calib-dir', CALIBDIR)
+        logging.info('set non-default psana.calib-dir:' + str(CALIBDIR))
 
     ds = DataSource(dsname)
     det = Detector(detname)
