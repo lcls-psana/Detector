@@ -95,7 +95,7 @@ detectors = {
     "Archon"      : AreaDetector,
     "iStar"       : AreaDetector,
     "QuadAdc"     : GenericWFDetector,
-
+    "Alvium"      : AreaDetector,
 }
 
 

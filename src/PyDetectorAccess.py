@@ -710,6 +710,7 @@ class PyDetectorAccess(object):
         elif self.dettype == gu.ZYLA      : return self.raw_data_zyla(evt, env)
         elif self.dettype == gu.ISTAR     : return self.raw_data_istar(evt, env)
         elif self.dettype == gu.UXI       : return self.raw_data_uxi(evt, env)
+        elif self.dettype == gu.ALVIUM    : return self.raw_data_alvium(evt, env)
         else                              : return None
 
 
@@ -1051,6 +1052,18 @@ class PyDetectorAccess(object):
 
 
 
+    def raw_data_alvium(self, evt, env):
+        # data object
+        d = pda.get_vimba_data_object(evt, self.source)
+        if d is None: return None
+
+        # configuration object
+        #c = pda.get_alvium_config_object(env, self.source)
+        #if c is None: return None
+        #print('config: width: %d, height: %d' % (c.width(), c.height()))
+
+        nda = d.data()
+        return nda if nda is not None else None
 
 
 
@@ -1480,6 +1493,13 @@ class PyDetectorAccess(object):
         #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
 
 
+    def shape_config_alvium(self, env):
+        # configuration from data file
+        c = pda.get_alvium_config_object(env, self.source)
+        if c is None: return None
+        return (c.numPixelsY(), c.numPixelsX())
+        #return (c.height()/c.binY(), c.width()/c.binX())  # (1024, 1024)
+
 
     def shape_config_epicscam(self, env):
         c = pda.get_epicscam_config_object(env, self.source)
@@ -1580,6 +1600,7 @@ class PyDetectorAccess(object):
         elif self.dettype == gu.UXI       : return self.shape_config_uxi(env)
         elif self.dettype == gu.PIXIS     : return self.shape_config_pixis(env)
         elif self.dettype == gu.ARCHON    : return self.shape_config_archon(env)
+        elif self.dettype == gu.ALVIUM    : return self.shape_config_alvium(env)
 
         # waveform detectors:
         #elif self.dettype == gu.ACQIRIS   : return self.shape_config_acqiris(env)

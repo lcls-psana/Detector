@@ -8,6 +8,13 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V02-00-25
+2021-09-22 Daniel Damiani
+- add support for Alvium detector
+	modified:   src/DetectorTypes.py
+	modified:   src/PyDataAccess.py
+	modified:   src/PyDetectorAccess.py
+
 Tag: V02-00-24
 2021-08-27 Mikhail Dubrovin
 - app/det_calib_ave_and_max - fix issue with CALIBDIR=None

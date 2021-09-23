@@ -568,6 +568,27 @@ def get_istar_config_object(env, src) :
 
 ##-----------------------------
 
+def get_vimba_data_object(evt, src) :
+    """get vimba data object
+    """
+    o = evt.get(_psana.Vimba.FrameV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
+def get_alvium_config_object(env, src) :
+    """get alvium config object
+    """
+    cfg = env.configStore()
+    o = cfg.get(_psana.Vimba.AlviumConfigV1, src)
+    if o is not None : return o
+
+    return None
+
+##-----------------------------
+
 def get_jungfrau_data_object(evt, src) :
     """get jungfrau data object
     """
