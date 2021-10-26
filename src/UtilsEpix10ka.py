@@ -33,7 +33,6 @@ get_epix10ka_data_object = get_epix_data_object
 
 # CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
 
-#--------------------
 
 GAIN_MODES    = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
 GAIN_MODES_IN = ['FH','FM','FL','AHL-H','AML-M']
@@ -43,7 +42,6 @@ B04 =    0o20 #    16 or 1<<4   (5-th bit starting from 1)
 B05 =    0o40 #    32 or 1<<5   (6-th bit starting from 1)
 M14 =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
-#--------------------
 
 class Storage:
     def __init__(self):
@@ -52,12 +50,11 @@ class Storage:
         self.mask = None
         self.counter = -1
 
-#--------------------
 dic_store = {} # {det.name:Storage()} in stead of singleton
-#--------------------
+
 
 def config_objects(env, src, idx=0):
-    """ Returns configuration objects for detector, quad, element; 
+    """ Returns configuration objects for detector, quad, element;
         dco,qco,eco (or None depending on detector) of types
         psana.Epix.Config10ka2MV1 or psana.Epix.Config10ka2MV1
         psana.Epix.Config10kaQuadV1 or psana.Epix.Config10kaQuadV2
@@ -76,7 +73,6 @@ def config_objects(env, src, idx=0):
                     (str(env), str(src), str(idx)))
     return None, None, None
 
-#--------------------
 
 def cbits_config_epix10ka(cob):
     """Returns array of control bits shape=(352, 384) from psana.Epix.Config10ka object
@@ -91,7 +87,7 @@ def cbits_config_epix10ka(cob):
     trbits = [cob.asics(i).trbit() for i in range(cob.numberOfAsics())] # 4 ASIC trbits, ex: [1,1,1,1]
     #logger.debug('In cbits_config_epix10ka cob: %s trbits: %s' %  (str(cob), str(trbits)))
 
-    # begin to create array of control bits 
+    # begin to create array of control bits
     pca = cob.asicPixelConfigArray()
     cbits = np.bitwise_and(pca,12) # 014 (bin:1100)
 
@@ -105,7 +101,6 @@ def cbits_config_epix10ka(cob):
         if trbits[1]: cbits[:176,192:] = np.bitwise_or(cbits[:176,192:], B04)
     return cbits
 
-#------------------------------
 
 def cbits_config_epix10kaquad(qcob):
     """Returns array of control bits shape=(4, 352, 384) from psana.Epix.Config10kaQuadV1
@@ -116,7 +111,6 @@ def cbits_config_epix10kaquad(qcob):
     #              (str(qcob), qcob.numberOfElements(), info_ndarr(cbits, 'cbits for epix10kaquad')))
     return cbits
 
-#--------------------
 
 def cbits_config_epix10ka2m(dcob):
     """Returns array of control bits shape=(16, 352, 384) from psana.Epix.Config10ka2MV1 object
@@ -126,8 +120,7 @@ def cbits_config_epix10ka2m(dcob):
     #logger.debug('In cbits_config_epix10ka2m cob: %s numberOfElements: %d\n %s'%\
     #              (str(dcob), dcob.numberOfElements(), info_ndarr(cbits, 'cbits for epix10ka2m')))
     return cbits
-       
-#--------------------
+
 
 def cbits_config_epix10ka_any(env, src):
     """Returns array of control bits shape=(16, 352, 384) from any config object
@@ -143,27 +136,26 @@ def cbits_config_epix10ka_any(env, src):
 
     return None
 
-#--------------------
 
 def cbits_total_epix10ka_any(det, data=None):
-    """Returns array of control bits shape=(16, 352, 384) 
+    """Returns array of control bits shape=(16, 352, 384)
        from any config object and data array.
+
+       get 5-bit pixel config array with bit assignments
+         0001 = 1<<0 = 1 - T test bit
+         0010 = 1<<1 = 2 - M mask bit
+         0100 = 1<<2 = 4 - g  gain bit
+         1000 = 1<<3 = 8 - ga gain bit
+       010000 = 1<<4 = 16 - trbit 1/0 for H/M
+       add data bit
+       100000 = 1<<5 = 32 - data bit 14
     """
+
     cbits = cbits_config_epix10ka_any(det.env, det.source)
     #logger.debug(info_ndarr(cbits, 'cbits', first, last))
-    
+
     if cbits is None: return None
 
-    #--------------------------------
-    # get 5-bit pixel config array with bit assignments
-    #   0001 = 1<<0 = 1 - T test bit
-    #   0010 = 1<<1 = 2 - M mask bit
-    #   0100 = 1<<2 = 4 - g  gain bit
-    #   1000 = 1<<3 = 8 - ga gain bit
-    # 010000 = 1<<4 = 16 - trbit 1/0 for H/M
-    # add data bit
-    # 100000 = 1<<5 = 32 - data bit 14
-    #--------------------------------
     if data is not None:
         #logger.debug(info_ndarr(data, 'data', first, last))
         # get array of data bit 14 and add it as a bit 5 to cbits
@@ -174,37 +166,35 @@ def cbits_total_epix10ka_any(det, data=None):
 
     return cbits
 
-#--------------------
 
 def gain_maps_epix10ka_any(det, data=None):
-    """Returns maps of gain groups shape=(16, 352, 384) 
+    """Returns maps of gain groups shape=(16, 352, 384)
+
+    cbits - pixel control bit array
+    -------------------------------
+       data bit 14 is moved here 1/0 for H,M/L
+      / trbit  1/0 for H/M
+     V / bit3  1/0 for F/A
+      V / bit2 1/0 for H,M/L
+       V / M   mask
+        V / T  test       gain range index
+         V /             /  in calib files
+          V             V
+     x111xx =28 -  FH_H 0
+     x011xx =12 -  FM_M 1
+     xx10xx = 8 -  FL_L 2
+     0100xx =16 - AHL_H 3
+     0000xx = 0 - AML_M 4
+     1100xx =48 - AHL_L 5
+     1000xx =32 - AML_L 6
+
+     111100 =60 - cbitsM60 - mask
+     011100 =28 - cbitsM28 - mask
+     001100 =12 - cbitsM12 - mask
     """
+
     cbits = cbits_total_epix10ka_any(det, data)
     if cbits is None: return None
-
-    #--------------------------------
-    # cbits - pixel control bit array
-    #--------------------------------
-    #   data bit 14 is moved here 1/0 for H,M/L
-    #  / trbit  1/0 for H/M
-    # V / bit3  1/0 for F/A
-    #  V / bit2 1/0 for H,M/L
-    #   V / M   mask
-    #    V / T  test       gain range index
-    #     V /             /  in calib files
-    #      V             V 
-    # x111xx =28 -  FH_H 0 
-    # x011xx =12 -  FM_M 1 
-    # xx10xx = 8 -  FL_L 2
-    # 0100xx =16 - AHL_H 3
-    # 0000xx = 0 - AML_M 4
-    # 1100xx =48 - AHL_L 5
-    # 1000xx =32 - AML_L 6
-    #--------------------------------
-    # 111100 =60 - cbitsM60 - mask 
-    # 011100 =28 - cbitsM28 - mask 
-    # 001100 =12 - cbitsM12 - mask 
-    #--------------------------------
 
     cbitsM60 = cbits & 60 # control bits masked by configuration 3-bit-mask
     cbitsM28 = cbits & 28 # control bits masked by configuration 3-bit-mask
@@ -220,10 +210,9 @@ def gain_maps_epix10ka_any(det, data=None):
     gr6 = (cbitsM60 == 32)
 
     #first = 10000; logger.debug(info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first, first+5))
-        
+
     return gr0, gr1, gr2, gr3, gr4, gr5, gr6
 
-#--------------------
 
 def info_gain_mode_arrays1(gmaps, first=0, last=5):
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
@@ -240,7 +229,6 @@ def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
     """DEPRECATED"""
     return info_gain_mode_arrays1((gr0, gr1, gr2, gr3, gr4, gr5, gr6), first, last)
 
-#--------------------
 
 def pixel_gain_mode_statistics1(gmaps):
     """returns statistics of pixels in defferent gain modes in gain maps
@@ -260,7 +248,6 @@ def pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     """DEPRECATED"""
     return pixel_gain_mode_statistics1((gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
-#--------------------
 
 #def pixel_gain_mode_fractions(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
 def pixel_gain_mode_fractions(det, data):
@@ -273,7 +260,6 @@ def pixel_gain_mode_fractions(det, data):
     f = 1.0/gr0.size
     return [npix*f for npix in pix_stat]
 
-#--------------------
 
 def info_pixel_gain_mode_fractions(det, raw, msg='pixel gain mode fractions : '):
     """returns (str) with fraction of pixels in defferent gain modes in gain maps
@@ -281,7 +267,6 @@ def info_pixel_gain_mode_fractions(det, raw, msg='pixel gain mode fractions : ')
     grp_prob = pixel_gain_mode_fractions(det, raw)
     return '%s%s' % (msg, ', '.join(['%.5f'%p for p in grp_prob]))
 
-#--------------------
 
 def info_pixel_gain_mode_statistics1(gmaps):
     """returns (str) with statistics of pixels in defferent gain modes in gain maps
@@ -293,7 +278,6 @@ def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     """DEPRECATED"""
     return info_pixel_gain_mode_statistics1((gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
-#--------------------
 
 def info_pixel_gain_mode_statistics_for_raw(det, raw, msg='pixel gain mode statistics: '):
     """returns (str) with statistics of pixels in defferent gain modes in raw data
@@ -303,7 +287,6 @@ def info_pixel_gain_mode_statistics_for_raw(det, raw, msg='pixel gain mode stati
     #gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     return '%s%s' % (msg, info_pixel_gain_mode_statistics1(gmaps))
 
-#--------------------
 
 def map_pixel_gain_mode1(gmaps):
     """returns map of pixel gain modes shaped as (16/4, 352, 384)
@@ -317,16 +300,14 @@ def map_pixel_gain_mode1(gmaps):
 def map_pixel_gain_mode(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     return map_pixel_gain_mode1((gr0, gr1, gr2, gr3, gr4, gr5, gr6))
 
-#--------------------
 
 def map_pixel_gain_mode_for_raw(det, raw):
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None: return None
     return map_pixel_gain_mode1(gmaps)
 
-#--------------------
 
-def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=1, mask=None, nda_raw=None and 
+def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=1, mask=None, nda_raw=None
     """
     Returns calibrated epix10ka data
 
@@ -372,7 +353,7 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
         logger.debug('create store for detector %s' % det.name)
         store = dic_store[det.name] = Storage()
 
-        # do ONCE this initialization 
+        # do ONCE this initialization
         logger.debug(info_ndarr(raw,  '\n  raw ')\
                     +info_ndarr(gain, '\n  gain')\
                     +info_ndarr(peds, '\n  peds'))
@@ -415,13 +396,13 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
 
     arrf = np.array(raw & M14, dtype=np.float32) - pedest
 
-    if store.mask is None: 
+    if store.mask is None:
         mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
         mask = det.mask_comb(evt, mbits, **kwa) if mbits > 0 else None
         mask_opt = kwa.get('mask',None) # mask optional parameter in det.calib(...,mask=...)
         if mask_opt is not None:
            store.mask = mask_opt if mask is None else merge_masks(mask,mask_opt)
-    mask = store.mask        
+    mask = store.mask
 
     logger.debug('common-mode correction pars cmp: %s' % str(cmp))
 
@@ -462,11 +443,9 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
 
     return arrf * factor if mask is None else arrf * factor * mask # gain correction
 
-#--------------------
 
 calib_epix10ka = calib_epix10ka_any
 
-#--------------------
 
 def find_gain_mode(det, data=None):
     """Returns str gain mode from the list GAIN_MODES or None.
@@ -497,14 +476,11 @@ def find_gain_mode(det, data=None):
 
     ind = next((i for i,p in enumerate(grp_prob) if p>0.5), None)
     if ind is None: return None
-    gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None 
+    gain_mode = GAIN_MODES[ind] if ind<len(grp_prob) else None
     #logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
 
     return gain_mode
 
-#--------------------
-#--------------------
-#--------------------
 
 if __name__ == "__main__":
 
@@ -514,22 +490,19 @@ if __name__ == "__main__":
 
   EVENTS  = 5
 
-#--------------------
-
   # See Detector.examples.ex_source_dsname
-  def ex_source_dsname(tname): 
+  def ex_source_dsname(tname):
     src, dsn = 'MfxEndstation.0:Epix10ka.0', 'exp=mfxx32516:run=346' # 'Epix10ka_0', run=377
     if   tname == '1': pass
     elif tname == '2': src, dsn = 'NoDetector.0:Epix10ka.3',\
                                   'exp=mfxx32516:run=1021:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
-    elif tname == '10': src, dsn = 'MfxEndstation.0:Epix10ka.1', 'exp=mfxx32516:run=377' 
+    elif tname == '10': src, dsn = 'MfxEndstation.0:Epix10ka.1', 'exp=mfxx32516:run=377'
     else: sys.exit('Non-implemented sample for test number # %s' % tname)
     return src, dsn
 
-#--------------------
 
   def test_config_data(tname):
-    
+
     ssrc, dsname = ex_source_dsname(tname)
     print('Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc))
 
@@ -547,10 +520,9 @@ if __name__ == "__main__":
     epix_name = 'epix-%s' % id_epix(confo)
     print('epix_name: %s' % epix_name)
 
-#--------------------
 
   def test_calib(tname):
-    
+
     ssrc, dsname = ex_source_dsname(tname)
     print('Test: %s\n  dataset: %s\n  source: %s' % (tname, dsname, ssrc))
 
@@ -560,7 +532,7 @@ if __name__ == "__main__":
     src = psana.Source(ssrc)
 
     for nev,evt in enumerate(ds.events()):
-    
+
         if nev > EVENTS: break
         print('%s\nEvent %4d' % (50*'_', nev))
         if evt is None: continue
@@ -584,7 +556,6 @@ if __name__ == "__main__":
 
         #nda = d.calib(evt, cmppars=(8,5,500))
 
-#--------------------
 
 if __name__ == "__main__":
     print(80*'_')
@@ -595,4 +566,4 @@ if __name__ == "__main__":
     else: sys.exit ('Not recognized test name: "%s"' % tname)
     sys.exit('End of %s' % sys.argv[0])
 
-#--------------------
+# EOF
