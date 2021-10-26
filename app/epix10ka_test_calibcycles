@@ -13,7 +13,7 @@ from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_obje
                             get_epix10ka_any_config_object, find_gain_mode,\
      info_pixel_gain_mode_statistics_for_raw, info_pixel_gain_mode_fractions
 
-#----------
+
     #ds = DataSource('exp=detdaq18:run=14:smd')
     #ds = DataSource('exp=detdaq18:run=18:smd') # good dark calib-cycles: FH, FM, FL, AHL-H, AML_M
     #ds = DataSource('exp=detdaq18:run=27-29:smd')
@@ -23,12 +23,12 @@ from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_obje
     #ds = DataSource('exp=detdaq18:run=39:smd')
     #ds = DataSource('exp=detdaq18:run=40:smd')
     #det = Detector('DetLab.0:Epix10ka2M.0')
-#----------
+
 
 def argument_parser():
 
     import argparse
-    
+
     d_dsname  = 'exp=detdaq18:run=51:smd'
     d_detname = 'DetLab.0:Epix10ka2M.0'
     d_prefix  ='./img'
@@ -45,7 +45,7 @@ def argument_parser():
           + '\n  or: %s %s -i -e -p -S 5 # skip 5 calib-cycles and plot graphics' % (scrname, d_dsname)\
           + '\n  or: %s %s -e -p -s --detname %s -f %s' % (scrname, d_dsname, d_detname, d_prefix)
     print(usage)
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('dsname', type=str, default=d_dsname, help="dataset, default: %s"%d_dsname)
     parser.add_argument('-d', '--detname', type=str, default=d_detname, help="detname, default: %s"%d_detname)
@@ -56,17 +56,16 @@ def argument_parser():
     parser.add_argument('-s', '--save', default=d_save, help='save graphics, default: %s'%d_save, action='store_true')
     parser.add_argument('-i', '--objinfo', default=d_objinfo, help='print objcts info, default: %s'%d_objinfo, action='store_false')
     parser.add_argument('-S', '--skip', default=d_skip, type=int, help='skip initial number of calibcycles, default: %d'%d_skip)
-    parser.add_argument('-L', '--logmode', type=str, default=d_logmode, help=h_logmode)    
+    parser.add_argument('-L', '--logmode', type=str, default=d_logmode, help=h_logmode)
 
     args = parser.parse_args()
     print('Arguments: %s\n' % str(args))
-    for k,v in vars(args).items() : print('  %12s : %s' % (k, str(v)))
- 
+    for k,v in vars(args).items(): print('  %12s : %s' % (k, str(v)))
+
     logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[args.logmode])
 
     return args
 
-#----------
 
 args = argument_parser()
 
@@ -79,7 +78,7 @@ PROC_EVENT = args.procev
 OBJINFO    = args.objinfo
 SKIPNCC    = args.skip
 
-if DO_PLOT: 
+if DO_PLOT:
     import pyimgalgos.Graphics as gr
     fig = gr.figure(figsize=(10,9), title='Image', dpi=80, facecolor='w', edgecolor='w', frameon=True, move=None)
     fig, axim, axcb = gr.fig_img_cbar_axes(fig, win_axim=(0.05,  0.03, 0.87, 0.93), win_axcb=(0.923, 0.03, 0.02, 0.93))
@@ -169,17 +168,16 @@ def info_config(cfg):
     if e0 is not None: info_elemCfg(e0)
     if a0 is not None: info_asic(a0)
 
-#----------
 
 def do_work():
 
     ds  = DataSource(DSNAME)
     cd  = Detector('ControlData')
     det = Detector(DETNAME)
-    
+
     idx = 0
     #print('=== cd:', dir(cd))
-    
+
     nstep = -1
     for run in ds.runs():
       env = run.env()
@@ -200,7 +198,7 @@ def do_work():
             print('  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value()))
 
 
-        if nstep<SKIPNCC : 
+        if nstep<SKIPNCC:
             print('    skip calibcycles < %d' % SKIPNCC)
             continue
 
@@ -213,7 +211,7 @@ def do_work():
           if nev > PROC_EVENT: continue
 
           raw = det.raw(evt)
-          
+
           if raw is None:
               print('Ev:%2d raw is None' % nev)
               continue
@@ -243,13 +241,12 @@ def do_work():
                       ofname = '%s-%s-r%04d-s%03d-e%04d-seg%02d.png'%\
                            (PREFIX, str(det.name).replace(':','-').replace('.','-'), run.run(), nstep, nevgood, idx)
                       gr.save_fig(fig, fname=ofname, verb=True)
-    
+
         print('%sstep: %03d contains %d/%d good/total events in run' % (10*' ', nstep, nevgood, nev))
-    
+
         if PROC_EVENT and nevgood<0: nstep -= 1
 
-#----------
 
 do_work()
 
-#----------
+# EOF
