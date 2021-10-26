@@ -40,24 +40,24 @@ def issue_2021_01_13():
        but ana-4.0.9-py3 shows some error messages but then runs (see below).
        chris
     """
-    from psana import DataSource, Detector                    
-    #ds = DataSource(exp='ueddaq02',run=81)   
-    ds = DataSource('exp=xpplv6818:run=166')  
-    epix1 = Detector('epix_1')                
-    epix2M = Detector('epix10k2M')            
-    #for evt in ds.events():                   
+    from psana import DataSource, Detector
+    #ds = DataSource(exp='ueddaq02',run=81)
+    ds = DataSource('exp=xpplv6818:run=166')
+    epix1 = Detector('epix_1')
+    epix2M = Detector('epix10k2M')
+    #for evt in ds.events():
     for nevent,evt in enumerate(ds.events()):
         if nevent>5: break
-        img1 = epix1.image(evt)               
-        if img1 is None:                      
-            print('img1 none')                
-        else:                                 
-            print('img1',img1.shape)          
-        img2 = epix2M.image(evt)              
-        if img2 is None:                      
-            print('img2 none')                
-        else:                                 
-            print('img2',img2.shape)          
+        img1 = epix1.image(evt)
+        if img1 is None:
+            print('img1 none')
+        else:
+            print('img1',img1.shape)
+        img2 = epix2M.image(evt)
+        if img2 is None:
+            print('img2 none')
+        else:
+            print('img2',img2.shape)
 
 
 def id_epix10ka(co, ielem=0) :
@@ -117,7 +117,7 @@ def issue_2021_02_16():
        Hi Mikhail,
        I was looking into using the common mode correction for the jungfrau1M ini XPP.
        I wanted to start by comparing no common mode (7,0,10,10) to the ?optimum? (7,3,10,10).
-       This common mode works in the old psana, but not the new one. 
+       This common mode works in the old psana, but not the new one.
        Can you look into this? Am I calling this wrong?
        Best,
        Silke
@@ -290,7 +290,7 @@ def issue_2021_03_17():
         #if raw is None: continue
         #print('==== Event %2d '%i)
         #print(info_ndarr(raw, '  raw '))
-        #if not ecm.select(evt): continue 
+        #if not ecm.select(evt): continue
         #evt_codes = evrdet.eventCodes(evt)
         select = ecm.select(evt)
         #evt_codes = ecm.event_codes(evt)
@@ -452,6 +452,26 @@ def issue_2021_04_27():
     print(img.shape)
 
 
+def issue_2021_10_25():
+    """ISSUE: How to access calibration rows
+       REASON: try to use them for common mode correction
+    """
+    from psana import *
+    from Detector.PyDataAccess import get_epix_data_object
+    from Detector.GlobalUtils import info_ndarr
+
+    ds = DataSource('exp=xpplw2619:run=11:smd')
+    det = Detector('XppGon.0:Epix10ka2M.0')
+    for run in ds.runs():
+      for nevent,evt in enumerate(run.events()):
+        raw = det.raw(evt)
+        if raw is not None:
+          print(info_ndarr(raw,'raw')) #raw shape:(16, 352, 384) size:2162688 dtype:uint16 [3536 3487 3608 3625 3464...]
+          odata = get_epix_data_object(evt, det.source)
+          print(info_ndarr(odata.calibrationRows(),'calibrows')) #calibrows shape:(16, 4, 384) size:24576 dtype:uint16 [3091 2933 3057 2923 2996...]
+          break
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -481,6 +501,7 @@ USAGE = '\nUsage:'\
       + '\n   13 - issue_2021_03_24 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M configuration issue'\
       + '\n   14 - issue_2021_04_08 - my - exp=xcsx39718:run=222 too lonng run loop'\
       + '\n   15 - issue_2021_04-27 - Silke - exp=meclq8515:run=266 epix100a - det.image does not work'\
+      + '\n   16 - issue_2021_10-25 - Chris Kenney usage of calibration rows for common mode correction'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -500,6 +521,7 @@ elif TNAME in ('12',): issue_2021_03_18B()
 elif TNAME in ('13',): issue_2021_03_24()
 elif TNAME in ('14',): issue_2021_04_08()
 elif TNAME in ('15',): issue_2021_04_27()
+elif TNAME in ('16',): issue_2021_10_25()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
