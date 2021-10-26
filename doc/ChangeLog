@@ -1,6 +1,6 @@
-#--------------------------------------------------------------------------
+#-------------------------------------
 # ChangeLog file for package Detector
-#------------------------------------------------------------------------
+#-------------------------------------
 
 Package author: Mikhail Dubrovin
 
@@ -8,6 +8,13 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+
+???? Tag: V02-00-26
+2021-10-26 Mikhail Dubrovin
+modified: src/PyDataAccess.py, src/AreaDetector.py, app/epix10ka_test_calibcycles
+	- code cleaning - remove blanks and separators
+modified:   examples/test-issues-2021.py - add issue_2021_10-25
+
 Tag: V02-00-25
 2021-09-22 Daniel Damiani
 - add support for Alvium detector
