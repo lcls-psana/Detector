@@ -8,22 +8,10 @@ STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
 import sys
 from psana import DataSource, Detector
 from Detector.PyDataAccess import get_epix_config_object
-from Detector.GlobalUtils import info_ndarr, print_ndarr
-from Detector.UtilsEpix10ka import store, GAIN_MODES, GAIN_MODES_IN, config_objects,\
+from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record
+from Detector.UtilsEpix10ka import GAIN_MODES, GAIN_MODES_IN, config_objects,\
                             get_epix10ka_any_config_object, find_gain_mode,\
      info_pixel_gain_mode_statistics_for_raw, info_pixel_gain_mode_fractions
-
-
-    #ds = DataSource('exp=detdaq18:run=14:smd')
-    #ds = DataSource('exp=detdaq18:run=18:smd') # good dark calib-cycles: FH, FM, FL, AHL-H, AML_M
-    #ds = DataSource('exp=detdaq18:run=27-29:smd')
-    #ds = DataSource('exp=detdaq18:run=35-36:smd')
-    #ds = DataSource('exp=detdaq18:run=37:smd')
-    #ds = DataSource('exp=detdaq18:run=38:smd')
-    #ds = DataSource('exp=detdaq18:run=39:smd')
-    #ds = DataSource('exp=detdaq18:run=40:smd')
-    #det = Detector('DetLab.0:Epix10ka2M.0')
-
 
 def argument_parser():
 
@@ -50,7 +38,6 @@ def argument_parser():
     parser.add_argument('dsname', type=str, default=d_dsname, help="dataset, default: %s"%d_dsname)
     parser.add_argument('-d', '--detname', type=str, default=d_detname, help="detname, default: %s"%d_detname)
     parser.add_argument('-f', '--prefix', type=str, default=d_prefix, help='output file name prefix, default: %s'%d_prefix)
-    #parser.add_argument('-e', '--procev', default=d_procev, help='process events in loop, default: %s'%d_procev, action='store_true')
     parser.add_argument('-e', '--procev', type=int, default=d_procev, help='number of process events in calibcycle, default: %d'%d_procev)
     parser.add_argument('-p', '--plot', default=d_plot, help='plot graphics, default: %s'%d_plot, action='store_true')
     parser.add_argument('-s', '--save', default=d_save, help='save graphics, default: %s'%d_save, action='store_true')
@@ -83,7 +70,6 @@ if DO_PLOT:
     fig = gr.figure(figsize=(10,9), title='Image', dpi=80, facecolor='w', edgecolor='w', frameon=True, move=None)
     fig, axim, axcb = gr.fig_img_cbar_axes(fig, win_axim=(0.05,  0.03, 0.87, 0.93), win_axcb=(0.923, 0.03, 0.02, 0.93))
 
-#----------
 
 def info_quad(q):
     print('quad = cfg.quad(i)', q)
@@ -192,7 +178,7 @@ def do_work():
       for nstep_in_run, step in enumerate(run.steps()):
         nstep += 1
         print('%s\nrun: %04d step: %03d/%03d (in run/total)' % (50*'=', run.run(), nstep, nstep_in_run), \
-              '    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(),cd().pvLabels(),cd().pvMonitors() # EMPTY: ,)
+              '\n    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(), cd().pvLabels(), cd().pvMonitors()) # EMPTY: ,)
 
         for pvl in cd().pvLabels():
             print('  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value()))
