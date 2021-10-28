@@ -10,7 +10,7 @@ from psana import DataSource, Detector, setOption
 from Detector.GlobalUtils import info_ndarr, selected_record
 
 SCRNAME = sys.argv[0].rsplit('/')[-1]
-usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-to-skip> <calib-dir> <log-level-str>'%SCRNAME\
+usage = '%s <dataset-name> <detector-name> <number-of-events> <number-events-to-skip> <calib-dir> <log-level-str>'%SCRNAME\
       + '\n  Examples:'\
       + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10 0 None DEBUG'%SCRNAME\
       + '\n  %s exp=cxilv9518:run=8 CxiDs1.0:Jungfrau.0 10'%SCRNAME\
@@ -18,8 +18,7 @@ usage = '  %s <dataset-name> <detector-name> <number-of-events> <number-events-t
       + '\n  %s exp=meclv2518:run=99:dir=/reg/d/ffb/mec/meclv2518/xtc/:smd MecTargetChamber.0:Epix10kaQuad.0 10 0 /reg/neh/operator/mecopr/calib DEBUG'%SCRNAME
 
 #/reg/neh/operator/mecopr/calib/
-#logging.info('%s\nusage: %s' % (50*'=', usage))
-print('%s\nusage: %s' % (50*'=', usage))
+print('%s\nAccumulates det.calib array average and max\nUSAGE: %s' % (50*'=', usage))
 
 nargs = len(sys.argv)
 dsname  = sys.argv[1]      if nargs>1 else 'exp=cxilv9518:run=8'
@@ -34,7 +33,7 @@ DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.items() if isinstance(k
 logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[LOGLEV])
 
 
-if nargs<3: sys.exit('NEED MORE ARGUMENTS')
+if nargs<3: sys.exit('MISSING ARGUMENTS')
 
 nev_sum = 0
 nda_sum = None
@@ -62,7 +61,7 @@ if True:
             logging.debug(info_ndarr(pedestals, 'pedestals'))
             gains = det.gain(evt)
             logging.debug(info_ndarr(gains, 'gains'))
-    
+
         raw = det.raw(evt)
         logging.debug(info_ndarr(raw, 'raw'))
 
