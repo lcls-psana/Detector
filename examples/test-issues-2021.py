@@ -456,7 +456,7 @@ def issue_2021_10_25():
     """ISSUE: How to access calibration rows
        REASON: try to use them for common mode correction
     """
-    from psana import *
+    from psana import Detector, DataSource
     from Detector.PyDataAccess import get_epix_data_object
     from Detector.GlobalUtils import info_ndarr
 
@@ -470,6 +470,23 @@ def issue_2021_10_25():
           odata = get_epix_data_object(evt, det.source)
           print(info_ndarr(odata.calibrationRows(),'calibrows')) #calibrows shape:(16, 4, 384) size:24576 dtype:uint16 [3091 2933 3057 2923 2996...]
           break
+
+
+def issue_2021_10_27():
+    """ISSUE: Philip - how to access attributes of the jungfrau config object
+       REASON: try to use them for common mode correction
+    """
+    from psana import Detector, DataSource
+    from Detector.PyDataAccess import get_jungfrau_config_object
+    from Detector.GlobalUtils import info_ndarr
+
+    ds = DataSource('exp=cxilu7619:run=144:smd')
+    det = Detector('jungfrau4M')
+    env = ds.env()
+    cfg = get_jungfrau_config_object(env, det.source)
+    print('dir(cfg):', dir(cfg))
+    print('dir(cfg.gainMode().Normal):', dir(cfg.gainMode().Normal))
+    print('dir(cfg.GainMode.Normal:)', dir(cfg.GainMode.Normal))
 
 
 def issue_2021_MM_DD():
@@ -502,6 +519,7 @@ USAGE = '\nUsage:'\
       + '\n   14 - issue_2021_04_08 - my - exp=xcsx39718:run=222 too lonng run loop'\
       + '\n   15 - issue_2021_04-27 - Silke - exp=meclq8515:run=266 epix100a - det.image does not work'\
       + '\n   16 - issue_2021_10-25 - Chris Kenney usage of calibration rows for common mode correction'\
+      + '\n   16 - issue_2021_10-27 - Phill access attributes of the config object'\
       + '\n   99 - issue_2021_MM_DD - template'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
@@ -522,6 +540,7 @@ elif TNAME in ('13',): issue_2021_03_24()
 elif TNAME in ('14',): issue_2021_04_08()
 elif TNAME in ('15',): issue_2021_04_27()
 elif TNAME in ('16',): issue_2021_10_25()
+elif TNAME in ('17',): issue_2021_10_27()
 elif TNAME in ('99',): issue_2021_MM_DD()
 else:
     print(USAGE)
