@@ -18,11 +18,15 @@ detname = sys.argv[2]      if nargs>2 else 'DetLab.0:Epix10ka.0'
 EVENTS  = int(sys.argv[3]) if nargs>3 else 3
 EVSKIP  = int(sys.argv[4]) if nargs>4 else 0
 
+if nargs<3:
+    logging.info('Non-graphical data test script dumping det.raw, det.calib, and det.image\nUSAGE: %s' % usage)
+    sys.exit('MISSING ARGUMENTS')
+
 if True:
     ds = DataSource('exp=detdaq18:run=272')
     det = Detector('DetLab.0:Epix10ka.0')
     logging.info('det.shape:' + str(det.shape()))
-    
+
     #import _psana
     #cfg = ds.env().configStore()
     #c = cfg.get(_psana.Epix.Config10kaV1, det.source)
