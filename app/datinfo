@@ -22,6 +22,7 @@ USAGE = '\n  %s -d <detector> -e <experiment> -r <run-number(s)> [kwargs]' % SCR
 
 from psana import DataSource, Detector
 from Detector.GlobalUtils import info_ndarr, info_kwargs, info_command_line # info_command_line_parameters
+import PSCalib.GlobalUtils as gu
 
 
 def info_evt_keys(evt, fmt=' %s', sep='\n  ', title='evt.keys:'):
@@ -46,14 +47,13 @@ def ds_det(**kwa):
 
 
 def info_det(det, par=None, env=None):
-    import PSCalib.GlobalUtils as gu
 
     s = 'info_det'
 
     if det is None: return s + ' DETECTOR IS NOT DEFINED IN --detname or -d'
 
     dettype = gu.det_type_from_source(det.source)
- 
+
     s +='\n  det.src: %s' % str(det.source)\
       + '\n  dettype: %s' % str(dettype)
 
@@ -64,7 +64,7 @@ def info_det(det, par=None, env=None):
         co = get_epix_config_object(env, det.source)
         s += '\n  id_epix: %s' % str(id_epix(co))
         #s += '\n  is_trbit_high: %s' % str(is_trbit_high(co))
-      
+
     elif dettype == gu.EPIX10KA:
         from Detector.UtilsEpix import id_epix, is_trbit_high
         from Detector.UtilsEpix10ka import get_epix10ka_config_object
@@ -91,11 +91,12 @@ def info_det(det, par=None, env=None):
       s += info_ndarr(X, '\n  pixel X')
       s += info_ndarr(Y, '\n  pixel Y')
       s += info_ndarr(Z, '\n  pixel Z')
-      #s += '\n  geometry:\n%s' % (geo if geo else 'GEOMETRY IS MISSING') 
+      #s += '\n  geometry:\n%s' % (geo if geo else 'GEOMETRY IS MISSING')
     return s
 
 
 def loop_run_step_evt(**kwa):
+    from Detector.UtilsEpix10ka import info_pixel_gain_mode_fractions
 
     ds,det = ds_det(**kwa)
     cd = Detector('ControlData')
@@ -108,9 +109,13 @@ def loop_run_step_evt(**kwa):
     stepnum = kwa.get('stepnum', None)
     runnum = int(runs.replace(',',' ').replace('-',' ').replace(':',' ').split(' ')[0])
 
+    dettype = gu.det_type_from_source(det.source)
+
     logger.info('runnum: %s' % runnum)
     logger.info('info_det: %s' % info_det(det, runnum, ds.env()))
     logger.info('calibDir: %s' % ds.env().calibDir())
+    logger.info('dettype: %s' % dettype)
+    logger.info('dettype of EPIX10KA2M: %s' % gu.EPIX10KA2M)
 
     str_evt_keys = None
 
@@ -160,12 +165,17 @@ def loop_run_step_evt(**kwa):
             print('%s\n' % str_evt_keys)
 
           if det is None:
-              msg = '\nTO LOOK AT DATA DEFINE ONE OF THE DETECTORS IN OPTION --detname or -d' 
+              msg = '\nTO LOOK AT DATA DEFINE ONE OF THE DETECTORS IN OPTION --detname or -d'
               sys.exit(msg)
 
           raw = det.raw(evt)
-          if raw is not None: 
+          if raw is not None:
               ngood+=1
+              if dettype in (gu.EPIX10KA, gu.EPIX10KA2M, gu.EPIX10KAQUAD) and ngood<3:
+                s = 'pixel gain mode fractions for ranges\n  FH       FM       FL'\
+                    '       AHL-H    AML-M    AHL-L    AML-L\n  '
+                print(' ievt: %04d '%ievt,
+                      info_pixel_gain_mode_fractions(det, raw, msg=s))
 
           s = info_ndarr(raw,' ievt: %04d raw'%ievt)
           print(s, end='\r')
