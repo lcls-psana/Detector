@@ -215,15 +215,21 @@ def gain_maps_epix10ka_any(det, data=None):
 
 
 def info_gain_mode_arrays1(gmaps, first=0, last=5):
-    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
-    return 'gain range arrays:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s'%(\
-        info_ndarr(gr0, 'gr0', first, last),\
-        info_ndarr(gr1, 'gr1', first, last),\
-        info_ndarr(gr2, 'gr2', first, last),\
-        info_ndarr(gr3, 'gr3', first, last),\
-        info_ndarr(gr4, 'gr4', first, last),\
-        info_ndarr(gr5, 'gr5', first, last),\
-        info_ndarr(gr6, 'gr6', first, last))
+    """ gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    """
+    recs = [info_ndarr(gr, 'gr%d'%i, first, last) for i,gr in enumerate(gmaps)]
+    return 'gain range arrays:\n  %s' % ('  %s\n'.join(recs))
+
+#    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+#    return 'gain range arrays:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s'%(\
+#        info_ndarr(gr0, 'gr0', first, last),\
+#        info_ndarr(gr1, 'gr1', first, last),\
+#        info_ndarr(gr2, 'gr2', first, last),\
+#        info_ndarr(gr3, 'gr3', first, last),\
+#        info_ndarr(gr4, 'gr4', first, last),\
+#        info_ndarr(gr5, 'gr5', first, last),\
+#        info_ndarr(gr6, 'gr6', first, last))
+
 
 def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
     """DEPRECATED"""
@@ -235,14 +241,16 @@ def pixel_gain_mode_statistics1(gmaps):
     """
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     arr1 = np.ones_like(gr0, dtype=np.int32)
-    return\
-      np.sum(np.select((gr0,), (arr1,), default=0)),\
-      np.sum(np.select((gr1,), (arr1,), default=0)),\
-      np.sum(np.select((gr2,), (arr1,), default=0)),\
-      np.sum(np.select((gr3,), (arr1,), default=0)),\
-      np.sum(np.select((gr4,), (arr1,), default=0)),\
-      np.sum(np.select((gr5,), (arr1,), default=0)),\
-      np.sum(np.select((gr6,), (arr1,), default=0))
+    return [np.sum(np.select((gr,), (arr1,), default=0)) for gr in gmaps]
+#    return\
+#      np.sum(np.select((gr0,), (arr1,), default=0)),\
+#      np.sum(np.select((gr1,), (arr1,), default=0)),\
+#      np.sum(np.select((gr2,), (arr1,), default=0)),\
+#      np.sum(np.select((gr3,), (arr1,), default=0)),\
+#      np.sum(np.select((gr4,), (arr1,), default=0)),\
+#      np.sum(np.select((gr5,), (arr1,), default=0)),\
+#      np.sum(np.select((gr6,), (arr1,), default=0))
+
 
 def pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     """DEPRECATED"""
@@ -273,6 +281,7 @@ def info_pixel_gain_mode_statistics1(gmaps):
     """
     grp_stat = pixel_gain_mode_statistics1(gmaps)
     return ', '.join(['%7d' % npix for npix in grp_stat])
+
 
 def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
     """DEPRECATED"""
