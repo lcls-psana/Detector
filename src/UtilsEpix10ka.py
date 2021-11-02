@@ -201,17 +201,15 @@ def gain_maps_epix10ka_any(det, data=None):
     cbitsM12 = cbits & 12 # control bits masked by configuration 2-bit-mask
     #logger.debug(info_ndarr(cbitsMCB, 'cbitsMCB', first, last))
 
-    gr0 = (cbitsM28 == 28)
-    gr1 = (cbitsM28 == 12)
-    gr2 = (cbitsM12 ==  8)
-    gr3 = (cbitsM60 == 16)
-    gr4 = (cbitsM60 ==  0)
-    gr5 = (cbitsM60 == 48)
-    gr6 = (cbitsM60 == 32)
+    #return gr0, gr1, gr2, gr3, gr4, gr5, gr6
+    return (cbitsM28 == 28),\
+           (cbitsM28 == 12),\
+           (cbitsM12 ==  8),\
+           (cbitsM60 == 16),\
+           (cbitsM60 ==  0),\
+           (cbitsM60 == 48),\
+           (cbitsM60 == 32)
 
-    #first = 10000; logger.debug(info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first, first+5))
-
-    return gr0, gr1, gr2, gr3, gr4, gr5, gr6
 
 
 def info_gain_mode_arrays1(gmaps, first=0, last=5):
@@ -219,16 +217,6 @@ def info_gain_mode_arrays1(gmaps, first=0, last=5):
     """
     recs = [info_ndarr(gr, 'gr%d'%i, first, last) for i,gr in enumerate(gmaps)]
     return 'gain range arrays:\n  %s' % ('  %s\n'.join(recs))
-
-#    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
-#    return 'gain range arrays:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s'%(\
-#        info_ndarr(gr0, 'gr0', first, last),\
-#        info_ndarr(gr1, 'gr1', first, last),\
-#        info_ndarr(gr2, 'gr2', first, last),\
-#        info_ndarr(gr3, 'gr3', first, last),\
-#        info_ndarr(gr4, 'gr4', first, last),\
-#        info_ndarr(gr5, 'gr5', first, last),\
-#        info_ndarr(gr6, 'gr6', first, last))
 
 
 def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
@@ -242,14 +230,6 @@ def pixel_gain_mode_statistics1(gmaps):
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     arr1 = np.ones_like(gr0, dtype=np.int32)
     return [np.sum(np.select((gr,), (arr1,), default=0)) for gr in gmaps]
-#    return\
-#      np.sum(np.select((gr0,), (arr1,), default=0)),\
-#      np.sum(np.select((gr1,), (arr1,), default=0)),\
-#      np.sum(np.select((gr2,), (arr1,), default=0)),\
-#      np.sum(np.select((gr3,), (arr1,), default=0)),\
-#      np.sum(np.select((gr4,), (arr1,), default=0)),\
-#      np.sum(np.select((gr5,), (arr1,), default=0)),\
-#      np.sum(np.select((gr6,), (arr1,), default=0))
 
 
 def pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
@@ -489,6 +469,45 @@ def find_gain_mode(det, data=None):
     #logger.debug('Gain mode %s is selected from %s' % (gain_mode, ', '.join(GAIN_MODES)))
 
     return gain_mode
+
+
+def event_constants_for_gmaps(gmaps, cons, default=0):
+    """ 6 msec
+    Parameters
+    ----------
+    - gmaps - tuple of 7 boolean maps ndarray(<nsegs>, 352, 384)
+    - cons - 4d constants  (7, <nsegs>, 352, 384)
+    - default value for constants
+
+    Returns
+    -------
+    np.ndarray (<nsegs>, 352, 384) - per event constants
+    """
+    return np.select(gmaps, (cons[0,:], cons[1,:], cons[2,:], cons[3,:],\
+                             cons[4,:], cons[5,:], cons[6,:]), default=default)
+
+
+def event_constants(det, evt, cons, default=0):
+    raw = det.raw(evt)
+    if raw is None: return None
+    gmaps = gain_maps_epix10ka_any(det, raw) #tuple: 7 x shape:(4, 352, 384)
+    if gmaps is None: return None
+    return event_constants_for_gmaps(gmaps, cons, default=default)
+
+
+def map_gain_range_index(det, evt, **kwa):
+    """Returns array of epix10ka per pixel gain range indices [0:6] shaped as raw (<nsegs>, 352, 384) dtype:uint16
+    """
+    nda_raw = kwa.get('nda_raw', None)
+    raw = det.raw(evt) if nda_raw is None else nda_raw
+    if raw is None: return None
+
+    gmaps = gain_maps_epix10ka_any(det, raw)
+    if gmaps is None: return None
+    #gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
+    return np.select(gmaps, (0, 1, 2, 3, 4, 5, 6), default=10)#.astype(np.uint16) # int64 -> uint16
+
+
 
 
 if __name__ == "__main__":

@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 import numpy as np
 #import psana.pyalgos.generic.Graphics as gr
-import pyimgalgos.GlobalGraphics as gr
+#import pyimgalgos.GlobalGraphics as gr
+import pyimgalgos.Graphics as gr
 #from psana.pyalgos.generic.NDArrUtils import info_ndarr
 from Detector.GlobalUtils import info_ndarr
 
@@ -230,6 +231,7 @@ class fleximagespec(flexbase):
               'orientation'  :kwa.get('orientation','vertical'),
               'cmap'         :kwa.get('cmap','inferno'),
               }
+
         self.imsh, self.cbar = gr.imshow_cbar(self.fig, self.axim, self.axcb, img, **kwic)
 
         self.update_his(arr, **kwa)
@@ -244,9 +246,10 @@ class fleximagespec(flexbase):
 
         self.axhi.cla()
         self.axhi.invert_xaxis() # anvert x-axis direction
-        self.axhi.set_ylim(amp_range)
+#        self.axhi.set_ylim(amp_range)
         self.axhi.set_yticklabels([]) # removes axes labels, not ticks
         self.axhi.tick_params(axis='y', direction='in')
+        self.axhi.tick_params(axis='x', rotation=25)
         self.axhi.set_ylim(amp_range)
         #self.axhi.set_ylabel('V')
         #self.axhi.get_yaxis().set_visible(False) # hides axes labels and ticks
@@ -264,6 +267,7 @@ class fleximagespec(flexbase):
             }
 
         self.his = pp_hist(self.axhi, nda.ravel(), **kwh)
+
         wei, bins, patches = self.his
         gr.add_stat_text(self.axhi, wei, bins)
 
@@ -274,7 +278,6 @@ class fleximagespec(flexbase):
         amin, amax = self._intensity_limits(img, **kwa)
         self.imsh.set_data(img)
         self.imsh.set_clim(amin, amax)
-        self.axcb.set_ylim(amin, amax)
 
         arr = kwa.get('arr', None)
         if arr is None: arr = img

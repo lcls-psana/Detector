@@ -11,9 +11,21 @@ reverse time order.
 
 ???? Tag: V02-00-26
 2021-10-26 Mikhail Dubrovin
-modified: src/PyDataAccess.py, src/AreaDetector.py, app/epix10ka_test_calibcycles
+- src/PyDataAccess.py, src/AreaDetector.py, app/epix10ka_test_calibcycles
 	- code cleaning - remove blanks and separators
-modified:   examples/test-issues-2021.py - add issue_2021_10-25
+- examples/test-issues-2021.py - add issue_2021_10-25
+- src/UtilsGraphics.py - adopt from lcls2
+- app/datinfo - use info_pixel_gain_mode_fractions
+- src/UtilsEpix10ka.py - use comprehenson lists in info_gain_mode_arrays1, etc.
+- src/UtilsEpix10ka.py - add methods event_constants*, map_gain_range_index
+- examples/test-issues-2021.py - add issue_2021_10_27
+- app/det_calib_ave_and_max - change printing content
+- app/det_ndarr_raw_proc - remove spaces and separators
+- add app/det_raw_calib_image - add exit if nargs<3
+- app/epix10ka_test_calibcycles - cosmetic update
+- app/epix10ka_calib_components - complete replacement using new development from lcls2
+- src/UtilsCalib.py - add method mean_constrained
+- examples/ex_epix10ka_calibrows.py - calibration rows averaging for test purpose
 
 Tag: V02-00-25
 2021-09-22 Daniel Damiani
