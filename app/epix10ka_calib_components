@@ -1,0 +1,354 @@
+#!/usr/bin/env python
+"""
+Intended to plot different types of detector images.
+
+See:
+  - `github: <https://github.com/slac-lcls/lcls2>`_.
+  - `confluence: <https://confluence.slac.stanford.edu/display/PSDM/EPIXQUAD+ueddaq02+r401+issue+calib+hot+banks+2021-10-18>`_.
+
+Created on 2021-10-26 by Mikhail Dubrovin
+"""
+
+from __future__ import print_function
+
+import sys
+from time import time
+#import math
+import numpy as np
+import logging
+logger = logging.getLogger(__name__)
+
+DICT_NAME_TO_LEVEL = logging._levelNames # py2 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
+#DICT_NAME_TO_LEVEL = logging._nameToLevel # py3 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
+
+#from psana.pyalgos.generic.NDArrUtils import info_ndarr, divide_protected
+#from psana import DataSource
+#from psana.detector.UtilsGraphics import gr, fleximagespec#, fleximage, flexhist
+#from psana.detector.UtilsEpix10ka  import event_constants
+
+t0_sec = time()
+
+import argparse
+
+import psana
+
+from Detector.PyDataAccess import get_epix_config_object
+from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record, divide_protected
+from Detector.PyDataAccess import get_epix_config_object, get_epix_data_object
+from Detector.UtilsGraphics import gr, fleximagespec, fleximage, flexhist
+from Detector.UtilsEpix10ka import map_gain_range_index, event_constants
+
+print('TIME import time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+SCRNAME = sys.argv[0].rsplit('/')[-1]
+USAGE = '\n    %s -r554 -t1' % SCRNAME\
+      + '\n    %s -e ueddaq02 -d epixquad -r554 -t1' % SCRNAME\
+      + '\n    -t, --tname - test name/number:'\
+      + '\n      1 - segment numeration'\
+      + '\n      2 - gain range index'\
+      + '\n      3 - gain, ADU/keV'\
+      + '\n      4 - pedestals'\
+      + '\n      5 - rms'\
+      + '\n      6 - raw'\
+      + '\n      7 - raw-peds'\
+      + '\n      8 - (raw-peds)/gain, keV'\
+      + '\n      9 - calib, keV'\
+      + '\n     10 - status'\
+      + '\n     11 - gain factor = 1/gain, keV/ADU'\
+      + '\n    101 - panel raw and calib rows'\
+
+d_tname   = '1'
+d_detname = 'epix10k2M'
+d_expname = 'mfxc00118'
+d_run     = 191
+d_events  = 3
+d_evskip  = 0
+d_stepnum = None
+d_saveimg = False
+d_segindex= None
+d_grindex = None
+d_amin    = None
+d_amax    = None
+d_cframe  = 0
+d_loglev  = 'INFO'
+
+parser = argparse.ArgumentParser(usage=USAGE, description='%s - test per-event components of the det.raw.calib method'%SCRNAME)
+parser.add_argument('-t', '--tname',   default=d_tname,   type=str, help='test name, def=%s' % d_tname)
+parser.add_argument('-d', '--detname', default=d_detname, type=str, help='detector name, def=%s' % d_detname)
+parser.add_argument('-e', '--expname', default=d_expname, type=str, help='experiment name, def=%s' % d_expname)
+parser.add_argument('-r', '--run',     default=d_run,     type=int, help='run number, def=%s' % d_run)
+parser.add_argument('-N', '--events',  default=d_events,  type=int, help='maximal number of events, def=%s' % d_events)
+parser.add_argument('-K', '--evskip',  default=d_evskip,  type=int, help='number of events to skip in the beginning of run, def=%s' % d_evskip)
+parser.add_argument('-s', '--stepnum', default=d_stepnum, type=int, help='step number counting from 0 or None for all steps, def=%s' % d_stepnum)
+parser.add_argument('-S', '--saveimg', default=d_saveimg, action='store_true', help='save image in file, def=%s' % d_saveimg)
+parser.add_argument('-i', '--segindex',default=d_segindex,type=int, help='segment index [0,15], def=%s' % str(d_segindex))
+parser.add_argument('-g', '--grindex', default=d_grindex, type=int, help='gain range index [0,6] for peds, gains etc., def=%s' % str(d_grindex))
+parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help='logger level (DEBUG, INFO, WARNING, etc.), def.=%s' % str(d_loglev))
+parser.add_argument('--amin',          default=d_amin,    type=float, help='spectrum minimal value, def=%s' % str(d_amin))
+parser.add_argument('--amax',          default=d_amax,    type=float, help='spectrum maximal value, def=%s' % str(d_amax))
+parser.add_argument('--cframe',        default=d_cframe,  type=int, help='coordinate frame for images 0/1 for psana/LAB, def=%s' % str(d_cframe))
+
+
+args = parser.parse_args()
+print('*** parser.parse_args: %s' % str(args))
+
+logfmt =  '[%(levelname).1s] L%(lineno)04d: %(message)s' if args.loglev == 'INFO' else\
+          '[%(levelname).1s] %(name)s L%(lineno)04d: %(message)s'
+
+logging.basicConfig(format=logfmt, level=DICT_NAME_TO_LEVEL[args.loglev])
+#logging.getLogger('matplotlib').setLevel(logging.WARNING)
+#logging.getLogger('psana.psexp.event_manager').setLevel(logging.INFO)
+
+tname = args.tname # sys.argv[1] if len(sys.argv) > 1 else '0'
+THRMIN = 100
+THRMAX = 500
+AMIN   = 1
+AMAX   = 200
+MDB    = 0x3fff
+shape_seg = (352,384)
+
+flims  = None
+fname = 'ims.png'
+prefix = 'ims-%s-r%04d' % (args.expname, args.run)
+
+cmpars=(7,0,10,10)
+s_cmpars = '-'.join([str(v) for v in cmpars])
+
+dsname = 'exp=%s:run=%d:smd' % (args.expname, args.run)
+runnum = args.run
+detname = args.detname
+tname = args.tname
+
+def amin_amax(args, amin_def=None, amax_def=None):
+    return args.amin if args.amin else amin_def,\
+           args.amax if args.amax else amax_def
+
+
+def event_or_grindex_constants(det, evt, cons, grindex=None):
+    """        cons.shape = (7, <nsegs>, 352, 384)
+       event_constants.shape = (<nsegs>, 352, 384)
+    """
+    return cons[grindex,:] if grindex is not None else\
+           event_constants(det, evt, cons)
+
+
+print('TIME parameter initialization time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+ds  = psana.DataSource(dsname)
+env = ds.env()
+det = psana.Detector(detname)
+cd  = psana.Detector('ControlData')
+
+logger.info('experiment %s' % env.experiment())
+logger.info('run        %d' % runnum)
+logger.info('dataset    %s' % (dsname))
+logger.info('detname    %s' % (detname))
+logger.info('calibDir:  %s' % env.calibDir())
+
+print('TIME Detector initialization time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+peds   = det.pedestals(runnum) if tname in ('4','7','8',) else None
+gain   = det.gain(runnum)      if tname in ('3','8','11')     else None
+rms    = det.rms(runnum)       if tname in ('5',)         else None
+status = det.status(runnum)    if tname in ('10',)        else None
+
+print(info_ndarr(peds,'pedestals'))
+print(info_ndarr(gain,'gain, ADU/keV'))
+print(info_ndarr(rms,'rms'))
+print('data bit mask: %s' % oct(MDB))
+
+print('TIME loading constants time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+arr, img = None, None
+suffix = ''
+evt_peds, evt_gfac = None, None
+
+break_runs = False
+break_steps = False
+break_events = False
+
+nstep = -1
+for orun in ds.runs():
+
+  env = orun.env()
+  cfg = get_epix_config_object(env, det.source)
+
+  logger.info('\n=== run: %d' % orun.run())
+
+  for nstep_in_run, step in enumerate(orun.steps()):
+
+    nstep += 1
+    print('%s\nrun: %04d step: %03d/%03d (in run/total)' % (50*'=', orun.run(), nstep, nstep_in_run), \
+          '\n    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(), cd().pvLabels(), cd().pvMonitors()) # EMPTY: ,)
+
+    for pvl in cd().pvLabels():
+        print('  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value()))
+
+    if args.stepnum and nstep<args.stepnum:
+        logger.info('    skip calibcycles nstep < --stepnum=%d' % args.stepnum)
+        continue
+
+    if args.stepnum and nstep>args.stepnum:
+        logger.info('    break calibcycles, nstep > --stepnum=%d' % args.stepnum)
+        break
+
+    nevgood=-1
+    for nev,evt in enumerate(step.events()):
+
+      if nev < args.evskip:
+          logger.info('Ev:%6d skip, nev < --evskip=%d' % (nev, args.evskip))
+          continue
+
+      if nev > args.events:
+          logger.info('Ev:%6d break, nev > --events=%d' % (nev, args.events))
+          break
+
+      raw = det.raw(evt)
+
+      if raw is None:
+          logger.info('Ev:%6d raw is None' % nev)
+          continue
+
+      step_evt = 's%02d-e%04d' % (nstep, nev)
+
+      nevgood += 1
+      logger.info(info_ndarr(raw, 'Ev:%6d raw' % nev))
+
+
+      if tname in ('4', '7', '8'):
+        evt_peds = event_or_grindex_constants(det, evt, peds, args.grindex)
+        print(info_ndarr(evt_peds,'evt_peds'))
+
+      if tname in ('8','11',):
+        gfac = divide_protected(np.ones_like(gain), gain)
+        evt_gfac = event_or_grindex_constants(det, evt, gfac, args.grindex)
+        print(info_ndarr(evt_gfac,'evt_gfac, keV/ADU'))
+
+
+      arr, img = None, None
+
+      if tname=='1':
+        suffix = 'segment-nums'
+        ones = np.ones(shape_seg) # det.raw._seg_geo.shape()) # (352,384)
+        seginds = range(raw.shape[0]) # det.raw._segment_indices() #_segments(evt)
+        logger.info('seginds %s' % str(seginds))
+        arr = np.stack([ones*i for i in seginds])
+        logger.info(info_ndarr(arr, '    arr'))
+        AMIN, AMAX = 0, raw.shape[0]
+        break_steps = True
+        break_run = True
+        break_events = True
+
+      elif tname=='2':
+        suffix = 'gain-range-index-%s' % step_evt
+        arr = map_gain_range_index(det, evt)
+        AMIN, AMAX = amin_amax(args, amin_def=-1, amax_def=8)
+
+      elif tname=='3':
+        suffix = 'gain-ADU-per-keV-%s' % step_evt
+        arr = event_or_grindex_constants(det, evt, gain, args.grindex) #(<nsegs>, 352, 384)
+        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=20)
+
+      elif tname=='4':
+        suffix = 'pedestals-%s' % step_evt
+        arr = evt_peds
+        AMIN, AMAX = amin_amax(args, amin_def=2000, amax_def=4000)
+
+      elif tname=='5':
+        suffix = 'rms-%s' % step_evt
+        arr = event_or_grindex_constants(det, evt, rms, args.grindex) #(<nsegs>, 352, 384)
+        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=8)
+
+      elif tname=='6':
+        suffix = 'raw-%s' % step_evt
+        arr = raw & MDB
+        AMIN, AMAX = amin_amax(args, amin_def=2000, amax_def=4000)
+
+      elif tname=='7':
+        suffix = 'raw-peds-%s' % step_evt
+        arr = (raw & MDB) - evt_peds
+        AMIN, AMAX = amin_amax(args, amin_def=-40, amax_def=40)
+
+      elif tname=='8':
+        suffix = 'raw-peds-x-gain-%s' % step_evt
+        arr = ((raw & MDB) - evt_peds)*evt_gfac
+        AMIN, AMAX = amin_amax(args, amin_def=-5, amax_def=5)
+
+      elif tname=='10':
+        suffix = 'status-%s' % step_evt
+        arr = event_or_grindex_constants(det, evt, status, args.grindex) #(<nsegs>, 352, 384)
+        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=32)
+
+      elif tname=='11':
+        suffix = 'gain-factor-keV-per-ADU-%s' % step_evt
+        arr = evt_gfac
+        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=np.amax(arr)*1.1)
+
+
+
+
+      elif tname=='101':
+        odata = get_epix_data_object(evt, det.source)
+        crows = odata.calibrationRows()
+        print(info_ndarr(crows, '               calibrows'))
+        segind = args.segindex if args.segindex else 0
+
+        rawseg = raw[segind,:]
+        crows  = crows[segind,:]
+        zeros  = np.zeros((4,384), dtype=np.uint16) # det.raw._seg_geo.shape()) # (352,384)
+
+        crow0exp = [crows[0,:] for i in range(20)]
+        crow1exp = [crows[1,:] for i in range(20)]
+        img = np.vstack(crow0exp + [zeros, rawseg, zeros] + crow1exp)
+
+        med = np.median(rawseg)
+        AMIN, AMAX = amin_amax(args, amin_def=med-1000, amax_def=med+1000)
+        suffix = 'raw-%s-seg-%02d' % (step_evt, segind)
+
+
+      else: # elif tname=='9':
+        suffix = 'raw-peds-%s-cm-%s' % (step_evt, s_cmpars)
+        arr = det.calib(evt, cmpars=cmpars)
+        AMIN, AMAX = amin_amax(args, amin_def=-5, amax_def=+5)
+        logger.info(info_ndarr(arr, '        calib' % arr))
+
+
+      print(info_ndarr(arr,'Event %d det.calib'%nev))
+      if arr is not None:
+        med, std = np.median(arr), np.std(arr)
+        logger.info('array median %.3f std %.3f' % (med,std))
+
+      if img is None: img = det.image(evt, nda_in=arr) #, cframe=args.cframe)
+
+      print(info_ndarr(img,'  img'))
+
+      if flims is None:
+        #flims = fleximage(img, arr=arr, bins=100, w_in=14, h_in=10, amin=AMIN, amax=AMAX)#, interpolation='nearest') #fraclo=0.01, frachi=0.99
+        flims = fleximagespec(img, arr=arr, bins=100, w_in=14, h_in=10, amin=AMIN, amax=AMAX) #fraclo=0.01, frachi=0.99
+        flims.move(10,20)
+      else:
+        fname = '%s-%s.png' % (prefix, suffix)
+        flims.update(img, arr=arr, amin=AMIN, amax=AMAX)#, interpolation='nearest')
+        flims.axtitle('Event %d %s'%(nev,fname))
+
+      gr.show(mode=1)
+
+      if tname in ('0','9',) and args.saveimg:
+          flims.save(fname)
+
+      if break_events: break
+    if break_steps: break
+  if break_runs: break
+
+gr.show()
+
+#np.save('nda-epix10ka-seg-352x384.npy', img)
+if args.saveimg: flims.save(fname)
+
+sys.exit('END OF %s -t %s' % (SCRNAME, tname))
+
+# EOF

@@ -2,7 +2,7 @@ from __future__ import print_function
 
 """
 :py:class:`UtilsCalib`
-==============================
+======================
 
 Usage::
     from Detector.UtilsCalib import proc_block, DarkProc, evaluate_limits
@@ -96,7 +96,7 @@ def rundescriptor_in_dsname(dsname):
 
 def is_single_run_dataset(dsname):
     return rundescriptor_in_dsname(dsname).isdigit()
-    
+
 
 def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     """Moved from Detector.UtilsEpix10kaCalib
@@ -137,7 +137,7 @@ def save_ndarray_in_textfile(nda, fname, fmode, fmt):
     if not fexists: os.chmod(fname, fmode)
     logger.debug('saved: %s fmode: %s fmt: %s' % (fname, oct(fmode), fmt))
 
- 
+
 def file_name_prefix(panel_type, panel_id, tstamp, exp, irun, fname_aliases):
     panel_alias = alias_for_id(panel_id, fname=fname_aliases, exp=exp, run=irun)
     return '%s_%s_%s_%s_r%04d' % (panel_type, panel_alias, tstamp, exp, irun), panel_alias
@@ -265,10 +265,22 @@ class RepoManager(object):
         return '%s/%s_log_%s.txt' % (self.makedir_logs_year(), tstamp, scrname)
 
 
+
+def mean_constrained(arr, lo, hi):
+    """Evaluates mean value of the input array for values between low and high limits
+    """
+    condlist = (np.logical_not(np.logical_or(arr<lo, arr>hi)),)
+    arr1 = np.ones(arr.shape, dtype=np.int32)
+    arr_of1 = np.select(condlist, (arr1,), 0)
+    arr_ofv = np.select(condlist, (arr,), 0)
+    ngood = arr_of1.sum()
+    return arr_ofv.sum()/ngood if ngood else None
+
+
 def proc_dark_block(block, **kwa):
     """Copied and modified from UtilsEpix10kaCalib
        Assumes that ALL dark events are in the block - returns ALL arrays
-       
+
        Returns per-panel (352, 384) arrays of mean, rms, ...
        block.shape = (nrecs, 352, 384), where nrecs <= 1024
     """
@@ -309,7 +321,7 @@ def proc_dark_block(block, **kwa):
     - np.median(block, axis=0) or np.quantile(...,interpolation='linear') return result rounded to int
     - in order to return interpolated float values apply the trick:
       data_block + random [0,1)-0.5
-    - this would distort data in the range [-0.5,+0.5) ADU, but would allow 
+    - this would distort data in the range [-0.5,+0.5) ADU, but would allow
       to get better interpolation for median and quantile values
     - use nrecs1 (< nrecs) due to memory and time consumption
     """
@@ -433,7 +445,7 @@ def proc_dark_block(block, **kwa):
                +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
                )
 
-    #0/1/2/4/8/16/32 for good/hot-rms/cold-rms/saturated/cold/average above limit/average below limit, 
+    #0/1/2/4/8/16/32 for good/hot-rms/cold-rms/saturated/cold/average above limit/average below limit,
     arr_sta = np.zeros(shape, dtype=np.uint64)
     arr_sta += arr_sta_rms_hi    # hot rms
     arr_sta += arr_sta_rms_lo*2  # cold rms
@@ -461,13 +473,10 @@ def proc_dark_block(block, **kwa):
 
     return arr_av1, arr_rms, arr_sta
 
-#===
-#===
-#===
 
 def proc_block(block, **kwa):
     """Dark data 1st stage processing to define gate limits.
-       block.shape = (nrecs, <raw-detector-shape>), 
+       block.shape = (nrecs, <raw-detector-shape>),
        where <raw-detector-shape> can be per segment (352, 384) or per detector (nsegs, 352, 384)
        Returns segment/detector shaped arrays of gate_lo, gate_hi, arr_med, arr_abs_dev
     """
@@ -508,7 +517,7 @@ def proc_block(block, **kwa):
     - np.median(block, axis=0) or np.quantile(...,interpolation='linear') return result rounded to int
     - in order to return interpolated float values apply the trick:
       data_block + random [0,1)-0.5
-    - this would distort data in the range [-0.5,+0.5) ADU, but would allow 
+    - this would distort data in the range [-0.5,+0.5) ADU, but would allow
       to get better interpolation for median and quantile values
     - use nrecs1 (< nrecs) due to memory and time consumption
     """
@@ -638,7 +647,7 @@ class DarkProc(object):
             logger.info('begin data summary stage')
         else:
             logger.info('irec=%d there are no arrays to save...' % self.irec)
-            return 
+            return
 
         savebw  = self.savebw
         int_hi  = self.int_hi
@@ -660,7 +669,7 @@ class DarkProc(object):
         frac_int_hi = np.array(self.sta_int_hi/counter, dtype=np.float32)
 
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
-        
+
         logger.debug(info_ndarr(arr_rms, 'arr_rms'))
         logger.debug(info_ndarr(arr_av1, 'arr_av1'))
 
@@ -683,7 +692,7 @@ class DarkProc(object):
                +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
                )
 
-        #0/1/2/4/8/16/32 for good/hot-rms/cold-rms/saturated/cold/average above limit/average below limit, 
+        #0/1/2/4/8/16/32 for good/hot-rms/cold-rms/saturated/cold/average above limit/average below limit,
         arr_sta = np.zeros(arr_av1.shape, dtype=np.uint64)
         arr_sta += arr_sta_rms_hi    # hot rms
         arr_sta += arr_sta_rms_lo*2  # cold rms
@@ -694,7 +703,7 @@ class DarkProc(object):
 
         arr_msk  = np.select((arr_sta>0,), (self.arr0,), 1)
 
-        self.arr_av1 = arr_av1        
+        self.arr_av1 = arr_av1
         self.arr_rms = arr_rms
         self.arr_sta = arr_sta
         self.arr_msk = np.select((arr_sta>0,), (self.arr0,), 1)
@@ -714,7 +723,7 @@ class DarkProc(object):
         cond_lo = raw<self.gate_lo
         cond_hi = raw>self.gate_hi
         condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
-        
+
         raw_f64 = raw.astype(np.float64)
 
         self.arr_sum0   += np.select(condlist, (self.arr1u64,), 0)
@@ -739,7 +748,7 @@ class DarkProc(object):
            - igm (int) - index of the gain mode in DIC_GAIN_MODE
         """
         logger.debug('event %d' % evnum)
-            
+
         if raw is None: return self.status
 
         if self.block is None :
@@ -819,7 +828,7 @@ def plot_image(nda, tit=''):
 def common_mode_pars(src, arr_ave, arr_rms, arr_msk):
         """Returns detector-dependent common mode parameters as np.array for a few detectors and None for others.
         """
-        import PSCalib.GlobalUtils as gu 
+        import PSCalib.GlobalUtils as gu
         import math
 
         dettype = gu.det_type_from_source(src)
@@ -850,7 +859,7 @@ def find_file_for_timestamp(dirname, pattern, tstamp):
     # list of file names in directory, dirname, containing pattern
     fnames = [name for name in os.listdir(dirname) if os.path.splitext(name)[-1]=='.dat' and pattern in name]
 
-    # list of int tstamps 
+    # list of int tstamps
     # !!! here we assume specific name structure generated by file_name_prefix
     itstamps = [int(name.split('_',3)[2]) for name in fnames]
 
@@ -864,7 +873,7 @@ def find_file_for_timestamp(dirname, pattern, tstamp):
             ts = str(its)
 
             for name in fnames:
-                if ts in name: 
+                if ts in name:
                      fname = '%s/%s' % (dirname, name)
                      logger.debug('  selected %s for %s and %s' % (os.path.basename(fname),pattern,tstamp))
                      return fname
@@ -892,8 +901,8 @@ def merge_panels(lst):
 
 
 def calib_group(dettype):
-    """Returns subdirecrory name under calib/<subdir>/... for 
-       dettype, which is one of EPIX10KA2M, EPIX10KAQUAD, EPIX10KA, 
+    """Returns subdirecrory name under calib/<subdir>/... for
+       dettype, which is one of EPIX10KA2M, EPIX10KAQUAD, EPIX10KA,
        i.g. 'Epix10ka::CalibV1'
     """
     return dic_det_type_to_calib_group.get(dettype, None)
