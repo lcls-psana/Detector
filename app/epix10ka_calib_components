@@ -11,39 +11,32 @@ Created on 2021-10-26 by Mikhail Dubrovin
 
 from __future__ import print_function
 
-import sys
 from time import time
-#import math
+t0_sec = time()
+
+import sys
 import numpy as np
+import argparse
 import logging
 logger = logging.getLogger(__name__)
 
 DICT_NAME_TO_LEVEL = logging._levelNames # py2 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
 #DICT_NAME_TO_LEVEL = logging._nameToLevel # py3 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
 
-#from psana.pyalgos.generic.NDArrUtils import info_ndarr, divide_protected
-#from psana import DataSource
-#from psana.detector.UtilsGraphics import gr, fleximagespec#, fleximage, flexhist
-#from psana.detector.UtilsEpix10ka  import event_constants
-
-t0_sec = time()
-
-import argparse
-
 import psana
-
-from Detector.PyDataAccess import get_epix_config_object
 from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record, divide_protected
 from Detector.PyDataAccess import get_epix_config_object, get_epix_data_object
-from Detector.UtilsGraphics import gr, fleximagespec, fleximage, flexhist
+from Detector.UtilsGraphics import gr, fleximagespec, fleximage, flexhist, axis_plot
 from Detector.UtilsEpix10ka import map_gain_range_index, event_constants
+from Detector.UtilsEpix10ka2M import table_nxn_epix10ka_from_ndarr
 
 print('TIME import time = %.6f sec' % (time()-t0_sec))
 t0_sec = time()
 
 SCRNAME = sys.argv[0].rsplit('/')[-1]
-USAGE = '\n    %s -r554 -t1' % SCRNAME\
-      + '\n    %s -e ueddaq02 -d epixquad -r554 -t1' % SCRNAME\
+USAGE = '\n    %s -t1' % SCRNAME\
+      + '\n    %s -e mfxc00118 -d epix10k2M -r191 -t1' % SCRNAME\
+      + '\n    %s -e mfxc00118 -d epix10k2M -r191 -t103 -i1 --icrow 0 -S' % SCRNAME\
       + '\n    -t, --tname - test name/number:'\
       + '\n      1 - segment numeration'\
       + '\n      2 - gain range index'\
@@ -56,7 +49,9 @@ USAGE = '\n    %s -r554 -t1' % SCRNAME\
       + '\n      9 - calib, keV'\
       + '\n     10 - status'\
       + '\n     11 - gain factor = 1/gain, keV/ADU'\
-      + '\n    101 - panel raw and calib rows'\
+      + '\n    101 - one segment raw and calib rows'\
+      + '\n    102 - detector raw and calib rows'\
+      + '\n    103 - one segment raw-peds and calibrow-averaged and scatterplot, opts: -i1 --icrow 0'\
 
 d_tname   = '1'
 d_detname = 'epix10k2M'
@@ -72,6 +67,7 @@ d_amin    = None
 d_amax    = None
 d_cframe  = 0
 d_loglev  = 'INFO'
+d_icrow   = 0
 
 parser = argparse.ArgumentParser(usage=USAGE, description='%s - test per-event components of the det.raw.calib method'%SCRNAME)
 parser.add_argument('-t', '--tname',   default=d_tname,   type=str, help='test name, def=%s' % d_tname)
@@ -88,10 +84,10 @@ parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help='logger
 parser.add_argument('--amin',          default=d_amin,    type=float, help='spectrum minimal value, def=%s' % str(d_amin))
 parser.add_argument('--amax',          default=d_amax,    type=float, help='spectrum maximal value, def=%s' % str(d_amax))
 parser.add_argument('--cframe',        default=d_cframe,  type=int, help='coordinate frame for images 0/1 for psana/LAB, def=%s' % str(d_cframe))
-
+parser.add_argument('--icrow',         default=d_icrow,   type=int, help='calibrow index 0/1 for -t103, def=%s' % str(d_icrow))
 
 args = parser.parse_args()
-print('*** parser.parse_args: %s' % str(args))
+print('parser.parse_args: %s' % str(args))
 
 logfmt =  '[%(levelname).1s] L%(lineno)04d: %(message)s' if args.loglev == 'INFO' else\
           '[%(levelname).1s] %(name)s L%(lineno)04d: %(message)s'
@@ -111,14 +107,16 @@ shape_seg = (352,384)
 flims  = None
 fname = 'ims.png'
 prefix = 'ims-%s-r%04d' % (args.expname, args.run)
+figsc, axsc = None, None
 
-cmpars=(7,0,10,10)
+cmpars=(7,7,10,10)
 s_cmpars = '-'.join([str(v) for v in cmpars])
 
 dsname = 'exp=%s:run=%d:smd' % (args.expname, args.run)
 runnum = args.run
 detname = args.detname
 tname = args.tname
+segind = args.segindex if args.segindex else 0
 
 def amin_amax(args, amin_def=None, amax_def=None):
     return args.amin if args.amin else amin_def,\
@@ -131,6 +129,49 @@ def event_or_grindex_constants(det, evt, cons, grindex=None):
     """
     return cons[grindex,:] if grindex is not None else\
            event_constants(det, evt, cons)
+
+
+def image_epix10ka_segment_and_calibrows(arr, crows, nrowsc=20, nrowsm=20):
+     """Stacks epix10ka segment 2d array with four expanded for visiability calibration rows.
+        arr.shape = (352,384)
+        crows.shape = (4,384)
+        return img shape:(382, 384)
+     """
+     #zeros  = np.zeros((4,384), dtype=np.uint16) # det.raw._seg_geo.shape()) # (352,384)
+     crow0exp = [crows[0,:] for i in range(nrowsc)]
+     crow1exp = [crows[1,:] for i in range(nrowsc)]
+     crow2exp = [crows[2,:] for i in range(nrowsm)]
+     crow3exp = [crows[3,:] for i in range(nrowsm)]
+     return np.vstack(crow0exp + [crow2exp, arr, crow3exp] + crow1exp)
+
+
+def table_of_segments_from_3darr(nda, gaph=10, gapv=10, gapvalue=-10):
+    """returns table of epix10ka panels shaped as (nxn)
+       generated from epix10ka array shaped as (N, 352, 384) in data.
+    """
+    assert nda.ndim==3
+    nsegs, nrows, ncols = shape0 = nda.shape
+
+    if nsegs == 1:
+       logger.warning('quad panels are stacked as [(3,2),(1,0)]')
+       return np.reshape(nda, (nrows, ncols))
+
+    elif nsegs == 16:
+       a = nda
+       ntabrows, ntabcols = 4, 4
+       sh = a.shape = (ntabrows, ntabcols, nrows, ncols)
+       agaph = gapvalue * np.ones((nrows, gaph))
+       agapv = gapvalue * np.ones((gapv, ncols*ntabcols + gaph*(ntabcols-01)))
+
+       list_rows=[]
+       for r in range(ntabcols):
+          if r>0: list_rows.append(agapv)
+          list_rows.append(np.hstack([a[r,0,:], agaph, a[r,1,:], agaph, a[r,2,:], agaph, a[r,3,:]]))
+
+       t = np.vstack(list_rows)
+       nda.shape = shape0
+       return t
+
 
 
 print('TIME parameter initialization time = %.6f sec' % (time()-t0_sec))
@@ -150,15 +191,21 @@ logger.info('calibDir:  %s' % env.calibDir())
 print('TIME Detector initialization time = %.6f sec' % (time()-t0_sec))
 t0_sec = time()
 
-peds   = det.pedestals(runnum) if tname in ('4','7','8',) else None
+peds   = det.pedestals(runnum) if tname in ('4','7','8','103') else None
 gain   = det.gain(runnum)      if tname in ('3','8','11')     else None
 rms    = det.rms(runnum)       if tname in ('5',)         else None
 status = det.status(runnum)    if tname in ('10',)        else None
+crows_ave = np.load('calibrows-mfxc00118-r0191-epix10k2M-ave.npy') if tname in ('103',) else None
 
 print(info_ndarr(peds,'pedestals'))
 print(info_ndarr(gain,'gain, ADU/keV'))
 print(info_ndarr(rms,'rms'))
 print('data bit mask: %s' % oct(MDB))
+print(info_ndarr(crows_ave,'crows_ave'))
+
+#sys.exit('TEST EXIT')
+
+
 
 print('TIME loading constants time = %.6f sec' % (time()-t0_sec))
 t0_sec = time()
@@ -219,7 +266,7 @@ for orun in ds.runs():
       logger.info(info_ndarr(raw, 'Ev:%6d raw' % nev))
 
 
-      if tname in ('4', '7', '8'):
+      if tname in ('4', '7', '8', '103'):
         evt_peds = event_or_grindex_constants(det, evt, peds, args.grindex)
         print(info_ndarr(evt_peds,'evt_peds'))
 
@@ -271,7 +318,9 @@ for orun in ds.runs():
       elif tname=='7':
         suffix = 'raw-peds-%s' % step_evt
         arr = (raw & MDB) - evt_peds
+        arr[0,10:30,10:100] = -20
         AMIN, AMAX = amin_amax(args, amin_def=-40, amax_def=40)
+        #img = table_nxn_epix10ka_from_ndarr(arr)
 
       elif tname=='8':
         suffix = 'raw-peds-x-gain-%s' % step_evt
@@ -288,33 +337,74 @@ for orun in ds.runs():
         arr = evt_gfac
         AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=np.amax(arr)*1.1)
 
-
-
-
       elif tname=='101':
-        odata = get_epix_data_object(evt, det.source)
-        crows = odata.calibrationRows()
+        crows = get_epix_data_object(evt, det.source).calibrationRows()
         print(info_ndarr(crows, '               calibrows'))
-        segind = args.segindex if args.segindex else 0
-
-        rawseg = raw[segind,:]
-        crows  = crows[segind,:]
-        zeros  = np.zeros((4,384), dtype=np.uint16) # det.raw._seg_geo.shape()) # (352,384)
-
-        crow0exp = [crows[0,:] for i in range(20)]
-        crow1exp = [crows[1,:] for i in range(20)]
-        img = np.vstack(crow0exp + [zeros, rawseg, zeros] + crow1exp)
-
-        med = np.median(rawseg)
+        img = image_epix10ka_segment_and_calibrows(raw[segind,:], crows[segind,:])
+        print(info_ndarr(img, ' segment %02d array with calibrows'%segind))
+        med = np.median(raw[segind,:])
         AMIN, AMAX = amin_amax(args, amin_def=med-1000, amax_def=med+1000)
         suffix = 'raw-%s-seg-%02d' % (step_evt, segind)
 
+      elif tname=='102':
+        crows = get_epix_data_object(evt, det.source).calibrationRows()
+        print(info_ndarr(crows, '               calibrows'))
+        nda = np.stack([image_epix10ka_segment_and_calibrows(raw[i,:], crows[i,:])\
+                for i in range(raw.shape[0])])
+        print(info_ndarr(nda, ' combined array'))
+        img = table_of_segments_from_3darr(nda)
+        med = np.median(raw)
+
+        AMIN, AMAX = amin_amax(args, amin_def=med-1000, amax_def=med+1000)
+        suffix = 'raw-%s' % step_evt
+
+      elif tname=='103':
+        crows = get_epix_data_object(evt, det.source).calibrationRows()
+        print(info_ndarr(crows, '    calibrows          '))
+        crows = crows - crows_ave
+        print(info_ndarr(crows, '    calibrows-crows_ave'))
+
+        for r in range(4):
+            crow = crows[segind,r,:]
+            print('  seg:%d row:%d' % (segind, r))
+            print('    correction mean  : %.3f' % np.median(crow))
+            print('    correction median: %.3f' % np.mean(crow))
+            print('    correction std   : %.3f' % np.std(crow))
+            print('    correction amin  : %.3f' % np.amin(crow))
+            print('    correction amax  : %.3f' % np.amax(crow))
+
+        arr = (raw & MDB) - evt_peds
+        img = image_epix10ka_segment_and_calibrows(arr[segind,:], crows[segind,:])
+        print(info_ndarr(img, ' segment %02d array with calibrows'%segind))
+        med = np.median(arr[segind,:])
+        AMIN, AMAX = amin_amax(args, amin_def=-20, amax_def=20)
+        suffix = 'raw-peds-%s-seg-%02d' % (step_evt, segind)
+        icrow = args.icrow # 0 or 1
+        rbegin, rend = (0,176) if icrow==0 else (176,352)
+        crow = crows[segind,icrow,:]
+        title = 'raw-peds rows[%d:%d] vs calibrow[%d], ADU' % (rbegin, rend, icrow)
+        if figsc is None:
+           figsc = gr.figure(figsize=(9,10), title=title)
+           axsc, = gr.fig_axes(figsc, windows=((0.10,  0.08, 0.84, 0.86),))
+        axsc.clear()
+        axsc.set_xlim([-20, 20])
+        axsc.set_ylim([-20, 20])
+        gr.add_title_labels_to_axes(axsc,\
+           title=title,\
+           xlabel='calibrow[%d], ADU' % icrow,\
+           ylabel='raw-peds rows[%d:%d], ADU' % (rbegin, rend))
+        for r in range(rbegin, rend):
+            axis_plot(axsc, crow, arr[segind,r,:], '.', markersize=1) #**kwa)
+        gr.show(mode=1)
+        if args.saveimg: gr.save_fig(figsc, fname='%s-%s-scplot-crow%d-arows%03d-%03d.png' % (prefix, suffix, icrow, rbegin, rend))
+
 
       else: # elif tname=='9':
-        suffix = 'raw-peds-%s-cm-%s' % (step_evt, s_cmpars)
+        suffix = 'calib-%s-cm-%s' % (step_evt, s_cmpars)
         arr = det.calib(evt, cmpars=cmpars)
         AMIN, AMAX = amin_amax(args, amin_def=-5, amax_def=+5)
-        logger.info(info_ndarr(arr, '        calib' % arr))
+        logger.info(info_ndarr(cmpars, '  cmpars'))
+        logger.info(info_ndarr(arr,    '  calib'))
 
 
       print(info_ndarr(arr,'Event %d det.calib'%nev))
@@ -328,8 +418,8 @@ for orun in ds.runs():
 
       if flims is None:
         #flims = fleximage(img, arr=arr, bins=100, w_in=14, h_in=10, amin=AMIN, amax=AMAX)#, interpolation='nearest') #fraclo=0.01, frachi=0.99
-        flims = fleximagespec(img, arr=arr, bins=100, w_in=14, h_in=10, amin=AMIN, amax=AMAX) #fraclo=0.01, frachi=0.99
-        flims.move(10,20)
+        flims = fleximagespec(img, arr=arr, bins=100, w_in=16, h_in=12, amin=AMIN, amax=AMAX) #fraclo=0.01, frachi=0.99
+        flims.move(5,5)
       else:
         fname = '%s-%s.png' % (prefix, suffix)
         flims.update(img, arr=arr, amin=AMIN, amax=AMAX)#, interpolation='nearest')

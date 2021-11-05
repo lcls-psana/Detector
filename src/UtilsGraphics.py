@@ -305,4 +305,16 @@ def pp_hist(ax, x, **kwa):
     """
     return ax.hist(x, **kwa)
 
+
+def plot(x, y, fmt, **kwa):
+    """ matplotlib.pyplot.plot(x, y, fmt, **kwa)
+    """
+    return gr.plt.plot(x, y, fmt, **kwa)
+
+
+def axis_plot(ax, x, y, fmt, **kwa):
+    """ ax.plot(x, y, fmt, **kwa)
+    """
+    return ax.plot(x, y, fmt, **kwa)
+
 # EOF
