@@ -141,7 +141,7 @@ def jungfrau_dark_proc(parser):
 
     for irun, run in enumerate(ds.runs()):
         logger.info('\n%s Run %d %s' % (20*'=', run.run(), 20*'='))
-        
+
         terminate_steps = False
         nevrun = 0
         for istep, step in enumerate(run.steps()):
@@ -186,7 +186,7 @@ def jungfrau_dark_proc(parser):
                     break
 
             for ievt, evt in enumerate(step.events()):
-            
+
                 nevrun += 1
                 nevtot += 1
 
@@ -251,7 +251,7 @@ def jungfrau_dark_proc(parser):
                 logger.info('continue to accumulate statistics, due to --evcode=%s' % evcode)
             else:
                 logger.info('reset statistics for next step')
-                
+
                 if dpo is not None:
                     dpo.summary()
                     save_results(dpo, **kwargs)
@@ -298,10 +298,10 @@ def save_results(dpo, **kwa):
     gmindex    = dpo.gmindex
     gmname     = dpo.gmname
 
-    logger.info('exp:%s run:%d ts_run:%s ts_now:%s' % (exp, runnum, ts_run, ts_now)) 
-    logger.info('calibdir: %s' % calibdir) 
-    logger.info('detid: %s' % detid) 
-    logger.info('gmindex: %d gmname: %s' % (gmindex, gmname)) 
+    logger.info('exp:%s run:%d ts_run:%s ts_now:%s' % (exp, runnum, ts_run, ts_now))
+    logger.info('calibdir: %s' % calibdir)
+    logger.info('detid: %s' % detid)
+    logger.info('gmindex: %d gmname: %s' % (gmindex, gmname))
 
     logger.info(dpo.info_results(cmt='dark data processing results to save'))
 
@@ -366,7 +366,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
     #cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
     for nevt,evt in enumerate(ds.events()):
         raw = det.raw(evt)
-        if raw is not None: 
+        if raw is not None:
             tstamp, tstamp_now = uc.tstamps_run_and_now(env)
             cpdic['tstamp'] = tstamp
             del ds
@@ -384,7 +384,7 @@ def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname
     # define default constants to substitute missing
     nda_def = np.ones(shape, dtype=np.float32) if ctype in ('gain', 'rms', 'dark_max') else\
               np.zeros(shape, dtype=np.float32) # 'pedestals', 'status', 'dark_min'
-    if ctype == 'dark_max': nda_def *= M14 
+    if ctype == 'dark_max': nda_def *= M14
 
     # fillout dict {igm:nda} of gain range constants for panel
     dicnda = {0:None, 1:None, 2:None}
@@ -405,7 +405,7 @@ def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname
         lstnda.append(nda if nda is not None else nda_def)
         #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
         #logger.info('%5s : %s' % (gm,fname))
-    
+
     nda = np.stack(tuple(lstnda))
     logger.debug('merge_panel_gain_ranges - merged with shape %s' % str(nda.shape))
 
@@ -430,11 +430,11 @@ def jungfrau_deploy_constants(parser):
     (popts, pargs) = parser.parse_args()
     kwa = vars(popts) # dict of options
 
-    exp        = kwa.get('exp', None)     
-    detname    = kwa.get('det', None)   
-    irun       = kwa.get('run', None)    
-    tstamp     = kwa.get('tstamp', None)    
-    dirxtc     = kwa.get('dirxtc', None) 
+    exp        = kwa.get('exp', None)
+    detname    = kwa.get('det', None)
+    irun       = kwa.get('run', None)
+    tstamp     = kwa.get('tstamp', None)
+    dirxtc     = kwa.get('dirxtc', None)
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
@@ -457,7 +457,7 @@ def jungfrau_deploy_constants(parser):
     fmt_gain   = kwa.get('fmt_gain',   '%.6f')
     fmt_offset = kwa.get('fmt_offset', '%.6f')
 
-    panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3] 
+    panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3]
     dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
     _name = sys._getframe().f_code.co_name
 

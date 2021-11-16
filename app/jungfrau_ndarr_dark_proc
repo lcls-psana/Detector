@@ -38,7 +38,7 @@ def plot_det_image(det, evt, nda, tit=''):
         print('plot_det_image - Image "%s" is not available.'%tit)
         #sys.exit('Image is not available. FURTHER TEST IS TERMINATED')
         return
-    
+
     ave, rms = nda.mean(), nda.std()
     gg.plotImageLarge(img, amp_range=(ave-1*rms, ave+3*rms), title=tit)
     gg.show()
@@ -99,7 +99,7 @@ class JungfrauNDArrDarkProc(object):
         self.evstg1 = min(max(self.events*0.05, 5), 50)
         self.nsigma = popts.nsigma
         self.ccnum  = popts.ccnum
-        
+
         self.det      = None
         self.shape    = None
         self.counter  = 0
@@ -137,7 +137,7 @@ class JungfrauNDArrDarkProc(object):
     def _common_mode_pars(self, arr_ave, arr_rms, arr_msk):
         """Returns detector-dependent common mode parameters as np.array for a few detectors and None for others.
         """
-        import PSCalib.GlobalUtils as gu 
+        import PSCalib.GlobalUtils as gu
         import math
 
         dettype = gu.det_type_from_source(self.src)
@@ -267,7 +267,7 @@ class JungfrauNDArrDarkProc(object):
 
         #if self.stage & 2: return
         if self.counter < self.evstg1: return
- 
+
         t0_sec = time()
 
         arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
@@ -309,7 +309,7 @@ class JungfrauNDArrDarkProc(object):
             print(', begin data summary stage')
         else:
             print(', counter=%d there are no arrays to save...' % self.counter)
-            return 
+            return
 
         t0_sec = time()
 
@@ -331,7 +331,7 @@ class JungfrauNDArrDarkProc(object):
         frac_int_hi = np.array(self.sta_int_hi/counter, dtype=np.float32)
 
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
-        
+
         rms_min, rms_max = gu.evaluate_limits(arr_rms, self.rmsnlo, self.rmsnhi, self.rms_lo, self.rms_hi, self.verbos, cmt='RMS')
                            #if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0.\
                            #else (self.rms_lo, self.rms_hi)
@@ -346,15 +346,15 @@ class JungfrauNDArrDarkProc(object):
         arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
         arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
 
-        print('  Bad pixel status:')  
-        print('  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)) 
-        print('  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)) 
-        print('  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)) 
+        print('  Bad pixel status:')
+        print('  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max))
+        print('  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min))
+        print('  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm))
         print('  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm))
-        print('  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)) 
+        print('  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max))
         print('  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min))
 
-        #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit, 
+        #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit,
         arr_sta = np.zeros(self.shape, dtype=np.int64)
         arr_sta += arr_sta_rms_hi    # hot rms
         arr_sta += arr_sta_rms_lo*8  # cold rms
@@ -362,7 +362,7 @@ class JungfrauNDArrDarkProc(object):
         arr_sta += arr_sta_int_lo*4  # cold
         arr_sta += arr_sta_ave_hi*16 # too large average
         arr_sta += arr_sta_ave_lo*32 # too small average
-        
+
         arr_msk  = np.select((arr_sta>0,), (self.arr0,), 1)
 
         if plotim &  1: plot_det_image(det, evt, arr_av1,         tit='average')
@@ -374,7 +374,7 @@ class JungfrauNDArrDarkProc(object):
         if plotim & 64: plot_det_image(det, evt, self.sta_int_lo, tit='statistics below threshold')
         if plotim &128: plot_det_image(det, evt, self.sta_int_hi, tit='statistics above threshold')
 
-        self.arr_av1 = arr_av1        
+        self.arr_av1 = arr_av1
         self.arr_rms = arr_rms
         self.arr_sta = arr_sta
         self.arr_msk = arr_msk
@@ -387,7 +387,7 @@ class JungfrauNDArrDarkProc(object):
             print(' save_ndarrays()')
         else:
             print(' save_ndarrays(): counter=0 - do not save files')
-            return 
+            return
 
         addmetad = True
 
@@ -397,7 +397,7 @@ class JungfrauNDArrDarkProc(object):
         savebw   = self.savebw
         counter  = self.counter
 
-        cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]        
+        cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]
         template = gu.calib_fname_template(self.exp, self.runnum, self.tsec, self.tnsec, self.fid,\
                                            self.tsdate, self.tstime, self.src, counter, ofname)
 
@@ -437,7 +437,6 @@ class JungfrauNDArrDarkProc(object):
         return 'ind:%1d gm:%s exp:%s run:%04d src:%s shape:%s stage:%1d events:%6d status:%s'%\
             (self.gmind, self.gmname.ljust(12), self.exp.ljust(9), self.runnum, self.src.ljust(20), str(self.shape), self.stage,\
              self.counter, oct(self.status_bw()))
-
 
 
 class JungfrauDarkProc(object):
@@ -489,7 +488,7 @@ class JungfrauDarkProc(object):
         counter  = jdp0.counter
         str_src  = gu.string_from_source(det.source) # 'CxiEndstation.0:Jungfrau.0'
 
-        cmts = ['DATASET  %s' % jdp0.dsname, 'STATISTICS  %d' % counter]        
+        cmts = ['DATASET  %s' % jdp0.dsname, 'STATISTICS  %d' % counter]
         template = gu.calib_fname_template(jdp0.exp, jdp0.runnum, jdp0.tsec, jdp0.tnsec, jdp0.fid,\
                                            jdp0.tsdate, jdp0.tstime, str_src, counter, ofname)
 
@@ -544,7 +543,6 @@ class JungfrauDarkProc(object):
             self.save_ndarrays()
 
 
-
 def jungfrau_ndarr_raw_proc():
 
     PROC_DATA = True
@@ -584,10 +582,6 @@ def jungfrau_ndarr_raw_proc():
     rec = gu.log_rec_on_start()
     gu.add_rec_to_log(LOG_FILE, rec, verbos)
 
-    #====================
-    #sys.exit('TEST EXIT')
-    #====================
-
     ds  = psana.DataSource(dsname)
     env = ds.env()
     nevtot = 0
@@ -596,7 +590,7 @@ def jungfrau_ndarr_raw_proc():
     # Loop over runs
     for irun, run in enumerate(ds.runs()):
         print('%s\nRun %d' % (50*'=', run.run()))
-        
+
         # Loop over calibcycles
         nevclc = 0
         for istep, step in enumerate(run.steps()):
@@ -626,7 +620,7 @@ def jungfrau_ndarr_raw_proc():
 
             # Loop over events
             for i, evt in enumerate(step.events()):
-            
+
                 if i<SKIP: continue
                 if not i<EVENTS: break
                 #if not ecm.select(evt): continue
@@ -656,7 +650,6 @@ def jungfrau_ndarr_raw_proc():
     if verbos & 1: print('%s\nTotal consumed time = %f sec.' % (80*'_', time()-t0_sec))
 
 
-
 def usage(mode=0):
     proc_name = os.path.basename(sys.argv[0])
     if   mode == 1: return 'Proceses jungfrau dark dataset.'
@@ -672,12 +665,11 @@ def usage(mode=0):
            +'\nEx.5:  %prog -d exp=xcsx22015:run=503,504,505:smd -s XcsEndstation.0:Jungfrau.0 -u'
 
 
-
 def option_parser():
     from optparse import OptionParser
 
     d_dsname = 'exp=cxi11216:run=9,12,13:smd' # None
-    d_source = 'CxiEndstation.0:Jungfrau.0' # None 
+    d_source = 'CxiEndstation.0:Jungfrau.0' # None
     #d_ofname = 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt'
     d_ofname = 'work/nda-#exp-#run-#src-#evts-#type.txt'
     d_events = 10000
@@ -688,7 +680,7 @@ def option_parser():
     d_rmshig = 16000
     d_fraclm = 0.1
     d_nsigma = 6.0
-    d_plotim = 0      
+    d_plotim = 0
     d_verbos = 0o377
     d_savebw = 0o367 # do not save pixel_mask
     d_intnlo = 6.0
@@ -699,7 +691,7 @@ def option_parser():
     d_clbdir = None
     d_upload = False
     d_ccnum  = None
- 
+
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
     h_ofname='output file name template, default = %s' % d_ofname
@@ -749,7 +741,6 @@ def option_parser():
     parser.add_option('-N', '--ccnum',  dest='ccnum',  default=d_ccnum,  action='store', type='int',    help=h_ccnum)
 
     return parser
-
 
 
 if __name__ == "__main__":

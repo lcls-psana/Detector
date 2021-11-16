@@ -22,7 +22,7 @@ def option_parser():
     from optparse import OptionParser
     d_dirrepo= CALIB_REPO_JUNGFRAU # './panels' '/reg/g/psdm/detector/gains/jungfrau/panels'
     d_dsname = None # 'exp=cxi11216:run=9,12,13:smd' # None
-    d_source = None #'CxiEndstation.0:Jungfrau.0' # None 
+    d_source = None #'CxiEndstation.0:Jungfrau.0' # None
     d_events = 100000
     d_evskip = 0
     d_int_lo = 1
@@ -34,7 +34,7 @@ def option_parser():
     d_rmsnlo = 6.0
     d_rmsnhi = 6.0
     d_fraclm = 0.1
-    d_plotim = 0      
+    d_plotim = 0
     d_evcode = None
     d_clbdir = None
     d_upload = False
@@ -46,7 +46,7 @@ def option_parser():
     d_fraclo = 0.05    # fraction of statistics [0,1] below low limit
     d_frachi = 0.95    # fraction of statistics [0,1] below high limit
     d_logmode = 'INFO'
- 
+
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
     h_events='maximal number of events total (in runs, steps), default = %s' % d_events
