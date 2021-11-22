@@ -9,7 +9,12 @@ reverse time order.
 
 =======
 
-???? Tag: V02-00-27
+Tag: V02-00-27
+2021-11-22 Mikhail Dubrovin
+- app/epix10ka_deploy_constants src/UtilsEpix10kaCalib.py
+  - code cleaning - remove comments and blanks
+  - add parameter --runend by Philip and Silke request
+
 2021-11-15 Mikhail Dubrovin
 - cosmetic update - remove blanks
   app/jungfrau_dark_proc
