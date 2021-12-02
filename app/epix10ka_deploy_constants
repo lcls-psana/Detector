@@ -22,7 +22,7 @@ def epix10ka_deploy_constants():
     (popts, pargs) = parser.parse_args()
     args = pargs
     opts = vars(popts)
-    defs = vars(parser.get_default_values())
+    #defs = vars(parser.get_default_values())
 
     if popts.exp is None: raise IOError('WARNING: option "-e <experiment>" MUST be specified.') # sys.exit()
     if popts.det is None: raise IOError('WARNING: option "-d <detector-name>" MUST be specified.')
@@ -52,7 +52,6 @@ def usage(mode=0):
            '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r544 -o ./work -D -c ./calib'\
            '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r544 -o ./work -D -c ./calib --proc=g --low=0.25 --medium=1 --high=1'
 
-#------------------------------
 
 def option_parser():
     from optparse import OptionParser
