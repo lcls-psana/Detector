@@ -29,9 +29,9 @@ from PSCalib.GlobalUtils import deploy_file, save_textfile, create_directory,\
                          EPIX10KA2M, EPIX10KAQUAD, EPIX10KA #, dic_det_type_to_calib_group # str_tstamp, replace
 from Detector.GlobalUtils import info_ndarr, print_ndarr, divide_protected
 
-from Detector.UtilsCalib import evaluate_limits, tstamps_run_and_now, tstamp_for_dataset, str_tstamp,\
+from Detector.UtilsCalib import evaluate_limits, tstamps_run_and_now, str_tstamp,\
        save_log_record_on_start, find_file_for_timestamp, save_ndarray_in_textfile, save_2darray_in_textfile,\
-       calib_group
+       calib_group, env_time, TSTAMP_FORMAT
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -200,7 +200,7 @@ def plot_fit(x,y,pf0,pf1,fname):
     #plt.ion()
 
 
-def move_fig(fig, x0=200, y0=100) :
+def move_fig(fig, x0=200, y0=100):
     logger.debug('matplotlib.get_backend() %s' % str(matplotlib.get_backend()))
     backend = matplotlib.get_backend()
     if backend == 'TkAgg': # this is our case
@@ -574,6 +574,7 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0):
     cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
     cpdic['panel_ids'] = ids_epix10ka2m(co)
     cpdic['dettype'] = det.dettype
+    #cpdic['tstamp'] = str_tstamp(fmt=TSTAMP_FORMAT, time_sec=env_time(env))
     for nevt,evt in enumerate(ds.events()):
         raw = det.raw(evt)
         if raw is not None:
@@ -1549,7 +1550,7 @@ def add_links_for_gainci_fixed_modes(dir_gain, fname_prefix, verbose=True):
                  'FM': 'AML-M',
                  'FL': 'AML-L'} # 'AHL-L'
 
-    for k,v in dic_links.items() :
+    for k,v in dic_links.items():
         fname_auto  = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, v)
         fname_fixed = '%s/%s_gainci_%s.dat' % (dir_gain, fname_prefix, k)
         #print('file %s existx %s' % (fname_auto, os.path.exists(fname_auto)))
@@ -1619,7 +1620,8 @@ def deploy_constants(*args, **opts):
 
     tstamp = tstamp_run if tstamp is None else\
              tstamp if int(tstamp)>9999 else\
-             tstamp_for_dataset('exp=%s:run=%d'%(exp,tstamp))
+             tstamp_run # TSTAMP_FORMAT = '%Y%m%d%H%M%S', check for None is for protection of the next int(...)
+             #tstamp_for_dataset('exp=%s:run=%d'%(exp,tstamp)) - bug reported by Silke on 2021-11-29 - dsname should have :dir=...
 
     logger.debug('search for calibration files with tstamp <= %s' % tstamp)
 
@@ -1665,7 +1667,7 @@ def deploy_constants(*args, **opts):
     create_directory(dmerge, mode=dirmode)
     fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
 
-    for octype, lst in dic_consts.items() :
+    for octype, lst in dic_consts.items():
         mrg_nda = merge_panels(lst)
         logger.info(info_ndarr(mrg_nda, 'merged constants for %s' % octype))
         fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
