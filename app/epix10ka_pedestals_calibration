@@ -68,7 +68,7 @@ def option_parser():
     d_ccmax   = 5
     d_idx     = None # 0-15 for epix10ka2m, 0-3 for epix10kaquad
     d_dirxtc  = None # '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
-    d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo' 
+    d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo'
     d_logmode = 'DEBUG'
     d_usesmd  = True
     d_errskip = False
