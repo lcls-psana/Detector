@@ -31,7 +31,7 @@ def info_evt_keys(evt, fmt=' %s', sep='\n  ', title='evt.keys:'):
 
 def ds_det(**kwa):
     dsname   = kwa.get('dsname',  None) # 'exp=meclu9418:run=342:smd' or xtc file name
-    dssuffix = kwa.get('dssuffix', ':smd')
+    dssuffix = kwa.get('dssuffix', '')
     expname  = kwa.get('expname', None) #meclu9418
     detname  = kwa.get('detname', None) #MecTargetChamber.0:Epix100a.1
     runs     = kwa.get('runs', None) #342,343
@@ -77,7 +77,7 @@ def info_det(det, par=None, env=None):
         #from Detector.PyDataAccess import get_jungfrau_data_object, get_jungfrau_config_object
         #co = get_jungfrau_config_object(env, source)
         from Detector.UtilsJungfrau import id_jungfrau #, id_jungfrau_from_config
-        s += '\n  id_jungfrau: %s' % str(id_jungfrau(env, source))
+        s += '\n  id_jungfrau: %s' % str(id_jungfrau(env, det.source))
     else: pass
 
     if par is not None:
@@ -242,7 +242,7 @@ def argument_parser():
     h_stskip  = 'number of steps to skip in the beginning of each run, default = %s' % d_stskip
     h_stepnum = 'step index (int)[0:...] to show details, default = %s' % d_stepnum
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
-    h_dssuffix= 'suffix added to the DataSource argument, default = %s' % d_dssuffix
+    h_dssuffix= 'suffix added to the DataSource argument, e.g. :smd, default = %s' % d_dssuffix
     #h_typeinfo= 'type of information for output D-detector, R-run-loop, S-stepnum-loop, E-event-loop, default = %s' % d_typeinfo
 
     parser = ArgumentParser(description='Print info about experiment detector and run')
