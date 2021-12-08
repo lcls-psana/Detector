@@ -93,8 +93,8 @@ def jungfrau_dark_proc(parser):
 
     dirrepo = popts.dirrepo
 
-    dirmode  = 0o777 # opts.get('dirmode',  0o777)
-    filemode = 0o664 # opts.get('filemode', 0o666)
+    dirmode  = kwargs.get('dirmode',  0o775)
+    filemode = kwargs.get('filemode', 0o664)
 
     #clbdir = popts.clbdir
     #if clbdir is not None: psana.setOption('psana.calib-dir', clbdir)
@@ -112,7 +112,7 @@ def jungfrau_dark_proc(parser):
     logger.info(s)
 
     _name = sys._getframe().f_code.co_name
-    uc.save_log_record_on_start(dirrepo, _name, filemode)
+    uc.save_log_record_on_start(dirrepo, _name, dirmode, filemode)
 
     ds  = psana.DataSource(dsname)
     det = psana.Detector(source)
@@ -439,7 +439,7 @@ def jungfrau_deploy_constants(parser):
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o777)
+    dirmode    = kwa.get('dirmode',  0o775)
     filemode   = kwa.get('filemode', 0o664)
     gain0      = kwa.get('gain0', 41.5)    # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g0_gain.npy
     gain1      = kwa.get('gain1', -1.39)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g1_gain.npy
@@ -463,7 +463,7 @@ def jungfrau_deploy_constants(parser):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    uc.save_log_record_on_start(dirrepo, _name, filemode)
+    uc.save_log_record_on_start(dirrepo, _name, dirmode, filemode)
 
     cpdic = jungfrau_config_info(dsname, detname)
     tstamp_run  = cpdic.get('tstamp',    None)
@@ -483,7 +483,7 @@ def jungfrau_deploy_constants(parser):
 
     logger.debug('search for calibration files with tstamp <= %s' % tstamp)
 
-    repoman = uc.RepoManager(dirrepo)
+    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
 
     mpars = {\
       'pedestals':    ('pedestals', fmt_peds),\

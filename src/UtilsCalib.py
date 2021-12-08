@@ -13,7 +13,7 @@ Usage::
     ts_run, ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
-    save_log_record_on_start(dirrepo, fname, fac_mode=0o777)
+    save_log_record_on_start(dirrepo, fname, dirmode=0o775, filemode=0o664)
     fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
@@ -111,15 +111,15 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_on_start(dirrepo, fname, fac_mode=0o774):
+def save_log_record_on_start(dirrepo, fname, dirmode=0o775, filemode=0o775):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     rec = log_rec_on_start()
-    repoman = RepoManager(dirrepo, filemode=fac_mode)
+    repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
     logfname = repoman.logname_on_start(fname)
     fexists = os.path.exists(logfname)
     save_textfile(rec, logfname, mode='a')
-    if not fexists: os.chmod(logfname, fac_mode)
+    if not fexists: os.chmod(logfname, filemode)
     logger.debug('record on start: %s' % rec)
     logger.info('saved:  %s' % logfname)
 
@@ -160,7 +160,7 @@ class RepoManager(object):
 
     def __init__(self, dirrepo, **kwa):
         self.dirrepo = dirrepo.rstrip('/')
-        self.dirmode     = kwa.get('dirmode',  0o774)
+        self.dirmode     = kwa.get('dirmode',  0o775)
         self.filemode    = kwa.get('filemode', 0o664)
         self.dirname_log = kwa.get('dirname_log', 'logs')
 
@@ -181,6 +181,7 @@ class RepoManager(object):
     def makedir_in_repo(self, name):
         """create and return directory <dirrepo>/<name>
         """
+        d = self.makedir(self.dirrepo)
         return self.makedir(self.dir_in_repo(name))
 
 
@@ -193,6 +194,7 @@ class RepoManager(object):
     def makedir_logs(self):
         """create and return directory <dirrepo>/logs
         """
+        d = self.makedir(self.dirrepo)
         return self.makedir(self.dir_logs())
 
 
@@ -206,10 +208,12 @@ class RepoManager(object):
     def makedir_logs_year(self, year=None):
         """create and return directory <dirrepo>/logs/<year>
         """
+        d = self.makedir_logs()
         return self.makedir(self.dir_logs_year(year))
 
 
     def dir_merge(self, dname='merge_tmp'):
+        d = self.makedir(self.dirrepo)
         return self.dir_in_repo(dname)
 
 
@@ -226,6 +230,7 @@ class RepoManager(object):
     def makedir_panel(self, panel_id):
         """create and returns path to panel directory like <dirrepo>/<panel_id>
         """
+        d = self.makedir(self.dirrepo)
         return self.makedir(self.dir_panel(panel_id))
 
 
@@ -238,6 +243,7 @@ class RepoManager(object):
     def makedir_type(self, panel_id, ctype): # ctype='pedestals'
         """create and returns path to the directory like <dirrepo>/<panel_id>/<ctype>
         """
+        d = self.makedir_panel(panel_id)
         return self.makedir(self.dir_type(panel_id, ctype))
 
 
@@ -250,6 +256,7 @@ class RepoManager(object):
     def makedir_types(self, panel_id, subdirs=('pedestals', 'rms', 'status', 'plots')):
         """create structure of subdirectories in calibration repository under <dirrepo>/<panel_id>/...
         """
+        dp = self.makedir_panel(panel_id)
         dirs = self.dir_types(panel_id, subdirs=subdirs)
         for d in dirs: self.makedir(d)
         return dirs
