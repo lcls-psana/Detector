@@ -9,6 +9,30 @@ reverse time order.
 
 =======
 
+Tag: V02-00-29
+2021-12-10 Mikhail Dubrovin
+- app/datinfo for id_jungfrau source -> det.source
+- app/epix10ka_pedestals_calibration - code cleaning
+- fix issue reported by Silke about file/dir permissions for JF
+  - app/jungfrau_dark_proc, jungfrau_deploy_constants
+    - add dirmode=0o775, filemode=0o664
+  - src/UtilsCalib.py
+    - add use mode=0o775, filemode=0o664
+    - update class RepoManager
+	- explicitly create intermediate rirs and do chmod
+    - src/UtilsEpix10kaCalib.py
+	- use parameter filemode in method save_log_record_on_start
+    - src/UtilsJungfrauCalib.py
+	- use parameter filemode in method save_log_record_on_start and uc.RepoManager
+- fix jungfrau_dark_proc for 3-calib-cycle file for per-cc per-panel processing
+  - app/jungfrau_dark_proc - remove clbdir, add evstep, change d_nrecs1 = 50
+  - src/UtilsLogging.py - add %(filename)s to formatter for DEBUG
+  - src/UtilsJungfrauCalib.py - use common time stamp for all steps, create dpo for processed steps only
+	- use common time-stamps ts_run, ts_now for the dataset
+	- create dpo for processed steps only
+	- remove terminate_steps from irrelevant places to loop over all steps
+	- use dirmode in uc.RepoManager
+
 Tag: V02-00-28
 2021-12-02 Mikhail Dubrovin
 - app/epix10ka_deploy_constants - code cleaning
