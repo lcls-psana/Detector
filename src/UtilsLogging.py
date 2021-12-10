@@ -20,7 +20,9 @@ def init_logger(loglevel='DEBUG', logfname=None):
 
     logger = logging.getLogger()
     logger.setLevel(int_loglevel) # logging.DEBUG
-    formatter = logging.Formatter('[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    fmt = '[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s' if int_loglevel==logging.DEBUG else\
+          '[%(levelname).1s] L%(lineno)04d %(message)s'
+    formatter = logging.Formatter(fmt)
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(int_loglevel)
