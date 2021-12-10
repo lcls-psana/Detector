@@ -2,6 +2,12 @@
 
 import sys
 
+from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger #, logging, DICT_NAME_TO_LEVEL
+#logger = logging.getLogger(__name__)
+
+from Detector.UtilsJungfrauCalib import jungfrau_dark_proc, CALIB_REPO_JUNGFRAU, uc, gu
+
+
 SCRNAME = sys.argv[0].split('/')[-1]
 
 DESCRIPTION = 'Proceses jungfrau dark data'
@@ -25,6 +31,7 @@ def option_parser():
     d_source = None #'CxiEndstation.0:Jungfrau.0' # None
     d_events = 100000
     d_evskip = 0
+    d_evstep = 2000
     d_int_lo = 1
     d_int_hi = 16000
     d_intnlo = 6.0
@@ -36,12 +43,11 @@ def option_parser():
     d_fraclm = 0.1
     d_plotim = 0
     d_evcode = None
-    d_clbdir = None
     d_upload = False
     d_stepnum= None
     d_stepmax= None
     d_segind = None
-    d_nrecs1 = 100
+    d_nrecs1 = 50
     d_nrecs  = 1000
     d_fraclo = 0.05    # fraction of statistics [0,1] below low limit
     d_frachi = 0.95    # fraction of statistics [0,1] below high limit
@@ -51,6 +57,7 @@ def option_parser():
     h_source='input ndarray source name, default = %s' % d_source
     h_events='maximal number of events total (in runs, steps), default = %s' % d_events
     h_evskip='number of events to skip in the beginning of each step, default = %s' % d_evskip
+    h_evstep='maximal number of events to process in each step, default = %s' % d_evstep
     h_int_lo='intensity low limit, default = %s' % d_int_lo
     h_int_hi='intensity high limit, default = %s' % d_int_hi
     h_intnlo='number of sigma from mean for low limit on INTENSITY, default = %s' % d_intnlo
@@ -63,13 +70,12 @@ def option_parser():
     h_plotim='control bit-word to plot images, default = %s' % d_plotim
     h_evcode='comma separated event codes for selection as OR combination, any negative %s'%\
              'code inverts selection, default = %s'%str(d_evcode)
-    h_clbdir='calib directory for deployment of calibration files, default = %s' % d_clbdir
     h_upload='upload files in calib directory, default = %s' % d_upload
     h_stepnum ='step/calibcycle number [0,2] or all by default, default = %s' % str(d_stepnum)
     h_stepmax ='maximal number of steps or all by default, default = %s' % str(d_stepmax)
     h_segind ='segment index to process, default = %s' % str(d_segind)
     h_nrecs ='number of records to collect data, default = %s' % str(d_nrecs)
-    h_nrecs1='number of records for 1st stage processing, default = %s' % str(d_nrecs)
+    h_nrecs1='number of records for 1st stage processing, default = %s' % str(d_nrecs1)
     h_fraclo= 'fraction of statistics [0,1] below low  limit of the gate, default = %f' % d_fraclo
     h_frachi= 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
@@ -82,6 +88,7 @@ def option_parser():
     parser.add_option('-s', '--source', dest='source', default=d_source, action='store', type='string', help=h_source)
     parser.add_option('-n', '--events', dest='events', default=d_events, action='store', type='int',    help=h_events)
     parser.add_option('-m', '--evskip', dest='evskip', default=d_evskip, action='store', type='int',    help=h_evskip)
+    parser.add_option('-e', '--evstep', dest='evstep', default=d_evstep, action='store', type='int',    help=h_evstep)
     parser.add_option('-b', '--int_lo', dest='int_lo', default=d_int_lo, action='store', type='float',  help=h_int_lo)
     parser.add_option('-t', '--int_hi', dest='int_hi', default=d_int_hi, action='store', type='float',  help=h_int_hi)
     parser.add_option('-B', '--rms_lo', dest='rms_lo', default=d_rms_lo, action='store', type='float',  help=h_rms_lo)
@@ -93,7 +100,6 @@ def option_parser():
     parser.add_option('-L', '--rmsnlo', dest='rmsnlo', default=d_rmsnlo, action='store', type='float',  help=h_rmsnlo)
     parser.add_option('-H', '--rmsnhi', dest='rmsnhi', default=d_rmsnhi, action='store', type='float',  help=h_rmsnhi)
     parser.add_option('-c', '--evcode', dest='evcode', default=d_evcode, action='store', type='string', help=h_evcode)
-    parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
     parser.add_option('-u', '--upload', dest='upload', default=d_upload, action='store_true',           help=h_upload)
     parser.add_option('-N', '--stepnum',dest='stepnum',default=d_stepnum,action='store', type='int',    help=h_stepnum)
     parser.add_option('-M', '--stepmax',dest='stepmax',default=d_stepmax,action='store', type='int',    help=h_stepmax)
@@ -111,17 +117,12 @@ def option_parser():
 
 if __name__ == "__main__":
 
-    #import logging
-    #logger = logging.getLogger(__name__)
-    #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
-
-    from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger
-    from Detector.UtilsJungfrauCalib import jungfrau_dark_proc, CALIB_REPO_JUNGFRAU, uc, gu
-
     parser = option_parser()
     (popts, pargs) = parser.parse_args()
+
     logfname = uc.RepoManager(popts.dirrepo, dirmode=0o775, filemode=0o664).logname('%s_%s' % (SCRNAME, gu.get_login()))
     init_logger(loglevel=popts.logmode, logfname=logfname) # (loglevel='DEBUG', logfname=None)
+    #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
 
     jungfrau_dark_proc(parser)
     sys.exit(0)
