@@ -67,7 +67,8 @@ def info_gain_modes(gm):
 
 def selected_record(i, events):
     return i<5\
-       or (i<200 and not i%10)\
+       or (i<50 and not i%10)\
+       or (i<200 and not i%20)\
        or not i%100\
        or i>events-5
 
@@ -83,6 +84,7 @@ def jungfrau_dark_proc(parser):
     kwargs = vars(popts) # dict of options
 
     evskip = popts.evskip
+    evstep = popts.evstep
     events = popts.events
     source = popts.source
     dsname = popts.dsname
@@ -127,7 +129,7 @@ def jungfrau_dark_proc(parser):
     nsteptot = 0
     ss = ''
 
-    logger.info('dsname: %s  detname: %s' % (dsname, det.name))
+    logger.info('dsname: %s  detname: %s  is_single_run: %s' % (dsname, det.name, is_single_run))
 
     #info_jungfrau(ds, source)
     jf_id = jungfrau_uniqueid(ds, source)
@@ -139,36 +141,14 @@ def jungfrau_dark_proc(parser):
 
     terminate_runs = False
 
+    ts_run, ts_now = uc.tstamps_run_and_now(env, fmt=uc.TSTAMP_FORMAT)
+
     for irun, run in enumerate(ds.runs()):
         logger.info('\n%s Run %d %s' % (20*'=', run.run(), 20*'='))
-
         terminate_steps = False
         nevrun = 0
         for istep, step in enumerate(run.steps()):
             nsteptot += 1
-            env = step.env()
-            gmo = get_jungfrau_gain_mode_object(env, source)
-            igm = DIC_GAIN_MODE[gmo.name]
-
-            if dpo is None:
-               dpo = uc.DarkProc(**kwargs)
-               dpo.runnum = run.run()
-               dpo.exp = env.experiment()
-               dpo.calibdir = env.calibDir()
-               dpo.ts_run, dpo.ts_now = uc.tstamps_run_and_now(env, fmt=uc.TSTAMP_FORMAT)
-               dpo.detid = jf_id
-               dpo.gmindex = igm
-               dpo.gmname = gmo.name
-
-               igm0 = igm
-
-            if igm != igm0:
-               logger.warning('event for wrong gain mode index %d, expected %d' % (igm, igm0))
-
-            if istep==0:
-                logger.info('gain mode info from jungfrau configuration\n%s' % info_gain_modes(gmo))
-
-            logger.info('\n== begin step %d gain mode "%s" index %d' % (istep, gmo.name, igm))
 
             if stepmax is not None and nsteptot>stepmax:
                 logger.info('==== Step:%02d loop is terminated, --stepmax=%d' % (nsteptot, stepmax))
@@ -185,6 +165,30 @@ def jungfrau_dark_proc(parser):
                     terminate_runs = True
                     break
 
+            env = step.env()
+            gmo = get_jungfrau_gain_mode_object(env, source)
+            igm = DIC_GAIN_MODE[gmo.name]
+
+            if dpo is None:
+               dpo = uc.DarkProc(**kwargs)
+               dpo.runnum = run.run()
+               dpo.exp = env.experiment()
+               dpo.calibdir = env.calibDir()
+               dpo.ts_run, dpo.ts_now = ts_run, ts_now #uc.tstamps_run_and_now(env, fmt=uc.TSTAMP_FORMAT)
+               dpo.detid = jf_id
+               dpo.gmindex = igm
+               dpo.gmname = gmo.name
+
+               igm0 = igm
+
+            if igm != igm0:
+               logger.warning('event for wrong gain mode index %d, expected %d' % (igm, igm0))
+
+            if istep==0:
+                logger.info('gain mode info from jungfrau configuration\n%s' % info_gain_modes(gmo))
+
+            logger.info('\n== begin step %d gain mode "%s" index %d' % (istep, gmo.name, igm))
+
             for ievt, evt in enumerate(step.events()):
 
                 nevrun += 1
@@ -199,7 +203,12 @@ def jungfrau_dark_proc(parser):
                     or ievt==evskip-1: logger.info(s)
                     continue
 
-                if not nevtot<events:
+                if ievt>=evstep:
+                    print()
+                    logger.info('break at ievt %d == --evstep=%d' % (ievt, evstep))
+                    break
+
+                if nevtot>=events:
                     print()
                     logger.info('break at nevtot %d == --events=%d' % (nevtot, events))
                     terminate_steps = True
@@ -238,9 +247,12 @@ def jungfrau_dark_proc(parser):
                     status = dpo.event(raw,ievt)
                     if status == 2:
                         logger.info('requested statistics --nrecs=%d is collected - terminate loops' % popts.nrecs)
-                        if ecm: terminate_runs = True
-                        terminate_steps = True
+                        #if ecm:
+                        #    terminate_runs = True
+                        #    terminate_steps = True
                         break # evt loop
+
+                # End of event-loop
 
             print()
             ss = 'run[%d] %d  end of step %d  events total/run/step/selected: %4d/%4d/%4d/%4d'%\
@@ -262,16 +274,26 @@ def jungfrau_dark_proc(parser):
                 logger.info('terminate_steps')
                 break
 
+            # End of step-loop
+
         logger.info(ss)
         logger.info('run %d, number of steps processed %d' % (run.run(), istep+1))
 
-        if is_single_run or terminate_runs:
-            logger.info('terminated due to terminate_runs:%s or is_single_run:%s' % (terminate_runs, is_single_run))
+        #if is_single_run:
+        #    logger.info('terminated due to is_single_run:%s' % is_single_run)
+        #    break
+
+        if dpo is not None:
+            dpo.summary()
+            save_results(dpo, **kwargs)
+            del(dpo)
+            dpo=None
+
+        if terminate_runs:
+            logger.info('terminate_runs')
             break
 
-    if dpo is not None:
-       dpo.summary()
-       save_results(dpo, **kwargs)
+        # End of run-loop
 
     logger.info('number of runs processed %d' % (irun+1))
     logger.info('%s\ntotal consumed time = %.3f sec.' % (40*'_', time()-t0_sec))
@@ -283,6 +305,7 @@ def save_results(dpo, **kwa):
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     segind     = kwa.get('segind', None)
     panel_type = kwa.get('panel_type', 'jungfrau')
+    dirmode    = kwa.get('dirmode', 0o775)
     filemode   = kwa.get('filemode', 0o664)
     fmt_peds   = kwa.get('fmt_peds',   '%.3f')
     fmt_rms    = kwa.get('fmt_rms',    '%.3f')
@@ -318,7 +341,7 @@ def save_results(dpo, **kwa):
 
     #ctypes = list_save[:][0]
 
-    repoman = uc.RepoManager(dirrepo)
+    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
     #dlog = repoman.dir_logs_year()
 
     panel_ids = detid.split('_')
