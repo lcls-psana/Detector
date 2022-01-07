@@ -118,6 +118,17 @@ Usage::
     det.move_geo(par, dx, dy, dz)    # move detector it 3-d space
     det.tilt_geo(par, dtx, dty, dtz) # tilt detector around 3 axes
 
+    # get geometry in PSF format.
+    # PSF stands for asic (0,0) pixel Position, Slow, and Fast orthogonal vectors along rows and columns, respectively.
+    # psf (list-of-tuples) shapesd as (<number-of-asics>, 3(vectors vp, vs, vf), 3(vector components x,y,z)).
+    psf = det.psf(par, cframe=1) # cframe=1 stands for gu.CFRAME_LAB
+
+    # convert psana per-panel data to PSF per-asic data array with shape=(<number-of-asics>, <rows-in-asic>, <cols-in-asic>)
+    datapsf = det.data_psf(par, data)
+
+    # get pixel coordinate array through the psf vectors
+    xarr, yarr, zarr = det.pixel_coords_psf(par, cframe=1)
+
     # access to combined mask
     # NOTE: by default none of mask keywords is set to True, returns None.
     mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False, unbondnbrs8=False, **kwargs)
@@ -1358,6 +1369,40 @@ class AreaDetector(object):
            - dtx, dty, dtz : float - three angular increments [deg] of the detector tilt.
         """
         self.pyda.tilt_geo(par, dtx, dty, dtz)
+
+
+    def psf(self, par, cframe=gu.CFRAME_LAB):
+        """Returns PSF vectors for asics as a tuple psf[<number-of-asics>][3][3].
+
+           Parameters
+
+           - par : int or psana.Event() - integer run number or psana event object.
+           - cframe : int - coordinate frame 0=psana or 1=LAB frame.
+
+           Returns
+
+           - tuple of tuples - per-asic psf vectors.
+        """
+        return self.geometry(par).psf(cframe)
+
+
+    def data_psf(self, par, data):
+        """Converts psana per-panel data to PSF per-asic shaped data array.
+
+           Parameters
+
+           - par : int or psana.Event() - integer run number or psana event object.
+           - data : psana-formatted data array.
+
+           Returns
+
+           - np.array - PSF per-asic shaped data array.
+        """
+        return self.geometry(par).data_psf(data)
+
+
+    def pixel_coords_psf(self, par, cframe=1):
+        return self.geometry(par).pixel_coords_psf(cframe)
 
 
     def image_xaxis(self, par, pix_scale_size_um=None, x0_off_pix=None):
