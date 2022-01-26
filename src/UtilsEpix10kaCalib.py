@@ -1247,7 +1247,7 @@ def pedestals_calibration(*args, **opts):
     fmt_status = opts.get('fmt_status', '%4i')
     idx_sel    = opts.get('idx', None)
     dirmode    = opts.get('dirmode', 0o777)
-    filemode   = opts.get('filemode', 0o664)
+    filemode   = opts.get('filemode', 0o666)
     usesmd     = opts.get('usesmd', False)
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
