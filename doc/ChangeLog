@@ -9,6 +9,14 @@ reverse time order.
 
 =======
 
+Tag: V02-00-31
+2021-01-25 Mikhail Dubrovin
+- app/epix10ka_deploy_constants, epix10ka_pedestals_calibration - replace logging.basicConfig with init_logger
+- app/jungfrau_dark_proc, jungfrau_deploy_constants - change dirmode=0o775->0o777, filemode=0o664->0o666
+- src/UtilsCalib.py - use os.umask(0o0), change dirmode=0o775->0o777, filemode=0o664->0o666
+- src/UtilsEpix10kaCalib.py - use os.umask(0o0), change dirmode=0o775->0o777, filemode=0o664->0o666
+- src/UtilsJungfrauCalib.py - change dirmode=0o775->0o777, filemode=0o664->0o666
+
 Tag: V02-00-30
 2021-01-06 Mikhail Dubrovin
 	modified:   PyDetectorAccess.py - code cleaning - remove blanks and comments
