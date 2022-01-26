@@ -13,7 +13,7 @@ Usage::
     ts_run, ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
-    save_log_record_on_start(dirrepo, fname, dirmode=0o775, filemode=0o664)
+    save_log_record_on_start(dirrepo, fname, dirmode=0o777, filemode=0o666)
     fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
@@ -111,9 +111,10 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_on_start(dirrepo, fname, dirmode=0o775, filemode=0o775):
+def save_log_record_on_start(dirrepo, fname, dirmode=0o777, filemode=0o666):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
+    os.umask(0o0)
     rec = log_rec_on_start()
     repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
     logfname = repoman.logname_on_start(fname)
@@ -125,6 +126,7 @@ def save_log_record_on_start(dirrepo, fname, dirmode=0o775, filemode=0o775):
 
 
 def save_2darray_in_textfile(nda, fname, fmode, fmt):
+    os.umask(0o0)
     fexists = os.path.exists(fname)
     np.savetxt(fname, nda, fmt=fmt)
     if not fexists: os.chmod(fname, fmode)
@@ -132,6 +134,7 @@ def save_2darray_in_textfile(nda, fname, fmode, fmt):
 
 
 def save_ndarray_in_textfile(nda, fname, fmode, fmt):
+    os.umask(0o0)
     fexists = os.path.exists(fname)
     save_txt(fname=fname, arr=nda, fmt=fmt)
     if not fexists: os.chmod(fname, fmode)
@@ -160,8 +163,8 @@ class RepoManager(object):
 
     def __init__(self, dirrepo, **kwa):
         self.dirrepo = dirrepo.rstrip('/')
-        self.dirmode     = kwa.get('dirmode',  0o775)
-        self.filemode    = kwa.get('filemode', 0o664)
+        self.dirmode     = kwa.get('dirmode',  0o777)
+        self.filemode    = kwa.get('filemode', 0o666)
         self.dirname_log = kwa.get('dirname_log', 'logs')
 
 
