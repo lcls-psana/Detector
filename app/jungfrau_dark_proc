@@ -120,7 +120,7 @@ if __name__ == "__main__":
     parser = option_parser()
     (popts, pargs) = parser.parse_args()
 
-    logfname = uc.RepoManager(popts.dirrepo, dirmode=0o775, filemode=0o664).logname('%s_%s' % (SCRNAME, gu.get_login()))
+    logfname = uc.RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666).logname('%s_%s' % (SCRNAME, gu.get_login()))
     init_logger(loglevel=popts.logmode, logfname=logfname) # (loglevel='DEBUG', logfname=None)
     #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
 
