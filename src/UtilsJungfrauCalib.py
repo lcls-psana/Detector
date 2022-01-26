@@ -95,8 +95,8 @@ def jungfrau_dark_proc(parser):
 
     dirrepo = popts.dirrepo
 
-    dirmode  = kwargs.get('dirmode',  0o775)
-    filemode = kwargs.get('filemode', 0o664)
+    dirmode  = kwargs.get('dirmode',  0o777)
+    filemode = kwargs.get('filemode', 0o666)
 
     #clbdir = popts.clbdir
     #if clbdir is not None: psana.setOption('psana.calib-dir', clbdir)
@@ -305,8 +305,8 @@ def save_results(dpo, **kwa):
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     segind     = kwa.get('segind', None)
     panel_type = kwa.get('panel_type', 'jungfrau')
-    dirmode    = kwa.get('dirmode', 0o775)
-    filemode   = kwa.get('filemode', 0o664)
+    dirmode    = kwa.get('dirmode', 0o777)
+    filemode   = kwa.get('filemode', 0o666)
     fmt_peds   = kwa.get('fmt_peds',   '%.3f')
     fmt_rms    = kwa.get('fmt_rms',    '%.3f')
     fmt_status = kwa.get('fmt_status', '%4i')
@@ -462,8 +462,8 @@ def jungfrau_deploy_constants(parser):
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o775)
-    filemode   = kwa.get('filemode', 0o664)
+    dirmode    = kwa.get('dirmode',  0o777)
+    filemode   = kwa.get('filemode', 0o666)
     gain0      = kwa.get('gain0', 41.5)    # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g0_gain.npy
     gain1      = kwa.get('gain1', -1.39)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g1_gain.npy
     gain2      = kwa.get('gain2', -0.11)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g2_gain.npy
