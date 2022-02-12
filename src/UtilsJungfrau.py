@@ -10,10 +10,10 @@ Usage ::
     from Detector.UtilsJungfrau import id_jungfrau
     from Detector.UtilsJungfrau import id_jungfrau, number_of_modules_in_jungfrau, psana_source,\
                                        number_of_modules_in_jungfrau, string_from_source
-    
+
     idjf = id_jungfrau_from_config(co)   # 1508613-000022630721062933-3997872-1508613-22630721062933-3997943
     ids0 = id_jungfrau_from_config(co,0) # 1508613-000022630721062933-3997872
-    ids0 = id_jungfrau_from_config(co,1) # 1508613-000022630721062933-3997943    
+    ids0 = id_jungfrau_from_config(co,1) # 1508613-000022630721062933-3997943
 
 Jungfrau gain range coding
 bit: 15,14,...,0   Gain range, ind
@@ -77,11 +77,11 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
 
     - det (psana.Detector) - Detector object
     - evt (psana.Event)    - Event object
-    - cmpars (tuple) - common mode parameters 
+    - cmpars (tuple) - common mode parameters
         - cmpars[0] - algorithm # 7-for jungfrau
         - cmpars[1] - control bit-word 1-in rows, 2-in columns
-        - cmpars[2] - maximal applied correction 
-    - **kwa - used here and passed to det.mask_comb   
+        - cmpars[2] - maximal applied correction
+    - **kwa - used here and passed to det.mask_comb
       - nda_raw - if not None, substitutes evt.raw()
       - mbits - parameter of the det.mask_comb(...)
       - mask - user defined mask passed as optional parameter
@@ -149,19 +149,19 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     #a = np.select((gr0, gr1, gr2), (gain[0,:], gain[1,:], gain[2,:]), default=1) # 2msec
     factor = np.select((gr0, gr1, gr2), (gfac[0,:], gfac[1,:], gfac[2,:]), default=1) # 2msec
     offset = np.select((gr0, gr1, gr2), (offs[0,:], offs[1,:], offs[2,:]), default=0)
- 
+
     #print_ndarr(factor, 'XXX: calib_jungfrau factor')
     #print_ndarr(offset, 'XXX: calib_jungfrau offset')
 
     arrf -= offset # Apply offset correction
 
-    if store.mask is None: 
+    if store.mask is None:
         mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
         mask = det.mask_comb(evt, mbits, **kwa) if mbits > 0 else None
         mask_opt = kwa.get('mask',None) # mask optional parameter in det.calib(...,mask=...)
         if mask_opt is not None:
            store.mask = mask_opt if mask is None else merge_masks(mask,mask_opt)
-    mask = store.mask        
+    mask = store.mask
 
     if cmp is not None:
       mode, cormax = int(cmp[1]), cmp[2]
@@ -260,7 +260,7 @@ def psana_source(env, src):
     source = None
     if   isinstance(src, psana.Source) : source = src
     elif isinstance(src, psana.DetInfo): source = psana.Source(src) # complete_detname_from_detinfo(src)
-    elif isinstance(src, str): 
+    elif isinstance(src, str):
         detname = complete_detname(env, src)
         if detname is None: return None
         source = psana.Source(detname)
@@ -282,7 +282,7 @@ def id_jungfrau(env, src, iseg=None):
 
 class JFPanelCalibDir(object):
     """Works with names like '170505-149520170815-3d00b0-20171025000000'
-       It does validiti check for availability of 3 or 4 fields and 
+       It does validiti check for availability of 3 or 4 fields and
        separate panel name and time stamp.
     """
     def __init__(self, dname):
@@ -341,7 +341,7 @@ def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None):
     """Returns panel calibration directory from dnos (dirname objects) usint timestamp.
     """
     msg = 'Find calibdir for panel: %s and timestamp: %s' % (panel, str(tstamp))
-    sorted_lst = sorted([o for o in dnos if panel==o.pname])    
+    sorted_lst = sorted([o for o in dnos if panel==o.pname])
     size = len(sorted_lst)
 
     msg += '\n  Selected and sorted list of %d calibdirs:' % size
@@ -352,7 +352,7 @@ def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None):
     elif size == 1     : return sorted_lst[0].dname  # return 1st
     elif tstamp is None: return sorted_lst[-1].dname # return latest
     else: # select for time stamp
-        for i,o in enumerate(sorted_lst[1:]): 
+        for i,o in enumerate(sorted_lst[1:]):
             if o.int_ts > tstamp: return sorted_lst[i].dname # previous item in the list started from [1:]
     return sorted_lst[-1].dname # return latest
 
@@ -384,7 +384,7 @@ def merge_panel_constants(dirs, ifname='%s/g%d_gain.npy', ofname='jf_pixel_gain'
             if not os.path.lexists(fname):
                 msg = 'FILE IS NOT AVAILABLE: %s' % fname
                 logger.warning(msg)
-                sys.exit()                
+                sys.exit()
             nda = np.load(fname)
             logger.debug(info_ndarr(nda, 'file %s nda\n     ' % fname))
             lst_segs.append(nda)
@@ -406,7 +406,7 @@ def merge_panel_constants(dirs, ifname='%s/g%d_gain.npy', ofname='jf_pixel_gain'
 
 
 def info_jungfrau(ds, detname):
-    source = psana_source(ds.env(), detname) 
+    source = psana_source(ds.env(), detname)
     strsrc = string_from_source(source).replace(':','-')
     npanels = number_of_modules_in_jungfrau(ds.env(), source)
     logger.info('Found source: %s, number of panels: %s' %(strsrc, str(npanels)))
@@ -416,7 +416,7 @@ def info_jungfrau(ds, detname):
 
 
 def jungfrau_uniqueid(ds, detname):
-    source = psana_source(ds.env(), detname) 
+    source = psana_source(ds.env(), detname)
     return id_jungfrau(ds.env(), source)
 
 
@@ -431,7 +431,7 @@ if __name__ == "__main__":
 
 
   def test_keys(env):
-    for k in env.configStore().keys(): 
+    for k in env.configStore().keys():
         print(k)
         print('  type:', k.type(), '  src:', k.src(), '  alias:', k.alias())
         src = k.src()
@@ -441,7 +441,7 @@ if __name__ == "__main__":
 
   # See Detector.examples.ex_source_dsname
 
-  def ex_source_dsname(ntest): 
+  def ex_source_dsname(ntest):
 
     if   ntest == 1: # psana.Jungfrau.ConfigV1
         src, dsn = 'CxiEndstation.0:Jungfrau.0', 'exp=cxi11216:run=9'
