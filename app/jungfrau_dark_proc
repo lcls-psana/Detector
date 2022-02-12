@@ -16,6 +16,7 @@ USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
       +'\nEx.1:  %s -d exp=cxilu9218:run=242,243,244:smd -s CxiDs1.0:Jungfrau.0 # regular dark processing' % SCRNAME\
       +'\nEx.2:  %s -d exp=cxilu9218:run=242,243,244:smd -s CxiDs1.0:Jungfrau.0 -I1 # speed-up for single panel' % SCRNAME\
       +'\nEx.3:  %s -d exp=cxilu9218:run=238:smd -s CxiDs1.0:Jungfrau.0 --evcode 162 # use drop-shots as dark events' % SCRNAME\
+      +'\nEx.4:  %s -d exp=cxic00318:run=375:smd -s CxiDs1.0:Jungfrau.0 --nrecs1=50 --nrecs=100 -o work # test bad gain switch 221,228,224 sec' % SCRNAME\
       +'\n\nHelp:  %s -h\n' % SCRNAME
 
 
@@ -70,7 +71,7 @@ def option_parser():
     h_plotim='control bit-word to plot images, default = %s' % d_plotim
     h_evcode='comma separated event codes for selection as OR combination, any negative %s'%\
              'code inverts selection, default = %s'%str(d_evcode)
-    h_upload='upload files in calib directory, default = %s' % d_upload
+    h_upload='deprecated and not used, default = %s' % d_upload
     h_stepnum ='step/calibcycle number [0,2] or all by default, default = %s' % str(d_stepnum)
     h_stepmax ='maximal number of steps or all by default, default = %s' % str(d_stepmax)
     h_segind ='segment index to process, default = %s' % str(d_segind)
