@@ -9,6 +9,15 @@ reverse time order.
 
 =======
 
+Tag: V02-00-32
+2021-02-11 Mikhail Dubrovin
+modified:
+   ../app/jungfrau_dark_proc - note that option --upload or -u is deprecated and not used
+   ../examples/test-issues-2022.py - add issue_2022_02_09
+   UtilsCalib.py - refactoring - in DarkProc add/use parameter datbits, save in block raw data without data bit-mask
+   UtilsJungfrau.py - code cleaning - remove blanks
+   UtilsJungfrauCalib.py - add/use DarkProcJungfrau derived from DarkProc to define pixels with bad gain mode switch
+
 Tag: V02-00-31
 2021-01-25 Mikhail Dubrovin
 - app/epix10ka_deploy_constants, epix10ka_pedestals_calibration - replace logging.basicConfig with init_logger
