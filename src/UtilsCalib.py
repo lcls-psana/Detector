@@ -275,7 +275,6 @@ class RepoManager(object):
         return '%s/%s_log_%s.txt' % (self.makedir_logs_year(), tstamp, scrname)
 
 
-
 def mean_constrained(arr, lo, hi):
     """Evaluates mean value of the input array for values between low and high limits
     """
@@ -288,7 +287,8 @@ def mean_constrained(arr, lo, hi):
 
 
 def proc_dark_block(block, **kwa):
-    """Copied and modified from UtilsEpix10kaCalib
+    """Used in UtilsEpix10kaCalib.py only:
+       Copied and modified from UtilsEpix10kaCalib
        Assumes that ALL dark events are in the block - returns ALL arrays
 
        Returns per-panel (352, 384) arrays of mean, rms, ...
@@ -504,9 +504,10 @@ def proc_block(block, **kwa):
     fraclo     = kwa.get('fraclo', 0.05)    # fraction of statistics below low gate limit
     frachi     = kwa.get('frachi', 0.95)    # fraction of statistics below high gate limit
     frac05     = 0.5
-    #nrecs1     = kwa.get('nrecs1', None)    # number of records for the 1st stage processing
+    datbits    = kwa.get('datbits', 0x3fff) # data bits 0x3fff is 14-bit mask for epix10ka and Jungfrau
+    #nrecs1     = kwa.get('nrecs1', None)   # number of records for the 1st stage processing
 
-    logger.debug('in proc_dark_block for exp=%s det=%s, block.shape=%s' % (exp, detname, str(block.shape)))
+    logger.debug('in proc_block for exp=%s det=%s, block.shape=%s' % (exp, detname, str(block.shape)))
     logger.info(info_ndarr(block, 'begin pricessing of the data block', first=100, last=105))
 
     t0_sec = time()
@@ -536,7 +537,7 @@ def proc_block(block, **kwa):
     #                                 +' add random [0,1)-0.5 time = %.3f sec'%\
     #                                  (time()-t1_sec), first=100, last=105))
 
-    blockf64 = block
+    blockf64 = block & datbits
     #arr_med = np.median(block, axis=0)
     arr_med = np.quantile(blockf64, frac05, axis=0, interpolation='linear')
     arr_qlo = np.quantile(blockf64, fraclo, axis=0, interpolation='lower')
@@ -597,6 +598,7 @@ class DarkProc(object):
         self.rms_hi = kwa.get('rms_hi', 16000)   # rms ditribution high
         self.rmsnlo = kwa.get('rmsnlo', 6.0)     # rms ditribution number-of-sigmas low
         self.rmsnhi = kwa.get('rmsnhi', 6.0)     # rms ditribution number-of-sigmas high
+        self.datbits= kwa.get('datbits', 0x3fff) # data bits 0x3fff is 14-bit mask for epix10ka and Jungfrau
 
         self.status = 0 # 0/1/2 stage
         self.kwa    = kwa
@@ -605,7 +607,7 @@ class DarkProc(object):
 
 
     def accumulate_block(self, raw):
-        self.block[self.irec,:] = raw # & M14 - already done
+        self.block[self.irec,:] = raw # NO & M14. put in block real raw
 
 
     def proc_block(self):
@@ -648,7 +650,6 @@ class DarkProc(object):
 
 
     def summary(self):
-        t0_sec = time()
 
         logger.info('summary')
         logger.info('%s\nraw data found/selected in %d events' % (80*'_', self.irec+1))
@@ -711,30 +712,30 @@ class DarkProc(object):
         arr_sta += arr_sta_ave_hi*16 # too large average
         arr_sta += arr_sta_ave_lo*32 # too small average
 
-        arr_msk  = np.select((arr_sta>0,), (self.arr0,), 1)
-
         self.arr_av1 = arr_av1
         self.arr_rms = arr_rms
         self.arr_sta = arr_sta
         self.arr_msk = np.select((arr_sta>0,), (self.arr0,), 1)
 
-        logger.debug(self.info_results())
-        self.plot_images(titpref='')
-
         self.block = None
         self.irec = -1
-        logger.info('summary consumes %.3f sec' % (time()-t0_sec))
+
+
+    def show_plot_results(self):
+        logger.debug(self.info_results())
+        self.plot_images(titpref='')
 
 
     def add_event(self, raw, irec):
         logger.debug(info_ndarr(raw, 'add_event %3d raw' % irec))
-        #raw = raw & M14
 
-        cond_lo = raw<self.gate_lo
-        cond_hi = raw>self.gate_hi
+        _raw = raw & self.datbits # use data bits only (14 for jf and epix10ka)
+
+        cond_lo = _raw<self.gate_lo
+        cond_hi = _raw>self.gate_hi
         condlist = (np.logical_not(np.logical_or(cond_lo, cond_hi)),)
 
-        raw_f64 = raw.astype(np.float64)
+        raw_f64 = _raw.astype(np.float64)
 
         self.arr_sum0   += np.select(condlist, (self.arr1u64,), 0)
         self.arr_sum1   += np.select(condlist, (raw_f64,), 0)
@@ -743,8 +744,8 @@ class DarkProc(object):
         self.sta_int_lo += np.select((cond_lo,), (self.arr1u64,), 0)
         self.sta_int_hi += np.select((cond_hi,), (self.arr1u64,), 0)
 
-        np.maximum(self.arr_max, raw, out=self.arr_max)
-        np.minimum(self.arr_min, raw, out=self.arr_min)
+        np.maximum(self.arr_max, _raw, out=self.arr_max)
+        np.minimum(self.arr_min, _raw, out=self.arr_min)
 
 
     def add_block(self):
@@ -761,7 +762,7 @@ class DarkProc(object):
 
         if raw is None: return self.status
 
-        if self.block is None :
+        if self.block is None:
            self.block=np.zeros((self.nrecs1,)+tuple(raw.shape), dtype=raw.dtype)
            logger.info(info_ndarr(self.block,'created empty data block'))
 
