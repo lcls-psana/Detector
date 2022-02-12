@@ -17,6 +17,7 @@ Created on 2021-04-05 by Mikhail Dubrovin
 import logging
 logger = logging.getLogger(__name__)
 
+from time import time
 import os
 import sys
 import psana
@@ -55,6 +56,73 @@ JUNGFRAU_REPO_SUBDIRS = ('pedestals', 'rms', 'status', 'dark_min', 'dark_max', '
 # /reg/g/psdm/detector/gains/jungfrau/panels/logs/2021/2021-04-21T101714_log_jungfrau_dark_proc_dubrovin.txt
 # /reg/g/psdm/detector/gains/jungfrau/panels/logs/2021_log_jungfrau_dark_proc.txt
 # /reg/g/psdm/detector/gains/jungfrau/panels/190408-181206-50c246df50010d/pedestals/jungfrau_0001_20201201085333_cxilu9218_r0238_pedestals_gm0-Normal.dat
+
+class DarkProcJungfrau(uc.DarkProc):
+
+    """dark data accumulation and processing for Jungfrau.
+       Extends DarkProc to account for bad gain mode switch state in self.bad_switch array and pixel_status.
+    """
+    def __init__(self, **kwa):
+        kwa.setdefault('datbits', 0x3fff)
+        uc.DarkProc.__init__(self, **kwa)
+        self.modes = ['Normal-00', 'Med-01', 'Low-11', 'UNKNOWN-10']
+
+
+    def init_proc(self):
+        uc.DarkProc.init_proc(self)
+        shape_raw = self.arr_med.shape
+        self.bad_switch = np.zeros(shape_raw, dtype=np.uint8)
+
+
+    def add_event(self, raw, irec):
+        uc.DarkProc.add_event(self, raw, irec)
+        self.add_statistics_bad_gain_switch(raw, irec)
+
+
+    def add_statistics_bad_gain_switch(self, raw, irec, evgap=10):
+        #if irec%evgap: return #parsify events
+
+        igm    = self.gmindex
+        gmname = self.gmname
+
+        t0_sec = time()
+        gbits = raw>>14 # 00/01/11 - gain bits for mode 0,1,2
+        fg0, fg1, fg2 = gbits==0, gbits==1, gbits==3
+        bad = (np.logical_not(fg0),\
+               np.logical_not(fg1),\
+               np.logical_not(fg2))[igm]
+
+        if irec%evgap==0:
+           dt_sec = time()-t0_sec
+           fgx = gbits==2
+           sums = [fg0.sum(), fg1.sum(), fg2.sum(), fgx.sum()]
+           logger.debug('Rec: %4d found pixels %s gain definition time: %.6f sec igm=%d:%s'%\
+                    (irec,' '.join(['%s:%d' % (self.modes[i], sums[i]) for i in range(4)]), dt_sec, igm, gmname))
+
+        np.logical_or(self.bad_switch, bad, self.bad_switch)
+
+
+    def summary(self):
+        t0_sec = time()
+        uc.DarkProc.summary(self)
+        logger.info('\n  status 64: %8d pixel with bad gain mode switch' % self.bad_switch.sum())
+        self.arr_sta += self.bad_switch*64 # add bad gain mode switch to pixel_status
+        self.arr_msk = np.select((self.arr_sta>0,), (self.arr0,), 1) #re-evaluate mask
+        self.block = None
+        self.irec = -1
+        logger.info('summary consumes %.3f sec' % (time()-t0_sec))
+
+
+    def info_results(self, cmt='DarkProc results'):
+        return uc.DarkProc.info_results(self, cmt)\
+         +info_ndarr(self.bad_switch, '\n  badswch')\
+
+
+    def plot_images(self, titpref=''):
+        uc.DarkProc.plot_images(self, titpref)
+        plotim = self.plotim
+        #if plotim &   1: plot_image(self.arr_av1, tit=titpref + 'average')
+        if plotim &2048: plot_image(self.bad_switch, tit=titpref + 'bad gain mode switch')
 
 
 def info_gain_modes(gm):
@@ -170,7 +238,9 @@ def jungfrau_dark_proc(parser):
             igm = DIC_GAIN_MODE[gmo.name]
 
             if dpo is None:
-               dpo = uc.DarkProc(**kwargs)
+               kwargs['dettype'] = det.dettype
+               dpo = DarkProcJungfrau(**kwargs)
+               #dpo = uc.DarkProc(**kwargs)
                dpo.runnum = run.run()
                dpo.exp = env.experiment()
                dpo.calibdir = env.calibDir()
@@ -226,7 +296,7 @@ def jungfrau_dark_proc(parser):
                     logger.info('det.raw(evt) is None in event %d' % ievt)
                     continue
 
-                raw = (raw if segind is None else raw[segind,:]) & M14 # for JFG, epix etc
+                raw = (raw if segind is None else raw[segind,:]) # NO & M14 herte
 
                 nevsel += 1
 
@@ -266,6 +336,7 @@ def jungfrau_dark_proc(parser):
 
                 if dpo is not None:
                     dpo.summary()
+                    dpo.show_plot_results()
                     save_results(dpo, **kwargs)
                     del(dpo)
                     dpo=None
@@ -285,6 +356,7 @@ def jungfrau_dark_proc(parser):
 
         if dpo is not None:
             dpo.summary()
+            dpo.show_plot_results()
             save_results(dpo, **kwargs)
             del(dpo)
             dpo=None
