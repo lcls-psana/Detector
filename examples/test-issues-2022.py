@@ -72,6 +72,72 @@ def issue_2022_01_05():
     print(info_ndarr(zarr,'geom.pixel_coords_psf zarr:'))
 
 
+def issue_2022_02_09():
+    """ISSUE: Philip - jungfrau may have not switching pixels
+       REASON: ???
+       FIXED:
+    """
+    from time import time
+    import numpy as np
+    from psana import DataSource, Detector
+    import PSCalib.GlobalUtils as gu
+    from Detector.GlobalUtils import info_ndarr
+
+    #exp, run = 'cxilu7619', 168
+    exp, run = 'cxilv1019', 142
+    ds = DataSource('exp=%s:run=%d:smd' %(exp, run))
+    jf= Detector('jungfrau4M', ds.env())
+
+    g0cut = 1<<14
+    g1cut = 2<<14
+    g2cut = 3<<14
+    modes = ['Normal-00', 'Med-01', 'Low-11', 'UNKNOWN-10']
+
+    bad_tot = None
+    for istep, step in enumerate(ds.steps()):
+      print '%s mode %s' %(20*'==', modes[istep])
+      #evt = ds.events().next()
+      for ievt, evt in enumerate(step.events()):
+
+        if ievt % 20 != 0: continue
+        raw = jf.raw(evt)
+        t0_sec = time()
+        #fg0 = raw<g0cut
+        #fg1 = (raw>=g0cut) & (raw<g1cut)
+        #fg2 = raw>=g2cut
+        #bad = (fg1+fg2, fg0+fg2, fg0+fg1)[istep]
+
+        gbits = raw>>14 # 00/01/11 - gain bits for mode 0,1,2
+        fg0, fg1, fg2, fgx = gbits==0, gbits==1, gbits==3, gbits==2
+
+        bad = (np.logical_not(fg0),\
+               np.logical_not(fg1),\
+               np.logical_not(fg2))[istep]
+
+        dt_sec = time()-t0_sec
+
+        sums = [fg0.sum(), fg1.sum(), fg2.sum(), fgx.sum()]
+        s = ' '.join(['%s:%d' % (modes[i], sums[i]) for i in range(4)])
+        print('Ev: %4d found pixels %s gain definition time: %.6f sec' % (ievt, s, dt_sec))
+
+        if bad_tot is None: bad_tot = bad
+        else: np.logical_or(bad_tot, bad, bad_tot)
+
+        #print(info_ndarr(raw,     '  raw'))
+        #print(info_ndarr(fg0,     '  fg0'))
+        #print(info_ndarr(bad,     '  bad'))
+        #print(info_ndarr(bad_tot, '  bad_tot'))
+
+    print('Total number of bad pixels %d' % bad_tot.sum())
+
+    zeros = np.zeros_like(bad_tot, dtype=np.uint16)
+
+    mask = np.select((bad_tot,), (zeros,), default=1)
+    fname = '%s_r%d_bad_tot.npy' %(exp, run)
+    np.save(fname, mask+1)
+    print('saved file: %s' % fname)
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -89,12 +155,14 @@ USAGE = '\nUsage:'\
       + '\n    1 - issue_2022_01_03 - Roberto Alvarez - issue with psana-to-psf converter in py3'\
       + '\n    2 - issue_2022_01_04 - psf() from GeometryAccess'\
       + '\n    3 - issue_2022_01_05 - psf() from Detector -> AreaDetector -> GeometryAccess'\
+      + '\n    4 - issue_2022_02_09 - Philip - catch not switching pixels in jungfrau'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
 if   TNAME in  ('1',): issue_2022_01_03()
 elif TNAME in  ('2',): issue_2022_01_04()
 elif TNAME in  ('3',): issue_2022_01_05()
+elif TNAME in  ('4',): issue_2022_02_09()
 
 else:
     print(USAGE)
