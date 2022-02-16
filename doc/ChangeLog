@@ -9,6 +9,14 @@ reverse time order.
 
 =======
 
+Tag: V02-00-33
+2021-02-15 Mikhail Dubrovin
+modified:
+   ../app/jungfrau_images - use ArgumentParser as in epix10ka_calib_components
+   AreaDetector.py - status_as_mask add/use parameter mstcode=0xffff to select bad bits for mask
+   UtilsCalib.py - fix arr_dev_3d = blockf64[:,] - arr_med
+   UtilsJungfrau.py - add methods map_gain_range_index, gain_range_maps_jungfrau, event_constants
+
 Tag: V02-00-32
 2021-02-11 Mikhail Dubrovin
 modified:

@@ -63,6 +63,37 @@ class Storage(object):
 store = Storage() # singleton
 
 
+def map_gain_range_index(det, evt, **kwa):
+    """Returns per event array of jungfrau pixel gain range indices [0:2] shaped as raw (<nsegs>, 512, 1024) dtype:uint16
+    """
+    nda_raw = kwa.get('nda_raw', None)
+    raw = det.raw(evt) if nda_raw is None else nda_raw
+    if raw is None: return None
+    gbits = raw>>14 # 00/01/11 - gain bits for mode 0,1,2
+    #fg0, fg1, fg2 = gbits==0, gbits==1, gbits==3
+    return np.select((gbits<2, gbits>2), (gbits, 2*np.ones(raw.shape, dtype=np.uint16)), 0)
+
+
+def gain_range_maps_jungfrau(det, evt, nda_raw=None):
+    """Returns 3 of four possible arrays (<nsegs>, 512, 1024) dtype bool
+       for gain bits 00/01/11/10 of modes 0,1,2,x
+    """
+    raw = det.raw(evt) if nda_raw is None else nda_raw
+    if raw is None: return None
+    gbits = raw>>14 # 00/01/11/10 - gain bits for mode 0,1,2,x
+    return gbits==0, gbits==1, gbits==3 #, gbits==2
+
+
+def event_constants(cons, grmaps, default=0):
+    """Returns calibration constants shaped as det.raw
+       Parameters
+       ----------
+       cons shape=(3, <nsegs>, 512, 1024)
+       grmaps - list of boolean gain maps (gr0, gr1, gr2) = gain_range_maps_jungfrau(det, evt, **kwa)
+    """
+    return np.select(grmaps, (cons[0,:], cons[1,:], cons[2,:]), default=default)
+
+
 def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     """
     Returns calibrated jungfrau data
@@ -135,6 +166,9 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     gr0 = arr <  BW1              # 490 us
     gr1 =(arr >= BW1) & (arr<BW2) # 714 us
     gr2 = arr >= BW3              # 400 us
+
+    #gbits = raw>>14 # 00/01/11 - gain bits for mode 0,1,2
+    #gr0, gr1, gr2 = gbits==0, gbits==1, gbits==3
 
     #print_ndarr(gr0, 'XXX: calib_jungfrau gr0')
     #print_ndarr(gr1, 'XXX: calib_jungfrau gr1')
