@@ -549,7 +549,7 @@ def proc_block(block, **kwa):
     med_qlo = np.median(arr_qlo)
     med_qhi = np.median(arr_qhi)
 
-    arr_dev_3d = block[:,] - arr_med # .astype(dtype=np.float64)
+    arr_dev_3d = blockf64[:,] - arr_med # .astype(dtype=np.float64)
     arr_abs_dev = np.median(np.abs(arr_dev_3d), axis=0)
     med_abs_dev = np.median(arr_abs_dev)
 
