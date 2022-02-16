@@ -1,306 +1,381 @@
 #!/usr/bin/env python
+"""
+Intended to plot different types of jungfrau detector images.
+
+See:
+  - `github: <https://github.com/slac-lcls/lcls2>`_.
+
+Created on 2022-02-16 by Mikhail Dubrovin
+"""
 
 from __future__ import print_function
-from __future__ import division
+
+from time import time
+t0_sec = time()
+
 import sys
 import numpy as np
-from time import time
-
+import argparse
 import logging
 logger = logging.getLogger(__name__)
 
+DICT_NAME_TO_LEVEL = logging._levelNames # py2 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
+#DICT_NAME_TO_LEVEL = logging._nameToLevel # py3 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
+
 import psana
-from Detector.GlobalUtils import print_ndarr
-import PSCalib.GlobalUtils as gu
-
-import pyimgalgos.GlobalGraphics as gg
-import pyimgalgos.Graphics as gr
-
-#----
-
-EVSKIP  = 0
-EVENTS  = EVSKIP + 4
-PLOT_IMG = True #False #True #False
-PLOT_SPE = False #True #False #True #False
-DIR      = 'figs-jf'
-FNPREFIX = DIR +'/img'
-
-#----
-
-def usage():
-    return '\n    python %s <test-number -  one of 1,2,40,41,42,51,52,53,54>' % sys.argv[0]\
-         + '\n    python %s <experiment> <detector-name> <run-number>' % sys.argv[0]\
-         + '\n    python %s cxic00318 jungfrau4M 35' % sys.argv[0]\
-         + '\n    python %s xpplw0018 XppEndstation.0:Jungfrau.0 130' % sys.argv[0]
-
-def dsname_source(tname):
-    if   tname=='1' : return 'exp=xpptut15:run=410', 'Jungfrau512k', 410
-    elif tname=='2' : return 'exp=xpptut15:run=430', 'Jungfrau1M',   430
-    elif tname=='40': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
-    elif tname=='41': return '/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
-    elif tname=='42': return '/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2', 177
-    elif tname=='51': return 'exp=detdaq17:run=178', 'DetLab.0:Jungfrau.3', 178
-    elif tname=='52': return 'exp=detdaq17:run=179', 'DetLab.0:Jungfrau.3', 179
-    elif tname=='53': return 'exp=detdaq17:run=180', 'DetLab.0:Jungfrau.3', 180
-    elif tname=='54': return 'exp=cxic00318:run=35', 'CxiDs1.0:Jungfrau.0', 35
-    elif tname=='55': return 'exp=xpplw0018:run=130', 'XppEndstation.0:Jungfrau.0', 130
-    elif len(sys.argv)==4:
-        print('command example: %s' % usage())
-        exp, detname, runnum = sys.argv[1], sys.argv[2], int(sys.argv[3])
-        return 'exp=%s:run=%d'%(exp, runnum), detname, runnum
-
-    else: sys.exit('Not recognized test name: "%s"\n  try command:%s' % (tname, usage()))
-
-
-    # MISSING DATA
-    #elif tname=='1' : return 'exp=cxi11216:run=9',    'CxiEndstation.0:Jungfrau.0', None # 9,11,12 - dark for gain modes
-    #elif tname=='2' : return 'exp=xcsx22015:run=503', 'XcsEndstation.0:Jungfrau.0', None # dark: 503, 504, 505
-    #elif tname=='20': return 'exp=xcsx22015:run=508', 'XcsEndstation.0:Jungfrau.0', None # dark: 508, 509, 510; 516, 517, 518
-    #elif tname=='21': return 'exp=xcsx22015:run=509', 'XcsEndstation.0:Jungfrau.0', None 
-    #elif tname=='22': return 'exp=xcsx22015:run=510', 'XcsEndstation.0:Jungfrau.0', None 
-    #elif tname=='3' : return 'exp=xcsx22015:run=513', 'XcsEndstation.0:Jungfrau.0', None # data with variable gain
-    #elif tname=='4' : return 'exp=xcsx22015:run=552', 'XcsEndstation.0:Jungfrau.0', None # Silver behenate, attenuation 1.2e-2
-    #elif tname=='5' : return 'exp=mfx11116:run=624',  'MfxEndstation.0:Jungfrau.0', None
-    #elif tname=='6' : return 'exp=mfx11116:run=689',  'MfxEndstation.0:Jungfrau.1', None # Philip test 0.5M constants
-    #elif tname=='30': return 'exp=mfxls1016:run=369', 'MfxEndstation.0:Jungfrau.1', None # dark:369 test for clemens
-
-
-def print_constants(det, par):
-
-    peds = det.pedestals(par)
-    print_ndarr(peds, 'pedestals')
-    
-    rms = det.rms(par)
-    print_ndarr(rms, 'rms')
-    
-    mask = det.mask(par, calib=False, status=True,\
-           edges=False, central=False, unbond=False, unbondnbrs=False)
-    print_ndarr(mask, 'mask')
-    
-    gain = det.gain(par)
-    print_ndarr(gain, 'gain')
-    
-    offset = det.offset(par)
-    print_ndarr(offset, 'offset')
-    
-    bkgd = det.bkgd(par)
-    print_ndarr(bkgd, 'bkgd')
-    
-    datast = det.datast(par)
-    print_ndarr(datast, 'datast')
-
-    status = det.status(par)
-    print_ndarr(status, 'status')
-
-    statmask = det.status_as_mask(par)
-    print_ndarr(statmask, 'statmask')
-
-    if statmask is not None:
-        print('number of bad status pixels: %d' % (len(statmask[statmask==0])))
-
-    status_mask = det.status_as_mask(par)
-    print_ndarr(status_mask, 'status_mask')
-    
-    cmod = det.common_mode(par)
-    print_ndarr(cmod, 'common_mod')
-
-    coords_x = det.coords_x(par)
-    print_ndarr(coords_x, 'coords_x')
-
-    coords_y = det.coords_y(par)
-    print_ndarr(coords_y, 'coords_y')
-
-    areas = det.areas(par)
-    print_ndarr(areas, 'area')
+from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record, divide_protected
+from Detector.PyDataAccess import get_jungfrau_config_object, get_jungfrau_data_object
+from Detector.UtilsGraphics import gr, fleximagespec, fleximage, flexhist, axis_plot
+from Detector.UtilsJungfrau import map_gain_range_index, event_constants, gain_range_maps_jungfrau
+
+print('TIME import time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+SCRNAME = sys.argv[0].rsplit('/')[-1]
+USAGE = '\n    %s -t1' % SCRNAME\
+      + '\n    %s -e cxic00120 -d jungfrau4M -r42 -t1' % SCRNAME\
+      + '\n    %s -e cxic00120 -d jungfrau4M -r42 -c calib -t102' % SCRNAME\
+      + '\n    -t, --tname - test name/number:'\
+      + '\n      1 - segment index'\
+      + '\n      2 - raw'\
+      + '\n      3 - calib - default'\
+      + '\n      3 - calib with common mode'\
+      + '\n      5 - pedestals'\
+      + '\n      6 - rms'\
+      + '\n      7 - status'\
+      + '\n      8 - gain, ADU/keV'\
+      + '\n      9 - per event gain range index [0,1,2]'\
+      + '\n     10 - raw-peds'\
+      + '\n     11 - (raw-peds)/gain, keV'\
+      + '\n  Spec projects'\
+      + '\n    101 - status_as_mask(evt, mode=3, mstcode=63)'\
+      + '\n    102 - status_as_mask(evt, mode=3, mstcode=64)'\
+      + '\n    103 - status_as_mask(evt, mode=3, mstcode=127)'\
+
+d_tname   = '1'
+d_detname = 'CxiDs1.0:Jungfrau.0'
+d_expname = 'cxic00120'
+d_calibdir= None
+d_run     = 42
+d_events  = 2
+d_evskip  = 0
+d_stepnum = None
+d_saveimg = False
+d_segindex= None
+d_grindex = None
+d_amin    = None
+d_amax    = None
+d_fraclo  = 0.005
+d_frachi  = 0.995
+d_cframe  = 0
+d_loglev  = 'INFO'
+
+parser = argparse.ArgumentParser(usage=USAGE, description='%s - test per-event components of the det.raw.calib method'%SCRNAME)
+parser.add_argument('-t', '--tname',   default=d_tname,   type=str, help='test name, def=%s' % d_tname)
+parser.add_argument('-d', '--detname', default=d_detname, type=str, help='detector name, def=%s' % d_detname)
+parser.add_argument('-e', '--expname', default=d_expname, type=str, help='experiment name, def=%s' % d_expname)
+parser.add_argument('-c', '--calibdir',default=d_calibdir,type=str, help='non-default calib directory, def=%s' % d_calibdir)
+parser.add_argument('-r', '--run',     default=d_run,     type=int, help='run number, def=%s' % d_run)
+parser.add_argument('-N', '--events',  default=d_events,  type=int, help='maximal number of events, def=%s' % d_events)
+parser.add_argument('-K', '--evskip',  default=d_evskip,  type=int, help='number of events to skip in the beginning of run, def=%s' % d_evskip)
+parser.add_argument('-s', '--stepnum', default=d_stepnum, type=int, help='step number counting from 0 or None for all steps, def=%s' % d_stepnum)
+parser.add_argument('-S', '--saveimg', default=d_saveimg, action='store_true', help='save image in file, def=%s' % d_saveimg)
+parser.add_argument('-i', '--segindex',default=d_segindex,type=int, help='segment index [0,7], def=%s' % str(d_segindex))
+parser.add_argument('-g', '--grindex', default=d_grindex, type=int, help='gain range index [0,2] for peds, gains etc., def=%s' % str(d_grindex))
+parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help='logger level (DEBUG, INFO, WARNING, etc.), def.=%s' % str(d_loglev))
+parser.add_argument('--amin',          default=d_amin,    type=float, help='spectrum minimal value, def=%s' % str(d_amin))
+parser.add_argument('--amax',          default=d_amax,    type=float, help='spectrum maximal value, def=%s' % str(d_amax))
+parser.add_argument('--fraclo',        default=d_fraclo,  type=float, help='fraction of events for spectrum minimal value, def=%s' % str(d_fraclo))
+parser.add_argument('--frachi',        default=d_frachi,  type=float, help='fraction of events for spectrum maximal value, def=%s' % str(d_frachi))
+parser.add_argument('--cframe',        default=d_cframe,  type=int, help='coordinate frame for images 0/1 for psana/LAB, def=%s' % str(d_cframe))
+
+args = parser.parse_args()
+print('parser.parse_args: %s' % str(args))
+
+logfmt =  '[%(levelname).1s] L%(lineno)04d: %(message)s' if args.loglev == 'INFO' else\
+          '[%(levelname).1s] %(name)s L%(lineno)04d: %(message)s'
+
+logging.basicConfig(format=logfmt, level=DICT_NAME_TO_LEVEL[args.loglev])
+#logging.getLogger('matplotlib').setLevel(logging.WARNING)
+#logging.getLogger('psana.psexp.event_manager').setLevel(logging.INFO)
+
+tname = args.tname # sys.argv[1] if len(sys.argv) > 1 else '0'
+THRMIN = 100
+THRMAX = 500
+AMIN   = 1
+AMAX   = 200
+MDB    = 0x3fff
+shape_seg = (512, 1024)
+
+flims  = None
+fname = 'ims.png'
+prefix = 'ims-%s-r%04d' % (args.expname, args.run)
+figsc, axsc = None, None
+
+cmpars=(7,7,100,10)
+s_cmpars = '-'.join([str(v) for v in cmpars])
+
+dsname = 'exp=%s:run=%d:smd' % (args.expname, args.run)
+runnum   = args.run
+detname  = args.detname
+tname    = args.tname
+segind   = args.segindex if args.segindex else 0
+calibdir = args.calibdir
+grindex  = args.grindex
+fraclo   = args.fraclo
+frachi   = args.frachi
 
-    pixel_size = det.pixel_size(par)
-    print('%s\npixel size: %s' % (80*'_', str(pixel_size)))
-    
-    #mask_geo = det.mask_geo(par, mbits=3, width=1)
-    #print_ndarr(mask_geo, 'mask_geo')
 
-    ipx, ipy = det.point_indexes(par) # , pxy_um=(0,0)) 
-    print('Detector origin indexes: ix, iy:', ipx, ipy)
+def quantile_amin_amax(arr, fraclo=0.05, frachi=0.95):
+    return np.quantile(arr, fraclo, interpolation='lower'),\
+           np.quantile(arr, frachi, interpolation='higher')
 
-    print_ndarr(det.image_xaxis(par), 'image_xaxis')
-    print_ndarr(det.image_yaxis(par), 'image_yaxis')
 
-    
-def test_jungfrau_methods(tname):
+def amin_amax(args, amin_def=None, amax_def=None):
+    return args.amin if args.amin else amin_def,\
+           args.amax if args.amax else amax_def
 
-    if tname in ('51','52','53'): psana.setOption('psana.calib-dir', '/reg/neh/home/dubrovin/LCLS/con-detector/calib')
 
-    dsname, src, rnum = dsname_source(tname)
-    runnum = rnum if rnum is not None else int(dsname.split(':')[1].split('=')[1])
+#def map_gain_range_index(det, evt):
+#    raw = det.raw(evt)
+#    gr = raw>>14
+#    #twos = 2*np.ones(raw.shape, dtype=np.uint16))
+#    return np.select((gr<2, gr>2), (gr, 2*np.ones(raw.shape, dtype=np.uint16)), 0)
 
-    ds  = psana.DataSource(dsname)
-    env = ds.env()
-    
-    print('experiment %s' % env.experiment())
-    print('run        %d' % runnum)
-    print('dataset    %s' % (dsname)) 
-    print('calibDir:', env.calibDir())
 
-    #for key in evt.keys(): print(key)
+def event_or_grindex_constants(cons, grindex=None, grmaps=None, default=0):
+    """        cons.shape = (3, <nsegs>, 512, 1024)
+       event_constants.shape = (<nsegs>, 512, 1024)
+    """
+    return cons[grindex,:] if grindex is not None else\
+           event_constants(cons, grmaps, default=0)
 
-    ##-----------------------------
-    figim, axim, axcb, imsh = gg.fig_axim_axcb_imsh(figsize=(10,9)) if PLOT_IMG else (None, None, None, None)
-    #if figim is not None: gg.move_fig(figim, 300, 0)
 
-    fighi, axhi = None, None
-    if PLOT_SPE:
-        fighi = gr.figure(figsize=(8,6), title='Spectrum', move=(600,0))
-        axhi  = gr.add_axes(fighi, axwin=(0.08, 0.08, 0.90, 0.87)) 
+print('TIME parameter initialization time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
 
-    ##-----------------------------
+if calibdir is not None: psana.setOption('psana.calib-dir', calibdir)
 
-    det = psana.Detector(src, env)
-
-    par = runnum
-    shape_nda = det.shape(par)
-    print('det.source      : %s' % det.source)
-    print('shape of ndarray: %s' % str(det.shape(par)))
-    print('size of ndarray : %d' % det.size(par))
-    print('ndim of ndarray : %d' % det.ndim(par))
-
-    fnsuffix = '-%s-r%04d-%s' % (env.experiment(), runnum, src.replace(':','_').replace('.','_'))
-    print('fnsuffix: %s' % fnsuffix)
-
-
-    if not(tname in ('51','52','53','54')): print_constants(det, par)
-
-
-    t0_sec_tot = time()
-
-    for i, evt in enumerate(ds.events()):
-        print('%s\nEvent %4d' % (50*'_', i))
-
-        if i <EVSKIP: continue
-        if i>=EVENTS: break
-
-        t0_sec = time()
-        nda_raw = det.raw(evt)
-        if nda_raw is None: 
-            print('raw is None')
-            continue
-
-        print_ndarr(nda_raw, 'nda_raw')
-
-        raw_fake = None # 1000*np.ones((2, 512, 1024), dtype=np.uint16)
-
-	#cmpars = (7,1,1000) # t_cm 275ms #python Detector/examples/ex_jungfrau_images.py 54
- 	#cmpars = (7,2,1000) # t_cm 290ms 
- 	#cmpars = (7,4,1000) # t_cm 100ms 
- 	#cmpars = (7,3,400) #
- 	#cmpars = (7,3,100) #
- 	#cmpars = (7,3,1000) #  t_cm 570ms 
- 	#cmpars = (7,7,1000) # t_cm 680ms 
-        #cmpars = (7,3,1000,10)
-        cmpars = (7,0,1000,10)
-        cmpars = (7,2,5,10)
-        
-        ########################################################
-        nda = det.calib(evt, cmpars=cmpars, nda_raw=raw_fake)
-        ########################################################
-
-        FNTYPE = 'cmpars-'+'-'.join([str(v) for v in cmpars])
-
-        if nda is None: 
-            print('det.calib() is None, so plot det.raw()')
-            nda = nda_raw
-        else:
-            print_ndarr(nda, 'det.calib')
-
-        if tname=='42':
-            det_shape = nsegs, nrows, ncols = (8, 512, 1024)
-            size = nsegs*nrows*ncols
-            nda = np.arange(size, dtype=np.uint32)
-            nda.shape = det_shape
-
-            row_asc  = np.arange(nrows, dtype=np.uint32)
-            col_asc  = np.arange(ncols, dtype=np.uint32)
-            seg_rows, seg_cols = np.meshgrid(row_asc, col_asc)
-            nda[0,seg_rows,seg_cols] = (seg_rows*ncols + seg_cols*nrows)*4
-
-        print('    Consumed time for det.raw/calib(evt) = %7.3f sec' % (time()-t0_sec))
-        print_ndarr(nda, 'data nda')
-
-        ave,  rms  = None, None
-        amin, amax = None, None
-
-        if PLOT_IMG:
-            ndarr = np.array(nda)
-            #ndarr *= mask_geo
-    
-            img = det.image(evt, ndarr)
-            #img = ndarr; ndarr.shape = (1024,1024) # up and down pannels look flipped 
-
-            if img is None:
-                print('Image is not available.')
-                continue
-
-            #print_ndarr(img, 'img')
-
-            axim.clear()
-            if imsh is not None: del imsh
-            imsh = None
-
-            ave, rms = ndarr.mean(), ndarr.std()
-            med = np.median(ndarr)
-            spr = np.median(np.abs(ndarr-med))
-            print('median, spread:', med, spr)
-            print('ave, rms:', ave, rms)
-
-            amin, amax = (-1, 10) if tname=='4' else\
-                         (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
-                         (-1, 1) if tname=='30' else\
-                         (0,size) if tname=='42' else\
-                         (med-3*spr, med+3*spr) if tname=='54' else\
-                         (med-3*spr, med+3*spr)
-                         #(ave-1*rms, ave+1*rms)
-                         #(57000,57800) if tname in ('40','41') else\
-
-            gg.plot_imgcb(figim, axim, axcb, imsh, img, amin=amin, amax=amax, origin='upper', title='Event %d'%i, cmap='inferno') # 'jet, inferno
-            #figim.canvas.draw()
-            #gg.save_fig(figim, fname=ofnimg, pbits=0)
-            gr.show(mode='do_not_hold')
-
-            if FNPREFIX:
-               gu.create_directory_with_mode(DIR, mode=0o770, verb=True)
-               gg.save_fig(figim, fname=FNPREFIX+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), pbits=1)
-            ##if FNPREFIX: gg.save(FNPREFIX+fnsuffix+'-e%04d-%s.png'%(i,FNTYPE), True)
-
-        if PLOT_SPE:
-            #arrhi = ndarr # nda_raw
-            #arrhi, range_x = nda_raw,(0,(1<<16)-1)
-            #arrhi, range_x = ndarr, (-2,2)
-            #arrhi, range_x = ndarr, (ave-1*rms, ave+1*rms) 
-            arrhi, range_x = ndarr, (amin, amax) 
-            #range_x=(0,(1<<16)-1) # (arrhi.min(), arrhi.max())
-
-            axhi.clear()
-            hi = gr.hist(axhi, arrhi.flatten(), bins=100, amp_range=range_x, weights=None, color=None, log=True)
-            gr.add_title_labels_to_axes(axhi, title='Event %d'%i, xlabel='Raw data, ADU',\
-                                                                  ylabel='Entries', color='k')
-            #gr.save_fig(fig, fname='spec-%02d.png'%i, verb=True)
-
-        if PLOT_IMG or PLOT_SPE:
-            gr.show(mode='do_not_hold')
-
-    dt_sec_tot = time()-t0_sec_tot
-
-    logger.info('Loop over %d events time = %.3f sec or %.3f sec/event' % (EVENTS, dt_sec_tot, dt_sec_tot/EVENTS))
-
-    if PLOT_IMG or PLOT_SPE: gg.show()
-
-#----
-
-if __name__ == "__main__":
-    logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
-    tname = sys.argv[1] if len(sys.argv)>1 else '0'
-    logger.info('%s\nTest %s' % (80*'_', tname))
-    test_jungfrau_methods(tname)
-    logger.info('command example: %s' % usage())
-    sys.exit('End of %s' % sys.argv[0])
-
-#----
+ds  = psana.DataSource(dsname)
+env = ds.env()
+det = psana.Detector(detname)
+cd  = psana.Detector('ControlData')
+
+logger.info('experiment %s' % env.experiment())
+logger.info('run        %d' % runnum)
+logger.info('dataset    %s' % (dsname))
+logger.info('detname    %s' % (detname))
+logger.info('calibDir:  %s' % env.calibDir())
+
+print('TIME Detector initialization time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+peds   = det.pedestals(runnum) if tname in ('5','10','11') else None
+rms    = det.rms(runnum)       if tname in ('6',) else None
+status = det.status(runnum)    if tname in ('7',) else None
+gain   = det.gain(runnum)      if tname in ('8','11') else None
+
+print(info_ndarr(peds,'pedestals'))
+print(info_ndarr(gain,'gain, ADU/keV'))
+print(info_ndarr(rms,'rms'))
+print('data bit mask: %s' % oct(MDB))
+
+#sys.exit('TEST EXIT')
+
+print('TIME loading constants time = %.6f sec' % (time()-t0_sec))
+t0_sec = time()
+
+arr, img = None, None
+suffix = ''
+evt_peds, evt_gfac = None, None
+
+break_runs = False
+break_steps = False
+break_events = False
+
+nstep = -1
+for orun in ds.runs():
+
+  env = orun.env()
+  cfg = get_jungfrau_config_object(env, det.source)
+
+  logger.info('\n=== run: %d' % orun.run())
+
+  for nstep_in_run, step in enumerate(orun.steps()):
+
+    nstep += 1
+    print('%s\nrun: %04d step: %03d/%03d (in run/total)' % (50*'=', orun.run(), nstep, nstep_in_run), \
+          '\n    ControlData pvControls, pvLabels, pvMonitors', cd().pvControls(), cd().pvLabels(), cd().pvMonitors()) # EMPTY: ,)
+
+    for pvl in cd().pvLabels():
+        print('  pvlabel: name="%s" v:' % pvl.name(), pvl.value(), ' type:', type(pvl.value()))
+
+    if args.stepnum and nstep<args.stepnum:
+        logger.info('    skip calibcycles nstep < --stepnum=%d' % args.stepnum)
+        continue
+
+    if args.stepnum and nstep>args.stepnum:
+        logger.info('    break calibcycles, nstep > --stepnum=%d' % args.stepnum)
+        break
+
+    nevgood=-1
+    for nev,evt in enumerate(step.events()):
+
+      if nev < args.evskip:
+          logger.info('Ev:%6d skip, nev < --evskip=%d' % (nev, args.evskip))
+          continue
+
+      if nev > args.events:
+          logger.info('Ev:%6d break, nev > --events=%d' % (nev, args.events))
+          break
+
+      raw = det.raw(evt)
+
+      if raw is None:
+          logger.info('Ev:%6d raw is None' % nev)
+          continue
+
+      step_evt = 's%02d-e%04d' % (nstep, nev)
+
+      nevgood += 1
+      logger.info(info_ndarr(raw, 'Ev:%6d raw' % nev))
+
+      grmaps = gain_range_maps_jungfrau(det, evt, nda_raw=None) if grindex is None else None
+
+      arr, img = None, None
+
+      if tname=='1':
+        suffix = 'segment-nums'
+        ones = np.ones(shape_seg) # det.raw._seg_geo.shape()) # (352,384)
+        seginds = range(raw.shape[0]) # det.raw._segment_indices() #_segments(evt)
+        logger.info('seginds %s' % str(seginds))
+        arr = np.stack([ones*i for i in seginds])
+        logger.info(info_ndarr(arr, ' arr'))
+        AMIN, AMAX = 0, raw.shape[0]
+        break_steps = break_run = break_events = True
+
+      elif tname=='2':
+        suffix = 'raw-%s' % step_evt
+        arr = raw & MDB
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+
+      elif tname=='3':
+        suffix = 'calib-%s' % (step_evt)
+        arr = det.calib(evt)
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        logger.info(info_ndarr(arr, '  calib'))
+
+      elif tname=='4':
+        suffix = 'calib-%s-cm-%s' % (step_evt, s_cmpars)
+        arr = det.calib(evt, cmpars=cmpars)
+        AMIN, AMAX = amin_amax(args, amin_def=-5, amax_def=+5)
+        logger.info(info_ndarr(cmpars, '  cmpars'))
+        logger.info(info_ndarr(arr,    '  calib'))
+
+      elif tname=='5':
+        suffix = 'pedestals-%s-grindex-%s' % (step_evt, str(grindex))
+        arr = event_or_grindex_constants(peds, grindex=grindex, grmaps=grmaps, default=0) #(<nsegs>, 512, 1024)
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        if grindex is not None: break_steps = break_run = break_events = True
+
+      elif tname=='6':
+        suffix = 'rms-%s-grindex-%s' % (step_evt, str(grindex))
+        arr = event_or_grindex_constants(rms, grindex=grindex, grmaps=grmaps, default=0) #(<nsegs>, 512, 1024)
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        if grindex is not None: break_steps = break_run = break_events = True
+
+      elif tname=='7':
+        suffix = 'status-%s-grindex-%s' % (step_evt, str(grindex))
+        arr = event_or_grindex_constants(status, grindex=grindex, grmaps=grmaps, default=0) #(<nsegs>, 512, 1024)
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        if grindex is not None: break_steps = break_run = break_events = True
+
+      elif tname=='8':
+        suffix = 'gain-ADU-per-keV-%s-grindex-%s' % (step_evt, str(grindex))
+        arr = event_or_grindex_constants(gain, grindex=grindex, grmaps=grmaps, default=0) #(<nsegs>, 512, 1024)
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        if grindex is not None: break_steps = break_run = break_events = True
+
+      elif tname=='9':
+        suffix = 'gain-range-index-%s' % step_evt
+        arr = map_gain_range_index(det, evt)+0.1
+        AMIN, AMAX = amin_amax(args, amin_def=-1, amax_def=3)
+
+      elif tname=='10':
+        suffix = 'raw-peds-%s' % step_evt
+        evt_peds = event_or_grindex_constants(peds, grindex=grindex, grmaps=grmaps, default=0)
+        arr = (raw & MDB) - evt_peds
+        arr[0,10:30,10:100] = -20
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        #AMIN, AMAX = amin_amax(args, amin_def=-40, amax_def=40)
+        #img = table_nxn_epix10ka_from_ndarr(arr)
+
+      elif tname=='11':
+        suffix = 'raw-peds-x-gain-%s' % step_evt
+        evt_peds = event_or_grindex_constants(peds, grindex=grindex, grmaps=grmaps, default=0)
+        evt_gain = event_or_grindex_constants(gain, grindex=grindex, grmaps=grmaps, default=1)
+        evt_gfac = divide_protected(np.ones_like(evt_gain), evt_gain)
+        arr = ((raw & MDB) - evt_peds)*evt_gfac
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+        #AMIN, AMAX = amin_amax(args, amin_def=-5, amax_def=5)
+
+      elif tname=='101':
+        suffix = 'status_as_mask-mstcode063'
+        arr = det.status_as_mask(evt, mode=3, mstcode=63) + 1
+        AMIN, AMAX = amin_amax(args, amin_def=-1, amax_def=3)
+        break_steps = break_run = break_events = True
+
+      elif tname=='102':
+        suffix = 'status_as_mask-mstcode064'
+        arr = det.status_as_mask(evt, mode=3, mstcode=64) + 1
+        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=3)
+        break_steps = break_run = break_events = True
+
+      elif tname=='103':
+        suffix = 'status_as_mask-mstcode127'
+        arr = det.status_as_mask(evt, mode=3, mstcode=127) + 1
+        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=3)
+        break_steps = break_run = break_events = True
+
+      else: # elif tname=='9':
+        suffix = 'calib-%s-cm-%s' % (step_evt, s_cmpars)
+        arr = det.calib(evt, cmpars=cmpars)
+        AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
+
+      print('AMIN:%.1f  AMAX:%.1f' % (AMIN, AMAX))
+
+      print(info_ndarr(arr,'Event %d det.calib'%nev))
+      if arr is not None:
+        med, std = np.median(arr), np.std(arr)
+        logger.info('array median %.3f std %.3f' % (med,std))
+
+      if img is None: img = det.image(evt, nda_in=arr) #, cframe=args.cframe)
+
+      print(info_ndarr(img,'  img'))
+
+      if flims is None:
+        #flims = fleximage(img, arr=arr, bins=100, w_in=14, h_in=10, amin=AMIN, amax=AMAX)#, interpolation='nearest') #fraclo=0.01, frachi=0.99
+        flims = fleximagespec(img, arr=arr, bins=100, w_in=16, h_in=12, amin=AMIN, amax=AMAX) #fraclo=0.01, frachi=0.99
+        flims.move(5,5)
+      else:
+        fname = '%s-%s.png' % (prefix, suffix)
+        flims.update(img, arr=arr, amin=AMIN, amax=AMAX)#, interpolation='nearest')
+        flims.axtitle('Event %d %s'%(nev,fname))
+
+      gr.show(mode=1)
+
+      if tname in ('0','9',) and args.saveimg:
+          flims.save(fname)
+
+      if break_events: break
+    if break_steps: break
+  if break_runs: break
+
+gr.show()
+
+#np.save('nda-jungfrau-seg-512x1024.npy', img)
+if args.saveimg: flims.save(fname)
+
+sys.exit('END OF %s -t %s' % (SCRNAME, tname))
+
+# EOF

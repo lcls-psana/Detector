@@ -61,6 +61,7 @@ Usage::
     stmask = det.status_as_mask(par, **kwargs) # returns array of masked bad pixels in det.status
                                                # kwargs.mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
                                                # kwargs.indexes=(0,1,2,3,4) - merging parameter for epix10ka2m
+                                               # kwargs.mstcode=0xffff - bitword for status codes to mask uint16
     mask   = det.mask_calib(par)  # returns array of pixel mask from calib store type pixel_mask
     cmod   = det.common_mode(par) # returns 1-d array of common mode parameters from calib store type common_mode
 
@@ -703,6 +704,7 @@ class AreaDetector(object):
            Parameter
 
            - par  : int or psana.Event() - integer run number or psana event object.
+           - kwargs.mstcode : bitword for mask status codes
            - kwargs.mode    : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel
            - kwargs.indexes : tuple of indexes standing for 'FH','FM','FL','AHL-H','AML-M'
 
@@ -713,20 +715,18 @@ class AreaDetector(object):
         stat = self.status(par)
         if stat is None: return None
 
+        mstcode = kwargs.get('mstcode', 0xffff) # bitword for status codes to mask uint16
+        mode = kwargs.get('mode', 0) # 0/1/2 masks zero/four/eight neighbors around each bad pixel
+
         if self.is_epix10ka_any():
             stat = gu.merge_status(stat, **kwargs) # indexes=(0,1,2,3,4) or (0,1,2)
 
-        #elif self.is_jungfrau():
-        #    stat = gu.merge_status(stat, indexes=(0,1,2))
+        smask = np.asarray(np.select((stat & mstcode,), (0,), default=1), dtype=np.uint8)
 
-        mode = kwargs.get('mode', 0) # 0/1/2 masks zero/four/eight neighbors around each bad pixel
-
-        smask = np.asarray(np.select((stat>0,), (0,), default=1), dtype=np.uint8)
         if mode: smask = gu.mask_neighbors(smask, allnbrs=(True if mode>=2 else False))
 
-        if self.is_jungfrau():
-            mask01 = gu.merge_masks(smask[0,:], smask[1,:])
-            return   gu.merge_masks(smask[2,:], mask01)
+        if self.is_jungfrau(): # merge 3 gains
+            return gu.merge_masks(gu.merge_masks(smask[0,:], smask[1,:]), smask[2,:])
 
         if self.is_cspad2x2(): return smask # stat already has a shape (2,185,388)
         return self._shaped_array_(par, smask, gu.PIXEL_STATUS)
