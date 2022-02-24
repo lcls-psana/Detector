@@ -52,7 +52,7 @@ def info_det(det, par=None, env=None):
 
     if det is None: return s + ' DETECTOR IS NOT DEFINED IN --detname or -d'
 
-    dettype = gu.det_type_from_source(det.source)
+    dettype = gu.det_type_from_source(det.source) if hasattr('det', 'source') else 'N/A'
 
     s +='\n  det.src: %s' % str(det.source)\
       + '\n  dettype: %s' % str(dettype)
@@ -109,7 +109,7 @@ def loop_run_step_evt(**kwa):
     stepnum = kwa.get('stepnum', None)
     runnum = int(runs.replace(',',' ').replace('-',' ').replace(':',' ').split(' ')[0])
 
-    dettype = gu.det_type_from_source(det.source)
+    dettype = gu.det_type_from_source(det.source) if hasattr('det', 'source') else 'N/A'
 
     logger.info('runnum: %s' % runnum)
     logger.info('info_det: %s' % info_det(det, runnum, ds.env()))
