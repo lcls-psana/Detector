@@ -8,6 +8,14 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V02-00-34
+2021-02-24 Mikhail Dubrovin
+modified:
+   app/datinfo - add protection if hasattr('det', 'source')
+   app/jungfrau_images - add multiple tests and description of examples in help
+   src/AlgoAccess.py - code cleaning
+   src/AreaDetector.py - add method mask_v2
+   src/UtilsCalib.py - add method info_pixel_status
 
 Tag: V02-00-33
 2021-02-15 Mikhail Dubrovin
