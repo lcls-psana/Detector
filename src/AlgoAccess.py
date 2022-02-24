@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-#------------------------------
-
 from __future__ import print_function
 from ImgAlgos.PyAlgos import photons as alg_photons
 
-#------------------------------
-
-def test_photons() :
+def test_photons():
 
     #import sys
     import numpy as np
@@ -41,11 +37,11 @@ def test_photons() :
     plotImageLarge(arr2d, title='arr2d')
     show()
 
-#------------------------------
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
 
     test_photons()
 
-#------------------------------
+# EOF
+
 
