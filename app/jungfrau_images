@@ -27,6 +27,8 @@ from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record, divid
 from Detector.PyDataAccess import get_jungfrau_config_object, get_jungfrau_data_object
 from Detector.UtilsGraphics import gr, fleximagespec, fleximage, flexhist, axis_plot
 from Detector.UtilsJungfrau import map_gain_range_index, event_constants, gain_range_maps_jungfrau
+from Detector.UtilsCalib import info_pixel_status, str_tstamp
+import PSCalib.GlobalUtils as gu
 
 print('TIME import time = %.6f sec' % (time()-t0_sec))
 t0_sec = time()
@@ -35,6 +37,11 @@ SCRNAME = sys.argv[0].rsplit('/')[-1]
 USAGE = '\n    %s -t1' % SCRNAME\
       + '\n    %s -e cxic00120 -d jungfrau4M -r42 -t1' % SCRNAME\
       + '\n    %s -e cxic00120 -d jungfrau4M -r42 -c calib -t102' % SCRNAME\
+      + '\n    %s -e xpptut15 -r 380 -d DscCsPad -t14' % SCRNAME\
+      + '\n    %s -e xpptut15 -r 230 -d cs140_0 -t14 -s0 -N10' % SCRNAME\
+      + '\n    %s -e xpptut15 -r 260 -d epix100a_diff -t14' % SCRNAME\
+      + '\n    %s -e xpptut15 -r 450 -d pnccd -t14' % SCRNAME\
+      + '\n    %s -e xpptut15 -r 550 -d epix10k2M -t14' % SCRNAME\
       + '\n    -t, --tname - test name/number:'\
       + '\n      1 - segment index'\
       + '\n      2 - raw'\
@@ -47,7 +54,10 @@ USAGE = '\n    %s -t1' % SCRNAME\
       + '\n      9 - per event gain range index [0,1,2]'\
       + '\n     10 - raw-peds'\
       + '\n     11 - (raw-peds)/gain, keV'\
+      + '\n     12 - det.mask'\
+      + '\n     13 - custom mask'\
       + '\n  Spec projects'\
+      + '\n    100 - mask from file'\
       + '\n    101 - status_as_mask(evt, mode=3, mstcode=63)'\
       + '\n    102 - status_as_mask(evt, mode=3, mstcode=64)'\
       + '\n    103 - status_as_mask(evt, mode=3, mstcode=127)'\
@@ -60,7 +70,8 @@ d_run     = 42
 d_events  = 2
 d_evskip  = 0
 d_stepnum = None
-d_saveimg = False
+d_ofpref  = '%s-figs-jf/img' % str_tstamp(fmt='%Y-%m-%d')#, time_sec=time())
+d_ofsuff  = None
 d_segindex= None
 d_grindex = None
 d_amin    = None
@@ -69,6 +80,7 @@ d_fraclo  = 0.005
 d_frachi  = 0.995
 d_cframe  = 0
 d_loglev  = 'INFO'
+d_saveimg = False
 
 parser = argparse.ArgumentParser(usage=USAGE, description='%s - test per-event components of the det.raw.calib method'%SCRNAME)
 parser.add_argument('-t', '--tname',   default=d_tname,   type=str, help='test name, def=%s' % d_tname)
@@ -79,7 +91,8 @@ parser.add_argument('-r', '--run',     default=d_run,     type=int, help='run nu
 parser.add_argument('-N', '--events',  default=d_events,  type=int, help='maximal number of events, def=%s' % d_events)
 parser.add_argument('-K', '--evskip',  default=d_evskip,  type=int, help='number of events to skip in the beginning of run, def=%s' % d_evskip)
 parser.add_argument('-s', '--stepnum', default=d_stepnum, type=int, help='step number counting from 0 or None for all steps, def=%s' % d_stepnum)
-parser.add_argument('-S', '--saveimg', default=d_saveimg, action='store_true', help='save image in file, def=%s' % d_saveimg)
+parser.add_argument('-o', '--ofpref',  default=d_ofpref,  type=str, help='output file prefix, def=%s' % d_ofpref)
+parser.add_argument('-S', '--ofsuff',  default=d_ofsuff,  type=str, help='output file suffix, save file if it is not None, def=%s' % d_ofsuff)
 parser.add_argument('-i', '--segindex',default=d_segindex,type=int, help='segment index [0,7], def=%s' % str(d_segindex))
 parser.add_argument('-g', '--grindex', default=d_grindex, type=int, help='gain range index [0,2] for peds, gains etc., def=%s' % str(d_grindex))
 parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help='logger level (DEBUG, INFO, WARNING, etc.), def.=%s' % str(d_loglev))
@@ -124,6 +137,8 @@ calibdir = args.calibdir
 grindex  = args.grindex
 fraclo   = args.fraclo
 frachi   = args.frachi
+ofpref   = args.ofpref
+ofsuff   = args.ofsuff
 
 
 def quantile_amin_amax(arr, fraclo=0.05, frachi=0.95):
@@ -134,13 +149,6 @@ def quantile_amin_amax(arr, fraclo=0.05, frachi=0.95):
 def amin_amax(args, amin_def=None, amax_def=None):
     return args.amin if args.amin else amin_def,\
            args.amax if args.amax else amax_def
-
-
-#def map_gain_range_index(det, evt):
-#    raw = det.raw(evt)
-#    gr = raw>>14
-#    #twos = 2*np.ones(raw.shape, dtype=np.uint16))
-#    return np.select((gr<2, gr>2), (gr, 2*np.ones(raw.shape, dtype=np.uint16)), 0)
 
 
 def event_or_grindex_constants(cons, grindex=None, grmaps=None, default=0):
@@ -172,7 +180,7 @@ t0_sec = time()
 
 peds   = det.pedestals(runnum) if tname in ('5','10','11') else None
 rms    = det.rms(runnum)       if tname in ('6',) else None
-status = det.status(runnum)    if tname in ('7',) else None
+status = det.status(runnum)    if tname in ('7','101','102','103') else None
 gain   = det.gain(runnum)      if tname in ('8','11') else None
 
 print(info_ndarr(peds,'pedestals'))
@@ -308,7 +316,6 @@ for orun in ds.runs():
         arr[0,10:30,10:100] = -20
         AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
         #AMIN, AMAX = amin_amax(args, amin_def=-40, amax_def=40)
-        #img = table_nxn_epix10ka_from_ndarr(arr)
 
       elif tname=='11':
         suffix = 'raw-peds-x-gain-%s' % step_evt
@@ -317,24 +324,70 @@ for orun in ds.runs():
         evt_gfac = divide_protected(np.ones_like(evt_gain), evt_gain)
         arr = ((raw & MDB) - evt_peds)*evt_gfac
         AMIN, AMAX = quantile_amin_amax(arr, fraclo, frachi)
-        #AMIN, AMAX = amin_amax(args, amin_def=-5, amax_def=5)
+
+      elif tname=='12':
+        suffix = 'det_mask'
+        arr = 1 + det.mask(evt, calib=False, status=True, edges=True, central=True, unbond=False, unbondnbrs=False, mode=0o377, width=5, wcentral=5, mstcode=0xffff)
+        AMIN, AMAX = 0,2 # amin_amax(args, amin_def=-1, amax_def=3)
+        break_steps = break_run = break_events = True
+
+      elif tname=='13':
+        suffix = 'custom_mask'
+        mask = det.status_as_mask(evt, mstcode=0o377) # mode=0 - by default do not mask neighbors
+        mask = gu.mask_neighbors_in_radius(mask, rad=6, ptrn='r')
+        mask = gu.merge_masks(mask, det.mask_geo(evt, width=10, wcentral=5)) # mbits=0o377, where 1-edges, 2-central, 4-non-bonded for cspad2x1, ... neighbors
+        #mask = gu.merge_masks(mask, gu.mask_edges(mask, mrows=2, mcols=4)) # masks each segment edges only
+        mask = gu.merge_masks(mask, det.mask_calib(evt))
+        arr = 1 + mask
+        AMIN, AMAX = 0,2 # amin_amax(args, amin_def=-1, amax_def=3)
+        break_steps = break_run = break_events = True
+
+      elif tname=='14':
+        suffix = 'det_mask_v2'
+        kwa={'status'   :True, 'mstcode':64, 'indexes':(0,1,2,3,4),\
+             'unbond'   :True,\
+             'neighbors':True, 'rad':5, 'ptrn':'r',\
+             'edges'    :True, 'mrows':2, 'mcols':4,\
+             'central'  :True, 'wcentral':10}
+        arr = 1 + det.mask_v2(evt, **kwa)
+        #arr = 1 + det.mask_v2(evt, status=False, unbond=False, neighbors=True, edges=False, central=False, calib=False)#, **kwa)
+        AMIN, AMAX = 0,2 # amin_amax(args, amin_def=-1, amax_def=3)
+        break_steps = break_run = break_events = True
+
+      elif tname=='100':
+        suffix = 'mask-from-file'
+        ifname = 'fd-mask-8-512-1024-float64.npy'
+        print('load mask array from file %s' % ifname)
+        arr = 1 + np.load(ifname)
+        AMIN, AMAX = 0,2
+        break_steps = break_run = break_events = True
 
       elif tname=='101':
         suffix = 'status_as_mask-mstcode063'
-        arr = det.status_as_mask(evt, mode=3, mstcode=63) + 1
-        AMIN, AMAX = amin_amax(args, amin_def=-1, amax_def=3)
+        arr = det.status_as_mask(evt, mode=1, mstcode=63)
+        arr = 1 + gu.mask_neighbors_in_radius(arr, rad=9, ptrn='r') #rad=9 for comp with test 100
+        AMIN, AMAX = 0,2 # amin_amax(args, amin_def=-1, amax_def=3)
         break_steps = break_run = break_events = True
+
+        statusm = gu.merge_status(status)
+        print('Merged for 3 gain modes status')
+        print('%s run:%d status.shape:%s size: %d' % (args.expname, args.run, str(statusm.shape), statusm.size))
+        print('bad pixels w/o sw:', info_pixel_status(statusm, bits=63))
+        print('bad pixels switch:', info_pixel_status(statusm, bits=64))
+        print('bad pixels total :', info_pixel_status(statusm, bits=127))
 
       elif tname=='102':
         suffix = 'status_as_mask-mstcode064'
-        arr = det.status_as_mask(evt, mode=3, mstcode=64) + 1
-        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=3)
+        arr = det.status_as_mask(evt, mode=1, mstcode=64)
+        arr = 1 + gu.mask_neighbors_in_radius(arr, rad=9, ptrn='r') #rad=9 for comp with test 100
+        AMIN, AMAX = 0,2 #  amin_amax(args, amin_def=0, amax_def=3)
         break_steps = break_run = break_events = True
 
       elif tname=='103':
         suffix = 'status_as_mask-mstcode127'
-        arr = det.status_as_mask(evt, mode=3, mstcode=127) + 1
-        AMIN, AMAX = amin_amax(args, amin_def=0, amax_def=3)
+        arr = det.status_as_mask(evt, mode=1, mstcode=127)
+        arr = 1 + gu.mask_neighbors_in_radius(arr, rad=9, ptrn='r') #rad=9 for comp with test 100
+        AMIN, AMAX = 0,2 #  amin_amax(args, amin_def=0, amax_def=3)
         break_steps = break_run = break_events = True
 
       else: # elif tname=='9':
@@ -351,21 +404,24 @@ for orun in ds.runs():
 
       if img is None: img = det.image(evt, nda_in=arr) #, cframe=args.cframe)
 
+
       print(info_ndarr(img,'  img'))
 
+      title = '%s-r%04d-%s-%s-t%s-%s' % (env.experiment(), runnum, step_evt, detname.replace(':','_').replace('.','_'), tname, suffix)
+
       if flims is None:
-        #flims = fleximage(img, arr=arr, bins=100, w_in=14, h_in=10, amin=AMIN, amax=AMAX)#, interpolation='nearest') #fraclo=0.01, frachi=0.99
-        flims = fleximagespec(img, arr=arr, bins=100, w_in=16, h_in=12, amin=AMIN, amax=AMAX) #fraclo=0.01, frachi=0.99
+        flims = fleximagespec(img, arr=arr, bins=100, w_in=16.4, h_in=12, amin=AMIN, amax=AMAX) #fraclo=0.01, frachi=0.99, interpolation='nearest'
+        flims.axtitle(title)
         flims.move(5,5)
       else:
-        fname = '%s-%s.png' % (prefix, suffix)
         flims.update(img, arr=arr, amin=AMIN, amax=AMAX)#, interpolation='nearest')
-        flims.axtitle('Event %d %s'%(nev,fname))
+        flims.axtitle(title)
 
       gr.show(mode=1)
 
-      if tname in ('0','9',) and args.saveimg:
-          flims.save(fname)
+      if args.ofsuff is not None:
+          gu.create_directory_with_mode(ofpref.rsplit('/',1)[0], mode=0o770, verb=True)
+          flims.save('%s-%s-%s.png'%(ofpref, title, ofsuff))
 
       if break_events: break
     if break_steps: break
@@ -373,8 +429,7 @@ for orun in ds.runs():
 
 gr.show()
 
-#np.save('nda-jungfrau-seg-512x1024.npy', img)
-if args.saveimg: flims.save(fname)
+#if args.saveimg: flims.save(fname)
 
 sys.exit('END OF %s -t %s' % (SCRNAME, tname))
 
