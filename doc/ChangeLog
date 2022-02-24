@@ -9,7 +9,7 @@ reverse time order.
 
 =======
 Tag: V02-00-34
-2021-02-24 Mikhail Dubrovin
+2022-02-24 Mikhail Dubrovin
 modified:
    app/datinfo - add protection if hasattr('det', 'source')
    app/jungfrau_images - add multiple tests and description of examples in help
@@ -18,7 +18,7 @@ modified:
    src/UtilsCalib.py - add method info_pixel_status
 
 Tag: V02-00-33
-2021-02-15 Mikhail Dubrovin
+2022-02-15 Mikhail Dubrovin
 modified:
    ../app/jungfrau_images - use ArgumentParser as in epix10ka_calib_components
    AreaDetector.py - status_as_mask add/use parameter mstcode=0xffff to select bad bits for mask
@@ -35,7 +35,7 @@ modified:
    UtilsJungfrauCalib.py - add/use DarkProcJungfrau derived from DarkProc to define pixels with bad gain mode switch
 
 Tag: V02-00-31
-2021-01-25 Mikhail Dubrovin
+2022-01-25 Mikhail Dubrovin
 - app/epix10ka_deploy_constants, epix10ka_pedestals_calibration - replace logging.basicConfig with init_logger
 - app/jungfrau_dark_proc, jungfrau_deploy_constants - change dirmode=0o775->0o777, filemode=0o664->0o666
 - src/UtilsCalib.py - use os.umask(0o0), change dirmode=0o775->0o777, filemode=0o664->0o666
@@ -43,7 +43,7 @@ Tag: V02-00-31
 - src/UtilsJungfrauCalib.py - change dirmode=0o775->0o777, filemode=0o664->0o666
 
 Tag: V02-00-30
-2021-01-06 Mikhail Dubrovin
+2022-01-06 Mikhail Dubrovin
 	modified:   PyDetectorAccess.py - code cleaning - remove blanks and comments
 	modified:   ../src/AreaDetector.py - add *psf methods using PSCalib/GeometryAccess -> UtilsPSF
 	new file:   test-issues-2022.py - use it as test examples
