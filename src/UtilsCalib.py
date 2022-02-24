@@ -28,7 +28,7 @@ import os
 import numpy as np
 from time import time, strftime, localtime
 from psana import EventId, DataSource
-from PSCalib.GlobalUtils import log_rec_on_start, create_directory, save_textfile, dic_det_type_to_calib_group
+from PSCalib.GlobalUtils import log_rec_on_start, create_directory, save_textfile, dic_det_type_to_calib_group, merge_masks
 from Detector.GlobalUtils import info_ndarr, divide_protected #reshape_to_2d#print_ndarr
 from PSCalib.UtilsPanelAlias import alias_for_id #, id_for_alias
 from PSCalib.NDArrIO import save_txt
@@ -917,5 +917,13 @@ def calib_group(dettype):
        i.g. 'Epix10ka::CalibV1'
     """
     return dic_det_type_to_calib_group.get(dettype, None)
+
+
+def info_pixel_status(status, bits=0xffff):
+    arr1 = np.ones(status.shape, dtype=np.int32)
+    statist_bits = np.select((status & bits,), (arr1,), 0)
+    statist_tot = np.select((status>0,), (arr1,), 0)
+    return 'number of pixels containing bits %4d(dec) %4s(oct): %d of total bad %d of total %d'%\
+            (bits, oct(bits), statist_bits.sum(), statist_tot.sum(), status.size)
 
 # EOF
