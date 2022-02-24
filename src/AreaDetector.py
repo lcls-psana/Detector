@@ -134,12 +134,23 @@ Usage::
     # NOTE: by default none of mask keywords is set to True, returns None.
     mask = det.mask(par, calib=False, status=False, edges=False, central=False, unbond=False, unbondnbrs=False, unbondnbrs8=False, **kwargs)
 
+    mask = det.mask_v2(evt, status=True, unbond=False, neighbors=False, edges=False, central=False, calib=False, **kwa)
+
+    # Example:
+    kwa={'status'   :True, 'mstcode':64, 'indexes':(0,1,2,3,4),\
+         'unbond'   :True,\
+         'neighbors':True, 'rad':5, 'ptrn':'r',\
+         'edges'    :True, 'mrows':2, 'mcols':4,\
+         'central'  :True, 'wcentral':10}
+    mask = det.mask_v2(evt, **kwa)
+
     # or cashed mask with mbits - bitword control
     mask = det.mask_comb(par, mbits, **kwargs)
     # where mbits has bits for pixel_status, pixel_mask, edges, central, unbond, unbondnbrs, unbondnbrs8, respectively
 
     # static-mask methods for n-d mask arrays
     mask_nbr = det.mask_neighbors(mask, allnbrs=True) # allnbrs=False/True for 4/8 neighbors
+    mask = det.mask_neighbors_in_radius(self, mask, rad=9, ptrn='r') # mask array with increased by radial paramerer rad region around all 0-pixels in the input mask ndarray.
     mask_edg = det.mask_edges(mask, mrows=1, mcols=1)
 
     # reconstruct image
@@ -747,6 +758,22 @@ class AreaDetector(object):
         return gu.mask_neighbors(mask, allnbrs)
 
 
+    def mask_neighbors_in_radius(self, mask, rad=9, ptrn='r'):
+        """Returns 2-d or n-d mask array with increased by radial paramerer rad region around all 0-pixels in the input mask.
+
+           Parameter
+
+           - mask : np.array - input mask of good/bad (1/0) pixels
+           - rad  : int - radisl parameter for masking region aroung each 0-pixel in mask
+           - ptrn : char - pattern of the masked region, ptrn='r' -rhombus, othervise square [-rad,+rad] in rows and columns.
+
+           Returns
+
+           - np.array - mask with masked neighbors, shape = mask.shape
+        """
+        return gu.mask_neighbors_in_radius(self, mask, rad, ptrn)
+
+
     def mask_edges(self, mask, mrows=1, mcols=1):
         """Returns n-d array of mask with masked mrows and mcols edges on each 2-d segment.
 
@@ -959,7 +986,7 @@ class AreaDetector(object):
             kwargs['mbits']=mbits
             return calib_jungfrau(self, evt, cmpars, **kwargs)
         if self.is_epix10ka_any():
-            kwargs['mbits']=mbits
+            Kwargs['mbits']=mbits
             return calib_epix10ka_any(self, evt, cmpars, **kwargs)
 
         rnum = self.runnum(evt)
@@ -1024,6 +1051,67 @@ class AreaDetector(object):
         return cdata
 
 
+    def mask_v2(self, par, status=False, unbond=False, neighbors=False, edges=False, central=False, calib=False, **kwargs):
+        """Returns combined mask controlled by the keyword arguments.
+           Parameters
+           ----------
+           - status   : bool : False - mask from pixel_status constants,
+                                       kwargs: mstcode=0o377 - status bits to use in mask
+                                       kwargs: indexes=(0,1,2,3,4) - list of gain range indexes to merge for epix10ka only
+           - unbond   : bool : False - mask of unbond pixels for cspad 2x1 panels
+           - neighbor : bool : False - mask of neighbors of all bad pixels,
+                                       kwargs: rad=5, ptrn='r'
+           - Edge     : bool : False - mask edge rows and columns of each panel,
+                                       kwargs: mrows=1, mcols=1
+           - central  : bool : False - mask central rows and columns of each panel consisting of ASICS (cspad, epix, jungfrau),
+                                       kwargs: wcentral=1
+           - calib    : bool : False - apply user's defined mask from pixel_mask constants
+
+           Returns
+           -------
+           np.array: dtype=np.uint8, shape as det.raw - mask array of 1 or 0 or None if all switches are False.
+        """
+        mask = None
+        if status:
+            mstcode = kwargs.get('mstcode', 0o377)
+            indexes = kwargs.get('indexes', (0,1,2,3,4) if self.is_epix10ka_any() else (0,1,2) if self.is_jungfrau() else (0,))
+            mask = self.status_as_mask(par, mstcode=mstcode, mode=0, indexes=indexes)
+            # mode=0 - do not mask neighbors here
+            # indexes=(0,1,2,3,4) - list of indexes of epix10ka... gain modes to merge status
+
+        if unbond and (self.is_cspad2x2() or self.is_cspad()):
+            mask_unbond = self.mask_geo(par, width=0, wcentral=0, mbits=4) # mbits=4 - unbonded pixels for cspad2x1 segments
+            mask = mask_unbond if mask is None else gu.merge_masks(mask, mask_unbond)
+
+        if neighbors and mask is not None:
+            rad = kwargs.get('rad', 5)
+            ptrn = kwargs.get('ptrn', 'r')
+            mask = gu.mask_neighbors_in_radius(mask, rad=rad, ptrn=ptrn)
+
+        if edges:
+            mrows = kwargs.get('mrows', 1)
+            mcols = kwargs.get('mcols', 1)
+            mask_edges = gu.mask_edges(mask, mrows=mrows, mcols=mcols) # masks each segment edges only
+            mask = mask_edges if mask is None else gu.merge_masks(mask, mask_edges)
+
+        if central:
+            #mbits=1 - mask edges,
+            #     +2 - mask two central columns,
+            #     +4 - mask non-bonded pixels,
+            #     +8 - mask nearest four neighbours of nonbonded pixels,
+            #     +16- mask eight neighbours of nonbonded pixels.
+
+            wcentral = kwargs.get('wcentral', 1)
+            mask_central = self.mask_geo(par, width=0, wcentral=wcentral, mbits=2) # mbits=4 - mask central rows/cols
+            mask = mask_central if mask is None else gu.merge_masks(mask, mask_central)
+
+        if calib:
+            mask_calib = self.mask_calib(par)
+            mask = mask_calib if mask is None else gu.merge_masks(mask, mask_calib)
+
+        return mask
+
+
     def mask(self, par, calib=False, status=False, edges=False, central=False,\
              unbond=False, unbondnbrs=False, unbondnbrs8=False, **kwargs):
         """Returns per-pixel array with mask values (per-pixel product of all requested masks).
@@ -1034,19 +1122,21 @@ class AreaDetector(object):
            - calib   : bool - True/False = on/off mask from calib directory.
            - status  : bool - True/False = on/off mask generated from calib pixel_status.
 
-           Other parameters make sense for cspad 2x1 sensors only:
+           Other parameters work for selected detectors with appropriate implementation (cspad, epix10ka, jungfrau etc.):
 
            - edges      : bool - True/False = on/off mask of edges.
            - central    : bool - True/False = on/off mask of two central columns.
            - unbond     : bool - True/False = on/off mask of unbonded pixels.
            - unbondnbrs : bool - True/False = on/off mask of unbonded pixel with four neighbors.
            - unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors.
-           - kwargs     : dict - additional parameters passed to low level methods (width,...)
+           - kwargs     : dict - additional parameters passed to low level methods
+                          kwargs.mstcode=0xffff - status_as_mask - bitword for mask status codes
                           kwargs.mode=0/1/2 - status_as_mask - masks zero/four/eight neighbors around each bad pixel
                           kwargs.indexes=(0,1,2,3,4) - status_as_mask list of gain indexes to merge for epix10ka2n
-                          kwargs.mbits - mask_geo: 1 - mask edges, +2 - mask central in mask_geo
-                          kwargs.width - mask_geo=1 - number of masked rows columns on each edge
-                          kwargs.wcentral - mask_geo=1 - number of masked rows columns in the center of each panel
+                          kwargs.mbits=1 - mask_geo - mask edges, +2 - mask central in mask_geo
+                          kwargs.width=1 - mask_geo - number of masked rows columns on each edge
+                          kwargs.wcentral=1 - mask_geo - number of masked rows columns in the center of each panel
+
            Returns
 
            - np.array - per-pixel mask values 1/0 for good/bad pixels.
@@ -1087,7 +1177,7 @@ class AreaDetector(object):
                  + 32 - unbonded pixel with four neighbors
                  + 64 - unbonded pixel with eight neighbors
 
-           - kwargs : dict - additional parameters passed to low level methods (width,...)
+           - kwargs : dict - additional parameters passed to low level methods as explained in method mask(...)
 
            Returns
 
