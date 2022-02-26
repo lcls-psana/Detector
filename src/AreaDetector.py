@@ -84,7 +84,7 @@ Usage::
     # and with custom common mode parameter sequence
     nda_cdata = det.calib(evt, cmpars=(1,25,10,91)) # see description of common mode algorithms in confluence,
     # and with combined mask.
-    nda_cdata = det.calib(evt, mbits=1) # see description of det.mask_comb method.
+    nda_cdata = det.calib(evt, status=True, calib=True) # see description of det.mask_v2 or deprecated det.mask_comb method.
     # NEW - common mode correction for pnCCD:
     nda_cdata = det.calib(evt, (8,5,500), mask=mask)
 
@@ -153,6 +153,8 @@ Usage::
     mask = det.mask_neighbors_in_radius(self, mask, rad=9, ptrn='r') # mask array with increased by radial paramerer rad region around all 0-pixels in the input mask ndarray.
     mask_edg = det.mask_edges(mask, mrows=1, mcols=1)
 
+    mask = det.mask_total(par, **kwargs) # is used in det.calib as det.mask_v2 if mbits is None else det.mask_comb
+
     # reconstruct image
     img   = det.image(evt) # uses calib() by default
     img   = det.image(evt, img_nda)
@@ -219,7 +221,7 @@ import numpy as np
 import PSCalib.GlobalUtils as gu
 from   PSCalib.GeometryObject import data2x2ToTwo2x1, two2x1ToData2x2
 from   Detector.PyDetectorAccess import PyDetectorAccess
-#from   Detector.GlobalUtils import print_ndarr
+from   Detector.GlobalUtils import info_ndarr
 
 from Detector.UtilsJungfrau import calib_jungfrau
 from Detector.UtilsEpix10ka import calib_epix10ka_any
@@ -945,7 +947,7 @@ class AreaDetector(object):
         self._gain_mask_factor = gfactor
 
 
-    def calib(self, evt, cmpars=None, mbits=1, **kwargs):
+    def calib(self, evt, cmpars=None, mbits=None, **kwargs):
         """Returns per-pixel array of calibrated data intensities.
 
            Gets raw data ndarray, applys baic corrections and return thus calibrated data.
@@ -966,27 +968,21 @@ class AreaDetector(object):
            - cmpars : list - common mode parameters, ex.: (1,50,50,100)
                     By default uses parameters from calib directory.
                     0 - common mode is not applied.
-           - mbits  : int - mask control bit-word.  optional.
-                 defaults to 1.  Bit definitions:
+           - mbits  : int - DEPRECATED mask control bit-word. optional.
 
-                 + 1  - pixel_status ("bad pixels" deployed by calibman)
-                 + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
-                 + 4  - edge pixels
-                 + 8  - big "central" pixels of a cspad2x1
-                 + 16 - unbonded pixels
-                 + 32 - unbonded pixel with four neighbors
-                 + 64 - unbonded pixel with eight neighbors
-           - **kwargs : dict - parameters for common mode correction algorithm etc., i.e. for pnccd: cmpars=(8,5,500), mask=...
+           - **kwargs : dict - parameters for mask, common mode correction algorithm etc., i.e. for pnccd: cmpars=(8,5,500).
+                method mask_v2 - descriptin of mask parameters
+                method mask_comb - descriptin of mask parameters - works if mbits>0
 
            Returns
 
            - np.array - per-pixel array of calibrated intensities from data.
         """
+        kwargs['mbits']=mbits
+
         if self.is_jungfrau():
-            kwargs['mbits']=mbits
             return calib_jungfrau(self, evt, cmpars, **kwargs)
         if self.is_epix10ka_any():
-            Kwargs['mbits']=mbits
             return calib_epix10ka_any(self, evt, cmpars, **kwargs)
 
         rnum = self.runnum(evt)
@@ -1039,32 +1035,61 @@ class AreaDetector(object):
             cdata *= gain
         # -------------
 
-        if mbits > 0:
-            #smask = self.status_as_mask(rnum) # (2, 185, 388)
-            mask = self.mask_comb(evt, mbits, **kwargs)
-            if mask is None:
-                if self.pbits & 32: self._print_warning('combined mask is missing.')
-            else:
-                mask.shape = cdata.shape
-                cdata *= mask
+        mask = self.mask_total(evt, **kwargs)
+
+        if mask is None:
+            if self.pbits & 32: self._print_warning('combined mask is missing.')
+        else:
+            mask.shape = cdata.shape
+            cdata *= mask
 
         return cdata
 
 
-    def mask_v2(self, par, status=False, unbond=False, neighbors=False, edges=False, central=False, calib=False, **kwargs):
+    def mask_total(self, par, **kwargs):
+        """returns the best cached mask for det.calib method selected from det.mask_v2 or deprecated det.mask_comb methods.
+        """
+
+        rnum = self.runnum(par)
+
+        #Check/return cached mask
+        if rnum == self._rnum_mask\
+           and self._mask_nda is not None: return self._mask_nda
+
+        #Evaluate new mask
+        mbits = kwargs.pop('mbits', None) # None - new mask_v2 is used for pixel_status only
+        self._rnum_mask  = rnum
+        self._mask_nda = self.mask_v2(par, **kwargs) if mbits is None else\
+                         self.mask_comb(par, mbits, **kwargs) if mbits>0 else\
+                         None
+
+        # Merge with mask from optional parameter in det.calib(...,mask=...)
+        mask_opt = kwargs.get('mask',None)
+        if mask_opt is not None:
+            self._mask_nda = mask_opt if mask is None else gu.merge_masks(self._mask_nda, mask_opt)
+
+        return self._mask_nda
+
+
+    def mask_v2(self, par, status=True, unbond=False, neighbors=False, edges=False, central=False, calib=False, **kwargs):
         """Returns combined mask controlled by the keyword arguments.
            Parameters
            ----------
-           - status   : bool : False - mask from pixel_status constants,
-                                       kwargs: mstcode=0o377 - status bits to use in mask
+           - status   : bool : True  - mask from pixel_status constants,
+                                       kwargs: mstcode=0o377 - status bits to use in mask.
+                                       Status bits show why pixel is considered as bad.
+                                       Content of the bitword depends on detector and code version.
+                                       It is wise to exclude pixels with any bad status by setting mstcode=0o377.
                                        kwargs: indexes=(0,1,2,3,4) - list of gain range indexes to merge for epix10ka only
-           - unbond   : bool : False - mask of unbond pixels for cspad 2x1 panels
+           - unbond   : bool : False - mask of unbond pixels for cspad 2x1 panels only
            - neighbor : bool : False - mask of neighbors of all bad pixels,
-                                       kwargs: rad=5, ptrn='r'
-           - Edge     : bool : False - mask edge rows and columns of each panel,
-                                       kwargs: mrows=1, mcols=1
+                                       kwargs: rad=5 - radial parameter of masked region
+                                       kwargs: ptrn='r'-rhombus, 'c'-circle, othervise square region around each bad pixel
+           - edges    : bool : False - mask edge rows and columns of each panel,
+                                       kwargs: mrows=1, mcols=1 - number of masked edge rows, columns
            - central  : bool : False - mask central rows and columns of each panel consisting of ASICS (cspad, epix, jungfrau),
-                                       kwargs: wcentral=1
+                                       kwargs: wcentral=1 - number of masked central rows and columns in the segment
+                                       works for cspad2x1, epix100, epix10ka, jungfrau
            - calib    : bool : False - apply user's defined mask from pixel_mask constants
 
            Returns
@@ -1074,7 +1099,7 @@ class AreaDetector(object):
         mask = None
         if status:
             mstcode = kwargs.get('mstcode', 0o377)
-            indexes = kwargs.get('indexes', (0,1,2,3,4) if self.is_epix10ka_any() else (0,1,2) if self.is_jungfrau() else (0,))
+            indexes = kwargs.get('indexes', (0,1,2,3,4) if self.is_epix10ka_any() else None)
             mask = self.status_as_mask(par, mstcode=mstcode, mode=0, indexes=indexes)
             # mode=0 - do not mask neighbors here
             # indexes=(0,1,2,3,4) - list of indexes of epix10ka... gain modes to merge status
@@ -1095,6 +1120,7 @@ class AreaDetector(object):
             mask = mask_edges if mask is None else gu.merge_masks(mask, mask_edges)
 
         if central:
+            # mask_geo
             #mbits=1 - mask edges,
             #     +2 - mask two central columns,
             #     +4 - mask non-bonded pixels,
@@ -1102,7 +1128,7 @@ class AreaDetector(object):
             #     +16- mask eight neighbours of nonbonded pixels.
 
             wcentral = kwargs.get('wcentral', 1)
-            mask_central = self.mask_geo(par, width=0, wcentral=wcentral, mbits=2) # mbits=4 - mask central rows/cols
+            mask_central = self.mask_geo(par, width=0, wcentral=wcentral, mbits=2)
             mask = mask_central if mask is None else gu.merge_masks(mask, mask_central)
 
         if calib:
