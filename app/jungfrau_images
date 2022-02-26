@@ -343,16 +343,28 @@ for orun in ds.runs():
         break_steps = break_run = break_events = True
 
       elif tname=='14':
-        suffix = 'det_mask_v2'
-        kwa={'status'   :True, 'mstcode':64, 'indexes':(0,1,2,3,4),\
+        suffix = 'det_mask_total'
+        kwa={'status'   :True, 'mstcode':0o377, 'indexes':(0,1,2,3,4),\
              'unbond'   :True,\
              'neighbors':True, 'rad':5, 'ptrn':'r',\
              'edges'    :True, 'mrows':2, 'mcols':4,\
              'central'  :True, 'wcentral':10}
-        arr = 1 + det.mask_v2(evt, **kwa)
+        arr = 1 + det.mask_total(evt, **kwa)
         #arr = 1 + det.mask_v2(evt, status=False, unbond=False, neighbors=True, edges=False, central=False, calib=False)#, **kwa)
         AMIN, AMAX = 0,2 # amin_amax(args, amin_def=-1, amax_def=3)
         break_steps = break_run = break_events = True
+
+      elif tname=='15':
+        suffix = 'det_calib_mask_total-%s' % (step_evt)
+        kwa={'status'   :True, 'mstcode':0o377, 'indexes':(0,1,2,3,4),\
+             'unbond'   :True,\
+             'neighbors':True, 'rad':5, 'ptrn':'r',\
+             'edges'    :True, 'mrows':2, 'mcols':4,\
+             'central'  :True, 'wcentral':10}
+        arr = det.calib(evt, **kwa)
+        AMIN, AMAX = -1,4 #quantile_amin_amax(arr, fraclo, frachi)
+        logger.info(info_ndarr(arr, '  calib_with_mask_total'))
+        #break_steps = break_run = break_events = True
 
       elif tname=='100':
         suffix = 'mask-from-file'
