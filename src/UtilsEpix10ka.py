@@ -296,7 +296,7 @@ def map_pixel_gain_mode_for_raw(det, raw):
     return map_pixel_gain_mode1(gmaps)
 
 
-def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=1, mask=None, nda_raw=None
+def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=None, mask=None, nda_raw=None
     """
     Returns calibrated epix10ka data
 
@@ -318,7 +318,7 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
             i.e: cmpars=(7,0,100) or (7,2,100)
     - **kwa - used here and passed to det.mask_comb
       - nda_raw - substitute for det.raw(evt)
-      - mbits - parameter of the det.mask_comb(...)
+      - mbits - deprecated parameter of the det.mask_comb(...), det.mask_v2 is used by default
       - mask - user defined mask passed as optional parameter
     """
 
@@ -386,11 +386,7 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
     arrf = np.array(raw & M14, dtype=np.float32) - pedest
 
     if store.mask is None:
-        mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
-        mask = det.mask_comb(evt, mbits, **kwa) if mbits > 0 else None
-        mask_opt = kwa.get('mask',None) # mask optional parameter in det.calib(...,mask=...)
-        if mask_opt is not None:
-           store.mask = mask_opt if mask is None else merge_masks(mask,mask_opt)
+       store.mask = det.mask_total(evt, **kwa)
     mask = store.mask
 
     logger.debug('common-mode correction pars cmp: %s' % str(cmp))

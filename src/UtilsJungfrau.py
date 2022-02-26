@@ -112,9 +112,9 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
         - cmpars[0] - algorithm # 7-for jungfrau
         - cmpars[1] - control bit-word 1-in rows, 2-in columns
         - cmpars[2] - maximal applied correction
-    - **kwa - used here and passed to det.mask_comb
+    - **kwa - used here and passed to det.mask_v2 or det.mask_comb
       - nda_raw - if not None, substitutes evt.raw()
-      - mbits - parameter of the det.mask_comb(...)
+      - mbits - DEPRECATED parameter of the det.mask_comb(...)
       - mask - user defined mask passed as optional parameter
     """
 
@@ -190,11 +190,7 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     arrf -= offset # Apply offset correction
 
     if store.mask is None:
-        mbits = kwa.pop('mbits',1) # 1-mask from status, etc.
-        mask = det.mask_comb(evt, mbits, **kwa) if mbits > 0 else None
-        mask_opt = kwa.get('mask',None) # mask optional parameter in det.calib(...,mask=...)
-        if mask_opt is not None:
-           store.mask = mask_opt if mask is None else merge_masks(mask,mask_opt)
+       store.mask = det.mask_total(evt, **kwa)
     mask = store.mask
 
     if cmp is not None:
