@@ -8,6 +8,14 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 =======
+Tag: V02-00-35
+2022-02-25 Mikhail Dubrovin
+modified:
+   ../app/jungfrau_images - use mask_total in -t14, add -t15 for det.calib with mask_total
+   AreaDetector.py - add/use method mask_total in stead of mask_comb
+   UtilsEpix10ka.py
+   UtilsJungfrau.py
+
 Tag: V02-00-34
 2022-02-24 Mikhail Dubrovin
 modified:
