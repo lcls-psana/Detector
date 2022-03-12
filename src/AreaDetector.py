@@ -734,7 +734,8 @@ class AreaDetector(object):
         if self.is_epix10ka_any():
             stat = gu.merge_status(stat, **kwargs) # indexes=(0,1,2,3,4) or (0,1,2)
 
-        smask = np.asarray(np.select((stat & mstcode,), (0,), default=1), dtype=np.uint8)
+        cond = (stat & mstcode) > 0
+        smask = np.asarray(np.select((cond,), (0,), default=1), dtype=np.uint8)
 
         if mode: smask = gu.mask_neighbors(smask, allnbrs=(True if mode>=2 else False))
 
