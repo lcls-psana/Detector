@@ -13,14 +13,15 @@ STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
 #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(filename)s %(message)s', level=logging.INFO)
 #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(message)s', level=logging.INFO)
 
-def init_logger(loglevel='DEBUG', logfname=None):
+def init_logger(loglevel='DEBUG', logfname=None, fmt=None):
     import sys
 
     int_loglevel = DICT_NAME_TO_LEVEL[loglevel.upper()]
 
     logger = logging.getLogger()
     logger.setLevel(int_loglevel) # logging.DEBUG
-    fmt = '[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s' if int_loglevel==logging.DEBUG else\
+    fmt = fmt if fmt is not None else\
+          '[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s' if int_loglevel==logging.DEBUG else\
           '[%(levelname).1s] L%(lineno)04d %(message)s'
     formatter = logging.Formatter(fmt)
 
