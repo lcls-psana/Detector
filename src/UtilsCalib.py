@@ -13,7 +13,7 @@ Usage::
     ts_run, ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
-    save_log_record_on_start(dirrepo, fname, dirmode=0o777, filemode=0o666)
+    save_log_record_at_start(dirrepo, fname, dirmode=0o777, filemode=0o666)
     fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
@@ -28,11 +28,12 @@ import os
 import numpy as np
 from time import time, strftime, localtime
 from psana import EventId, DataSource
-from PSCalib.GlobalUtils import log_rec_on_start, create_directory, save_textfile, dic_det_type_to_calib_group, merge_masks
 from Detector.GlobalUtils import info_ndarr, divide_protected #reshape_to_2d#print_ndarr
 from PSCalib.UtilsPanelAlias import alias_for_id #, id_for_alias
 from PSCalib.NDArrIO import save_txt
-
+import PSCalib.GlobalUtils as cgu
+log_rec_at_start, create_directory, save_textfile, merge_masks =\
+  cgu.log_rec_at_start, cgu.create_directory, cgu.save_textfile, cgu.merge_masks
 TSTAMP_FORMAT = '%Y%m%d%H%M%S'
 
 def str_tstamp(fmt='%Y-%m-%dT%H:%M:%S', time_sec=None):
@@ -111,18 +112,18 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_on_start(dirrepo, fname, dirmode=0o777, filemode=0o666):
+def save_log_record_at_start(dirrepo, fname, dirmode=0o777, filemode=0o666):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     os.umask(0o0)
-    rec = log_rec_on_start()
+    rec = log_rec_at_start(tsfmt='%Y-%m-%dT%H:%M:%S', **{'dirrepo':dirrepo,})
     repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
-    logfname = repoman.logname_on_start(fname)
+    logfname = repoman.logname_at_start(fname)
     fexists = os.path.exists(logfname)
     save_textfile(rec, logfname, mode='a')
     if not fexists: os.chmod(logfname, filemode)
-    logger.debug('record on start: %s' % rec)
-    logger.info('saved:  %s' % logfname)
+    logger.info('record at start: %s\nsaved in: %s' % (rec,logfname))
+    #return logfname, rec
 
 
 def save_2darray_in_textfile(nda, fname, fmode, fmt):
@@ -150,7 +151,7 @@ class RepoManager(object):
     """Supports repository directories/files naming structure
        <dirrepo>/<panel_id>/<constant_type>/<files-with-constants>
        <dirrepo>/logs/<year>/<log-files>
-       <dirrepo>/logs/log-<fname>-<year>.txt # file with log_rec_on_start()
+       <dirrepo>/logs/log-<fname>-<year>.txt # file with log_rec_at_start()
        e.g.: dirrepo = '/reg/g/psdm/detector/gains/epix10k/panels'
 
     Usage::
@@ -166,6 +167,9 @@ class RepoManager(object):
         self.dirmode     = kwa.get('dirmode',  0o777)
         self.filemode    = kwa.get('filemode', 0o666)
         self.dirname_log = kwa.get('dirname_log', 'logs')
+        self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
+        self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
+        self.dir_log_at_start = kwa.get('dir_log_at_start', '/cds/group/psdm/logs/atstart')
 
 
     def makedir(self, d):
@@ -176,7 +180,7 @@ class RepoManager(object):
 
 
     def dir_in_repo(self, name):
-        """return directory <dirrepo>/<name>
+        """Return directory <dirrepo>/<name>
         """
         return os.path.join(self.dirrepo, name)
 
@@ -265,7 +269,7 @@ class RepoManager(object):
         return dirs
 
 
-    def logname_on_start(self, scrname, year=None):
+    def logname_at_start(self, scrname, year=None):
         _year = str_tstamp(fmt='%Y') if year is None else str(year)
         return '%s/%s_log_%s.txt' % (self.makedir_logs(), _year, scrname)
 
@@ -273,6 +277,32 @@ class RepoManager(object):
     def logname(self, scrname):
         tstamp = str_tstamp(fmt='%Y-%m-%dT%H%M%S')
         return '%s/%s_log_%s.txt' % (self.makedir_logs_year(), tstamp, scrname)
+
+
+    #=== lcls2 style of logname_at_start_lcls1: DIR_LOG_AT_START/<year>/<year>_lcls1_<procname>.txt
+
+    def dir_log_at_start_year(self):
+        """return directory <dirlog_at_start>/<year>"""
+        return os.path.join(self.dir_log_at_start, self.year)
+
+
+    def makedir_log_at_start_year(self):
+        """create and return directory"""
+        return self.makedir(self.dir_log_at_start_year())
+
+
+    def logname_at_start_lcls1(self, procname):
+        return '%s/%s_lcls1_%s.txt' % (self.makedir_log_at_start_year(), self.year, procname)
+
+
+    def save_record_at_start(self, procname, tsfmt='%Y-%m-%dT%H:%M:%S'):
+        os.umask(0o0)
+        rec = log_rec_at_start(tsfmt, **{'dirrepo':self.dirrepo,})
+        logfname = self.logname_at_start_lcls1(procname)
+        fexists = os.path.exists(logfname)
+        save_textfile(rec, logfname, mode='a')
+        if not fexists: os.chmod(logfname, self.filemode)
+        logger.info('record at start: %s\nsaved in: %s' % (rec,logfname))
 
 
 def mean_constrained(arr, lo, hi):
@@ -868,11 +898,11 @@ def common_mode_pars(src, arr_ave, arr_rms, arr_msk):
 
 def find_file_for_timestamp(dirname, pattern, tstamp):
     # list of file names in directory, dirname, containing pattern
-    fnames = [name for name in os.listdir(dirname) if os.path.splitext(name)[-1]=='.dat' and pattern in name]
+    fnames = [name for name in os.listdir(dirname) if os.path.splitext(name)[-1] in ('.dat','.data') and pattern in name]
 
     # list of int tstamps
     # !!! here we assume specific name structure generated by file_name_prefix
-    itstamps = [int(name.split('_',3)[2]) for name in fnames]
+    itstamps = [int(name.rsplit('.',1)[0].split('_',3)[2]) for name in fnames]
 
     # reverse-sort int timestamps in the list
     itstamps.sort(key=int,reverse=True)
@@ -916,7 +946,16 @@ def calib_group(dettype):
        dettype, which is one of EPIX10KA2M, EPIX10KAQUAD, EPIX10KA,
        i.g. 'Epix10ka::CalibV1'
     """
-    return dic_det_type_to_calib_group.get(dettype, None)
+    return cgu.dic_det_type_to_calib_group.get(dettype, None)
+
+
+def calib_group_for_tname_lower(name):
+    """Returns subdirecrory name under calib/<subdir>/... for
+       detector type name in lower, which is one of epix10ka2m, epix10kaquad, epix10ka,
+       i.g. 'Epix10ka::CalibV1'
+    """
+    return cgu.dic_det_tname_lower_to_calib_group.get(name, None)
+
 
 
 def info_pixel_status(status, bits=0xffff):
