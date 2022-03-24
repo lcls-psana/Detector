@@ -30,7 +30,7 @@ from PSCalib.GlobalUtils import deploy_file, save_textfile, create_directory,\
 from Detector.GlobalUtils import info_ndarr, print_ndarr, divide_protected
 
 from Detector.UtilsCalib import evaluate_limits, tstamps_run_and_now, str_tstamp,\
-       save_log_record_on_start, find_file_for_timestamp, save_ndarray_in_textfile, save_2darray_in_textfile,\
+       save_log_record_at_start, find_file_for_timestamp, save_ndarray_in_textfile, save_2darray_in_textfile,\
        calib_group, env_time, TSTAMP_FORMAT
 
 import matplotlib
@@ -767,7 +767,7 @@ def offset_calibration(*args, **opts):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_on_start(dirrepo, _name, dirmode, filemode)
+    save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
     tstamp      = cpdic.get('tstamp', None)
@@ -1262,7 +1262,7 @@ def pedestals_calibration(*args, **opts):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_on_start(dirrepo, _name, dirmode, filemode)
+    save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic, tstamp, panel_ids, expnum, dettype, shape = config_info_for_pedestals(dsname, detname)
 
@@ -1596,7 +1596,7 @@ def deploy_constants(*args, **opts):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_on_start(dirrepo, _name, dirmode, filemode)
+    save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp_run  = cpdic.get('tstamp',    None)
