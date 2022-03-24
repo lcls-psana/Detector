@@ -182,7 +182,7 @@ def jungfrau_dark_proc(parser):
     logger.info(s)
 
     _name = sys._getframe().f_code.co_name
-    uc.save_log_record_on_start(dirrepo, _name, dirmode, filemode)
+    uc.save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     ds  = psana.DataSource(dsname)
     det = psana.Detector(source)
@@ -558,7 +558,7 @@ def jungfrau_deploy_constants(parser):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    uc.save_log_record_on_start(dirrepo, _name, dirmode, filemode)
+    uc.save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic = jungfrau_config_info(dsname, detname)
     tstamp_run  = cpdic.get('tstamp',    None)
