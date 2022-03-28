@@ -767,7 +767,7 @@ def offset_calibration(*args, **opts):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_at_start(dirrepo, _name, dirmode, filemode)
+    #save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname, idx)
     tstamp      = cpdic.get('tstamp', None)
@@ -1262,7 +1262,7 @@ def pedestals_calibration(*args, **opts):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_at_start(dirrepo, _name, dirmode, filemode)
+    #save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic, tstamp, panel_ids, expnum, dettype, shape = config_info_for_pedestals(dsname, detname)
 
@@ -1596,7 +1596,7 @@ def deploy_constants(*args, **opts):
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
 
-    save_log_record_at_start(dirrepo, _name, dirmode, filemode)
+    #save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname)
     tstamp_run  = cpdic.get('tstamp',    None)

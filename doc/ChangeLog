@@ -7,7 +7,23 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-=======
+Tag: V02-00-37
+2022-03-28 Mikhail Dubrovin
+   app/epix10ka_deploy_constants, epix10ka_offset_calibration, epix10ka_pedestals_calibration
+      jungfrau_dark_proc, jungfrau_deploy_constants - add repoman=RepoManager and repoman.save_record_at_start
+   app/geometry_deploy_constants
+   src/UtilsEpix10kaCalib.py, UtilsJungfrauCalib.py - remove save_log_record_at_start from script algorithm
+
+Tag: V02-00-36
+2022-03-24 Mikhail Dubrovin
+modified:
+   app/geometry_deploy_constants - add command geometry_deploy_constants
+   src/UtilsGeometryDeploy.py
+   src/UtilsCalib.py - add ave_record_at_start and associated methods to class RepoManager
+   src/UtilsEpix10kaCalib.py - code cleaning
+   src/UtilsJungfrauCalib.py - code cleaning
+   src/UtilsLogging.py - add parameter fmt=None to method init_logger
+
 Tag: V02-00-35
 2022-02-25 Mikhail Dubrovin
 modified:
