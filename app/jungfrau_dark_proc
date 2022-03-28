@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-
-from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger #, logging, DICT_NAME_TO_LEVEL
-#logger = logging.getLogger(__name__)
-
+import Detector.UtilsLogging as ul
+logger = ul.logging.getLogger(__name__)
 from Detector.UtilsJungfrauCalib import jungfrau_dark_proc, CALIB_REPO_JUNGFRAU, uc, gu
-
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -80,7 +77,7 @@ def option_parser():
     h_fraclo= 'fraction of statistics [0,1] below low  limit of the gate, default = %f' % d_fraclo
     h_frachi= 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
-    h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
     #h_savebw='control bit-word to save arrays: 1/2/4/8/16/32/...'\
     #         ' - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi, default = (oct) %s' % oct(d_savebw)
 
@@ -121,9 +118,11 @@ if __name__ == "__main__":
     parser = option_parser()
     (popts, pargs) = parser.parse_args()
 
-    logfname = uc.RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666).logname('%s_%s' % (SCRNAME, gu.get_login()))
-    init_logger(loglevel=popts.logmode, logfname=logfname) # (loglevel='DEBUG', logfname=None)
-    #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
+    repoman = uc.RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
+    ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    logger.info('log file: %s' % logname)
+    repoman.save_record_at_start(SCRNAME)
 
     jungfrau_dark_proc(parser)
     sys.exit(0)

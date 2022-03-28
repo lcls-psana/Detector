@@ -33,11 +33,11 @@ def epix10ka_pedestals_calibration():
     #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
     from Detector.UtilsCalib import RepoManager
     import getpass
-    logfname = RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666).logname('%s_%s' % (SCRNAME, getpass.getuser()))
-    init_logger(loglevel=popts.logmode, logfname=logfname) # loglevel='DEBUG', logfname=None
-
-    logger.debug('%s\nIn epix10ka_pedestals_calibration' % (50*'_'))
-    logger.debug(info_command_line_parameters(parser))
+    repoman = RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    logname = repoman.logname('%s_%s' % (SCRNAME, getpass.getuser()))
+    init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    logger.info('log file: %s' % logname)
+    repoman.save_record_at_start(SCRNAME)
 
     pedestals_calibration(*args, **opts)
 

@@ -40,7 +40,7 @@ if len(sys.argv)<2:
 def argument_parser():
     import argparse
 
-    d_dirstart = DIR_LOG_AT_START
+    #d_dirstart = DIR_LOG_AT_START
     d_dirrepo  = CALIB_REPO_GEOMETRY
     d_exp      = None # 'mfxx32516'
     d_det      = None # 'NoDetector.0:Epix10ka.3'
@@ -62,6 +62,7 @@ def argument_parser():
     d_roty     = 0
     d_rotz     = 0
 
+    #h_dirstart= 'directory of the log file for records at start, default = %s' % d_dirstart
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
     h_run     = 'run number of the existing dataset to get run time-stamp, detector full name etc., default = %s' % str(d_run)
@@ -69,8 +70,7 @@ def argument_parser():
     h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
     h_dssuffix= 'dataset name suffix beyond exp=<expname>:run=<runnum><dssuffix>, for example ":smd:dir=<path>/xtc/", default = %s' % d_dssuffix
-    h_dsname  = 'override exp=<expname>:run=<runnum><dssuffix>, e.g. with xtc file path/name, <path>/xtc/<file-name>.xtc", default = %s' % d_dsname
-    h_dirstart= 'directory of the log file for at start records, default = %s' % d_dirstart
+    h_dsname  = 'overrides exp=<expname>:run=<runnum><dssuffix> if specified, e.g. path to *.xtc file, default = %s' % d_dsname
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
@@ -81,12 +81,13 @@ def argument_parser():
     h_posx    = 'detector position x[um] relative IP, default = %f' % d_posx
     h_posy    = 'detector position y[um] relative IP, default = %f' % d_posy
     h_posz    = 'detector position z[um] relative IP, default = %f' % d_posz
-    h_rotx    = 'detector rotation around axis x[degree] relative IP, default = %f' % d_rotx
-    h_roty    = 'detector position around axis y[degree] relative IP, default = %f' % d_roty
-    h_rotz    = 'detector position around axis z[degree] relative IP, default = %f' % d_rotz
+    h_rotx    = 'detector rotation angle [degree] around axis x, default = %f' % d_rotx
+    h_roty    = 'detector position angle [degree] around axis y, default = %f' % d_roty
+    h_rotz    = 'detector position angle [degree] around axis z, default = %f' % d_rotz
 
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
+    #parser.add_argument(      '--dirstart',default=d_dirstart,type=str, help=h_dirstart)
     parser.add_argument('-e', '--exp',     default=d_exp,     type=str, help=h_exp)
     parser.add_argument('-d', '--det',     default=d_det,     type=str, help=h_det)
     parser.add_argument('-r', '--run',     default=d_run,     type=str, help=h_run)
@@ -94,7 +95,6 @@ def argument_parser():
     parser.add_argument('-s', '--dssuffix',default=d_dssuffix,type=str, help=h_dssuffix)
     parser.add_argument('-x', '--dsname',  default=d_dsname,  type=str, help=h_dsname)
     parser.add_argument('-o', '--dirrepo', default=d_dirrepo, type=str, help=h_dirrepo)
-    parser.add_argument(      '--dirstart',default=d_dirstart,type=str, help=h_dirstart)
     parser.add_argument('-c', '--dircalib',default=d_dircalib,type=str, help=h_dircalib)
     parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help=h_loglev)
     parser.add_argument('--dirmode',       default=d_dirmode, type=int, help=h_dirmode)

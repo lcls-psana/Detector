@@ -6,8 +6,9 @@ from time import time
 
 from Detector.GlobalUtils import info_command_line_parameters
 from Detector.UtilsEpix10kaCalib import deploy_constants, CALIB_REPO_EPIX10KA, GAIN_MODES_IN
-from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, init_logger, logging
-logger = logging.getLogger(__name__)
+#from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, init_logger, logging
+import Detector.UtilsLogging as ul
+logger = ul.logging.getLogger(__name__)
 SCRNAME = sys.argv[0].split('/')[-1]
 
 
@@ -25,14 +26,14 @@ def epix10ka_deploy_constants():
     if popts.det is None: raise IOError('WARNING: option "-d <detector-name>" MUST be specified.')
     if popts.run is None: raise IOError('WARNING: option "-r <run-number>" MUST be specified.')
 
-    #logging.basicConfig(format='%(levelname)s: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
+    #logging.basicConfig(format='%(levelname)s: %(message)s', level=ul.DICT_NAME_TO_LEVEL[popts.logmode])
     from Detector.UtilsCalib import RepoManager
     import getpass
-    logfname = RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666).logname('%s_%s' % (SCRNAME, getpass.getuser()))
-    init_logger(loglevel=popts.logmode, logfname=logfname) # loglevel='DEBUG', logfname=None
-
-    logger.debug('%s\nIn epix10ka_deploy_constants' % (50*'_'))
-    logger.debug(info_command_line_parameters(parser))
+    repoman = RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    logname = repoman.logname('%s_%s' % (SCRNAME, getpass.getuser()))
+    ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    logger.info('log file: %s' % logname)
+    repoman.save_record_at_start(SCRNAME)
 
     deploy_constants(*args, **opts)
 
@@ -89,7 +90,7 @@ def option_parser():
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
-    h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
     h_high    = 'default high   gain ADU/keV, default = %s' % str(d_high)
     h_medium  = 'default medium gain ADU/keV, default = %s' % str(d_medium)
     h_low     = 'default low    gain ADU/keV, default = %s' % str(d_low)
