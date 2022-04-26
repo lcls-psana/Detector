@@ -138,6 +138,46 @@ def issue_2022_02_09():
     print('saved file: %s' % fname)
 
 
+def issue_2022_04_20():
+    """datinfo -e mecly4720 -r834 -d MecTargetChamber.0:Epix100a.0
+    """
+    #import logging
+    #logger = logging.getLogger(__name__)
+    #logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.DEBUG)
+
+    from Detector.GlobalUtils import np, info_ndarr
+    import psana
+    runnum = 834
+    ds = psana.DataSource('exp=mecly4720:run=%d'%runnum)
+    det = psana.Detector('MecTargetChamber.0:Epix100a.0')
+    det.set_print_bits(0o177777)
+
+    print(info_ndarr(det.gain(runnum), 'gain:'))
+
+
+def issue_2022_04_26():
+    """ISSUE: Nelson, Silke <snelson@slac.stanford.edu>
+    common mode turn off?
+    datinfo -e xpptut15 -r 580 -d jungfrau4M
+    """
+    from time import time
+    import psana
+    from Detector.GlobalUtils import np, info_ndarr
+    runnum = 580
+    ds = psana.DataSource('exp=xpptut15:run=%d'%runnum)
+    det = psana.Detector('jungfrau4M')
+
+    print(info_ndarr(det.pedestals(runnum),'  det.pedestals(%d)'%runnum))
+    print(info_ndarr(det.common_mode(runnum),'  det.common_mode(%d)'%runnum))
+    for i in range(10):
+        evt = ds.events().next()
+        t0_sec = time()
+        #calib = det.raw(evt)
+        calib = det.calib(evt, cmpars=(7,0,10,10))
+        dt_sec = time()-t0_sec
+        print(info_ndarr(calib,'Event %d det.calib(evt,...) dt=%.3f sec' % (i, dt_sec)))
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -156,6 +196,8 @@ USAGE = '\nUsage:'\
       + '\n    2 - issue_2022_01_04 - psf() from GeometryAccess'\
       + '\n    3 - issue_2022_01_05 - psf() from Detector -> AreaDetector -> GeometryAccess'\
       + '\n    4 - issue_2022_02_09 - Philip - catch not switching pixels in jungfrau'\
+      + '\n    5 - issue_2022_04_20 - Philip - epix100 default gain'\
+      + '\n    6 - issue_2022_04_26 - Silke - how to turn off common mode for jungfrau'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -163,6 +205,8 @@ if   TNAME in  ('1',): issue_2022_01_03()
 elif TNAME in  ('2',): issue_2022_01_04()
 elif TNAME in  ('3',): issue_2022_01_05()
 elif TNAME in  ('4',): issue_2022_02_09()
+elif TNAME in  ('5',): issue_2022_04_20()
+elif TNAME in  ('6',): issue_2022_04_26()
 
 else:
     print(USAGE)
