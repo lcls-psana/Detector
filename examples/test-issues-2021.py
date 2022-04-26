@@ -129,7 +129,7 @@ def issue_2021_02_16():
     ds = psana.DataSource('exp=xpplw0018:run=7')
     det = psana.Detector('jungfrau1M')
     evt = ds.events().next()
-    p = det.calib(evt, cmpars=(7,3,10,10))
+    p = det.calib(evt, cmpars=(7,7,10,10))
     print('det.calib(evt,...):\n%s' % str(p))
 
 
@@ -311,10 +311,10 @@ def issue_2021_03_18():
     Wed 3/17/2021 8:57 PM
     Hi Chris & Mikhail,
 
-    We have an issue with the small epix10k in psana: 
-    The pedestal is the right shape and so is the raw data. 
-    In this experiment, I have both a 2M and a 135k. When my first call to calib(evt) goes out to the 135k, everthing looks fine. 
-    If I ask for the 2M first, calib(evt) for the 135k returns data of the 2M shape where the data for the first tiles is repeated 16 times. 
+    We have an issue with the small epix10k in psana:
+    The pedestal is the right shape and so is the raw data.
+    In this experiment, I have both a 2M and a 135k. When my first call to calib(evt) goes out to the 135k, everthing looks fine.
+    If I ask for the 2M first, calib(evt) for the 135k returns data of the 2M shape where the data for the first tiles is repeated 16 times.
     Something must be going wrong with the caching.
     Best,
     Silke
@@ -511,7 +511,7 @@ USAGE = '\nUsage:'\
       + '\n    6 - issue_2021_02_23 - cpo - exp=meclv2518:run=269 - Epix100a'\
       + '\n    7 - issue_2021_02_28 - Silke - exp=xcsx39718:run=9 - epix10k135 - calib'\
       + '\n    8 - issue_2021_02_28B- Silke - exp=xcsx39718:run=9 - epix10k135 - shape '\
-      + '\n    9 - issue_2021_03_01 - Silke - exp=xpplv0918:run=30 - default c ommon mode for Jungfrau'\
+      + '\n    9 - issue_2021_03_01 - Silke - exp=xpplv0918:run=30 - default common mode for Jungfrau'\
       + '\n   10 - issue_2021_03_17 - Silke - exp=cxilu9218:run=240 - Jungfrau dark processing using evcode'\
       + '\n   11 - issue_2021_03_18 - Silke - exp=xcsx39718:run=222 epix10k135 and epix10k2M'\
       + '\n   12 -                                                  epix10k2M and epix10k135'\
