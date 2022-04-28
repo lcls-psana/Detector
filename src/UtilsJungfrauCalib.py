@@ -471,7 +471,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
     return cpdic
 
 
-def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777):
+def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777, errskip=True):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -496,6 +496,7 @@ def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname
     for igm in range(NUMBER_OF_GAIN_MODES):
         nda = dicnda[igm]
         fname = dic_fnames.get(igm, 'use default')
+        check_exists(fname, errskip, 'panel constants "%s" for gm:%d and tstamp %s NOT FOUND %s' % (ctype, igm, str(tstamp), fname))
         logger.info('merge gm:%d %s' % (igm, fname))
         lstnda.append(nda if nda is not None else nda_def)
         #logger.debug(info_ndarr(nda, 'nda for %s' % gm))
@@ -516,6 +517,16 @@ def fname_prefix_merge(dmerge, detname, tstamp, exp, irun):
     return '%s/%s-%s-%s-r%04d' % (dmerge, detname, tstamp, exp, irun)
 
 
+def check_exists(path, errskip, msg):
+    if path is None or (not os.path.exists(path)):
+        if errskip: logger.warning(msg)
+        else:
+            msg += '\n  to fix this issue please process this or previous dark run using command jungfrau_dark_proc'\
+                   '\n  or add the command line parameter -E or --errskip to skip missing file errors, use default, and force to deploy constants.'
+            logger.error(msg)
+            sys.exit(1)
+
+
 def jungfrau_deploy_constants(parser):
     """jungfrau deploy constants
     """
@@ -533,6 +544,7 @@ def jungfrau_deploy_constants(parser):
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
+    errskip    = kwa.get('errskip', False)
     logmode    = kwa.get('logmode', 'DEBUG')
     dirmode    = kwa.get('dirmode',  0o777)
     filemode   = kwa.get('filemode', 0o666)
@@ -588,7 +600,7 @@ def jungfrau_deploy_constants(parser):
       'dark_max':     ('dark_max',  fmt_minmax),\
     }
 
-    # dict_consts for constants octype: 'pedestals','status', 'rms',  etc.
+    # dict_consts for constants octype: 'pedestals','status', 'rms',  etc. {ctype:<list-of-per-panel-constants-merged-for-3-gains>}
     dic_consts = {}
     for ind, panel_id in enumerate(panel_ids):
 
@@ -597,7 +609,9 @@ def jungfrau_deploy_constants(parser):
             continue # skip non-selected panels
 
         dirpanel = repoman.dir_panel(panel_id)
-        logger.info('%s\nmerge constants for panel %02d dir: %s' % (110*'_', ind, dirpanel))
+        logger.info('%s\nmerge gain range constants for panel %02d dir: %s' % (110*'_', ind, dirpanel))
+
+        check_exists(dirpanel, errskip, 'panel directory does not exist %s' % dirpanel)
 
         fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, tstamp, exp, irun, FNAME_PANEL_ID_ALIASES)
         logger.debug('fname_prefix: %s' % fname_prefix)
@@ -606,13 +620,14 @@ def jungfrau_deploy_constants(parser):
             dir_ctype = repoman.dir_type(panel_id, ctype)
             #logger.info('  dir_ctype: %s' % dir_ctype)
             fname = '%s/%s_%s.txt' % (dir_ctype, fname_prefix, ctype)
-            nda = merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape_panel, fname, fmt, filemode)
-            logger.info('-- save merged gain ranges: %s' % fname)
+            nda = merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape_panel, fname, fmt, filemode, errskip=errskip)
+            logger.info('-- save array of panel constants "%s" merged for 3 gain ranges shaped as %s in file\n%s%s\n'\
+                        % (ctype, str(nda.shape), 21*' ', fname))
 
             if octype in dic_consts: dic_consts[octype].append(nda) # append for panel per ctype
             else:                    dic_consts[octype] = [nda,]
 
-    logger.info('\n%s\nmerge panel constants and deploy them' % (80*'_'))
+    logger.info('\n%s\nmerge all panel constants and deploy them' % (80*'_'))
 
     dmerge = repoman.makedir_merge()
     fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
@@ -635,7 +650,7 @@ def jungfrau_deploy_constants(parser):
             ofname   = '%d-end.data' % irun
             lfname   = None
             verbos   = True
-            logger.info('deploy calib files under %s/%s' % (ctypedir, octype))
+            logger.info('deploy file %s/%s/%s' % (ctypedir, octype, ofname))
             gu.deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
         else:
             logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
