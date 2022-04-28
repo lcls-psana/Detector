@@ -163,17 +163,27 @@ def issue_2022_04_26():
     from time import time
     import psana
     from Detector.GlobalUtils import np, info_ndarr
-    runnum = 580
-    ds = psana.DataSource('exp=xpptut15:run=%d'%runnum)
+
+    #runnum = 580
+    #ds = psana.DataSource('exp=xpptut15:run=%d'%runnum)
+    #det = psana.Detector('jungfrau4M')
+
+    expname='cxilx8720'
+    runnum=6
+    #ds = psana.DataSource('exp=%s:run=%d:dir=/cds/data/drpsrcf/%s/%s/xtc'%(expname,runnum,expname[:3],expname))
+    ds = psana.DataSource('exp=%s:run=%d'%(expname,runnum))
     det = psana.Detector('jungfrau4M')
+    cmpars=(7,1,10,10)
 
     print(info_ndarr(det.pedestals(runnum),'  det.pedestals(%d)'%runnum))
     print(info_ndarr(det.common_mode(runnum),'  det.common_mode(%d)'%runnum))
+    print(info_ndarr(cmpars,' cmpars'))
+
     for i in range(10):
         evt = ds.events().next()
         t0_sec = time()
         #calib = det.raw(evt)
-        calib = det.calib(evt, cmpars=(7,0,10,10))
+        calib = det.calib(evt, cmpars=cmpars)
         dt_sec = time()-t0_sec
         print(info_ndarr(calib,'Event %d det.calib(evt,...) dt=%.3f sec' % (i, dt_sec)))
 
