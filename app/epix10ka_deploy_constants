@@ -68,7 +68,7 @@ def option_parser():
     d_dircalib= None # './calib
     d_deploy  = False
     d_errskip = False
-    d_logmode = 'DEBUG'
+    d_logmode = 'INFO' #'DEBUG'
     d_proc    = 'psrg'
     d_paninds = None
     d_high    = 16.40 # 1.
