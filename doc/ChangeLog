@@ -7,6 +7,20 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-38
+2022-04-28 Mikhail Dubrovin
+- modified:
+   app/epix10ka_deploy_constants - add boolean parameter -E, or --errskip, change d_logmode to INFO
+   app/jungfrau_deploy_constants - add boolean parameter -E, or --errskip
+   src/UtilsEpix10kaCalib.py - use parameter errskip add/use method check_exists
+   src/UtilsJungfrauCalib.py - use parameter errskip add/use method check_exists
+   examples/test-issues-2022.py - in issue_2022_04_26 add Silke's dataset cxilx8720 run6
+   src/PyDetectorAccess.py - in get_constants remove void parameter use_repo
+
+2022-04-26 Mikhail Dubrovin
+- examples/test-issues-2021.py - correction of comments
+- examples/test-issues-2022.py - add issue_2022_04_20, issue_2022_04_26
+
 Tag: V02-00-37
 2022-03-28 Mikhail Dubrovin
    app/epix10ka_deploy_constants, epix10ka_offset_calibration, epix10ka_pedestals_calibration
