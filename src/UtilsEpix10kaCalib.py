@@ -1213,7 +1213,8 @@ def load_panel_constants(dir_ctype, pattern, tstamp):
         arr=np.loadtxt(fname)
         logger.info('Loaded: %s' % fname)
     else:
-        logger.warning('file DOES NOT EXIST: %s' % fname)
+        logger.warning('file "%s" DOES NOT EXIST for pattern: %s tstamp: %s dir_ctype: \n          %s'%\
+                       (fname, pattern, str(tstamp), dir_ctype))
     return arr
 
 
@@ -1433,7 +1434,7 @@ def pedestals_calibration(*args, **opts):
     #logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
 
 
-def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777):
+def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777, errskip=True):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -1448,6 +1449,8 @@ def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, f
         nda = np.loadtxt(fname, dtype=np.float32) if fname is not None else\
               nda_def*GAIN_FACTOR_DEF[igm] if ctype in ('gain', 'gainci') else\
               nda_def
+
+        #print('????? igm:%d gm:%s fname:%s'% (igm, gm, fname))
 
         # 2021-05-11 by Philip request use pedestals_FL for AHL-L, AML-L
         # 2021-07-04 by Philip request use pedestals_FL + offsetph_AML for AML-L
@@ -1561,6 +1564,16 @@ def add_links_for_gainci_fixed_modes(dir_gain, fname_prefix, verbose=True):
     return
 
 
+def check_exists(path, errskip, msg):
+    if path is None or (not os.path.exists(path)):
+        if errskip: logger.warning(msg)
+        else:
+            msg += '\n  to fix this issue please process this or previous dark run using command jungfrau_dark_proc'\
+                   '\n  or add the command line parameter -E or --errskip to skip missing file errors, use default, and force to deploy constants.'
+            logger.error(msg)
+            sys.exit(1)
+
+
 def deploy_constants(*args, **opts):
 
     #from PSCalib.NDArrIO import save_txt; global save_txt
@@ -1574,6 +1587,7 @@ def deploy_constants(*args, **opts):
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     dircalib   = opts.get('dircalib', None)
     deploy     = opts.get('deploy', False)
+    errskip    = opts.get('errskip', False)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_gain   = opts.get('fmt_gain', '%.6f')
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
@@ -1639,6 +1653,8 @@ def deploy_constants(*args, **opts):
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
 
+        check_exists(dir_panel, errskip, 'panel directory does not exist %s' % dir_panel)
+
         #mpars = (('pedestals', 'pedestals',    prefix_peds,   dir_peds),\
         #         ('rms',       'pixel_rms',    prefix_rms,    dir_rms),\
         #         ('status',    'pixel_status', prefix_status, dir_status),\
@@ -1657,7 +1673,7 @@ def deploy_constants(*args, **opts):
             fmt = CTYPE_FMT.get(octype,'%.5f')
             logger.debug('begin merging for ctype:%s, octype:%s, fmt:%s,\n  prefix:%s' % (ctype, octype, fmt, prefix))
             fname = '%s_%s.txt' % (prefix, ctype)
-            nda = merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, fname, fmt, filemode)
+            nda = merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, fname, fmt, filemode, errskip=errskip)
             if octype in dic_consts: dic_consts[octype].append(nda) # append for panel per ctype
             else:                    dic_consts[octype] = [nda,]
 
@@ -1683,7 +1699,7 @@ def deploy_constants(*args, **opts):
             ofname   = '%d-%s.data' % (irun, erun)
             lfname   = None
             verbos   = True
-            logger.info('deploy calib files under %s' % ctypedir)
+            logger.info('deploy file %s/%s/%s' % (ctypedir, octype, ofname))
             deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
         else:
             logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
