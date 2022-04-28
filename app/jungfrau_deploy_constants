@@ -34,6 +34,7 @@ def option_parser():
     d_dircalib= None # './calib'
     d_paninds = None
     d_deploy  = False
+    d_errskip = False
     d_logmode = 'INFO'
 #    d_high    = 16.40 # 1.
 #    d_medium  = 5.466 # 0.33333
@@ -50,6 +51,7 @@ def option_parser():
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_paninds = 'comma-separated (str) panel indexds to generate constants for subset of panels (ex. 2 panel of 8 in the detector), default = %s' % d_paninds
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
+    h_errskip = 'if possible, skip errors and deploy constants, default = %s' % d_errskip
     h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
 #    h_high    = 'default high   gain ADU/keV, default = %s' % str(d_high)
 #    h_medium  = 'default medium gain ADU/keV, default = %s' % str(d_medium)
@@ -67,6 +69,7 @@ def option_parser():
     parser.add_option('-c', '--dircalib',default=d_dircalib,action='store', type='string', help=h_dircalib)
     parser.add_option('-I', '--paninds', default=d_paninds, action='store', type='string', help=h_paninds)
     parser.add_option('-D', '--deploy',  default=d_deploy,  action='store_true',           help=h_deploy)
+    parser.add_option('-E', '--errskip', default=d_errskip, action='store_true',           help=h_errskip)
     parser.add_option('-L', '--logmode', default=d_logmode, action='store', type='string', help=h_logmode)
 #    parser.add_option(      '--high',    default=d_high,    action='store', type='float',  help=h_high)
 #    parser.add_option(      '--medium',  default=d_medium,  action='store', type='float',  help=h_medium)

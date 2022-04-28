@@ -67,6 +67,7 @@ def option_parser():
     d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo'
     d_dircalib= None # './calib
     d_deploy  = False
+    d_errskip = False
     d_logmode = 'DEBUG'
     d_proc    = 'psrg'
     d_paninds = None
@@ -90,6 +91,7 @@ def option_parser():
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
+    h_errskip = 'if possible, skip errors and deploy constants, default = %s' % d_errskip
     h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
     h_high    = 'default high   gain ADU/keV, default = %s' % str(d_high)
     h_medium  = 'default medium gain ADU/keV, default = %s' % str(d_medium)
@@ -107,6 +109,7 @@ def option_parser():
     parser.add_option('-o', '--dirrepo', default=d_dirrepo, action='store', type='string', help=h_dirrepo)
     parser.add_option('-c', '--dircalib',default=d_dircalib,action='store', type='string', help=h_dircalib)
     parser.add_option('-D', '--deploy',  default=d_deploy,  action='store_true',           help=h_deploy)
+    parser.add_option('-E', '--errskip', default=d_errskip, action='store_true',           help=h_errskip)
     parser.add_option('-L', '--logmode', default=d_logmode, action='store', type='string', help=h_logmode)
     parser.add_option(      '--high',    default=d_high,    action='store', type='float',  help=h_high)
     parser.add_option(      '--medium',  default=d_medium,  action='store', type='float',  help=h_medium)
