@@ -7,6 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-39
+2022-05-02 Mikhail Dubrovin
+modified:
+   examples/test-issues-2022.py - add issue_2022_05_02
+   src/AreaDetector.py - path kwargs['rms'] to self.pyda.common_mode_apply(_cmpars, nda, **kwargs),
+	use kwargs['mbits'] for calib_jungfrau/epix10ka only
+   src/PyDetectorAccess.py - fix positional parameters for pyimgalgos: cm_epix
+
 Tag: V02-00-38
 2022-04-28 Mikhail Dubrovin
 - modified:
