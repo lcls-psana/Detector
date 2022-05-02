@@ -283,7 +283,9 @@ class PyDetectorAccess(object):
         alg_num = cmpars[0]
 
         if alg_num == 6:
-            cm_epix(img=nda, **kwargs)
+            #in pyimgalgos: cm_epix(img, rms, maxCorr=30, histoRange=30, colrow=3, minFrac=0.25, normAll=False)
+            img, rms = nda, kwargs.pop('rms', np.ones_like(nda))
+            cm_epix(img, rms, **kwargs)
 
         elif alg_num == 8:
             mask = kwargs.get('mask', None)
