@@ -95,7 +95,7 @@ def issue_2022_02_09():
 
     bad_tot = None
     for istep, step in enumerate(ds.steps()):
-      print '%s mode %s' %(20*'==', modes[istep])
+      print('%s mode %s' %(20*'==', modes[istep]))
       #evt = ds.events().next()
       for ievt, evt in enumerate(step.events()):
 
@@ -188,6 +188,28 @@ def issue_2022_04_26():
         print(info_ndarr(calib,'Event %d det.calib(evt,...) dt=%.3f sec' % (i, dt_sec)))
 
 
+def issue_2022_05_02():
+    """O'Grady, Paul Christopher Fri 4/29/2022 5:55 PM
+       Hi Mikhail,I think Silke?s code is highlighting an issue in 4.0.39 when cmpars is passed to det.calib
+       for epix100 (perhaps others too?). Short script is below. For the weekend the experimenters are working
+       around it by using 4.0.36.  Can you have a look on Monday?
+       Thanks, and have a good weekend?
+       chris
+
+       export PATH=/cds/sw/ds/ana/conda1/inst/envs/ana-4.0.39-py3/bin:$PATH
+    """
+
+    #from psana import *
+    import psana
+    ds = psana.DataSource('exp=xcslx6920:run=2')
+    det = psana.Detector('epix_1')
+    evt = next(ds.events())
+    det.calib(evt)
+    print('done det.calib')
+    det.calib(evt, cmpars=[6])
+    print('done det.calib with cmpars')
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -208,6 +230,7 @@ USAGE = '\nUsage:'\
       + '\n    4 - issue_2022_02_09 - Philip - catch not switching pixels in jungfrau'\
       + '\n    5 - issue_2022_04_20 - Philip - epix100 default gain'\
       + '\n    6 - issue_2022_04_26 - Silke - how to turn off common mode for jungfrau'\
+      + '\n    7 - issue_2022_05_02 - Silke - pbits?'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -217,6 +240,7 @@ elif TNAME in  ('3',): issue_2022_01_05()
 elif TNAME in  ('4',): issue_2022_02_09()
 elif TNAME in  ('5',): issue_2022_04_20()
 elif TNAME in  ('6',): issue_2022_04_26()
+elif TNAME in  ('7',): issue_2022_05_02()
 
 else:
     print(USAGE)
