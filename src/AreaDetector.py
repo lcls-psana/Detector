@@ -902,6 +902,7 @@ class AreaDetector(object):
 
         if _cmpars is not None and _cmpars[0] in [6,8]:
             # go into python
+            kwargs['rms'] = self.rms(par)
             self.pyda.common_mode_apply(_cmpars, nda, **kwargs)
         else:
             # go into cpp
@@ -979,11 +980,12 @@ class AreaDetector(object):
 
            - np.array - per-pixel array of calibrated intensities from data.
         """
-        kwargs['mbits']=mbits
 
         if self.is_jungfrau():
+            kwargs['mbits']=mbits
             return calib_jungfrau(self, evt, cmpars, **kwargs)
         if self.is_epix10ka_any():
+            kwargs['mbits']=mbits
             return calib_epix10ka_any(self, evt, cmpars, **kwargs)
 
         rnum = self.runnum(evt)
