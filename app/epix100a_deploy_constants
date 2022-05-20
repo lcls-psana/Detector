@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+
+import sys
+
+REPO_GAIN = '/reg/g/psdm/detector/gains/'
+DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
+
+SCRNAME = sys.argv[0].split('/')[-1]
+
+DESCRIPTION = 'Deployment of geometry calibration parameters'
+
+USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> [-D] [-L <logging-mode>] [...]' % SCRNAME\
+      + '\n\nREGULAR COMMAND EXAMPLE:'\
+      + '\n  %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -D -c ./calib -D --runrange 10-20' % SCRNAME\
+      + '\n\nTEST COMMANDS:'\
+      + '\nEx.1 for epix100a: %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -D -c ./calib' % SCRNAME\
+      + '\n\nHelp:  %s -h\n' % SCRNAME
+
+
+if len(sys.argv)<2:
+    print('%s\n%s\n%s' % (40*'_', DESCRIPTION, USAGE))
+    sys.exit('MISSING COMMAND LINE PARAMETERS')
+
+
+def argument_parser():
+    import argparse
+
+    #d_dirstart = DIR_LOG_AT_START
+    d_dirrepo  = REPO_GAIN
+    d_exp      = None # 'xpptut15'
+    d_det      = None # 'XcsEndstation.0:Epix100a.1'
+    d_run      = None # 260
+    d_runrange = '0-end'
+    d_tstamp   = None # 20180910111049
+    d_dsname   = None # '<path>/xtc/<file-name>.xtc'
+    d_dssuffix = None # ':smd:dir=<path>/xtc/'
+    d_dircalib = None # './calib'
+    d_deploy   = False
+    d_loglev   = 'INFO'
+    d_dirmode  = 0o777
+    d_filemode = 0o666
+
+    #h_dirstart= 'directory of the log file for records at start, default = %s' % d_dirstart
+    h_exp     = 'experiment name, default = %s' % d_exp
+    h_det     = 'detector name, default = %s' % d_det
+    h_run     = 'run number of the existing dataset to get run time-stamp, detector full name etc., default = %s' % str(d_run)
+    h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
+    h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
+                'By default run time is used, default = %s' % str(d_tstamp)
+    h_dssuffix= 'dataset name suffix beyond exp=<expname>:run=<runnum><dssuffix>, for example ":smd:dir=<path>/xtc/", default = %s' % d_dssuffix
+    h_dsname  = 'overrides exp=<expname>:run=<runnum><dssuffix> if specified, e.g. path to *.xtc file, default = %s' % d_dsname
+    h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
+    h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
+    h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
+    h_loglev  = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_loglev)
+    h_dirmode = 'mode for all mkdir, default = %s' % d_dirmode
+    h_filemode= 'mode for all saved files, default = %s' % d_filemode
+
+    parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
+
+    #parser.add_argument(      '--dirstart',default=d_dirstart,type=str, help=h_dirstart)
+    parser.add_argument('-e', '--exp',     default=d_exp,     type=str, help=h_exp)
+    parser.add_argument('-d', '--det',     default=d_det,     type=str, help=h_det)
+    parser.add_argument('-r', '--run',     default=d_run,     type=str, help=h_run)
+    parser.add_argument('-t', '--tstamp',  default=d_tstamp,  type=int, help=h_tstamp)
+    parser.add_argument('-s', '--dssuffix',default=d_dssuffix,type=str, help=h_dssuffix)
+    parser.add_argument('-x', '--dsname',  default=d_dsname,  type=str, help=h_dsname)
+    parser.add_argument('-o', '--dirrepo', default=d_dirrepo, type=str, help=h_dirrepo)
+    parser.add_argument('-c', '--dircalib',default=d_dircalib,type=str, help=h_dircalib)
+    parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help=h_loglev)
+    parser.add_argument('--dirmode',       default=d_dirmode, type=int, help=h_dirmode)
+    parser.add_argument('--filemode',      default=d_filemode,type=int, help=h_filemode)
+    parser.add_argument('-D', '--deploy',  default=d_deploy, action='store_true', help=h_deploy)
+    parser.add_argument('-R', '--runrange',default=d_runrange,type=str, help=h_runrange)
+
+    return parser
+
+
+if __name__ == "__main__":
+
+    from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger, logging
+    logger = logging.getLogger(__name__)
+
+    import PSCalib.GlobalUtils as gu
+    import Detector.UtilsCalib as uc
+
+    parser = argument_parser()
+    args = parser.parse_args()
+    kwa = vars(args)
+    print('Arguments: %s\n' % str(args))
+
+    repoman = uc.RepoManager(args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START)
+    logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
+    init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    logger.info('log file: %s' % logname)
+    repoman.save_record_at_start(SCRNAME)
+
+    kwa['repoman'] = repoman
+
+    #import Detector.UtilsGeometryDeploy as ugd
+    #ugd.geometry_deploy_constants(**kwa)
+
+    sys.exit('TEST EXIT')
+
+    sys.exit(0)
+
+# EOF
