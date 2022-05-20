@@ -210,6 +210,22 @@ def issue_2022_05_02():
     print('done det.calib with cmpars')
 
 
+def issue_2022_05_16():
+    """Frederic P Poitevin <frederic.poitevin@stanford.edu>
+    Hi Mikhail, sorry I did not come back to you yet about this.
+    It would be interesting to check what the actual pixel size is: 44um or 44.5um?
+    The only source I could find was the following where it says 44um: https://lcls.slac.stanford.edu/detectors/rayonix
+    So for some reason, `psana` reports 89.0mm no matter what...
+    """
+    import psana
+    ds = psana.DataSource('exp=mfxlx5520:run=100')
+    det = psana.Detector('Rayonix', ds.env())
+    cfg = ds.env().configStore()
+    rayonix_cfg = cfg.get(psana.Rayonix.ConfigV2, psana.Source('Rayonix'))
+    print('pixel size det value:', det.pixel_size(ds.env), ' vs cfg value:', rayonix_cfg.pixelWidth())
+    print('Addition from Dan - Device ID:', rayonix_cfg.deviceID())
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -231,6 +247,7 @@ USAGE = '\nUsage:'\
       + '\n    5 - issue_2022_04_20 - Philip - epix100 default gain'\
       + '\n    6 - issue_2022_04_26 - Silke - how to turn off common mode for jungfrau'\
       + '\n    7 - issue_2022_05_02 - Silke - pbits?'\
+      + '\n    8 - issue_2022_05_16 - Frederic - Rayonix pixel size'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -241,6 +258,7 @@ elif TNAME in  ('4',): issue_2022_02_09()
 elif TNAME in  ('5',): issue_2022_04_20()
 elif TNAME in  ('6',): issue_2022_04_26()
 elif TNAME in  ('7',): issue_2022_05_02()
+elif TNAME in  ('8',): issue_2022_05_16()
 
 else:
     print(USAGE)
