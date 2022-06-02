@@ -1,6 +1,6 @@
-#------------------------------
+
 """
-Method :meth:`detector_factory` in :class:`PyDetector` returns instance of the detector data accessor 
+Method :meth:`detector_factory` in :class:`PyDetector` returns instance of the detector data accessor
 =====================================================================================================
 
    Method detector_factory(src,env) switches between detector data access objects depending on source parameter.
@@ -72,7 +72,7 @@ class DetInfo(object):
     def __init__(self,source_string):
         """
         Interpret a string like 'DetInfo(CxiDs2.0:Cspad.0)' in terms of:
-        
+
         detector_type --> 'CxiDs2'
         detector_id   --> 0
         device_type   --> 'Cspad'
@@ -100,8 +100,6 @@ class DetInfo(object):
             return self.det+'.'+str(self.detid)+':'+self.dev+'.'+str(self.devid)
 
 
-# the following function is renamed psana.Detector in the
-# psana __init__.py file
 def detector_factory(source_string, env, *args, **kwargs):
     """
     See psana/src/det_interface.py for documentation
@@ -232,9 +230,10 @@ def dettype(source_string, env, accept_missing=False, *args, **kwargs):
 
     return detector_class
 
-##-----------------------------
 
-def _test1(ntest):
+if __name__ == '__main__':
+
+  def _test1(ntest):
     """Test of the detector_factory(src, env) for AreaDetector and WFDetector classes.
     """
     from time import time
@@ -274,9 +273,8 @@ def _test1(ntest):
     except :
         print('WARNING: det.raw(evt) is not available for dataset: %s and source : %s' % (dsname, src)) 
 
-##-----------------------------
 
-def _test2():
+  def _test2():
     """Test of the detector_factory(src, env) for EvrDetector, DdlDetectorand and EpicsDetector classes.
     """
     # test EVR names
@@ -307,10 +305,10 @@ def _test2():
             print(det(evt))
             break
 
-    return 
+    return
 
 
-def _test3():
+  def _test3():
 
     import psana
 
@@ -325,11 +323,11 @@ def _test3():
         for t in times[:2]:
             evt = run.event(t)
             print(t, det().pvControls()[0].value())
-    
+
     return
 
 
-def test4():
+  def test4():
     import psana
     ds = psana.DataSource('exp=xpptut15:run=54')
     env = ds.env()
@@ -339,7 +337,6 @@ def test4():
     print(d( next(ds.events()) ))
     print(d2.raw( next(ds.events()) ))
 
-##-----------------------------
 
 if __name__ == '__main__':
 
@@ -359,4 +356,4 @@ if __name__ == '__main__':
 
     sys.exit ('Self test is done')
 
-##-----------------------------
+# EOF
