@@ -8,7 +8,7 @@ Usage::
     evcode = '1,2,4'
     ecm = EventCodeManager(evcode, verbos=0)
     for evt ds.events():
-        if not ecm.select(evt): continue 
+        if not ecm.select(evt): continue
 
 Methods:
   * :py:meth:`EventCodeManager.set_event_codes`
@@ -29,7 +29,7 @@ class EventCodeManager(object):
 
     The string of comma-separated event codes is passed in evcode through option -c, (ex.: -c 1,2,4).
     If any of listed event codes are available in evt Evr event codes then method select(evt) returns True, otherwise False.
-    If any of input event codes is set negative - then all event codes are used to deselect event.  
+    If any of input event codes is set negative - then all event codes are used to deselect event.
     More complicated logical formulaes are not supprorted.
     """
     def __init__(self, evcode=None, verbos=0):
@@ -53,7 +53,7 @@ class EventCodeManager(object):
         except:
             self.lst_ec = None
             return
-            
+
         self.do_deselect = any((ec<0 for ec in lst_ec))      # set do_deselect switch for any negative event code
         self.lst_ec = [abs(ec) for ec in lst_ec]             # list of unsigned integer event codes
 
@@ -72,6 +72,7 @@ class EventCodeManager(object):
         """Returns True/False to select/deselect event."""
         if not self.do_check: return True
         evt_codes = self.evrdet.eventCodes(evt)
+        if evt_codes is None: return None
         ec_in_event = any(ec in evt_codes for ec in self.lst_ec)
         res = (not ec_in_event) if self.do_deselect else ec_in_event
         if self.counter < 20:
