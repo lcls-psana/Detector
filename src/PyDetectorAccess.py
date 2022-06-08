@@ -1132,6 +1132,36 @@ class PyDetectorAccess(object):
         return nda
 
 
+    def det_config_object(self, env):
+        return\
+        pda.get_cspad_config_object(env, self.source)    if self.dettype == gu.CSPAD else\
+        pda.get_cspad2x2_config_object(env, self.source) if self.dettype == gu.CSPAD2X2 else\
+        pda.get_epix_config_object(env, self.source)     if self.dettype in (gu.EPIX100A, gu.EPIX10KA) else\
+        pda.get_epix10ka_any_config_object(env, self.source) if self.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD) else\
+        pda.get_pnccd_config_object(env, self.source)    if self.dettype == gu.PNCCD else\
+        pda.get_princeton_config_object(env, self.source) if self.dettype == gu.PRINCETON else\
+        pda.get_rayonix_config_object(env, self.source)  if self.dettype == gu.RAYONIX else\
+        pda.get_andor_config_object(env, self.source)    if self.dettype in (gu.ANDOR, gu.ANDOR3D) else\
+        pda.get_jungfrau_config_object(env, self.source) if self.dettype == gu.JUNGFRAU else\
+        pda.get_opal1k_config_object(env, self.source)   if self.dettype in (gu.OPAL1000, gu.OPAL2000, gu.OPAL4000, gu.OPAL8000) else\
+        pda.get_timepix_config_object(env, self.source)  if self.dettype == gu.TIMEPIX else\
+        pda.get_fli_config_object(env, self.source)      if self.dettype == gu.FLI else\
+        pda.get_pimax_config_object(env, self.source)    if self.dettype == gu.PIMAX else\
+        pda.get_pixis_config_object(env, self.source)    if self.dettype == gu.PIXIS else\
+        pda.get_zyla_config_object(env, self.source)     if self.dettype == gu.ZYLA else\
+        pda.get_istar_config_object(env, self.source)    if self.dettype == gu.ISTAR else\
+        pda.get_alvium_config_object(env, self.source)   if self.dettype == gu.ALVIUM else\
+        pda.get_epicscam_config_object(env, self.source) if self.dettype == gu.EPICSCAM else\
+        pda.get_uxi_config_object(env, self.source)      if self.dettype == gu.UXI else\
+        pda.get_archon_config_object(env, self.source)   if self.dettype == gu.ARCHON else\
+        pda.get_fccd_config_object(env, self.source)     if self.dettype in (gu.FCCD, gu.FCCD960) else\
+        pda.get_orca_config_object(env, self.source)     if self.dettype == gu.ORCAFL40 else\
+        pda.get_tm6740_config_object(env, self.source)   if self.dettype == gu.TM6740 else\
+        pda.get_quartz_config_object(env, self.source)   if self.dettype == gu.QUARTZ4A150 else\
+        pda.get_streak_config_object(env, self.source)   if self.dettype == gu.STREAK else\
+        None
+
+
     def shape_config_cspad(self, env):
         # configuration from data file
         # config object for cspad contains a number of used 2x1-s numSect()
