@@ -2,19 +2,38 @@
 
 import sys
 
-REPO_GAIN = '/reg/g/psdm/detector/gains/'
+DIR_REPO = '/reg/g/psdm/detector/calib/constants/'
 DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
-DESCRIPTION = 'Deployment of geometry calibration parameters'
+DESCRIPTION = 'Deployment of calibration parameters'
 
-USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> [-D] [-L <logging-mode>] [...]' % SCRNAME\
+USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> -C <calib-type> [-D] [-L <logging-mode>] [...]' % SCRNAME\
       + '\n\nREGULAR COMMAND EXAMPLE:'\
-      + '\n  %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -D -c ./calib -D --runrange 10-20' % SCRNAME\
+      + '\n  %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -D -c ./calib -D --runrange 10-20' % SCRNAME\
+      + '\n\n  Input parameters to select dataset:                     # DataSource argument:'\
+      + '\n    -e xpptut15 -r 260                                      # exp=xpptut15:run=260'\
+      + '\n    -e xpptut15 -r 260 -s :smd                              # exp=xpptut15:run=260:smd'\
+      + '\n    -e xpptut15 -r 260 -s :dir=path/xtc::stream=0-79        # exp=xpptut15:run=260:dir=path/xtc::stream=0-79'\
+      + '\n    -x /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>  # /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>'\
       + '\n\nTEST COMMANDS:'\
-      + '\nEx.1 for epix100a: %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -D -c ./calib' % SCRNAME\
+      + '\nEx.1  for epix100a     : %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -D -c ./calib' % SCRNAME\
+      + '\nEx.2  for Cspad CXI    : %s -e xpptut15 -r 380 -d CxiDs1.0:Cspad.0 -C gain -D -c ./calib' % SCRNAME\
+      + '\nEx.3  for Cspad CXI    : %s -e xpptut15 -r 380 -d CxiDs2.0:Cspad.0 -C gain -D -c ./calib' % SCRNAME\
+      + '\nEx.4  for Cspad XPP    : %s -e xpptut15 -r 320 -d XppGon.0:Cspad.0 -C gain -D -c ./calib' % SCRNAME\
+      + '\nEx.5  for cspad2x2     : %s -e xpptut15 -r 460 -d MecTargetChamber.0:Cspad2x2.3 -C gain -D -c ./calib' % SCRNAME\
+      + '\nEx.6  for pnCCD        : %s -e xpptut15 -r 450 -d Camp.0:pnCCD.1 -C gain -D -c ./calib' % SCRNAME\
       + '\n\nHelp:  %s -h\n' % SCRNAME
+
+#      + '\nEx.5  for jungfrau512k : %s -e xpptut15 -r 410 -d MfxEndstation.0:Jungfrau.1 -D -c ./calib' % SCRNAME\
+#      + '\nEx.6  for jungfrau1M   : %s -e xpptut15 -r 430 -d MfxEndstation.0:Jungfrau.0 -D -c ./calib' % SCRNAME\
+#      + '\nEx.7  for jungfrau4M   : %s -e xpptut15 -r 530 -d DetLab.0:Jungfrau.2 -D -c ./calib' % SCRNAME\
+#      + '\nEx.8  for epix10ka2m   : %s -e xpptut15 -r 570 -d MfxEndstation.0:Epix10ka2M.0 -D -c ./calib' % SCRNAME\
+#      + '\nEx.11 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.0 -D -c ./calib' % SCRNAME\
+#      + '\nEx.12 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.1 -D -c ./calib' % SCRNAME\
+#      + '\nEx.13 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.2 -D -c ./calib' % SCRNAME\
+#      + '\nEx.14 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.3 -D -c ./calib' % SCRNAME\
 
 
 if len(sys.argv)<2:
@@ -25,32 +44,32 @@ if len(sys.argv)<2:
 def argument_parser():
     import argparse
 
-    #d_dirstart = DIR_LOG_AT_START
-    d_dirrepo  = REPO_GAIN
+    d_dirrepo  = DIR_REPO
     d_exp      = None # 'xpptut15'
     d_det      = None # 'XcsEndstation.0:Epix100a.1'
     d_run      = None # 260
     d_runrange = '0-end'
     d_tstamp   = None # 20180910111049
-    d_dsname   = None # '<path>/xtc/<file-name>.xtc'
     d_dssuffix = None # ':smd:dir=<path>/xtc/'
+    d_dsname   = None # 'exp=mfxlx5520:run=100:smd:dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/:stream=0-79' or '<path>/xtc/<file-name>.xtc'
     d_dircalib = None # './calib'
+    d_ctype    = 'gain'
     d_deploy   = False
     d_loglev   = 'INFO'
     d_dirmode  = 0o777
     d_filemode = 0o666
 
-    #h_dirstart= 'directory of the log file for records at start, default = %s' % d_dirstart
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
     h_run     = 'run number of the existing dataset to get run time-stamp, detector full name etc., default = %s' % str(d_run)
     h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
-    h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
+    h_tstamp  = 'non-default time stamp (YYYYmmddHHMMSS) to search for constants in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
     h_dssuffix= 'dataset name suffix beyond exp=<expname>:run=<runnum><dssuffix>, for example ":smd:dir=<path>/xtc/", default = %s' % d_dssuffix
     h_dsname  = 'overrides exp=<expname>:run=<runnum><dssuffix> if specified, e.g. path to *.xtc file, default = %s' % d_dsname
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
-    h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
+    h_dircalib= 'non-default deployment calib directory, different from standard one, default = %s' % d_dircalib
+    h_ctype   = 'calibration type [gain, common_mode, etc.], default = %s' % str(d_ctype)
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
     h_loglev  = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_loglev)
     h_dirmode = 'mode for all mkdir, default = %s' % d_dirmode
@@ -58,7 +77,6 @@ def argument_parser():
 
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
-    #parser.add_argument(      '--dirstart',default=d_dirstart,type=str, help=h_dirstart)
     parser.add_argument('-e', '--exp',     default=d_exp,     type=str, help=h_exp)
     parser.add_argument('-d', '--det',     default=d_det,     type=str, help=h_det)
     parser.add_argument('-r', '--run',     default=d_run,     type=str, help=h_run)
@@ -67,6 +85,7 @@ def argument_parser():
     parser.add_argument('-x', '--dsname',  default=d_dsname,  type=str, help=h_dsname)
     parser.add_argument('-o', '--dirrepo', default=d_dirrepo, type=str, help=h_dirrepo)
     parser.add_argument('-c', '--dircalib',default=d_dircalib,type=str, help=h_dircalib)
+    parser.add_argument('-C', '--ctype',   default=d_ctype,   type=str, help=h_ctype)
     parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help=h_loglev)
     parser.add_argument('--dirmode',       default=d_dirmode, type=int, help=h_dirmode)
     parser.add_argument('--filemode',      default=d_filemode,type=int, help=h_filemode)
@@ -81,15 +100,17 @@ if __name__ == "__main__":
     from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger, logging
     logger = logging.getLogger(__name__)
 
-    import PSCalib.GlobalUtils as gu
+    #import PSCalib.GlobalUtils as gu
     import Detector.UtilsCalib as uc
+    import Detector.RepoManager as rm
+    gu = uc.cgu
 
     parser = argument_parser()
     args = parser.parse_args()
     kwa = vars(args)
     print('Arguments: %s\n' % str(args))
 
-    repoman = uc.RepoManager(args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = rm.RepoManager(args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START)
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
@@ -97,10 +118,8 @@ if __name__ == "__main__":
 
     kwa['repoman'] = repoman
 
-    #import Detector.UtilsGeometryDeploy as ugd
-    #ugd.geometry_deploy_constants(**kwa)
-
-    sys.exit('TEST EXIT')
+    import Detector.UtilsDeployConstants as udc
+    udc.deploy_constants(**kwa)
 
     sys.exit(0)
 
