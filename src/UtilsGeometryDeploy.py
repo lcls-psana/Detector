@@ -19,12 +19,34 @@ import sys
 import psana
 import numpy as np
 from time import time #, localtime, strftime
-import PSCalib.GlobalUtils as gu
+#import PSCalib.GlobalUtils as gu
 from PSCalib.GeometryAccess import GeometryAccess
 import Detector.UtilsCalib as uc
-
+gu = uc.cgu
 
 def command_line(): return ' '.join(sys.argv)
+
+
+def str_rayonix_geo_matrix_segment(d):
+    """returns str like 'MTRX:V2:3840:3840:44:44' using configuration data.
+    d = {'maxWidth': 3840, 'height': 1920, 'readoutMode': psana.Rayonix.ReadoutMode.Unknown,
+    'Version': 2, 'MX340HS_Row_Pixels': 7680, 'rawMode': 0, 'TypeId': 73, 'numPixels': 3686400,
+    'binning_f': 2, 'BasePixelSize': 44, 'MX170HS_Column_Pixels': 3840, 'width': 1920,
+    'ReadoutMode': psana.Rayonix.ReadoutMode(0), 'trigger': 0, 'binning_s': 2,
+    'MX170HS_Row_Pixels': 3840, 'pixelHeight': 88, 'DeviceIDMax': 40, 'pixelWidth': 88,
+    'darkFlag': 0, 'exposure': 0, 'maxHeight': 3840, 'MX340HS_Column_Pixels': 7680,
+    'deviceID': 'name:0000', 'testPattern': 0}
+    """
+    #d = gu.dict_of_object_metadata(rco)
+    logger.debug('dict_rayonix_cfg: %s' % str(d))
+    width = d.get('width', None)  # 1920
+    height = d.get('height', None)  # 1920
+    pixelWidth = d.get('pixelWidth', None)  # 88
+    pixelHeight = d.get('pixelHeight', None)  # 88
+
+    if None in (height, width, pixelHeight, pixelWidth): return None
+    return 'MTRX:V2:%d:%d:%d:%d' % (height, width, pixelHeight, pixelWidth)
+
 
 
 def geometry_deploy_constants(**kwa):
@@ -60,9 +82,11 @@ def geometry_deploy_constants(**kwa):
 
     strsrc = gu.string_from_source(src)
     _detname = strsrc.replace(':','-').replace('.','-')
-    dettype = gu.dic_det_type_to_name[gu.det_type_from_source(src)].lower()
+    int_dettype = gu.det_type_from_source(src)
+    dettype = gu.dic_det_type_to_name[int_dettype].lower()
     dir_dettype = repoman.dir_in_repo(dettype)
-    logger.info('directory for dettype: %s' % dir_dettype)
+    logger.info('dettype: %s directory: %s' %  (dettype, dir_dettype))
+
 
     pattern = fname_prefix = '%s_%s' % (dettype, _detname)
 
@@ -76,9 +100,21 @@ def geometry_deploy_constants(**kwa):
     logger.info('file_for_timestamp(tsrun=%s): %s' % (tsrun, fname))
 
     cmd = command_line()
-    if '--pos' in cmd or '--rot' in cmd or '--parent' in cmd:
+    if '--pos' in cmd or '--rot' in cmd or '--parent' in cmd or int_dettype == gu.RAYONIX:
+
         geo = GeometryAccess(fname, 0o377 if (logmode=='DEBUG') else 0)
         geo_ip = geo.get_geo(name_parent, 0)
+
+        logger.debug('dir(geo): %s' % str(dir(geo)))
+
+        if int_dettype == gu.RAYONIX:
+            d = det.pyda.dict_rayonix_config()
+            str_mtrx = str_rayonix_geo_matrix_segment(d)
+            logger.info('MTRX segment from rayonix configuration: %s' % str_mtrx)
+            for g in geo.list_of_geos:
+                print('geo.oname: %s' % g.oname)
+                if g.oname[:4] == 'MTRX': g.oname = str_mtrx
+
         if geo_ip is not None:
           list_of_geo_ip_children = geo_ip.list_of_children
           if list_of_geo_ip_children is not None and len(list_of_geo_ip_children)==1:

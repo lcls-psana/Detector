@@ -7,6 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-41
+2022-06-14 Mikhail Dubrovin
+modified:
+ - app/geometry_deploy_constants - add comment Ex.15
+ - examples/test-issues-2022.py - update issue_2022_05_16, add issue_2022_06_14 for rayonix
+ - src/PyDetectorAccess.py - add correction of rayonix segment from configuration
+ - src/UtilsGeometryDeploy.py - add correction of rayonix segment from configuration
+
 Tag: V02-00-40
 2022-06-09 Mikhail Dubrovin
 modified:

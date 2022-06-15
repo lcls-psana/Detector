@@ -29,6 +29,7 @@ USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> [-D] [-L <logging-mo
       + '\nEx.12 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.1 -D -c ./calib' % SCRNAME\
       + '\nEx.13 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.2 -D -c ./calib' % SCRNAME\
       + '\nEx.14 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.3 -D -c ./calib' % SCRNAME\
+      + '\nEx.15 for rayonix      : %s -e xpptut15 -r 240 -d XppEndstation.0:Rayonix.0 -D -c ./calib' % SCRNAME\
       + '\n\nHelp:  %s -h\n' % SCRNAME
 
 

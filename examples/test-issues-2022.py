@@ -1,7 +1,13 @@
 #!/usr/bin/env python
+"""
+USAGE: <python> Detector/examples/test-issues-2022.py 9
+"""
+
 #import logging
 #logger = logging.getLogger(__name__)
 #logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.DEBUG)
+
+
 
 import sys
 SCRNAME = sys.argv[0].rsplit('/')[-1]
@@ -218,12 +224,36 @@ def issue_2022_05_16():
     So for some reason, `psana` reports 89.0mm no matter what...
     """
     import psana
-    ds = psana.DataSource('exp=mfxlx5520:run=100')
-    det = psana.Detector('Rayonix', ds.env())
+    #ds = psana.DataSource('exp=mfxlx5520:run=100')
+    #det = psana.Detector('Rayonix', ds.env())
+    ds = psana.DataSource('exp=xpptut15:run=240')  # MX340-HS:125 'pixel size det value:', 89.0, ' vs cfg value:', 176
+    det = psana.Detector('XppEndstation.0:Rayonix.0', ds.env())
+    print('dict_rayonix_config:', det.pyda.dict_rayonix_config())  # dict
+
     cfg = ds.env().configStore()
-    rayonix_cfg = cfg.get(psana.Rayonix.ConfigV2, psana.Source('Rayonix'))
-    print('pixel size det value:', det.pixel_size(ds.env), ' vs cfg value:', rayonix_cfg.pixelWidth())
-    print('Addition from Dan - Device ID:', rayonix_cfg.deviceID())
+    #rayonix_cfg = cfg.get(psana.Rayonix.ConfigV2, psana.Source('Rayonix'))
+    #import Detector.PyDataAccess as pda
+    #co = pda.get_rayonix_config_object(ds.env(), det.source)
+    co = det.pyda.det_config_object(ds.env())
+    print('dir(rayonix_cfg)', dir(co))
+    print('pixel size det value:', det.pixel_size(ds.env), ' vs cfg value:', co.pixelWidth())
+    print('Addition from Dan - Device ID:', co.deviceID())
+    print('numPixels:', co.numPixels()) # 3686400
+    print('pixelWidth:', co.pixelWidth())  # 176
+    print('pixelHeight:', co.pixelHeight())  # 176
+    print('height:', co.height())  # 1920
+    print('width:', co.width())  # 1920
+
+def issue_2022_06_14():
+    """Chuck: it would be nice to check rayonix segment geometry for consistency with config.
+    """
+    import psana
+    #ds, runnum = psana.DataSource('exp=mfxlx5520:run=100'), 100
+    #det = psana.Detector('Rayonix', ds.env())
+    ds, runnum = psana.DataSource('exp=xpptut15:run=240'), 240  # MX340-HS:125 'pixel size det value:', 89.0, ' vs cfg value:', 176
+    det = psana.Detector('XppEndstation.0:Rayonix.0', ds.env())
+    #print('dict_rayonix_config:', det.pyda.dict_rayonix_config())  # dict
+    geom = det.geometry(runnum)
 
 
 def issue_2021_MM_DD():
@@ -248,6 +278,7 @@ USAGE = '\nUsage:'\
       + '\n    6 - issue_2022_04_26 - Silke - how to turn off common mode for jungfrau'\
       + '\n    7 - issue_2022_05_02 - Silke - pbits?'\
       + '\n    8 - issue_2022_05_16 - Frederic - Rayonix pixel size'\
+      + '\n    9 - issue_2022_06_14 - Me - Rayonix geometry consistency check'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -259,6 +290,7 @@ elif TNAME in  ('5',): issue_2022_04_20()
 elif TNAME in  ('6',): issue_2022_04_26()
 elif TNAME in  ('7',): issue_2022_05_02()
 elif TNAME in  ('8',): issue_2022_05_16()
+elif TNAME in  ('9',): issue_2022_06_14()
 
 else:
     print(USAGE)

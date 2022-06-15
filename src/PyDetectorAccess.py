@@ -34,6 +34,10 @@ Author Mikhail Dubrovin
 from __future__ import print_function
 from __future__ import division
 
+#import logging
+#logger = logging.getLogger(__name__)
+#logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.DEBUG)
+
 import sys
 import numpy as np
 import _psana
@@ -45,6 +49,19 @@ from PSCalib.CalibFileFinder import CalibFileFinder
 from PSCalib.GeometryAccess import GeometryAccess, img_from_pixel_arrays
 from PSCalib.NDArrIO import save_txt, load_txt
 from pyimgalgos.cm_epix import cm_epix
+
+
+def split_str_matrix_segment(mtrx):
+    """Splits string like 'MTRX:V2:1920:1920:88:88' for two parts 'MTRX:V2','1920:1920:88:88'
+    """
+    #mtrx.index(':',5)
+    mtype, nrows, ncols, sizerow, sizecol = mtrx.rsplit(':', 4)
+    return  mtype, '%s:%s:%s:%s' % (nrows, ncols, sizerow, sizecol)
+
+
+def str_rayonix_geo_matrix_segment(d):
+    import Detector.UtilsGeometryDeploy as ugd
+    return ugd.str_rayonix_geo_matrix_segment(d)
 
 
 class PyDetectorAccess(object):
@@ -187,6 +204,31 @@ class PyDetectorAccess(object):
             if self.pbits & 1: print('WARNING: PSCalib.GeometryAccess object is NOT created for run %d - geometry file is missing.' % runnum)
 
 
+    def check_rayonix_geo(self):
+        d = self.dict_rayonix_config()
+        mtrx_cfg = str_rayonix_geo_matrix_segment(d)
+        mtype_cfg, pars_cfg = split_str_matrix_segment(mtrx_cfg)
+        if self.pbits & 1: print('check rayonix segment matrix geometry parameters using configuration object'\
+                                 +'\ndict_rayonix_config: %s' % str(d)\
+                                 +'\nconfiguration mtype, pars:', mtype_cfg, pars_cfg)
+        if self.geo is None: return
+        mtrx_geo = None
+        for g in self.geo.list_of_geos:
+            if self.pbits: print(g.oname)
+            if g.oname[:4] == 'MTRX':
+                mtrx_geo = g.oname
+                if self.pbits & 1: print('Rayonix segment description is found in geometry: %s in config: %s' % (mtrx_geo, mtrx_cfg))
+                mtype_geo, pars_geo = split_str_matrix_segment(mtrx_geo)
+                #print('geometry mtype, pars:', mtype_geo, pars_geo)
+                if pars_cfg == pars_geo:
+                    print('segment parameters in geometry coincides with configuration.')
+                    return
+                else:
+                    smtrx = '%s:%s' % (mtype_geo, pars_cfg)
+                    print('WARNING - check_rayonix_geo: use rayonix segment parameters as %s' % smtrx)
+                    g.oname = smtrx
+                return
+
 
     def geoaccess(self, par): # par = _psana.Event | int runnum
         """Returns geometry or None if can't load.
@@ -209,6 +251,9 @@ class PyDetectorAccess(object):
             # 3) load default geometry if it is still unavailable. Implemented for a few detectors.
             if self.geo is None:
                 self.default_geometry()
+
+            if self.dettype == gu.RAYONIX:
+                self.check_rayonix_geo()
 
             # arrays for caching
             self.iX             = None
@@ -452,6 +497,24 @@ class PyDetectorAccess(object):
                                               pix_scale_size_um=pix_scale_size_um,\
                                               xy0_off_pix=xy0_off_pix, do_tilt=True, cframe=cframe, fract=fract)
         return ix, iy
+
+
+    def rayonix_config_object(self):
+        return pda.get_rayonix_config_object(self.env, self.source)
+
+
+    def dict_rayonix_config(self):
+        """Returns dict with usable configuration parameters from Rayonix or None. Ex:
+           {'maxWidth': 7680, 'height': 1920, 'readoutMode': psana.Rayonix.ReadoutMode.Unknown,\
+            'Version': 2, 'maxHeight': 7680, 'rawMode': 0, 'TypeId': 73, 'numPixels': 3686400,\
+            'binning_f': 4, 'BasePixelSize': 44, 'MX170HS_Column_Pixels': 3840, 'width': 1920,\
+            'ReadoutMode': <class 'psana.Rayonix.ReadoutMode'>, 'trigger': 0, 'binning_s': 4,\
+            'MX170HS_Row_Pixels': 3840, 'pixelHeight': 176, 'DeviceIDMax': 40, 'pixelWidth': 176,\
+            'darkFlag': 0, 'exposure': 0, 'MX340HS_Row_Pixels': 7680,\
+            'MX340HS_Column_Pixels': 7680, 'deviceID': 'MX340-HS:125', 'testPattern': 0}
+        """
+        c = self.rayonix_config_object()
+        return gu.dict_of_object_metadata(c)
 
 
     def pixel_size_rayonix(self):
