@@ -256,6 +256,20 @@ def issue_2022_06_14():
     geom = det.geometry(runnum)
 
 
+def issue_2022_06_16():
+    """/reg/d/psdm/xpp/xpply9820/calib
+    """
+    import psana
+    runnum = 25
+    ds = psana.DataSource('exp=xpply9820:run=%d' % runnum)
+    det = psana.Detector('XppGon.0:Epix100a.1', ds.env())
+    det.set_print_bits(0o377)
+    evt = next(ds.events())
+    arr = det.calib(evt)
+    from Detector.GlobalUtils import info_ndarr
+    print(info_ndarr(arr,'det.calib:'))
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -279,6 +293,7 @@ USAGE = '\nUsage:'\
       + '\n    7 - issue_2022_05_02 - Silke - pbits?'\
       + '\n    8 - issue_2022_05_16 - Frederic - Rayonix pixel size'\
       + '\n    9 - issue_2022_06_14 - Me - Rayonix geometry consistency check'\
+      + '\n   10 - issue_2022_06_16 - Vincent - why it is looking for *.h5?'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -291,6 +306,7 @@ elif TNAME in  ('6',): issue_2022_04_26()
 elif TNAME in  ('7',): issue_2022_05_02()
 elif TNAME in  ('8',): issue_2022_05_16()
 elif TNAME in  ('9',): issue_2022_06_14()
+elif TNAME in ('10',): issue_2022_06_16()
 
 else:
     print(USAGE)
