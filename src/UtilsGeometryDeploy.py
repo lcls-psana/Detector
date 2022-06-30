@@ -24,11 +24,13 @@ from PSCalib.GeometryAccess import GeometryAccess
 import Detector.UtilsCalib as uc
 gu = uc.cgu
 
+RAYONIX_PIXEL_SIZE = 44.271  # um 85.00 +/- 0.05mm/1920pixel
+
 def command_line(): return ' '.join(sys.argv)
 
 
 def str_rayonix_geo_matrix_segment(d):
-    """returns str like 'MTRX:V2:3840:3840:44:44' using configuration data.
+    """returns str like 'MTRX:V2:3840:3840:44.271:44.271' using configuration data.
     d = {'maxWidth': 3840, 'height': 1920, 'readoutMode': psana.Rayonix.ReadoutMode.Unknown,
     'Version': 2, 'MX340HS_Row_Pixels': 7680, 'rawMode': 0, 'TypeId': 73, 'numPixels': 3686400,
     'binning_f': 2, 'BasePixelSize': 44, 'MX170HS_Column_Pixels': 3840, 'width': 1920,
@@ -39,14 +41,19 @@ def str_rayonix_geo_matrix_segment(d):
     """
     #d = gu.dict_of_object_metadata(rco)
     logger.debug('dict_rayonix_cfg: %s' % str(d))
-    width = d.get('width', None)  # 1920
     height = d.get('height', None)  # 1920
-    pixelWidth = d.get('pixelWidth', None)  # 88
-    pixelHeight = d.get('pixelHeight', None)  # 88
+    width = d.get('width', None)  # 1920
+    binning_s = d.get('binning_f', None)  # 2
+    binning_f = d.get('binning_f', None)  # 2
 
-    if None in (height, width, pixelHeight, pixelWidth): return None
-    return 'MTRX:V2:%d:%d:%d:%d' % (height, width, pixelHeight, pixelWidth)
-
+    if None in (height, width, binning_s, binning_f):
+        maxHeight = d.get('maxHeight', None)  # 3840
+        maxWidth = d.get('maxWidth', None)  # 3840
+        logger.warning('Rayonis configuration has undefined parameters: '\
+                       +'maxHeight:%s maxWidth:%s height:%s width:%s binning_s:%s binning_f:%s' %\
+                       (str(maxHeight), str(maxWidth), str(height), str(width), str(binning_s), str(binning_f)))
+        return None
+    return 'MTRX:V2:%d:%d:%.3f:%.3f' % (height, width, RAYONIX_PIXEL_SIZE*binning_s, RAYONIX_PIXEL_SIZE*binning_f)
 
 
 def geometry_deploy_constants(**kwa):
@@ -111,9 +118,12 @@ def geometry_deploy_constants(**kwa):
             d = det.pyda.dict_rayonix_config()
             str_mtrx = str_rayonix_geo_matrix_segment(d)
             logger.info('MTRX segment from rayonix configuration: %s' % str_mtrx)
-            for g in geo.list_of_geos:
-                print('geo.oname: %s' % g.oname)
-                if g.oname[:4] == 'MTRX': g.oname = str_mtrx
+            if str_mtrx is not None:
+                for g in geo.list_of_geos:
+                    print('geo.oname: %s' % g.oname)
+                    if g.oname[:4] == 'MTRX': g.oname = str_mtrx
+            else:
+                logger.warning('RAYONIX SEGMENT DESCRIPTOR IS NOT CORRECTED because of missing configuration parameters.')
 
         if geo_ip is not None:
           list_of_geo_ip_children = geo_ip.list_of_children
