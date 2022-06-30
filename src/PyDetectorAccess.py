@@ -55,6 +55,7 @@ def split_str_matrix_segment(mtrx):
     """Splits string like 'MTRX:V2:1920:1920:88:88' for two parts 'MTRX:V2','1920:1920:88:88'
     """
     #mtrx.index(':',5)
+    if mtrx is None: return None
     mtype, nrows, ncols, sizerow, sizecol = mtrx.rsplit(':', 4)
     return  mtype, '%s:%s:%s:%s' % (nrows, ncols, sizerow, sizecol)
 
@@ -207,6 +208,9 @@ class PyDetectorAccess(object):
     def check_rayonix_geo(self):
         d = self.dict_rayonix_config()
         mtrx_cfg = str_rayonix_geo_matrix_segment(d)
+        if mtrx_cfg is None:
+            print('RAYONIX SEGMENT DESCRIPTOR IS NOT CORRECTED because of missing configuration parameters.')
+            return
         mtype_cfg, pars_cfg = split_str_matrix_segment(mtrx_cfg)
         if self.pbits & 1: print('check rayonix segment matrix geometry parameters using configuration object'\
                                  +'\ndict_rayonix_config: %s' % str(d)\
@@ -221,11 +225,11 @@ class PyDetectorAccess(object):
                 mtype_geo, pars_geo = split_str_matrix_segment(mtrx_geo)
                 #print('geometry mtype, pars:', mtype_geo, pars_geo)
                 if pars_cfg == pars_geo:
-                    print('segment parameters in geometry coincides with configuration.')
+                    if self.pbits: print('segment parameters in geometry coincides with configuration.')
                     return
                 else:
                     smtrx = '%s:%s' % (mtype_geo, pars_cfg)
-                    print('WARNING - check_rayonix_geo: use rayonix segment parameters as %s' % smtrx)
+                    print('WARNING - check_rayonix_geo: use rayonix segment geometry descriptor as %s' % smtrx)
                     g.oname = smtrx
                 return
 
