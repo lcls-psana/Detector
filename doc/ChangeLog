@@ -7,6 +7,12 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-43
+2022-06-30 Mikhail Dubrovin
+ - UtilsGeometryDeploy.py - use correct RAYONIX_PIXEL_SIZE = 44.271 um
+ - PyDetectorAccess.py - add protection for substituting
+	    correct rayonix pixel size from configuration
+
 Tag: V02-00-42
 2022-06-16 Mikhail Dubrovin
 test-issues-2022.py - add issue_2022_06_16
