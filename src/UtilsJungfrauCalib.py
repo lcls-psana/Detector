@@ -163,8 +163,8 @@ def jungfrau_dark_proc(parser):
 
     dirrepo = popts.dirrepo
 
-    dirmode  = kwargs.get('dirmode',  0o777)
-    filemode = kwargs.get('filemode', 0o666)
+    dirmode  = kwargs.get('dirmode',  0o2777)
+    filemode = kwargs.get('filemode', 0o2666)
 
     #clbdir = popts.clbdir
     #if clbdir is not None: psana.setOption('psana.calib-dir', clbdir)
@@ -377,8 +377,8 @@ def save_results(dpo, **kwa):
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     segind     = kwa.get('segind', None)
     panel_type = kwa.get('panel_type', 'jungfrau')
-    dirmode    = kwa.get('dirmode', 0o777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode', 0o2777)
+    filemode   = kwa.get('filemode', 0o2666)
     fmt_peds   = kwa.get('fmt_peds',   '%.3f')
     fmt_rms    = kwa.get('fmt_rms',    '%.3f')
     fmt_status = kwa.get('fmt_status', '%4i')
@@ -471,7 +471,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
     return cpdic
 
 
-def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777, errskip=True):
+def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o2777, errskip=True):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -546,8 +546,8 @@ def jungfrau_deploy_constants(parser):
     deploy     = kwa.get('deploy', False)
     errskip    = kwa.get('errskip', False)
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode',  0o2777)
+    filemode   = kwa.get('filemode', 0o2666)
     gain0      = kwa.get('gain0', 41.5)    # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g0_gain.npy
     gain1      = kwa.get('gain1', -1.39)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g1_gain.npy
     gain2      = kwa.get('gain2', -0.11)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g2_gain.npy

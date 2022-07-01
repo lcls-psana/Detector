@@ -15,7 +15,7 @@ import os
 import sys
 import psana
 
-import Detector.UtilsJungfrau as ju 
+import Detector.UtilsJungfrau as ju
 from Detector.jungfrau_datasets import DSNAMES, DETNAMES
 from pyimgalgos.GlobalUtils import print_command_line_parameters
 from time import time
@@ -28,7 +28,7 @@ def usage():
            +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES[:3])\
            +'       <DETNAME> is optional parameterr like one of the list:\n         %s\n' % '\n         '.join(DETNAMES[:3])\
            +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS - beginning of the validity range'\
-           +'\n\nTry: jungfrau_gain_constants -h' 
+           +'\n\nTry: jungfrau_gain_constants -h'
 
 #------------------------------
 
@@ -37,11 +37,11 @@ def log_file_name(lfpath, dsname) :
     """
     # Returns str like /reg/g/psdm/logs/calibman/jungfrau_gain/2018/05/20180503-104619-dubrovin-22122.txt
     t0_sec = time()
-    tstamp = gu.str_tstamp('%Y%m%dT%H%M%S', t0_sec) 
-    #year_month = gu.str_tstamp('%Y/%m', time_sec=None) 
+    tstamp = gu.str_tstamp('%Y%m%dT%H%M%S', t0_sec)
+    #year_month = gu.str_tstamp('%Y/%m', time_sec=None)
     sdsname =  dsname.replace('exp=','')
     sdsname = sdsname.replace(':run=','-r')
-    year = gu.str_tstamp('%Y', time_sec=None) 
+    year = gu.str_tstamp('%Y', time_sec=None)
     return '%s/%s/%s-%s-%s.txt' % (lfpath, year, tstamp, sdsname, gu.get_login())#, os.getpid())
 
 #------------------------------
@@ -54,7 +54,7 @@ def config_logger_v0(log_fname, llev) :
     #logging.basicConfig(format='%(levelname)s: %(message)s',\
     #                    level=llev,\
     #                    handlers=[fhandler, shandler]
-    #) 
+    #)
 
 #------------------------------
 
@@ -67,7 +67,7 @@ def config_logger(log_fname, loglev) :
     formatter = logging.Formatter(fmt)
 
     # Create logfile for any logging level excluding DEBUG
-    if llev != logging.DEBUG : 
+    if llev != logging.DEBUG :
         fhandler = logging.FileHandler(log_fname, 'w')
         fhandler.setFormatter(formatter)
         logger.addHandler(fhandler)
@@ -80,7 +80,7 @@ def config_logger(log_fname, loglev) :
 
 #------------------------------
 
-def jungfrau_gain_constants() :    
+def jungfrau_gain_constants() :
     """Main script for CL
     """
     print(80*'_')
@@ -96,11 +96,11 @@ def jungfrau_gain_constants() :
     nargs = len(pargs)
     DSNAME = pargs[0] if nargs>0 else popts.dsname
     DETNAME= pargs[1] if nargs>1 else popts.source
-    TSTAMP = pargs[2] if nargs>2 else popts.tstamp 
-    clbdir = popts.clbdir 
-    deploy = popts.deploy 
-    upload = popts.upload 
-    loglev = popts.loglev 
+    TSTAMP = pargs[2] if nargs>2 else popts.tstamp
+    clbdir = popts.clbdir
+    deploy = popts.deploy
+    upload = popts.upload
+    loglev = popts.loglev
     lfpath = popts.lfpath
     repdir = popts.repdir
 
@@ -114,7 +114,7 @@ def jungfrau_gain_constants() :
     if verbose : print_command_line_parameters(parser)
 
     log_fname = log_file_name(lfpath, DSNAME)
-    gu.create_path(log_fname, depth=6, mode=0o777, verb=False)
+    gu.create_path(log_fname, depth=6, mode=0o2777, verb=False)
 
     #print('==== Start logging ====')
     config_logger(log_fname, loglev)
@@ -125,7 +125,7 @@ def jungfrau_gain_constants() :
 
     ds = psana.DataSource(DSNAME)
     env = ds.env()
-    source = ju.psana_source(env, DETNAME) 
+    source = ju.psana_source(env, DETNAME)
     ssource = ju.string_from_source(source)
     strsrc  = ssource.replace(':','-')
     npanels = ju.number_of_modules_in_jungfrau(env, source)
@@ -133,14 +133,14 @@ def jungfrau_gain_constants() :
                +'\n      found source "%s" with number of panels: %s' %(ssource, str(npanels)))
     jfid = ju.id_jungfrau(env, source)
 
-    co = ju.jungfrau_config_object(env, source) 
+    co = ju.jungfrau_config_object(env, source)
     if co.Version < 3 : # for old versions of config jfid="MecTargetChamber.0-Jungfrau.0"
         msg = "WARNING: Jungfrau id is not available for config V%d. Constants can't be auto-generated." % co.Version
         logger.warning(msg)
         sys.exit()
 
     cdirs = ju.find_panel_calib_dirs(jfid, dname=ju.DIRNAME, tstamp=TSTAMP)
-    if None in cdirs :        
+    if None in cdirs :
         msg = "Calibdirs can't be found for all panels"
         sys.exit(msg)
 
@@ -191,7 +191,7 @@ def jungfrau_gain_constants() :
         logger.warning('Add option -D to deploy calib files under directory %s' % ctypedir)
 
     #----------
-    if upload : 
+    if upload :
         #dcs add <fname>.h5 -t pixel_gain -f <ifname>.txt -T 0 -m "comment"
         msg = 'Commands to upload calibration constants in repository %s:' % repdir
         #cmt = 'Id found in %s for %s' % (DSNAME, ssource)
@@ -245,7 +245,7 @@ def option_parser() :
     parser.add_option('-R', '--repdir', dest='repdir', default=d_repdir, action='store', type='string', help=h_repdir)
 
     return parser
- 
+
 #------------------------------
 #------------------------------
 #------------------------------

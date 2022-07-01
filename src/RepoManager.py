@@ -26,7 +26,7 @@ Usage::
     DIR_REPO = '/reg/g/psdm/detector/calib/constants/'
     DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
 
-    repoman = rm.RepoManager(DIR_REPO, dirmode=0o777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = rm.RepoManager(DIR_REPO, dirmode=0o2777, filemode=0o2666, dir_log_at_start=DIR_LOG_AT_START)
     repoman.save_record_at_start(SCRNAME)
 
     import PSCalib.GlobalUtils as gu
@@ -63,9 +63,9 @@ class RepoManager(object):
 
     def __init__(self, dirrepo, **kwa):
         self.dirrepo = dirrepo.rstrip('/')
-        self.dirmode     = kwa.get('dirmode',  0o777)
+        self.dirmode     = kwa.get('dirmode',  0o2777)
         self.dettype     = kwa.get('dettype', None)
-        self.filemode    = kwa.get('filemode', 0o666)
+        self.filemode    = kwa.get('filemode', 0o2666)
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
         self.dir_log_at_start = kwa.get('dir_log_at_start', '/cds/group/psdm/logs/atstart')

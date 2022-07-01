@@ -71,8 +71,8 @@ def geometry_deploy_constants(**kwa):
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode',  0o2777)
+    filemode   = kwa.get('filemode', 0o2666)
     repoman    = kwa.get('repoman', None)
     name_parent= kwa.get('parent', 'IP')
 

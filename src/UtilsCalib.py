@@ -13,7 +13,7 @@ Usage::
     ts_run, ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
-    save_log_record_at_start(dirrepo, fname, dirmode=0o777, filemode=0o666)
+    save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666)
     fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
@@ -112,7 +112,7 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_at_start(dirrepo, fname, dirmode=0o777, filemode=0o666):
+def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     os.umask(0o0)
@@ -164,8 +164,8 @@ class RepoManager(object):
 
     def __init__(self, dirrepo, **kwa):
         self.dirrepo = dirrepo.rstrip('/')
-        self.dirmode     = kwa.get('dirmode',  0o777)
-        self.filemode    = kwa.get('filemode', 0o666)
+        self.dirmode     = kwa.get('dirmode',  0o2777)
+        self.filemode    = kwa.get('filemode', 0o2666)
         self.dirname_log = kwa.get('dirname_log', 'logs')
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))

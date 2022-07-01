@@ -7,6 +7,26 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-44
+2022-07-01 Mikhail Dubrovin
+- add prefix 0o2000 to all dir/file mode parameter, e.g. 0o777 -> 0o2777
+   ../app/deploy_constants
+   ../app/epix10ka_deploy_constants
+   ../app/epix10ka_offset_calibration
+   ../app/epix10ka_pedestals_calibration
+   ../app/geometry_deploy_constants
+   ../app/jungfrau_dark_proc
+   ../app/jungfrau_deploy_constants
+   ../app/jungfrau_gain_constants
+   ../app/jungfrau_images
+   ../app/jungfrau_ndarr_dark_proc
+   RepoManager.py
+   UtilsCalib.py
+   UtilsDeployConstants.py
+   UtilsEpix10kaCalib.py
+   UtilsGeometryDeploy.py
+   UtilsJungfrauCalib.py
+
 Tag: V02-00-43
 2022-06-30 Mikhail Dubrovin
  - UtilsGeometryDeploy.py - use correct RAYONIX_PIXEL_SIZE = 44.271 um

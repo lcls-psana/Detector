@@ -494,7 +494,7 @@ class JungfrauDarkProc(object):
 
         if verbos: print('File name template: %s' % template)
 
-        gu.create_path(template, depth=0, mode=0o770, verb=True) # in case if template is work/...
+        gu.create_path(template, depth=0, mode=0o2770, verb=True) # in case if template is work/...
 
         if savebw &  1: det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
         if savebw &  2: det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)

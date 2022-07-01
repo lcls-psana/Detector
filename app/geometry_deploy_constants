@@ -53,8 +53,8 @@ def argument_parser():
     d_dircalib = None # './calib'
     d_deploy   = False
     d_loglev   = 'INFO'
-    d_dirmode  = 0o777
-    d_filemode = 0o666
+    d_dirmode  = 0o2777
+    d_filemode = 0o2666
     d_parent   = 'IP'
     d_posx     = 0
     d_posy     = 0

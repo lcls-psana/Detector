@@ -432,7 +432,7 @@ for orun in ds.runs():
       gr.show(mode=1)
 
       if args.ofsuff is not None:
-          gu.create_directory_with_mode(ofpref.rsplit('/',1)[0], mode=0o770, verb=True)
+          gu.create_directory_with_mode(ofpref.rsplit('/',1)[0], mode=0o2770, verb=True)
           flims.save('%s-%s-%s.png'%(ofpref, title, ofsuff))
 
       if break_events: break

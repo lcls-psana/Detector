@@ -81,8 +81,8 @@ def deploy_constants(**kwa):
     dircalib   = kwa.get('dircalib', None)
     ctype      = kwa.get('ctype', 'gain')   # None
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode',  0o2777)
+    filemode   = kwa.get('filemode', 0o2666)
     deploy     = kwa.get('deploy', False)
     repoman    = kwa.get('repoman', None)
 

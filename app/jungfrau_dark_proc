@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser = option_parser()
     (popts, pargs) = parser.parse_args()
 
-    repoman = uc.RepoManager(popts.dirrepo, dirmode=0o777, filemode=0o666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    repoman = uc.RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o2666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)

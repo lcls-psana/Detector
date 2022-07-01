@@ -56,8 +56,8 @@ def argument_parser():
     d_ctype    = 'gain'
     d_deploy   = False
     d_loglev   = 'INFO'
-    d_dirmode  = 0o777
-    d_filemode = 0o666
+    d_dirmode  = 0o2777
+    d_filemode = 0o2666
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
