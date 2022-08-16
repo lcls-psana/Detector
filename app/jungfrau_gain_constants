@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-#------------------------------
 """
   Merges panel gain and offset constants for specified experiment and jungfrau detector
 
   Created on 2018-04-30 by Mikhail Dubrovin
 """
 from __future__ import print_function
-#------------------------------
 
 import logging
 logger = logging.getLogger()
@@ -21,7 +19,6 @@ from pyimgalgos.GlobalUtils import print_command_line_parameters
 from time import time
 import PSCalib.GlobalUtils as gu # str_tstamp, deploy_file, log_rec_on_start, replace
 
-#------------------------------
 
 def usage():
     return  'Usage: jungfrau_gain_constants -d <DSNAME> [-s <DETNAME>] [-t <TSTAMP>] [-D]\n'\
@@ -30,9 +27,8 @@ def usage():
            +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS - beginning of the validity range'\
            +'\n\nTry: jungfrau_gain_constants -h'
 
-#------------------------------
 
-def log_file_name(lfpath, dsname) :
+def log_file_name(lfpath, dsname):
     """Returns log file name
     """
     # Returns str like /reg/g/psdm/logs/calibman/jungfrau_gain/2018/05/20180503-104619-dubrovin-22122.txt
@@ -44,9 +40,8 @@ def log_file_name(lfpath, dsname) :
     year = gu.str_tstamp('%Y', time_sec=None)
     return '%s/%s/%s-%s-%s.txt' % (lfpath, year, tstamp, sdsname, gu.get_login())#, os.getpid())
 
-#------------------------------
 
-def config_logger_v0(log_fname, llev) :
+def config_logger_v0(log_fname, llev):
     """logger.basicConfig
     """
     logging.basicConfig(format='%(levelname)s: %(message)s', level=llev)
@@ -56,9 +51,8 @@ def config_logger_v0(log_fname, llev) :
     #                    handlers=[fhandler, shandler]
     #)
 
-#------------------------------
 
-def config_logger(log_fname, loglev) :
+def config_logger(log_fname, loglev):
     """Configure logger for stream and file handlers
     """
     llev = logging._levelNames.get(loglev, logging.DEBUG)
@@ -67,7 +61,7 @@ def config_logger(log_fname, loglev) :
     formatter = logging.Formatter(fmt)
 
     # Create logfile for any logging level excluding DEBUG
-    if llev != logging.DEBUG :
+    if llev != logging.DEBUG:
         fhandler = logging.FileHandler(log_fname, 'w')
         fhandler.setFormatter(formatter)
         logger.addHandler(fhandler)
@@ -78,16 +72,15 @@ def config_logger(log_fname, loglev) :
 
     logger.setLevel(llev)
 
-#------------------------------
 
-def jungfrau_gain_constants() :
+def jungfrau_gain_constants():
     """Main script for CL
     """
     print(80*'_')
 
     parser = option_parser()
 
-    if len(sys.argv)==1 :
+    if len(sys.argv)==1:
         parser.print_help()
         print('\n%s' % usage())
         sys.exit('\nWARNING: MISSING ARGUMENTS\n')
@@ -111,7 +104,7 @@ def jungfrau_gain_constants() :
 
     #llev = logging._levelNames.get(loglev, logging.DEBUG)
     verbose = loglev != 'INFO'
-    if verbose : print_command_line_parameters(parser)
+    if verbose: print_command_line_parameters(parser)
 
     log_fname = log_file_name(lfpath, DSNAME)
     gu.create_path(log_fname, depth=6, mode=0o2777, verb=False)
@@ -134,20 +127,20 @@ def jungfrau_gain_constants() :
     jfid = ju.id_jungfrau(env, source)
 
     co = ju.jungfrau_config_object(env, source)
-    if co.Version < 3 : # for old versions of config jfid="MecTargetChamber.0-Jungfrau.0"
+    if co.Version < 3: # for old versions of config jfid="MecTargetChamber.0-Jungfrau.0"
         msg = "WARNING: Jungfrau id is not available for config V%d. Constants can't be auto-generated." % co.Version
         logger.warning(msg)
         sys.exit()
 
     cdirs = ju.find_panel_calib_dirs(jfid, dname=ju.DIRNAME, tstamp=TSTAMP)
-    if None in cdirs :
+    if None in cdirs:
         msg = "Calibdirs can't be found for all panels"
         sys.exit(msg)
 
     dirs = ['%s/%s' % (ju.DIRNAME, d) for d in cdirs]
 
     msg = 'Selected panel repository directories:'
-    for d in dirs : msg += '\n      %s' % d
+    for d in dirs: msg += '\n      %s' % d
     logger.info(msg)
 
     ctype_gain   = 'pixel_gain'
@@ -170,28 +163,23 @@ def jungfrau_gain_constants() :
     fprefix_g = '%s_%s'%(fprefix, ctype_gain)
     fprefix_o = '%s_%s'%(fprefix, ctype_offset)
 
-    #----------
-    if True :
+    if True:
         logger.info('Begin merging panel arrays')
         ju.merge_panel_constants(dirs, ifname='%s/g%d_gain.npy',   ofname=fprefix_g, ofmt='%.4f')
         ju.merge_panel_constants(dirs, ifname='%s/g%d_offset.npy', ofname=fprefix_o, ofmt='%.1f')
-    #else : logger.warning('Add option -M to merge panel arrays')
-
-    #----------
+    #else: logger.warning('Add option -M to merge panel arrays')
 
     logger.debug('calibdir: %s'%calibdir)
     logger.debug('destination file name: %s'%ofname)
 
-    #----------
-    if deploy :
+    if deploy:
         logger.info('Deploy calib files under %s' % ctypedir)
         gu.deploy_file('%s.txt'%fprefix_g, ctypedir, ctype_gain,   ofname, lfname, verbose)
         gu.deploy_file('%s.txt'%fprefix_o, ctypedir, ctype_offset, ofname, lfname, verbose)
-    else :
+    else:
         logger.warning('Add option -D to deploy calib files under directory %s' % ctypedir)
 
-    #----------
-    if upload :
+    if upload:
         #dcs add <fname>.h5 -t pixel_gain -f <ifname>.txt -T 0 -m "comment"
         msg = 'Commands to upload calibration constants in repository %s:' % repdir
         #cmt = 'Id found in %s for %s' % (DSNAME, ssource)
@@ -202,15 +190,14 @@ def jungfrau_gain_constants() :
         msg += '\n==== upload command for %s:\n' % ctype_offset
         msg += fmt % (repdir, jfid, ctype_offset, fprefix_o, cmt, exp, runnum, ssource)
         logger.info(msg)
-    else :
+    else:
         logger.warning('Add option -R to learn about uploading constants in repository %s' % repdir)
 
     logger.info('Log file: %s' % log_fname)
     #fhandler.close()
 
-#------------------------------
 
-def option_parser() :
+def option_parser():
     from optparse import OptionParser
 
     d_dsname = 'exp=mecls3216:run=226' # 'exp=xpptut15:run=430'
@@ -246,12 +233,9 @@ def option_parser() :
 
     return parser
 
-#------------------------------
-#------------------------------
-#------------------------------
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     jungfrau_gain_constants()
     sys.exit(0)
 
-#------------------------------
+# EOF
