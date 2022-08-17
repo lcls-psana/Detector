@@ -18,7 +18,11 @@ from Detector.jungfrau_datasets import DSNAMES, DETNAMES
 from pyimgalgos.GlobalUtils import print_command_line_parameters
 from time import time
 import PSCalib.GlobalUtils as gu # str_tstamp, deploy_file, log_rec_on_start, replace
+import Detector.UtilsLogging as ul
+from Detector.UtilsJungfrauCalib import uc  # CALIB_REPO_JUNGFRAU, gu
 
+
+SCRNAME = sys.argv[0].split('/')[-1]
 
 def usage():
     return  'Usage: jungfrau_gain_constants -d <DSNAME> [-s <DETNAME>] [-t <TSTAMP>] [-D]\n'\
@@ -41,36 +45,11 @@ def log_file_name(lfpath, dsname):
     return '%s/%s/%s-%s-%s.txt' % (lfpath, year, tstamp, sdsname, gu.get_login())#, os.getpid())
 
 
-def config_logger_v0(log_fname, llev):
-    """logger.basicConfig
+def str_exp_run(dsname):
+    """Returns log file name
     """
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=llev)
-    #logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
-    #logging.basicConfig(format='%(levelname)s: %(message)s',\
-    #                    level=llev,\
-    #                    handlers=[fhandler, shandler]
-    #)
-
-
-def config_logger(log_fname, loglev):
-    """Configure logger for stream and file handlers
-    """
-    llev = logging._levelNames.get(loglev, logging.DEBUG)
-    fmt = '%(levelname)s: %(name)s %(message)s' if llev == logging.DEBUG else\
-          '%(message)s'
-    formatter = logging.Formatter(fmt)
-
-    # Create logfile for any logging level excluding DEBUG
-    if llev != logging.DEBUG:
-        fhandler = logging.FileHandler(log_fname, 'w')
-        fhandler.setFormatter(formatter)
-        logger.addHandler(fhandler)
-
-    shandler = logging.StreamHandler()
-    shandler.setFormatter(formatter)
-    logger.addHandler(shandler)
-
-    logger.setLevel(llev)
+    # Returns str like 'cxilx5920-r6' from dsname like 'exp=cxilx5920:run=6'
+    return dsname.replace('exp=','').replace(':run=','-r')
 
 
 def jungfrau_gain_constants():
@@ -106,15 +85,17 @@ def jungfrau_gain_constants():
     verbose = loglev != 'INFO'
     if verbose: print_command_line_parameters(parser)
 
-    log_fname = log_file_name(lfpath, DSNAME)
-    gu.create_path(log_fname, depth=6, mode=0o2777, verb=False)
+    #log_fname = log_file_name(lfpath, DSNAME)
+    #gu.create_path(log_fname, depth=6, mode=0o2777, verb=False)
 
-    #print('==== Start logging ====')
-    config_logger(log_fname, loglev)
+    #print('DEPRECATED old style log file: %s' % log_file_name(lfpath, DSNAME))
 
+    repoman = uc.RepoManager(popts.repdir, dirmode=0o2777, filemode=0o2666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    logname = repoman.logname('%s_%s_%s' % (SCRNAME, str_exp_run(DSNAME), gu.get_login()))
+    ul.init_logger(loglevel=loglev, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    logger.info('log file: %s' % logname)
+    repoman.save_record_at_start(SCRNAME)
     logger.info('Generator of gain correction constants for Jungfrau')
-    logger.info(gu.log_rec_on_start())
-    logger.debug('Log file: %s' % log_fname)
 
     ds = psana.DataSource(DSNAME)
     env = ds.env()
@@ -193,7 +174,7 @@ def jungfrau_gain_constants():
     else:
         logger.warning('Add option -R to learn about uploading constants in repository %s' % repdir)
 
-    logger.info('Log file: %s' % log_fname)
+    logger.info('Log file: %s' % logname)
     #fhandler.close()
 
 
