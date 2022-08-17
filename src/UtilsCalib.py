@@ -112,10 +112,10 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666):
+def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666, umask=0o0):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
-    os.umask(0o0)
+    os.umask(umask)
     rec = log_rec_at_start(tsfmt='%Y-%m-%dT%H:%M:%S', **{'dirrepo':dirrepo,})
     repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
     logfname = repoman.logname_at_start(fname)
@@ -126,16 +126,16 @@ def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666):
     #return logfname, rec
 
 
-def save_2darray_in_textfile(nda, fname, fmode, fmt):
-    os.umask(0o0)
+def save_2darray_in_textfile(nda, fname, fmode, fmt, umask=0o0):
+    os.umask(umask)
     fexists = os.path.exists(fname)
     np.savetxt(fname, nda, fmt=fmt)
     if not fexists: os.chmod(fname, fmode)
     logger.info('saved:  %s' % fname)
 
 
-def save_ndarray_in_textfile(nda, fname, fmode, fmt):
-    os.umask(0o0)
+def save_ndarray_in_textfile(nda, fname, fmode, fmt, umask=0o0):
+    os.umask(umask)
     fexists = os.path.exists(fname)
     save_txt(fname=fname, arr=nda, fmt=fmt)
     if not fexists: os.chmod(fname, fmode)
@@ -166,6 +166,7 @@ class RepoManager(object):
         self.dirrepo = dirrepo.rstrip('/')
         self.dirmode     = kwa.get('dirmode',  0o2777)
         self.filemode    = kwa.get('filemode', 0o2666)
+        self.umask       = kwa.get('umask', 0o0)
         self.dirname_log = kwa.get('dirname_log', 'logs')
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
@@ -296,7 +297,7 @@ class RepoManager(object):
 
 
     def save_record_at_start(self, procname, tsfmt='%Y-%m-%dT%H:%M:%S'):
-        os.umask(0o0)
+        os.umask(self.umask)
         rec = log_rec_at_start(tsfmt, **{'dirrepo':self.dirrepo,})
         logfname = self.logname_at_start_lcls1(procname)
         fexists = os.path.exists(logfname)
@@ -397,8 +398,6 @@ def proc_dark_block(block, **kwa):
       + '\n    %.3f fraction of the event spectrum is below %.3f ADU - gate upper limit' % (frachi, med_qhi)\
       + '\n    event spectrum spread    median(abs(raw-med)): %.3f ADU - spectral peak width estimator' % med_abs_dev
     logger.info(s)
-
-    #sys.exit('TEST EXIT')
 
     logger.debug(info_ndarr(arr_med, '1st iteration proc time = %.3f sec arr_av1' % (time()-t0_sec)))
     #gate_half = nsigma*rms_ave
