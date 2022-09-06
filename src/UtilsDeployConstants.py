@@ -13,10 +13,6 @@ Created on 2022-06-01 by Mikhail Dubrovin
 
 import os
 import psana
-#import PSCalib.UtilsPanelAlias as upa #  alias_for_id, id_for_alias
-#import PSCalib.GlobalUtils as gu
-#from Detector.UtilsEpix import id_epix
-#from Detector.UtilsEpix10ka2M import id_epix, id_epix10ka
 import Detector.PyDataAccess as pda
 import Detector.UtilsCalib as uc
 gu = uc.cgu
@@ -27,8 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 def str_dsname(exp=None, run=None, dssuffix=None, dsname=None, **other):
-    #exp = kwa.get('exp', None)
-    #run = kwa.get('run', None)
     if dsname is not None: return dsname
     s = 'exp=%s:run=%s' % (exp, str(run))
     return s if dssuffix is None else '%s%s' % (s, dssuffix)
@@ -82,9 +76,10 @@ def deploy_constants(**kwa):
     ctype      = kwa.get('ctype', 'gain')   # None
     logmode    = kwa.get('logmode', 'DEBUG')
     dirmode    = kwa.get('dirmode',  0o2777)
-    filemode   = kwa.get('filemode', 0o2666)
+    filemode   = kwa.get('filemode', 0o666)
     deploy     = kwa.get('deploy', False)
     repoman    = kwa.get('repoman', None)
+    fname_only = kwa.get('repo_fname_only', False)
 
     irun = int(run)
 
@@ -133,6 +128,11 @@ def deploy_constants(**kwa):
     logger.debug('fname_aliases: %s alias: %s' % (fname_aliases, alias))
     logger.debug('fname_prefix: %s' % fname_prefix)
 
+    if fname_only:
+        prefix = fname_prefix if runrange in ('0-end', None) else\
+                 uc.file_name_prefix(dettype, detid, _tstamp, exp, int(runrange), fname_aliases, **kwa)[0]
+        return '%s/%s_%s.txt' % (dir_ctype, prefix, ctype)
+
     pattern = '%s_%s' % (dettype, alias) #  ex. 'epix100a_0001'
     fname = uc.find_file_for_timestamp(dir_ctype, pattern, _tstamp)
 
@@ -166,5 +166,36 @@ def deploy_constants(**kwa):
         gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
     else:
         logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
+
+
+def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None):
+    """Usage:
+    from Detector.UtilsDeployConstants import file_name_in_repo
+    f = file_name_in_repo('xpptut15', 260, 'XcsEndstation.0:Epix100a.1', 'gain', tstamp='20220901120000', rundepl='123')
+    """
+    from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
+    import Detector.RepoManager as rm
+    kwa_rm = {'dirmode':0o2777, 'filemode':0o666, 'dir_log_at_start':DIR_LOG_AT_START}
+    kwa = {'exp':exp, 'run':runnum, 'det':detname, 'ctype':ctype, 'tstamp':tstamp, 'runrange':rundepl}
+    kwa.update(kwa_rm)
+    kwa['repoman'] = rm.RepoManager(DIR_REPO, **kwa_rm)
+    kwa['repo_fname_only'] = True
+    return deploy_constants(**kwa)
+
+
+def save_epix100a_ctype_in_repo(arr2d, exp, runnum, detname, ctype, tstamp=None, rundepl=None, fmt='%.4f', filemode=0o666, group='ps-users'):
+    import numpy as np
+    from Detector.GlobalUtils import info_ndarr
+    from Detector.UtilsCalib import save_ndarray_in_textfile, change_file_ownership  #save_2darray_in_textfile
+
+    assert isinstance(arr2d, np.ndarray), 'input array of offsets type:%s is not a numpy array' % type(nda)
+    assert arr2d.shape == (704,768)
+    logger.info('save_epix100a_ctype_in_repo %s' % info_ndarr(arr2d, 'arr2d'))
+
+    fname = file_name_in_repo(exp, runnum, detname, ctype, tstamp=tstamp, rundepl=rundepl)
+    logger.info('save file: %s' % fname)
+
+    save_ndarray_in_textfile(arr2d, fname, filemode, fmt)
+    #change_file_ownership(fname, user=None, group=group)
 
 # EOF
