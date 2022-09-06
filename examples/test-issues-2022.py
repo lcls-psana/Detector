@@ -270,6 +270,43 @@ def issue_2022_06_16():
     print(info_ndarr(arr,'det.calib:'))
 
 
+def issue_2022_09_01():
+    """for Philip return file name of the gain file in repository for epix100a
+    """
+    from Detector.UtilsDeployConstants import file_name_in_repo
+    exp = 'xpptut15'
+    run = 260
+    det = 'XcsEndstation.0:Epix100a.1'
+    ctype = 'gain'
+    #tstamp = None
+    #rundepl = None
+    tstamp = '20220901120000'  # or None
+    rundepl = '123'  # or None
+    print('File name in repository: %s' %\
+          file_name_in_repo(exp, run, det, ctype, tstamp=tstamp, rundepl=rundepl)
+    )
+
+
+def issue_2022_09_02():
+    """for Philip save file in repository for epix100a
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(format='[%(levelname).1s]: %(message)s', level=logging.DEBUG) #INFO)
+
+    from Detector.UtilsDeployConstants import save_epix100a_ctype_in_repo
+    import numpy as np
+
+    arr2d = 0.061*np.ones((704,768))
+    exp = 'xpptut15'
+    run = 260
+    det = 'XcsEndstation.0:Epix100a.1'
+    ctype = 'gain'
+    tstamp = '20220901120000' # or None
+    rundepl = '123' # or None
+    save_epix100a_ctype_in_repo(arr2d, exp, run, det, ctype, tstamp=tstamp, rundepl=rundepl, fmt='%.4f')
+
+
 def issue_2021_MM_DD():
     """ISSUE:
        REASON:
@@ -294,6 +331,8 @@ USAGE = '\nUsage:'\
       + '\n    8 - issue_2022_05_16 - Frederic - Rayonix pixel size'\
       + '\n    9 - issue_2022_06_14 - Me - Rayonix geometry consistency check'\
       + '\n   10 - issue_2022_06_16 - Vincent - why it is looking for *.h5?'\
+      + '\n   11 - issue_2022_09_01 - Philip - file name of the gain file in repository for epix100a'\
+      + '\n   12 - issue_2022_09_02 - Philip - save file with gains in repository for epix100a'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -307,6 +346,8 @@ elif TNAME in  ('7',): issue_2022_05_02()
 elif TNAME in  ('8',): issue_2022_05_16()
 elif TNAME in  ('9',): issue_2022_06_14()
 elif TNAME in ('10',): issue_2022_06_16()
+elif TNAME in ('11',): issue_2022_09_01()
+elif TNAME in ('12',): issue_2022_09_02()
 
 else:
     print(USAGE)
