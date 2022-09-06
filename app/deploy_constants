@@ -2,8 +2,10 @@
 
 import sys
 
-DIR_REPO = '/reg/g/psdm/detector/calib/constants/'
-DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
+from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
+
+#DIR_REPO = os.path.join(DIR_ROOT, 'detector/calib/constants/')
+#DIR_LOG_AT_START = os.path.join(DIR_ROOT, 'logs/atstart/')
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -57,7 +59,7 @@ def argument_parser():
     d_deploy   = False
     d_loglev   = 'INFO'
     d_dirmode  = 0o2777
-    d_filemode = 0o2666
+    d_filemode = 0o666
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
@@ -72,8 +74,8 @@ def argument_parser():
     h_ctype   = 'calibration type [gain, common_mode, etc.], default = %s' % str(d_ctype)
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
     h_loglev  = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_loglev)
-    h_dirmode = 'mode for all mkdir, default = %s' % d_dirmode
-    h_filemode= 'mode for all saved files, default = %s' % d_filemode
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
 
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
