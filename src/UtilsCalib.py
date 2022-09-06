@@ -13,7 +13,7 @@ Usage::
     ts_run, ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
-    save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666)
+    save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o666)
     fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
@@ -112,7 +112,7 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666, umask=0o0):
+def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o666, umask=0o0):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     os.umask(umask)
@@ -124,6 +124,16 @@ def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o2666, um
     if not fexists: os.chmod(logfname, filemode)
     logger.info('record at start: %s\nsaved in: %s' % (rec,logfname))
     #return logfname, rec
+
+
+def change_file_ownership(fname, user=None, group='ps-users'):
+    """change file ownership"""
+    import grp
+    import pwd
+    gid = os.getgid() if group is None else grp.getgrnam(group).gr_gid
+    uid = os.getuid() if user is None else pwd.getpwnam(user).pw_uid
+    logger.debug('change_file_ownership uid:%d gid:%d' % (uid, gid)) # uid:5269 gid:10000
+    os.chown(fname, uid, gid) # for non-default user - OSError: [Errno 1] Operation not permitted
 
 
 def save_2darray_in_textfile(nda, fname, fmode, fmt, umask=0o0):
@@ -165,7 +175,7 @@ class RepoManager(object):
     def __init__(self, dirrepo, **kwa):
         self.dirrepo = dirrepo.rstrip('/')
         self.dirmode     = kwa.get('dirmode',  0o2777)
-        self.filemode    = kwa.get('filemode', 0o2666)
+        self.filemode    = kwa.get('filemode', 0o666)
         self.umask       = kwa.get('umask', 0o0)
         self.dirname_log = kwa.get('dirname_log', 'logs')
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
