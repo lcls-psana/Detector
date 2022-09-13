@@ -5,7 +5,7 @@ import sys
 from time import time
 
 from Detector.GlobalUtils import info_command_line_parameters
-from Detector.UtilsEpix10kaCalib import pedestals_calibration, CALIB_REPO_EPIX10KA, GAIN_MODES_IN
+from Detector.UtilsEpix10kaCalib import pedestals_calibration, CALIB_REPO_EPIX10KA, DIR_LOG_AT_START, GAIN_MODES_IN
 
 #import logging
 #logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def epix10ka_pedestals_calibration():
     #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
     from Detector.UtilsCalib import RepoManager
     import getpass
-    repoman = RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o2666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    repoman = RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
     logname = repoman.logname('%s_%s' % (SCRNAME, getpass.getuser()))
     init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
