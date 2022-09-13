@@ -26,7 +26,7 @@ Usage::
     DIR_REPO = '/reg/g/psdm/detector/calib/constants/'
     DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
 
-    repoman = rm.RepoManager(DIR_REPO, dirmode=0o2777, filemode=0o2666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = rm.RepoManager(DIR_REPO, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
     repoman.save_record_at_start(SCRNAME)
 
     import PSCalib.GlobalUtils as gu
@@ -65,7 +65,8 @@ class RepoManager(object):
         self.dirrepo = dirrepo.rstrip('/')
         self.dirmode     = kwa.get('dirmode',  0o2777)
         self.dettype     = kwa.get('dettype', None)
-        self.filemode    = kwa.get('filemode', 0o2666)
+        self.filemode    = kwa.get('filemode', 0o666)
+        self.umask       = kwa.get('umask', 0o0)
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
         self.dir_log_at_start = kwa.get('dir_log_at_start', '/cds/group/psdm/logs/atstart')
@@ -231,7 +232,7 @@ class RepoManager(object):
 
 
     def save_record_at_start(self, procname, tsfmt='%Y-%m-%dT%H:%M:%S'):
-        os.umask(0o0)
+        os.umask(self.umask)
         rec = log_rec_at_start(tsfmt, **{'dirrepo':self.dirrepo,})
         logfname = self.logname_at_start_lcls1(procname)
         fexists = os.path.exists(logfname)
