@@ -7,6 +7,25 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-46
+2022-09-13 Mikhail Dubrovin
+modified:
+   app/epix10ka_deploy_constants - change filemode to 0o666 from 0o2666, import/use DIR_LOG_AT_START
+   app/epix10ka_offset_calibration /
+   app/epix10ka_pedestals_calibration /
+   app/geometry_deploy_constants
+   app/jungfrau_dark_proc - change filemode to 0o666 from 0o2666, import/use DIR_LOG_AT_START
+   app/jungfrau_deploy_constants /
+   app/jungfrau_gain_constants /
+   src/RepoManager.py - change filemode to 0o666 from 0o2666
+   src/UtilsDeployConstants.py - add filemode and dirmode to gu.deploy_file
+   src/UtilsEpix.py - define CALIB_REPO_EPIX10KA using DIR_ROOT
+   src/UtilsEpix10kaCalib.py - change filemode to 0o666 from 0o2666
+   src/UtilsGeometryDeploy.py - fix usage of parameter loglev, change filemode to 0o666 from 0o2666
+   src/UtilsJungfrau.py - remove option from directory parameter in _find_panel_calib_dir and find_panel_calib_dirs
+   src/UtilsJungfrauCalib.py - change filemode to 0o666 from 0o2666, define CALIB_REPO_JUNGFRAU from dir_root.py
+   src/dir_root.py - add DIR_ROOT_DATA for dcs
+
 Tag: V02-00-45
 2022-08-16 Mikhail Dubrovin
 - UtilsCalib.py - add optional parameter umask
