@@ -70,9 +70,9 @@ def geometry_deploy_constants(**kwa):
     dirrepo    = kwa.get('dirrepo', './work')
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
-    logmode    = kwa.get('logmode', 'DEBUG')
+    loglev     = kwa.get('loglev', 'DEBUG')
     dirmode    = kwa.get('dirmode',  0o2777)
-    filemode   = kwa.get('filemode', 0o2666)
+    filemode   = kwa.get('filemode', 0o666)
     repoman    = kwa.get('repoman', None)
     name_parent= kwa.get('parent', 'IP')
 
@@ -109,7 +109,7 @@ def geometry_deploy_constants(**kwa):
     cmd = command_line()
     if '--pos' in cmd or '--rot' in cmd or '--parent' in cmd or int_dettype == gu.RAYONIX:
 
-        geo = GeometryAccess(fname, 0o377 if (logmode=='DEBUG') else 0)
+        geo = GeometryAccess(fname, 0o377 if (loglev=='DEBUG') else 0)
         geo_ip = geo.get_geo(name_parent, 0)
 
         logger.debug('dir(geo): %s' % str(dir(geo)))
@@ -120,7 +120,7 @@ def geometry_deploy_constants(**kwa):
             logger.info('MTRX segment from rayonix configuration: %s' % str_mtrx)
             if str_mtrx is not None:
                 for g in geo.list_of_geos:
-                    print('geo.oname: %s' % g.oname)
+                    logger.info('geo.oname: %s' % g.oname)
                     if g.oname[:4] == 'MTRX': g.oname = str_mtrx
             else:
                 logger.warning('RAYONIX SEGMENT DESCRIPTOR IS NOT CORRECTED because of missing configuration parameters.')
@@ -158,7 +158,7 @@ def geometry_deploy_constants(**kwa):
         ofname   = '%s.data' % runrange
         lfname   = None
         logger.info('deploy calib file %s under %s/%s' % (fname, ctypedir, octype))
-        gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
+        gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(loglev=='DEBUG'))
     else:
         logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
 # EOF
