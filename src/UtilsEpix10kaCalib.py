@@ -19,7 +19,7 @@ from time import sleep
 from psana import DataSource, Detector, EventId
 import numpy as np
 
-from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES, alias_for_id
+from Detector.UtilsEpix import id_epix, CALIB_REPO_EPIX10KA, FNAME_PANEL_ID_ALIASES, alias_for_id, DIR_LOG_AT_START
 from Detector.UtilsEpix10ka import GAIN_MODES, GAIN_MODES_IN, config_objects,\
                             get_epix10ka_any_config_object, find_gain_mode
 
@@ -746,7 +746,7 @@ def offset_calibration(*args, **opts):
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
     dirmode    = opts.get('dirmode', 0o2777)
-    filemode   = opts.get('filemode', 0o2666)
+    filemode   = opts.get('filemode', 0o666)
     ixoff      = opts.get('ixoff', 10)
     nperiods   = opts.get('nperiods', True)
     ccnum      = opts.get('ccnum', None)
@@ -1248,7 +1248,7 @@ def pedestals_calibration(*args, **opts):
     fmt_status = opts.get('fmt_status', '%4i')
     idx_sel    = opts.get('idx', None)
     dirmode    = opts.get('dirmode', 0o2777)
-    filemode   = opts.get('filemode', 0o2666)
+    filemode   = opts.get('filemode', 0o666)
     usesmd     = opts.get('usesmd', False)
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
@@ -1434,7 +1434,7 @@ def pedestals_calibration(*args, **opts):
     #logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
 
 
-def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o2777, errskip=True):
+def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777, errskip=True):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -1594,7 +1594,7 @@ def deploy_constants(*args, **opts):
     fmt_status = opts.get('fmt_status', '%4i')
     logmode    = opts.get('logmode', 'DEBUG')
     dirmode    = opts.get('dirmode',  0o2777)
-    filemode   = opts.get('filemode', 0o2666)
+    filemode   = opts.get('filemode', 0o666)
     high       = opts.get('high',   16.40) # ADU/keV #High gain: 132 ADU / 8.05 keV = 16.40 ADU/keV
     medium     = opts.get('medium', 5.466) # ADU/keV #Medium gain: 132 ADU / 8.05 keV / 3 = 5.466 ADU/keV
     low        = opts.get('low',    0.164) # ADU/keV#Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
@@ -1730,7 +1730,7 @@ def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
     dirrepo    = kwargs.get('dirrepo', CALIB_REPO_EPIX10KA)
     ctype      = kwargs.get('ctype', 'offset')
     fmt        = kwargs.get('fmt', '%.6f')
-    filemode   = kwargs.get('filemode', 0o2666)
+    filemode   = kwargs.get('filemode', 0o666)
     dirmode    = kwargs.get('dirmode', 0o2777)
 
     dsname = 'exp=%s:run=%d'%(exp,runnum)
