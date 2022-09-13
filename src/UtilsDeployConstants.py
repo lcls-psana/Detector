@@ -163,7 +163,8 @@ def deploy_constants(**kwa):
     logger.info('ready to deploy calib file %s under %s/%s' % (fname, ctypedir, octype))
 
     if deploy:
-        gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
+        gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'),\
+                       filemode=filemode, dirmode=dirmode)
     else:
         logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
 
@@ -174,11 +175,11 @@ def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None):
     f = file_name_in_repo('xpptut15', 260, 'XcsEndstation.0:Epix100a.1', 'gain', tstamp='20220901120000', rundepl='123')
     """
     from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
-    import Detector.RepoManager as rm
+    from Detector.RepoManager import RepoManager
     kwa_rm = {'dirmode':0o2777, 'filemode':0o666, 'dir_log_at_start':DIR_LOG_AT_START}
     kwa = {'exp':exp, 'run':runnum, 'det':detname, 'ctype':ctype, 'tstamp':tstamp, 'runrange':rundepl}
     kwa.update(kwa_rm)
-    kwa['repoman'] = rm.RepoManager(DIR_REPO, **kwa_rm)
+    kwa['repoman'] = RepoManager(DIR_REPO, **kwa_rm)
     kwa['repo_fname_only'] = True
     return deploy_constants(**kwa)
 
