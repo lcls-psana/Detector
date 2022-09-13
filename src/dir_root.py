@@ -5,8 +5,10 @@
 """
 import os
 
-DIR_ROOT = os.getenv('SIT_ROOT')
+DIR_ROOT = os.getenv('SIT_ROOT')  # /reg/g/psdm
 DIR_REPO = os.path.join(DIR_ROOT, 'detector/calib/constants/')
 DIR_LOG_AT_START = os.path.join(DIR_ROOT, 'logs/atstart/')
+
+DIR_ROOT_DATA = '/reg/d/psdm'  # dcs
 
 # EOF
