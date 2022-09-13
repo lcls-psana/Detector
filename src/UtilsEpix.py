@@ -16,12 +16,10 @@ Created on 2018-02-22 by Mikhail Dubrovin
 """
 
 from __future__ import print_function
-#import os
-#import logging
-#logger = logging.getLogger(__name__)
 from PSCalib.UtilsPanelAlias import alias_for_id, id_for_alias # keep it here for b/w compatability
 
-CALIB_REPO_EPIX10KA = '/reg/g/psdm/detector/gains/epix10k/panels'
+from Detector.dir_root import os, DIR_ROOT, DIR_LOG_AT_START
+CALIB_REPO_EPIX10KA = os.path.join(DIR_ROOT, 'detector/gains/epix10k/panels')  # '/reg/g/psdm/detector/gains/epix10k/panels'
 FNAME_PANEL_ID_ALIASES = '%s/.aliases.txt'%CALIB_REPO_EPIX10KA
 
 def id_epix(config_obj):
@@ -40,21 +38,8 @@ def id_epix(config_obj):
 
 
 def is_trbit_high(co):
-    """from configuration object define if detector works in high gain mode.
-    """
+    """from configuration object define if detector works in high gain mode."""
     if co.numberOfAsics()>1:
         return co.asics(0).trbit()==1
-
-
-#def time_of_nda(t0_sec, res, cmt='XXX'):
-#    from time import time
-#    from Detector.GlobalUtils import info_ndarr
-#    dt = time()-t0_sec
-#    print(info_ndarr(res, '%s: consumed time (sec) = %.6f' % (cmt,dt)))
-#    return res
-
-
-#def print_object_dir(o):
-#    print('dir(%s):\n  %s' % (str(o), ',\n  '.join([v for v in dir(o) if v[:1]!='_'])))
 
 # EOF
