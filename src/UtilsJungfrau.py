@@ -44,8 +44,6 @@ from Detector.PyDataAccess import get_jungfrau_data_object, get_jungfrau_config_
 
 from PSCalib.GlobalUtils import string_from_source, complete_detname
 
-DIRNAME = '/reg/g/psdm/detector/gains/jungfrau'
-
 BW1 =  0o40000 # 16384 or 1<<14 (15-th bit starting from 1)
 BW2 = 0o100000 # 32768 or 2<<14 or 1<<15
 BW3 = 0o140000 # 49152 or 3<<14
@@ -367,7 +365,7 @@ class JFPanelCalibDir(object):
         return self.__cmp__(other) >= 0
 
 
-def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None):
+def _find_panel_calib_dir(panel, dnos, tstamp=None):
     """Returns panel calibration directory from dnos (dirname objects) usint timestamp.
     """
     msg = 'Find calibdir for panel: %s and timestamp: %s' % (panel, str(tstamp))
@@ -387,12 +385,13 @@ def _find_panel_calib_dir(panel, dnos=DIRNAME, tstamp=None):
     return sorted_lst[-1].dname # return latest
 
 
-def find_panel_calib_dirs(jfid, dname=DIRNAME, tstamp=None):
+def find_panel_calib_dirs(jfid, dname, tstamp=None):
+    """dname='/reg/g/psdm/detector/gains/jungfrau'"""
     msg = 'Find panel directories for jungfrau %s\n      in repository %s' % (jfid, dname)
     logger.info(msg)
     msg = ''
     dnos = []
-    for d in os.listdir(DIRNAME):
+    for d in os.listdir(dname):
         dno = JFPanelCalibDir(d)
         if not dno.is_valid: continue
         dnos.append(dno)
