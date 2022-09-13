@@ -3,9 +3,11 @@
 import sys
 
 import Detector.UtilsGeometryDeploy as ugd
+from Detector.dir_root import os, DIR_ROOT, DIR_LOG_AT_START
 
-CALIB_REPO_GEOMETRY = '/reg/g/psdm/detector/calib/geometry/'
-DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
+DIR_REPO_GEOMETRY = os.path.join(DIR_ROOT, 'detector/calib/geometry/')
+#CALIB_REPO_GEOMETRY = '/reg/g/psdm/detector/calib/geometry/'
+#DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -42,7 +44,7 @@ def argument_parser():
     import argparse
 
     #d_dirstart = DIR_LOG_AT_START
-    d_dirrepo  = CALIB_REPO_GEOMETRY
+    d_dirrepo  = DIR_REPO_GEOMETRY
     d_exp      = None # 'mfxx32516'
     d_det      = None # 'NoDetector.0:Epix10ka.3'
     d_run      = None # 1021
@@ -54,7 +56,7 @@ def argument_parser():
     d_deploy   = False
     d_loglev   = 'INFO'
     d_dirmode  = 0o2777
-    d_filemode = 0o2666
+    d_filemode = 0o666
     d_parent   = 'IP'
     d_posx     = 0
     d_posy     = 0

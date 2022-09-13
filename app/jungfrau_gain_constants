@@ -19,8 +19,9 @@ from pyimgalgos.GlobalUtils import print_command_line_parameters
 from time import time
 import PSCalib.GlobalUtils as gu # str_tstamp, deploy_file, log_rec_on_start, replace
 import Detector.UtilsLogging as ul
-from Detector.UtilsJungfrauCalib import uc  # CALIB_REPO_JUNGFRAU, gu
+from Detector.UtilsJungfrauCalib import uc, DIR_REPO, DIR_LOG_AT_START
 
+#DIR_REPO = os.path.join(DIR_ROOT, 'detector/gains/jungfrau/')
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -29,20 +30,10 @@ def usage():
            +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES[:3])\
            +'       <DETNAME> is optional parameterr like one of the list:\n         %s\n' % '\n         '.join(DETNAMES[:3])\
            +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS - beginning of the validity range'\
-           +'\n\nTry: jungfrau_gain_constants -h'
-
-
-def log_file_name(lfpath, dsname):
-    """Returns log file name
-    """
-    # Returns str like /reg/g/psdm/logs/calibman/jungfrau_gain/2018/05/20180503-104619-dubrovin-22122.txt
-    t0_sec = time()
-    tstamp = gu.str_tstamp('%Y%m%dT%H%M%S', t0_sec)
-    #year_month = gu.str_tstamp('%Y/%m', time_sec=None)
-    sdsname =  dsname.replace('exp=','')
-    sdsname = sdsname.replace(':run=','-r')
-    year = gu.str_tstamp('%Y', time_sec=None)
-    return '%s/%s/%s-%s-%s.txt' % (lfpath, year, tstamp, sdsname, gu.get_login())#, os.getpid())
+           +'\n\nTest 4M: jungfrau_gain_constants -d exp=xpptut15:run=610 -s jungfrau4M -D -C calib -t 20220908160000'\
+           +'\n     1M: jungfrau_gain_constants -d exp=xpptut15:run=430 -s Jungfrau1M -D -C calib -t 20220908160000'\
+           +'\n   0.5M: jungfrau_gain_constants -d exp=xpptut15:run=410 -s Jungfrau512k -D -C calib -t 20220908160000'\
+           +'\n\nTry:  jungfrau_gain_constants -h\n'
 
 
 def str_exp_run(dsname):
@@ -73,7 +64,7 @@ def jungfrau_gain_constants():
     deploy = popts.deploy
     upload = popts.upload
     loglev = popts.loglev
-    lfpath = popts.lfpath
+#    lfpath = popts.lfpath
     repdir = popts.repdir
 
     defs = vars(parser.get_default_values())
@@ -85,12 +76,7 @@ def jungfrau_gain_constants():
     verbose = loglev != 'INFO'
     if verbose: print_command_line_parameters(parser)
 
-    #log_fname = log_file_name(lfpath, DSNAME)
-    #gu.create_path(log_fname, depth=6, mode=0o2777, verb=False)
-
-    #print('DEPRECATED old style log file: %s' % log_file_name(lfpath, DSNAME))
-
-    repoman = uc.RepoManager(popts.repdir, dirmode=0o2777, filemode=0o2666) # dir_log_at_start='/cds/group/psdm/logs/atstart')
+    repoman = uc.RepoManager(repdir, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
     logname = repoman.logname('%s_%s_%s' % (SCRNAME, str_exp_run(DSNAME), gu.get_login()))
     ul.init_logger(loglevel=loglev, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
@@ -113,12 +99,12 @@ def jungfrau_gain_constants():
         logger.warning(msg)
         sys.exit()
 
-    cdirs = ju.find_panel_calib_dirs(jfid, dname=ju.DIRNAME, tstamp=TSTAMP)
+    cdirs = ju.find_panel_calib_dirs(jfid, dname=repdir, tstamp=TSTAMP)  # dname=ju.DIRNAME
     if None in cdirs:
         msg = "Calibdirs can't be found for all panels"
         sys.exit(msg)
 
-    dirs = ['%s/%s' % (ju.DIRNAME, d) for d in cdirs]
+    dirs = ['%s/%s' % (repdir, d) for d in cdirs]
 
     msg = 'Selected panel repository directories:'
     for d in dirs: msg += '\n      %s' % d
@@ -135,12 +121,7 @@ def jungfrau_gain_constants():
     ofname   = '%d-end.data' % runnum
     lfname   = None
     verbos   = False
-
-    #fprefix = '%s-r%04d_%s_%s'%(exp, runnum, ssource, jfid)
     fprefix = '%s-r%04d_%s'%(exp, runnum, ssource)
-    #logger.info('fprefix %s' % fprefix)
-    #print('\nXXXXXXXX fprefix %s' % fprefix)
-
     fprefix_g = '%s_%s'%(fprefix, ctype_gain)
     fprefix_o = '%s_%s'%(fprefix, ctype_offset)
 
@@ -171,8 +152,8 @@ def jungfrau_gain_constants():
         msg += '\n==== upload command for %s:\n' % ctype_offset
         msg += fmt % (repdir, jfid, ctype_offset, fprefix_o, cmt, exp, runnum, ssource)
         logger.info(msg)
-    else:
-        logger.warning('Add option -R to learn about uploading constants in repository %s' % repdir)
+    #else:
+    #    logger.warning('Add option -R to learn about uploading constants in repository %s' % repdir)
 
     logger.info('Log file: %s' % logname)
     #fhandler.close()
@@ -188,18 +169,18 @@ def option_parser():
     d_upload = False
     d_clbdir = None
     d_loglev = 'INFO'
-    d_lfpath = '/reg/g/psdm/logs/calibman/jungfrau_gain' # '/#YYYY-MM/fname.txt'
-    d_repdir = '/reg/g/psdm/detector/calib/jungfrau'
+    d_lfpath = 'DEPRECATED: /reg/g/psdm/logs/calibman/jungfrau_gain - see .../detector/gains/jungfrau/logs'
+    d_repdir = DIR_REPO    # '/reg/g/psdm/detector/gains/jungfrau'
 
     h_dsname='dataset name, default = %s' % d_dsname
-    h_source='input ndarray source name, default = %s' % d_source
+    h_source='input ndarray source/detector name, default = %s' % d_source
     h_tstamp='time stamp for beginning of the validity range in format YYYYMMDDHHMMSS, default (now) = %s' % d_tstamp
-    h_deploy='deploy files in experiment calib directory, default = %s' % d_deploy
-    h_upload='add files to reposi uploadtory calibration hdf5 file for this jungfrau detector, default = %s' % d_upload
+    h_deploy='deploy files in experimental calib directory, default = %s' % d_deploy
+    h_upload='add to repository resulting files with gains and offsets for merged panesls, default = %s' % d_upload
     h_clbdir='non-default calib directory for deployment of calibration files, default = %s' % d_clbdir
     h_loglev='dataset name, default = %s' % d_loglev
     h_lfpath='path to log file, default = %s' % d_lfpath
-    h_repdir='repository of hdf5 files, default = %s' % d_repdir
+    h_repdir='repository of gain files, default = %s' % d_repdir
 
     parser = OptionParser(description='Generator of gain correction constants for Jungfrau', usage = usage())
     parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
