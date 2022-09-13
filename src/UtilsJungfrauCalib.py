@@ -30,6 +30,7 @@ from Detector.PyDataAccess import get_jungfrau_gain_mode_object #get_jungfrau_da
 from Detector.GlobalUtils import info_ndarr
 import Detector.UtilsCalib as uc
 from Detector.UtilsJungfrau import info_jungfrau, jungfrau_uniqueid, jungfrau_config_object, shape_from_config_jungfrau
+from Detector.dir_root import DIR_ROOT, DIR_LOG_AT_START
 
 SCRNAME = os.path.basename(sys.argv[0])
 
@@ -48,7 +49,8 @@ DIC_GAIN_MODE = {'FixedGain1':  1,
 M14 =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 #M14 =  037777 # 16383 or (1<<14)-1
 
-CALIB_REPO_JUNGFRAU = '/reg/g/psdm/detector/gains/jungfrau/panels'
+DIR_REPO = os.path.join(DIR_ROOT, 'detector/gains/jungfrau')  # for jungfrau_gain_constants
+CALIB_REPO_JUNGFRAU = os.path.join(DIR_ROOT, 'detector/gains/jungfrau/panels')  # for jungfrau_dark_proc, jungfrau_deploy_constants
 FNAME_PANEL_ID_ALIASES = '%s/.aliases_jungfrau.txt' % CALIB_REPO_JUNGFRAU
 JUNGFRAU_REPO_SUBDIRS = ('pedestals', 'rms', 'status', 'dark_min', 'dark_max', 'plots')
 
@@ -164,7 +166,7 @@ def jungfrau_dark_proc(parser):
     dirrepo = popts.dirrepo
 
     dirmode  = kwargs.get('dirmode',  0o2777)
-    filemode = kwargs.get('filemode', 0o2666)
+    filemode = kwargs.get('filemode', 0o666)
 
     #clbdir = popts.clbdir
     #if clbdir is not None: psana.setOption('psana.calib-dir', clbdir)
@@ -378,7 +380,7 @@ def save_results(dpo, **kwa):
     segind     = kwa.get('segind', None)
     panel_type = kwa.get('panel_type', 'jungfrau')
     dirmode    = kwa.get('dirmode', 0o2777)
-    filemode   = kwa.get('filemode', 0o2666)
+    filemode   = kwa.get('filemode', 0o666)
     fmt_peds   = kwa.get('fmt_peds',   '%.3f')
     fmt_rms    = kwa.get('fmt_rms',    '%.3f')
     fmt_status = kwa.get('fmt_status', '%4i')
@@ -413,7 +415,7 @@ def save_results(dpo, **kwa):
 
     #ctypes = list_save[:][0]
 
-    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
+    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START)
     #dlog = repoman.dir_logs_year()
 
     panel_ids = detid.split('_')
@@ -471,7 +473,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
     return cpdic
 
 
-def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o2777, errskip=True):
+def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o666, errskip=True):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -547,7 +549,7 @@ def jungfrau_deploy_constants(parser):
     errskip    = kwa.get('errskip', False)
     logmode    = kwa.get('logmode', 'DEBUG')
     dirmode    = kwa.get('dirmode',  0o2777)
-    filemode   = kwa.get('filemode', 0o2666)
+    filemode   = kwa.get('filemode', 0o666)
     gain0      = kwa.get('gain0', 41.5)    # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g0_gain.npy
     gain1      = kwa.get('gain1', -1.39)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g1_gain.npy
     gain2      = kwa.get('gain2', -0.11)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g2_gain.npy
@@ -590,7 +592,7 @@ def jungfrau_deploy_constants(parser):
 
     logger.debug('search for calibration files with tstamp <= %s' % tstamp)
 
-    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
+    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START)
 
     mpars = {\
       'pedestals':    ('pedestals', fmt_peds),\
