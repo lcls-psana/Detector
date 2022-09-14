@@ -42,7 +42,7 @@ namespace Detector {
  *
  *  @brief Produces ndarray<TOUT,2> from Princeton camera raw data.
  *
- *  @note This software was developed for the LCLS project.  If you use all or 
+ *  @note This software was developed for the LCLS project.  If you use all or
  *  part of it, please give an appropriate acknowledgment.
  *
  *  @version $Id$
@@ -57,7 +57,7 @@ namespace Detector {
 class NDArrProducerPrinceton : public NDArrProducerBase {
 public:
 
-  /// Data type for detector image 
+  /// Data type for detector image
   typedef uint16_t data_t;
 
   // Constructor
@@ -96,7 +96,7 @@ private:
    */
 
   template <typename TFRAME, typename TOUT>
-  ndarray<const data_t, 2> 
+  ndarray<const data_t, 2>
   getNDArrForType(PSEvt::Event& evt, PSEnv::Env& env) {
 
       m_count_ent ++;
@@ -105,20 +105,20 @@ private:
 
       if (frame.get()) {
 
-          // Get reference to data ndarray 
-          const ndarray<const data_t,2>& nda_data = frame->data(); 
+          // Get reference to data ndarray
+          const ndarray<const data_t,2>& nda_data = frame->data();
 
           if(m_as_data) return nda_data;
 
           // Create and initialize the array of the same shape as data, but for all 2x1...
           ndarray<TOUT,2> nda_out(nda_data.shape());
-          //std::fill(nda_out.begin(), nda_out.end(), TOUT(0));    
- 
+          //std::fill(nda_out.begin(), nda_out.end(), TOUT(0));
+
           // Pixel-to-pixel copy of data ndarray to output ndarray with type conversion:
-          typename ndarray<TOUT,2>::iterator it_out = nda_out.begin(); 
+          typename ndarray<TOUT,2>::iterator it_out = nda_out.begin();
           for ( ndarray<const data_t,2>::iterator it=nda_data.begin(); it!=nda_data.end(); ++it, ++it_out) {
               *it_out = (TOUT)*it;
-          } 
+          }
 
           //if(m_pbits & 1 && m_count_ent < 2) MsgLog(name(), info, " I/O data type: " << strOfDataTypeAndSize<data_t>());
           //if(m_pbits & 8) MsgLog(name(), info, stringOf2DArrayData<data_t>(frame->data(), std::string(" data: ")));
@@ -133,7 +133,7 @@ private:
 //-----------------------------
 //-----------------------------
 
-}; // class 
+}; // class
 
 } // namespace Detector
 
