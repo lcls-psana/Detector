@@ -1,25 +1,16 @@
-//--------------------------------------------------------------------------
+
 // File and Version Information:
 // 	$Id$
 //
 // Author:
 //      Mikhail S. Dubrovin
 //
-//------------------------------------------------------------------------
-
-//---------------
-// -- Headers --
-//---------------
 
 #include "Detector/NDArrProducerPnccd.h"
-
-//-----------------------------
 
 namespace Detector {
 
 typedef NDArrProducerPnccd::data_t data_t;
-
-//-----------------------------
 
 NDArrProducerPnccd::NDArrProducerPnccd(const PSEvt::Source& source, const unsigned& mode, const unsigned& pbits, const float& vdef)
   : NDArrProducerBase(source, mode, pbits, vdef)
@@ -30,13 +21,9 @@ NDArrProducerPnccd::NDArrProducerPnccd(const PSEvt::Source& source, const unsign
   m_as_data = true;
 }
 
-//-----------------------------
-
 NDArrProducerPnccd::~NDArrProducerPnccd ()
 {
 }
-
-//-----------------------------
 
 void
 NDArrProducerPnccd::print_warning(const char* msg)
@@ -49,35 +36,31 @@ NDArrProducerPnccd::print_warning(const char* msg)
   }
 }
 
-//-----------------------------
-
-ndarray<const data_t, 3> 
+ndarray<const data_t, 3>
 NDArrProducerPnccd::data_nda_uint16_3(PSEvt::Event& evt, PSEnv::Env& env)
 {
   ndarray<const data_t, 3> nda = getNDArrForType<Psana::PNCCD::FramesV1, data_t>(evt, env);
-  if ( ! nda.empty()) return nda; 
+  if ( ! nda.empty()) return nda;
 
   print_warning();
-  return nda; // empty
+  return nda;
 }
-
-//-----------------------------
 
 void
 NDArrProducerPnccd::print_config(PSEvt::Event& evt, PSEnv::Env& env)
 {
   boost::shared_ptr<Psana::PNCCD::ConfigV1> config1 = env.configStore().get(m_source);
-  if (config1.get()) {    
+  if (config1.get()) {
       WithMsgLog(name(), info, str) {
         str << "PNCCD::ConfigV1:";
         str << "\n  numLinks = " << config1->numLinks();
         str << "\n  payloadSizePerLink = " << config1->payloadSizePerLink();
-      }    
+      }
       return;
   }
 
   boost::shared_ptr<Psana::PNCCD::ConfigV2> config2 = env.configStore().get(m_source);
-  if (config2.get()) {    
+  if (config2.get()) {
       WithMsgLog(name(), info, str) {
         str << "PNCCD::ConfigV2:";
         str << "\n  numLinks = "             << config2->numLinks();
@@ -90,13 +73,12 @@ NDArrProducerPnccd::print_config(PSEvt::Event& evt, PSEnv::Env& env)
         str << "\n  camexMagic = "           << config2->camexMagic();
         str << "\n  info = "                 << config2->info();
         str << "\n  timingFName = "          << config2->timingFName();
-      } 
+      }
       return;
   }
 
-  MsgLog(name(), info, "PNCCD::ConfigV# is not found for source " << m_source);  
+  MsgLog(name(), info, "PNCCD::ConfigV# is not found for source " << m_source);
 }
 
-//-----------------------------
 } // namespace Detector
-//-----------------------------
+
