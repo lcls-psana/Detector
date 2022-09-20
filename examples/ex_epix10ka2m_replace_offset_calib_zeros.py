@@ -12,7 +12,6 @@ import numpy as np
 SCRNAME = os.path.basename(sys.argv[0])
 
 import logging
-#DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
 logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,6 @@ logger.info('start %s' % SCRNAME)
 
 from Detector.GlobalUtils import info_ndarr, print_ndarr
 
-#----------
 
 def replace_zeros(ifname, cfname, ofname):
 
@@ -57,7 +55,6 @@ def replace_zeros(ifname, cfname, ofname):
     np.savetxt(ofname,arr, fmt='%.3f')
     logger.info('    saved: %s'% ofname)
 
-#----------
 
 CTYPES=(\
   ('gain',      'gainci_AML-M'),\
@@ -77,7 +74,6 @@ CTYPES=(\
   ('pedestals', 'pedestals_AHL-L'),\
 )
 
-#----------
 
 def do_work():
 
@@ -85,9 +81,7 @@ def do_work():
     #work/0000000001-0173621761-3221225494-1014046789-0019435010-0000000000-0000000000/offset/epix10ka_0034_20200819112113_xcsc00118_r0095_offset_AHL-H.dat
     #work/0000000001-0173621761-3221225494-1014046789-0019435010-0000000000-0000000000/pedestals/epix10ka_0034_20200819112113_xcsc00118_r0095_pedestals_FM.dat
     #work/0000000001-0173621761-3221225494-1014046789-0019435010-0000000000-0000000000/pedestals/epix10ka_0034_20200819112113_xcsc00118_r0095_pedestals_AML-L.dat
-
     #panels/0000000001-0174306561-0234881046-0630252037-0016939401-0000000000-0000000000/pedestals/epix10ka_0038_20200819112113_xcsc00118_r0095_pedestals_AML-L.dat
-
     #DIR_REPO = '/reg/g/psdm/detector/gains/epix10k/panels'
     DIR_REPO = 'panels'
     #DIR_REPO = 'work'
@@ -107,11 +101,10 @@ def do_work():
         cfname = ifname.rstrip('.dat') + '.orig'
         ofname = ifname
         replace_zeros(ifname, cfname, ofname)
-    
-#----------
+
 
 if __name__ == "__main__":
     do_work()
     sys.exit('EXIT %s' % SCRNAME)
 
-#----------
+# EOF
