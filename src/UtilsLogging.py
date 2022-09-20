@@ -3,18 +3,27 @@ Usage::
         from Detector.UtilsLogging import logging, DICT_NAME_TO_LEVEL, STR_LEVEL_NAMES, init_logger
         logger = logging.getLogger(__name__)
         init_logger(loglevel='DEBUG', logfname=None)
+        logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(filename)s %(message)s', level=logging.INFO)
+        logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(message)s', level=logging.INFO)
 """
-
 import logging
 logger = logging.getLogger(__name__)
-DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
+
+import sys
+PYTHON_VERSION_MAJOR = sys.version_info.major  # (int) 2 or 3
+DICT_NAME_TO_LEVEL = logging._nameToLevel if PYTHON_VERSION_MAJOR == 3 else\
+                     {k:v for k,v in logging._levelNames.items() if isinstance(k, str)} if PYTHON_VERSION_MAJOR == 2 else\
+                     {'NOTSET': 0, 'DEBUG': 10, 'INFO': 20, 'WARNING': 30, 'WARN': 30,\
+                      'ERROR': 40, 'FATAL': 50,'CRITICAL': 50}
 STR_LEVEL_NAMES = ', '.join(DICT_NAME_TO_LEVEL.keys())
 
-#logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(filename)s %(message)s', level=logging.INFO)
-#logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(message)s', level=logging.INFO)
+
+def basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', int_loglevel=None, str_loglevel='INFO'):
+    loglevel = int_loglevel if int_loglevel is not None else DICT_NAME_TO_LEVEL[str_loglevel]
+    logging.basicConfig(format=format, level=loglevel)
+
 
 def init_logger(loglevel='DEBUG', logfname=None, fmt=None):
-    import sys
 
     int_loglevel = DICT_NAME_TO_LEVEL[loglevel.upper()]
 
