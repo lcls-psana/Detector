@@ -574,7 +574,7 @@ def get_jungfrau_config_object(env, src):
 
 
 def get_jungfrau_gain_mode_object(env, src):
-    """Returns gain mode object, usage: gmo=..., gmo.name, gmo.names.iteritems(), gm.values.iteritems(), etc.
+    """Returns gain mode object, usage: gmo=..., gmo.name, gmo.names.items(), gm.values.items(), etc.
     """
     co = get_jungfrau_config_object(env, _psana.Source(src))
     return co.gainMode()
