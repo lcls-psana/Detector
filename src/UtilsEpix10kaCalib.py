@@ -11,9 +11,9 @@ from __future__ import division
 import os
 import sys
 from time import time
-import logging
+
+from Detector.UtilsLogging import logging, DICT_NAME_TO_LEVEL
 logger = logging.getLogger(__name__)
-DICT_NAME_TO_LEVEL = {k:v for k,v in logging._levelNames.iteritems() if isinstance(k, str)}
 
 from time import sleep
 from psana import DataSource, Detector, EventId
