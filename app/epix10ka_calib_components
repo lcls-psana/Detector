@@ -11,17 +11,18 @@ Created on 2021-10-26 by Mikhail Dubrovin
 
 from __future__ import print_function
 
+import os
+os.environ['LIBGL_ALWAYS_INDIRECT'] = '1' # get rid of libGL error: unable to load driver: swrast_dri.so
+
 from time import time
 t0_sec = time()
 
 import sys
 import numpy as np
 import argparse
-import logging
-logger = logging.getLogger(__name__)
 
-DICT_NAME_TO_LEVEL = logging._levelNames # py2 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
-#DICT_NAME_TO_LEVEL = logging._nameToLevel # py3 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
+from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, logging
+logger = logging.getLogger(__name__)
 
 import psana
 from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record, divide_protected
@@ -35,6 +36,7 @@ t0_sec = time()
 
 SCRNAME = sys.argv[0].rsplit('/')[-1]
 USAGE = '\n    %s -t1' % SCRNAME\
+      + '\n    %s -e xpptut15 -d MfxEndstation.0:Epix10ka2M.0 -r570 -t1' % SCRNAME\
       + '\n    %s -e mfxc00118 -d epix10k2M -r191 -t1' % SCRNAME\
       + '\n    %s -e mfxc00118 -d epix10k2M -r191 -t103 -i1 --icrow 0 -S' % SCRNAME\
       + '\n    -t, --tname - test name/number:'\
@@ -161,7 +163,7 @@ def table_of_segments_from_3darr(nda, gaph=10, gapv=10, gapvalue=-10):
        ntabrows, ntabcols = 4, 4
        sh = a.shape = (ntabrows, ntabcols, nrows, ncols)
        agaph = gapvalue * np.ones((nrows, gaph))
-       agapv = gapvalue * np.ones((gapv, ncols*ntabcols + gaph*(ntabcols-01)))
+       agapv = gapvalue * np.ones((gapv, ncols*ntabcols + gaph*(ntabcols-1)))
 
        list_rows=[]
        for r in range(ntabcols):
