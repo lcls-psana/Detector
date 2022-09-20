@@ -7,6 +7,24 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-48
+2022-09-19 Mikhail Dubrovin
+- common modification: add/use
+    from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, logging
+  app/datinfo - improve output if raw=None
+  app/det_calib_ave_and_max - fix int after devision, add example for xpptut15
+  app/epix10ka2m_split_calib_for_7nda - remove comments
+  app/epix10ka_calib_components - get rid of libGL error, add example for xpptut15
+  app/epix10ka_pedestals_calibration - remove comments
+  app/epix10ka_test_calibcycles - UtilsLogging import
+  app/jungfrau_images - UtilsLogging import, get rid of libGL error
+  examples/ex_epix10ka2m_replace_offset_calib_zeros.py - remove comments
+  examples/ex_jungfrau_raw_plot.py - remove comments and blanks
+  examples/test-issues-2022.py - add issue_2022_09_19
+  src/PyDataAccess.py - update docstring
+  src/UtilsEpix10kaCalib.py - UtilsLogging import/use
+  src/UtilsLogging.py - make DICT_NAME_TO_LEVEL dependent on PYTHON_VERSION_MAJOR
+
 Tag: V02-00-47
 2022-09-14 Mikhail Dubrovin
 - NDArrProducerPrinceton.h, NDArrProducerPnccd.cpp - cosmetic - remove blanks"
