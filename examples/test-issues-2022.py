@@ -306,6 +306,16 @@ def issue_2022_09_02():
     rundepl = '123' # or None
     save_epix100a_ctype_in_repo(arr2d, exp, run, det, ctype, tstamp=tstamp, rundepl=rundepl, fmt='%.4f')
 
+def issue_2022_09_19():
+    """py3 is default sinse 2022-09-15 need to fix DICT_NAME_TO_LEVEL dependence on py2/3
+    """
+    from time import time
+    t0_sec = time()
+    from Detector.UtilsLogging import logging, DICT_NAME_TO_LEVEL, STR_LEVEL_NAMES, init_logger, PYTHON_VERSION_MAJOR
+    print('import Detector.UtilsLogging time: %.6f sec' % (time()-t0_sec))  # 0.266221 sec !!!!!
+    print('DICT_NAME_TO_LEVEL', DICT_NAME_TO_LEVEL)
+    print('STR_LEVEL_NAMES', STR_LEVEL_NAMES)
+    print('PYTHON_VERSION_MAJOR', PYTHON_VERSION_MAJOR)
 
 def issue_2021_MM_DD():
     """ISSUE:
@@ -333,6 +343,7 @@ USAGE = '\nUsage:'\
       + '\n   10 - issue_2022_06_16 - Vincent - why it is looking for *.h5?'\
       + '\n   11 - issue_2022_09_01 - Philip - file name of the gain file in repository for epix100a'\
       + '\n   12 - issue_2022_09_02 - Philip - save file with gains in repository for epix100a'\
+      + '\n   13 - issue_2022_09_19 - py3 is default sinse 2022-09-15 fix DICT_NAME_TO_LEVEL dependence on py2/3'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -348,6 +359,7 @@ elif TNAME in  ('9',): issue_2022_06_14()
 elif TNAME in ('10',): issue_2022_06_16()
 elif TNAME in ('11',): issue_2022_09_01()
 elif TNAME in ('12',): issue_2022_09_02()
+elif TNAME in ('13',): issue_2022_09_19()
 
 else:
     print(USAGE)
