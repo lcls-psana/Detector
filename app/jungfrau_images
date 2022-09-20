@@ -16,11 +16,8 @@ t0_sec = time()
 import sys
 import numpy as np
 import argparse
-import logging
+from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, logging
 logger = logging.getLogger(__name__)
-
-DICT_NAME_TO_LEVEL = logging._levelNames # py2 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
-#DICT_NAME_TO_LEVEL = logging._nameToLevel # py3 {'INFO': 20, 'WARNING': 30, 'WARN': 30,...
 
 import psana
 from Detector.GlobalUtils import info_ndarr, print_ndarr, selected_record, divide_protected
