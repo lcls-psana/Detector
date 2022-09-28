@@ -41,7 +41,8 @@ def ds_det(**kwa):
 
     ds = DataSource(dsname)
     det = Detector(detname) if detname is not None else None
-    det.set_print_bits(0o377 if logmode == 'DEBUG' else 0)
+    if det is not None:
+        det.set_print_bits(0o377 if logmode == 'DEBUG' else 0)
 
     return ds, det
 
