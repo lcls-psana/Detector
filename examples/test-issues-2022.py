@@ -306,6 +306,7 @@ def issue_2022_09_02():
     rundepl = '123' # or None
     save_epix100a_ctype_in_repo(arr2d, exp, run, det, ctype, tstamp=tstamp, rundepl=rundepl, fmt='%.4f')
 
+
 def issue_2022_09_19():
     """py3 is default sinse 2022-09-15 need to fix DICT_NAME_TO_LEVEL dependence on py2/3
     """
@@ -316,6 +317,43 @@ def issue_2022_09_19():
     print('DICT_NAME_TO_LEVEL', DICT_NAME_TO_LEVEL)
     print('STR_LEVEL_NAMES', STR_LEVEL_NAMES)
     print('PYTHON_VERSION_MAJOR', PYTHON_VERSION_MAJOR)
+
+
+def issue_2022_09_26():
+    """
+       datinfo -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1
+       datinfo -e xpptut15 -r 260 -d XcsEndstation.0:Cspad2x2.3
+       datinfo -e xpptut15 -r 240 -d XppEndstation.0:Rayonix.0
+       datinfo -e cxic00318 -r 123 -d jungfrau4M # CxiDs1.0:Jungfrau.0
+    """
+    import psana
+    #ds = psana.DataSource('exp=xpptut15:run=260:smd')
+    #det = psana.Detector('XcsEndstation.0:Epix100a.1', ds.env())
+    ds = psana.DataSource('exp=cxic00318:run=123:smd')
+    #det = psana.Detector('jungfrau4M', ds.env())
+    epics = ds.env().epicsStore()
+    #epics methods: 'alias', 'aliases', 'getPV', 'names', 'pvName', 'pvNames', 'status', 'value'
+
+    varnames = ['CXI:DS1:MMS:06.RBV', 'CXI:DS2:MMS:06.RBV', 'MFX:DET:MMS:04.RBV',
+                'XPP:ROB:POS:Z', 'AMO:LMP:MMS:10.RBV']
+    print('epics.names():', epics.names())
+    print('epics.pvNames():', epics.pvNames())
+    vfound = None
+    for vname in varnames:
+        if vname in epics.pvNames():
+            print('found name:', vname)
+            vfound = vname
+
+    print('epics.value("DscCsPad_z"):', epics.value('DscCsPad_z'))  # -424.9936
+    print('epics.value("CXI:DS1:MMS:06.RBV"):', epics.value('CXI:DS1:MMS:06.RBV'))  # -424.9936
+    print('dir(epics):', dir(epics))
+    print('epics.aliases():', epics.aliases())
+    print('epics.alias("CXI:DS1:MMS:06.RBV"):', epics.alias('CXI:DS1:MMS:06.RBV'))  # DscCsPad_z
+    print('epics.alias("DscCsPad_z"):', epics.alias('DscCsPad_z')) # empty
+    print('epics.status():', epics.status('CXI:DS1:MMS:06.RBV'))  # (0, 0, 0.0)
+    print('epics.pvName("CXI:DS1:MMS:06.RBV"):', epics.pvName('CXI:DS1:MMS:06.RBV'))
+    print('epics.getPV("CXI:DS1:MMS:06.RBV"):', epics.getPV('CXI:DS1:MMS:06.RBV'))  # <psana.Epics.EpicsPvCtrlDouble object at 0x7fe1863349f0>
+
 
 def issue_2021_MM_DD():
     """ISSUE:
@@ -344,6 +382,7 @@ USAGE = '\nUsage:'\
       + '\n   11 - issue_2022_09_01 - Philip - file name of the gain file in repository for epix100a'\
       + '\n   12 - issue_2022_09_02 - Philip - save file with gains in repository for epix100a'\
       + '\n   13 - issue_2022_09_19 - py3 is default sinse 2022-09-15 fix DICT_NAME_TO_LEVEL dependence on py2/3'\
+      + '\n   14 - issue_2022_09_26 - Chuck - request to access geometry correction z'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -360,6 +399,7 @@ elif TNAME in ('10',): issue_2022_06_16()
 elif TNAME in ('11',): issue_2022_09_01()
 elif TNAME in ('12',): issue_2022_09_02()
 elif TNAME in ('13',): issue_2022_09_19()
+elif TNAME in ('14',): issue_2022_09_26()
 
 else:
     print(USAGE)
