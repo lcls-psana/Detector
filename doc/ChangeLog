@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-49
+2022-09-28 Mikhail Dubrovin
+  app/datinfo - add protection for det is None
+  examples/test-issues-2022.py - add issue_2022_09_26
+
 Tag: V02-00-48
 2022-09-19 Mikhail Dubrovin
 - common modification: add/use
