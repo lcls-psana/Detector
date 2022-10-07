@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-50
+2022-10-07 Mikhail Dubrovin
+  src/RepoManager.py - add parameter adddict to save_record_at_start
+
 Tag: V02-00-49
 2022-09-28 Mikhail Dubrovin
   app/datinfo - add protection for det is None
