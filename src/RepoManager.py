@@ -23,8 +23,8 @@ Usage::
     import Detector.RepoManager as rm
 
     SCRNAME = sys.argv[0].split('/')[-1]
-    DIR_REPO = '/reg/g/psdm/detector/calib/constants/'
-    DIR_LOG_AT_START = '/reg/g/psdm/logs/atstart/'
+    DIR_REPO = '$SIT_ROOT/detector/calib/constants/'
+    DIR_LOG_AT_START = '$SIT_ROOT/logs/atstart/'
 
     repoman = rm.RepoManager(DIR_REPO, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
     repoman.save_record_at_start(SCRNAME)
@@ -57,7 +57,7 @@ def str_tstamp(fmt='%Y-%m-%dT%H:%M:%S', time_sec=None):
     return strftime(fmt, localtime(time_sec))
 
 
-class RepoManager(object):
+class RepoManager():
     """Supports repository directories/files naming structure for app/deploy_constants.
     """
 
