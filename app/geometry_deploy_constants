@@ -55,8 +55,8 @@ def argument_parser():
     d_dircalib = None # './calib'
     d_deploy   = False
     d_loglev   = 'INFO'
-    d_dirmode  = 0o2777
-    d_filemode = 0o666
+    d_dirmode  = 0o2774
+    d_filemode = 0o664
     d_parent   = 'IP'
     d_posx     = 0
     d_posy     = 0
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME)
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     kwa['repoman'] = repoman
     ugd.geometry_deploy_constants(**kwa)
