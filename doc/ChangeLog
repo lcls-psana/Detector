@@ -7,6 +7,16 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-51
+2022-10-14 Mikhail Dubrovin
+  app/deploy_constants - add adddict={'logfile':logname} to repoman.save_record_at_start
+  app/geometry_deploy_constants - add adddict={'logfile':logname} to repoman.save_record_at_start
+  src/RepoManager.py - use $SIT_ROOT
+  src/UtilsCalib.py - add parameter adddict={} to save_record_at_start
+  src/UtilsDeployConstants.py - use calibDir().replace('//','/')
+  src/UtilsGeometryDeploy.py - use calibDir().replace('//','/')
+  src/dir_root.py - add DIR_PSDM_DATA = os.getenv('SIT_PSDM_DATA')
+
 Tag: V02-00-50
 2022-10-07 Mikhail Dubrovin
   src/RepoManager.py - add parameter adddict to save_record_at_start
