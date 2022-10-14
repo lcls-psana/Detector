@@ -306,9 +306,11 @@ class RepoManager(object):
         return '%s/%s_lcls1_%s.txt' % (self.makedir_log_at_start_year(), self.year, procname)
 
 
-    def save_record_at_start(self, procname, tsfmt='%Y-%m-%dT%H:%M:%S'):
+    def save_record_at_start(self, procname, tsfmt='%Y-%m-%dT%H:%M:%S', adddict={}):
         os.umask(self.umask)
-        rec = log_rec_at_start(tsfmt, **{'dirrepo':self.dirrepo,})
+        d = {'dirrepo':self.dirrepo,}
+        if adddict: d.update(adddict)
+        rec = log_rec_at_start(tsfmt, **d)
         logfname = self.logname_at_start_lcls1(procname)
         fexists = os.path.exists(logfname)
         save_textfile(rec, logfname, mode='a')
