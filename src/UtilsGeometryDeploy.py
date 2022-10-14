@@ -147,9 +147,9 @@ def geometry_deploy_constants(**kwa):
         logger.warning('NOT EXISTS file: %s ' % fname)
         return
 
-    logger.info('standard calib dir: %s' % env.calibDir())
+    logger.info('standard calib dir: %s' % env.calibDir().replace('//','/'))
     logger.info('non-default calib dir: %s' % dircalib)
-    calibdir = env.calibDir() if dircalib is None else dircalib # '/reg/d/psdm/XPP/xpptut15/calib'
+    calibdir = env.calibDir().replace('//','/') if dircalib is None else dircalib # '/reg/d/psdm/XPP/xpptut15/calib'
     calibgrp = uc.calib_group_for_tname_lower(dettype) # 'Epix10ka::CalibV1'
     ctypedir = '%s/%s/%s' % (calibdir, calibgrp, strsrc) # '/calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
 
