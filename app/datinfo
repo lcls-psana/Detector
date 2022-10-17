@@ -114,7 +114,7 @@ def loop_run_step_evt(**kwa):
 
     logger.info('runnum: %s' % runnum)
     logger.info('info_det: %s' % info_det(det, runnum, ds.env()))
-    logger.info('calibDir: %s' % ds.env().calibDir())
+    logger.info('calibDir: %s' % ds.env().calibDir().replace('//','/'))
     logger.info('dettype: %s' % dettype)
     logger.info('dettype of EPIX10KA2M: %s' % gu.EPIX10KA2M)
 

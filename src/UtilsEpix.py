@@ -19,7 +19,7 @@ from __future__ import print_function
 from PSCalib.UtilsPanelAlias import alias_for_id, id_for_alias # keep it here for b/w compatability
 
 from Detector.dir_root import os, DIR_ROOT, DIR_LOG_AT_START
-CALIB_REPO_EPIX10KA = os.path.join(DIR_ROOT, 'detector/gains/epix10k/panels')  # '/reg/g/psdm/detector/gains/epix10k/panels'
+CALIB_REPO_EPIX10KA = os.path.join(DIR_ROOT, 'detector/gains/epix10k/panels')  # '$DIR_ROOT/detector/gains/epix10k/panels'
 FNAME_PANEL_ID_ALIASES = '%s/.aliases.txt'%CALIB_REPO_EPIX10KA
 
 def id_epix(config_obj):

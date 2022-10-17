@@ -568,7 +568,7 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0):
 
     cpdic = {}
     cpdic['expnum'] = env.expNum()
-    cpdic['calibdir'] = env.calibDir()
+    cpdic['calibdir'] = env.calibDir().replace('//','/')
     cpdic['strsrc'] = det.pyda.str_src
     cpdic['shape'] = shape_from_config_epix10ka(eco)
     cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data

@@ -7,6 +7,18 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-52
+2022-10-17 Mikhail Dubrovin
+  app/datinfo
+  app/epix10ka_calib_components
+  app/jungfrau_gain_constants
+  app/jungfrau_images
+  src/PyDetectorAccess.py
+  src/UtilsEpix10kaCalib.py
+  src/UtilsJungfrauCalib.py - ALL of above - calibDir().replace('//','/')
+  app/epix10ka_pedestals_calibration - adddict={'logfile':logname}
+  src/UtilsEpix.py - update comment
+
 Tag: V02-00-51
 2022-10-14 Mikhail Dubrovin
   app/deploy_constants - add adddict={'logfile':logname} to repoman.save_record_at_start

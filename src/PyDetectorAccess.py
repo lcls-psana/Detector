@@ -131,7 +131,7 @@ class PyDetectorAccess(object):
             self.runnum_cps = runnum
             group = gu.dic_det_type_to_calib_group[self.dettype]
             #self.cpst = cps.Create(self.env.calibDir(), group, self.str_src, runnum, self.pbits)
-            self.cpst = cps.CreateForEvtEnv(self.env.calibDir(), group, self.str_src, par, self.env, self.pbits & 0o377)
+            self.cpst = cps.CreateForEvtEnv(self.env.calibDir().replace('//','/'), group, self.str_src, par, self.env, self.pbits & 0o377)
             if self.pbits & 1: print('PSCalib.CalibParsStore object is created for run %d' % runnum)
 
         return self.cpst
@@ -176,7 +176,7 @@ class PyDetectorAccess(object):
         """
         import PSCalib.DCMethods as dcm
 
-        cdir = self.env.calibDir()
+        cdir = self.env.calibDir().replace('//','/')
 
         data = dcm.get_constants(tpar, self.env, self.str_src, ctype=gu.GEOMETRY, calibdir=cdir, vers=None,\
                                  verb=self.pbits & 16)#, use_repo=True)
@@ -194,7 +194,7 @@ class PyDetectorAccess(object):
         """Returns geometry object from calib store or None if can't load geometry.
         """
         group = gu.dic_det_type_to_calib_group[self.dettype]
-        cff = CalibFileFinder(self.env.calibDir(), group, 0o377 if self.pbits else 0)
+        cff = CalibFileFinder(self.env.calibDir().replace('//','/'), group, 0o377 if self.pbits else 0)
         fname = cff.findCalibFile(self.str_src, 'geometry', runnum)
         if fname:
             self.geo = GeometryAccess(fname, 0o377 if self.pbits else 0)

@@ -245,7 +245,7 @@ def jungfrau_dark_proc(parser):
                #dpo = uc.DarkProc(**kwargs)
                dpo.runnum = run.run()
                dpo.exp = env.experiment()
-               dpo.calibdir = env.calibDir()
+               dpo.calibdir = env.calibDir().replace('//','/')
                dpo.ts_run, dpo.ts_now = ts_run, ts_now #uc.tstamps_run_and_now(env, fmt=uc.TSTAMP_FORMAT)
                dpo.detid = jf_id
                dpo.gmindex = igm
@@ -455,7 +455,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
 
     cpdic = {}
     cpdic['expname'] = env.experiment()
-    cpdic['calibdir'] = env.calibDir()
+    cpdic['calibdir'] = env.calibDir().replace('//','/')
     cpdic['strsrc'] = det.pyda.str_src
     cpdic['shape'] = shape_from_config_jungfrau(co)
     cpdic['panel_ids'] = jungfrau_uniqueid(ds, detname).split('_')

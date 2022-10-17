@@ -115,7 +115,7 @@ def jungfrau_gain_constants():
 
     exp      = env.experiment()
     runnum   = env.configStore().get(psana.EventId).run()
-    calibdir = env.calibDir() if clbdir is None else clbdir
+    calibdir = env.calibDir().replace('//','/') if clbdir is None else clbdir
     #ctypedir = '/some-path/calib/Jungfrau::CalibV1/CxiEndstation.0:Jungfrau.0/'
     ctypedir = '%s/Jungfrau::CalibV1/%s' % (calibdir, ssource)
     ofname   = '%d-end.data' % runnum
