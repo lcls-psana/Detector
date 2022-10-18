@@ -61,7 +61,8 @@ def config_objects(env, src, idx=0):
         psana.Epix.Config10ka, psana.Epix.Config10kaV1, or psana.Epix.Config10kaV2
     """
     dco = get_epix10ka2m_config_object(env, src)
-    if dco is not None: return dco, dco.quad(idx/4), dco.elemCfg(idx)
+
+    if dco is not None: return dco, dco.quad(int(idx/4)), dco.elemCfg(idx)
 
     qco = get_epix10kaquad_config_object(env, src)
     if qco is not None: return None, qco, qco.elemCfg(idx)
