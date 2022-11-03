@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 from Detector.UtilsJungfrauCalib import jungfrau_deploy_constants, CALIB_REPO_JUNGFRAU, DIR_LOG_AT_START, uc, gu
 import Detector.UtilsLogging as ul
@@ -37,6 +38,9 @@ def option_parser():
     d_deploy  = False
     d_errskip = False
     d_logmode = 'INFO'
+    d_dirmode  = 0o2775
+    d_filemode = 0o664
+    d_group    = 'ps-users'
 #    d_high    = 16.40 # 1.
 #    d_medium  = 5.466 # 0.33333
 #    d_low     = 0.164 # 0.01
@@ -54,6 +58,10 @@ def option_parser():
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
     h_errskip = 'if possible, skip errors and deploy constants, default = %s' % d_errskip
     h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
+    h_group   = 'group ownership for all files, default = %s' % d_group
+
 #    h_high    = 'default high   gain ADU/keV, default = %s' % str(d_high)
 #    h_medium  = 'default medium gain ADU/keV, default = %s' % str(d_medium)
 #    h_low     = 'default low    gain ADU/keV, default = %s' % str(d_low)
@@ -72,6 +80,9 @@ def option_parser():
     parser.add_option('-D', '--deploy',  default=d_deploy,  action='store_true',           help=h_deploy)
     parser.add_option('-E', '--errskip', default=d_errskip, action='store_true',           help=h_errskip)
     parser.add_option('-L', '--logmode', default=d_logmode, action='store', type='string', help=h_logmode)
+    parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
+    parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)
+    parser.add_option('--group',         default=d_group,   action='store', type='string', help=h_group)
 #    parser.add_option(      '--high',    default=d_high,    action='store', type='float',  help=h_high)
 #    parser.add_option(      '--medium',  default=d_medium,  action='store', type='float',  help=h_medium)
 #    parser.add_option(      '--low',     default=d_low,     action='store', type='float',  help=h_low)
@@ -85,13 +96,19 @@ if __name__ == "__main__":
     parser = option_parser()
     (popts, pargs) = parser.parse_args()
 
-    repoman = uc.RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = uc.RepoManager(popts.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+                             dirmode=popts.dirmode, filemode=popts.filemode, group=popts.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-    ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME)
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
-    jungfrau_deploy_constants(parser)
+    popts.repoman = repoman
+    jungfrau_deploy_constants(pargs, popts)
+
+    os.chmod(logname, popts.filemode)
+    uc.cgu.change_file_ownership(logname, user=None, group=popts.group)
+
     sys.exit(0)
 
 # EOF

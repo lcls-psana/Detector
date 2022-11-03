@@ -19,7 +19,7 @@ from pyimgalgos.GlobalUtils import print_command_line_parameters
 from time import time
 import PSCalib.GlobalUtils as gu # str_tstamp, deploy_file, log_rec_on_start, replace
 import Detector.UtilsLogging as ul
-from Detector.UtilsJungfrauCalib import uc, DIR_REPO, DIR_LOG_AT_START
+from Detector.UtilsJungfrauCalib import uc, DIR_REPO, CALIB_REPO_JUNGFRAU, DIR_LOG_AT_START, fname_prefix_merge
 
 #DIR_REPO = os.path.join(DIR_ROOT, 'detector/gains/jungfrau/')
 
@@ -30,17 +30,18 @@ def usage():
            +'       where <DSNAME> is like one of the list:\n         %s\n' % '\n         '.join(DSNAMES[:3])\
            +'       <DETNAME> is optional parameterr like one of the list:\n         %s\n' % '\n         '.join(DETNAMES[:3])\
            +'       <TSTAMP> - timestamp in format YYYYMMDDHHMMSS - beginning of the validity range'\
-           +'\n\nTest 4M: jungfrau_gain_constants -d exp=xpptut15:run=610 -s jungfrau4M -D -C calib -t 20220908160000'\
-           +'\n     1M: jungfrau_gain_constants -d exp=xpptut15:run=430 -s Jungfrau1M -D -C calib -t 20220908160000'\
-           +'\n   0.5M: jungfrau_gain_constants -d exp=xpptut15:run=410 -s Jungfrau512k -D -C calib -t 20220908160000'\
+           +'\n\nTest 4M: jungfrau_gain_constants -d exp=xpptut15:run=610 -s jungfrau4M -D -c calib -t 20220908160000'\
+           +'\n     1M: jungfrau_gain_constants -d exp=xpptut15:run=430 -s Jungfrau1M -D -c calib -t 20220908160000'\
+           +'\n   0.5M: jungfrau_gain_constants -d exp=xpptut15:run=410 -s Jungfrau512k -D -c calib -t 20220908160000'\
            +'\n\nTry:  jungfrau_gain_constants -h\n'
 
 
 def str_exp_run(dsname):
-    """Returns log file name
+    """Returns str like xppx1004421-r1 from dsname
+       exp=xppx1004421:run=1:dir=/cds/data/drpsrcf/xpp/xppx1004421/xtc/:stream=0-79
     """
-    # Returns str like 'cxilx5920-r6' from dsname like 'exp=cxilx5920:run=6'
-    return dsname.replace('exp=','').replace(':run=','-r')
+    #return '-'.join(dsname.split(':',2)[:2]).replace('exp=','').replace('run=','r')
+    return '-'.join([p for p in dsname.split(':') if len(p)>3 and p[:3] in ('exp','run')]).replace('exp=','').replace('run=','r')
 
 
 def jungfrau_gain_constants():
@@ -64,7 +65,6 @@ def jungfrau_gain_constants():
     deploy = popts.deploy
     upload = popts.upload
     loglev = popts.loglev
-#    lfpath = popts.lfpath
     repdir = popts.repdir
 
     defs = vars(parser.get_default_values())
@@ -72,15 +72,15 @@ def jungfrau_gain_constants():
     DETNAME_DEF = defs['source']
     TSTAMP_DEF  = defs['tstamp']
 
-    #llev = logging._levelNames.get(loglev, logging.DEBUG)
     verbose = loglev != 'INFO'
     if verbose: print_command_line_parameters(parser)
 
-    repoman = uc.RepoManager(repdir, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = uc.RepoManager(repdir, dir_log_at_start=DIR_LOG_AT_START,\
+                             dirmode=popts.dirmode, filemode=popts.filemode, group=popts.group)
     logname = repoman.logname('%s_%s_%s' % (SCRNAME, str_exp_run(DSNAME), gu.get_login()))
-    ul.init_logger(loglevel=loglev, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    ul.init_logger(loglevel=loglev, logfname=logname, group=popts.group, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME)
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
     logger.info('Generator of gain correction constants for Jungfrau')
 
     ds = psana.DataSource(DSNAME)
@@ -121,14 +121,26 @@ def jungfrau_gain_constants():
     ofname   = '%d-end.data' % runnum
     lfname   = None
     verbos   = False
-    fprefix = '%s-r%04d_%s'%(exp, runnum, ssource)
-    fprefix_g = '%s_%s'%(fprefix, ctype_gain)
-    fprefix_o = '%s_%s'%(fprefix, ctype_offset)
+    dirmode  = 0o2775
+    filemode = 0o664
+    group    = 'ps-users'
 
-    if True:
-        logger.info('Begin merging panel arrays')
-        ju.merge_panel_constants(dirs, ifname='%s/g%d_gain.npy',   ofname=fprefix_g, ofmt='%.4f')
-        ju.merge_panel_constants(dirs, ifname='%s/g%d_offset.npy', ofname=fprefix_o, ofmt='%.1f')
+    tstamp_run, tstamp_now = uc.tstamps_run_and_now(env)
+    tstamp = tstamp_run
+
+#    tstamp = tstamp_run if TSTAMP is None else\
+#             TSTAMP if int(TSTAMP)>9999 else\
+#             tstamp_run
+
+    dmerge = repoman.makedir_merge()
+    fmerge_prefix = fname_prefix_merge(dmerge, ssource, tstamp, exp, runnum)
+    #fmerge_prefix  = '%s-r%04d_%s'%(exp, runnum, ssource)
+    fprefix_g = '%s_%s'%(fmerge_prefix, ctype_gain)
+    fprefix_o = '%s_%s'%(fmerge_prefix, ctype_offset)
+
+    logger.info('Begin merging panel arrays')
+    ju.merge_panel_constants(dirs, ifname='%s/g%d_gain.npy',   ofname=fprefix_g, ofmt='%.4f', filemode=filemode, group=group)
+    ju.merge_panel_constants(dirs, ifname='%s/g%d_offset.npy', ofname=fprefix_o, ofmt='%.1f', filemode=filemode, group=group)
     #else: logger.warning('Add option -M to merge panel arrays')
 
     logger.debug('calibdir: %s'%calibdir)
@@ -136,8 +148,10 @@ def jungfrau_gain_constants():
 
     if deploy:
         logger.info('Deploy calib files under %s' % ctypedir)
-        gu.deploy_file('%s.txt'%fprefix_g, ctypedir, ctype_gain,   ofname, lfname, verbose)
-        gu.deploy_file('%s.txt'%fprefix_o, ctypedir, ctype_offset, ofname, lfname, verbose)
+        gu.deploy_file('%s.txt'%fprefix_g, ctypedir, ctype_gain,   ofname, lfname, verbose,\
+                       filemode=filemode, dirmode=dirmode, group=group)
+        gu.deploy_file('%s.txt'%fprefix_o, ctypedir, ctype_offset, ofname, lfname, verbose,\
+                       filemode=filemode, dirmode=dirmode, group=group)
     else:
         logger.warning('Add option -D to deploy calib files under directory %s' % ctypedir)
 
@@ -155,6 +169,9 @@ def jungfrau_gain_constants():
     #else:
     #    logger.warning('Add option -R to learn about uploading constants in repository %s' % repdir)
 
+    os.chmod(logname, popts.filemode)
+    uc.cgu.change_file_ownership(logname, user=None, group=popts.group)
+
     logger.info('Log file: %s' % logname)
     #fhandler.close()
 
@@ -170,7 +187,10 @@ def option_parser():
     d_clbdir = None
     d_loglev = 'INFO'
     d_lfpath = 'DEPRECATED: /reg/g/psdm/logs/calibman/jungfrau_gain - see .../detector/gains/jungfrau/logs'
-    d_repdir = DIR_REPO    # '/reg/g/psdm/detector/gains/jungfrau'
+    d_repdir = DIR_REPO  # '/reg/g/psdm/detector/gains/jungfrau' # CALIB_REPO_JUNGFRAU
+    d_dirmode  = 0o2775
+    d_filemode = 0o664
+    d_group    = 'ps-users'
 
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source/detector name, default = %s' % d_source
@@ -181,6 +201,9 @@ def option_parser():
     h_loglev='dataset name, default = %s' % d_loglev
     h_lfpath='path to log file, default = %s' % d_lfpath
     h_repdir='repository of gain files, default = %s' % d_repdir
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
+    h_group   = 'group ownership for all files, default = %s' % d_group
 
     parser = OptionParser(description='Generator of gain correction constants for Jungfrau', usage = usage())
     parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
@@ -188,15 +211,25 @@ def option_parser():
     parser.add_option('-t', '--tstamp', dest='tstamp', default=d_tstamp, action='store', type='string', help=h_tstamp)
     parser.add_option('-D', '--deploy', dest='deploy', default=d_deploy, action='store_true',           help=h_deploy)
     parser.add_option('-U', '--upload', dest='upload', default=d_upload, action='store_true',           help=h_upload)
-    parser.add_option('-C', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
+    parser.add_option('-c', '--clbdir', dest='clbdir', default=d_clbdir, action='store', type='string', help=h_clbdir)
     parser.add_option('-L', '--loglev', dest='loglev', default=d_loglev, action='store', type='string', help=h_loglev)
     parser.add_option('-P', '--lfpath', dest='lfpath', default=d_lfpath, action='store', type='string', help=h_lfpath)
     parser.add_option('-R', '--repdir', dest='repdir', default=d_repdir, action='store', type='string', help=h_repdir)
+    parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
+    parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)
+    parser.add_option('--group',         default=d_group,   action='store', type='string', help=h_group)
 
     return parser
 
 
+def test_str_exp_run():
+    dsname = 'exp=xppx1004421:run=1:dir=/cds/data/drpsrcf/xpp/xppx1004421/xtc/:stream=0-79'
+    #dsname = 'exp=xppx1004421:run=1'
+    print('str_exp_run(%s) = %s' % (dsname, str_exp_run(dsname)))
+
+
 if __name__ == "__main__":
+    #test_str_exp_run()
     jungfrau_gain_constants()
     sys.exit(0)
 

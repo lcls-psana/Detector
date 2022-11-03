@@ -25,15 +25,19 @@ def epix10ka_deploy_constants():
     if popts.det is None: raise IOError('WARNING: option "-d <detector-name>" MUST be specified.')
     if popts.run is None: raise IOError('WARNING: option "-r <run-number>" MUST be specified.')
 
-    from Detector.UtilsCalib import RepoManager
+    from Detector.UtilsCalib import RepoManager, cgu
     import getpass
-    repoman = RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = RepoManager(popts.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+                          dirmode=popts.dirmode, filemode=popts.filemode, group=popts.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, getpass.getuser()))
-    ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME)
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     deploy_constants(*args, **opts)
+
+    os.chmod(logname, popts.filemode)
+    cgu.change_file_ownership(logname, user=None, group=popts.group)
 
     logger.info('DONE, consumed time %.3f sec' % (time() - t0_sec))
 
@@ -72,6 +76,9 @@ def option_parser():
     d_high    = 16.40 # 1.
     d_medium  = 5.466 # 0.33333
     d_low     = 0.164 # 0.01
+    d_dirmode  = 0o2775
+    d_filemode = 0o664
+    d_group    = 'ps-users'
 
     #Blaj, Gabriel <blaj@slac.stanford.edu> Mon 8/3/2020 6:52 PM
     #Hi, Here are some good starting values for the ADC to keV conversion:
@@ -97,6 +104,9 @@ def option_parser():
     h_proc    = '(str) keyword for processing of "p"-pedestals, "r"-rms, "s"-status, "g" or "c" - gain or charge-injection gain,'\
               + '  default = %s' % d_proc
     h_paninds = 'comma-separated panel indexds to generate constants for subset of panels (ex.: quad from 2M), default = %s' % d_paninds
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
+    h_group   = 'group ownership for all files, default = %s' % d_group
 
     parser = OptionParser(description=usage(1), usage = usage())
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
@@ -115,6 +125,9 @@ def option_parser():
     parser.add_option('-p', '--proc',    default=d_proc,    action='store', type='string', help=h_proc)
     parser.add_option('-I', '--paninds', default=d_paninds, action='store', type='string', help=h_paninds)
     parser.add_option('--runend',        default=d_runend,  action='store', type='string', help=h_runend)
+    parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
+    parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)
+    parser.add_option('--group',         default=d_group,   action='store', type='string', help=h_group)
 
     return parser
 

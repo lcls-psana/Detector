@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import Detector.UtilsLogging as ul
 logger = ul.logging.getLogger(__name__)
@@ -50,6 +51,9 @@ def option_parser():
     d_fraclo = 0.05    # fraction of statistics [0,1] below low limit
     d_frachi = 0.95    # fraction of statistics [0,1] below high limit
     d_logmode = 'INFO'
+    d_dirmode  = 0o2775
+    d_filemode = 0o664
+    d_group    = 'ps-users'
 
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
@@ -78,6 +82,9 @@ def option_parser():
     h_frachi= 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
     h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
+    h_group   = 'group ownership for all files, default = %s' % d_group
     #h_savebw='control bit-word to save arrays: 1/2/4/8/16/32/...'\
     #         ' - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi, default = (oct) %s' % oct(d_savebw)
 
@@ -108,6 +115,9 @@ def option_parser():
     parser.add_option('--frachi',       dest='frachi', default=d_frachi, action='store', type='float',  help=h_frachi)
     parser.add_option('-o', '--dirrepo',dest='dirrepo',default=d_dirrepo,action='store', type='string', help=h_dirrepo)
     parser.add_option('--logmode',      dest='logmode',default=d_logmode,action='store', type='string', help=h_logmode)
+    parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
+    parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)
+    parser.add_option('--group',         default=d_group,   action='store', type='string', help=h_group)
     #parser.add_option('-S', '--savebw', dest='savebw', default=d_savebw, action='store', type='int',    help=h_savebw)
 
     return parser
@@ -118,13 +128,19 @@ if __name__ == "__main__":
     parser = option_parser()
     (popts, pargs) = parser.parse_args()
 
-    repoman = uc.RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = uc.RepoManager(popts.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+                             dirmode=popts.dirmode, filemode=popts.filemode, group=popts.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-    ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME)
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
-    jungfrau_dark_proc(parser)
+    popts.repoman = repoman
+    jungfrau_dark_proc(pargs, popts)
+
+    os.chmod(logname, popts.filemode)
+    uc.cgu.change_file_ownership(logname, user=None, group=popts.group)
+
     sys.exit(0)
 
 # EOF

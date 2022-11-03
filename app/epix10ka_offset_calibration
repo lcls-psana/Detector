@@ -29,18 +29,22 @@ def epix10ka_offset_calibration():
 
     #ul.logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=ul.DICT_NAME_TO_LEVEL[popts.logmode])
 
-    from Detector.UtilsCalib import RepoManager
+    from Detector.UtilsCalib import RepoManager, cgu
     import getpass
-    repoman = RepoManager(popts.dirrepo, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = RepoManager(popts.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+                          dirmode=popts.dirmode, filemode=popts.filemode, group=popts.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, getpass.getuser()))
-    ul.init_logger(loglevel=popts.logmode, logfname=logname) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME)
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     logger.debug('%s\nIn epix10ka_offset_calibration' % (50*'_'))
     logger.debug(info_command_line_parameters(parser))
 
     offset_calibration(*args, **opts)
+
+    os.chmod(logname, popts.filemode)
+    cgu.change_file_ownership(logname, user=None, group=popts.group)
 
     logger.info('DONE, consumed time %.3f sec' % (time() - t0_sec))
 
@@ -90,6 +94,9 @@ def option_parser() :
     d_errskip = False
     d_savechi2= False
     d_pixrc   = None
+    d_dirmode  = 0o2775
+    d_filemode = 0o664
+    d_group    = 'ps-users'
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
@@ -112,6 +119,9 @@ def option_parser() :
     h_errskip = 'flag to skip errors and keep processing (stop otherwise), default = %s' % d_errskip
     h_savechi2= 'save chi2 files, default = %s' % d_savechi2
     h_pixrc   = 'selected pixel for graphics: comma separated pixel row and column, ex. 23,234, default = %s' % d_pixrc
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
+    h_group   = 'group ownership for all files, default = %s' % d_group
 
     parser = OptionParser(description=usage(1), usage = usage())
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
@@ -135,6 +145,9 @@ def option_parser() :
     parser.add_option('-E', '--errskip', default=d_errskip, action='store_true',           help=h_errskip)
     parser.add_option('-C', '--savechi2',default=d_savechi2,action='store_true',           help=h_savechi2)
     parser.add_option('-G', '--pixrc',   default=d_pixrc,   action='store', type='string', help=h_pixrc)
+    parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
+    parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)
+    parser.add_option('--group',         default=d_group,   action='store', type='string', help=h_group)
 
     return parser
 

@@ -55,8 +55,9 @@ def argument_parser():
     d_dircalib = None # './calib'
     d_deploy   = False
     d_loglev   = 'INFO'
-    d_dirmode  = 0o2774
+    d_dirmode  = 0o2775
     d_filemode = 0o664
+    d_group    = 'ps-users'
     d_parent   = 'IP'
     d_posx     = 0
     d_posy     = 0
@@ -78,8 +79,9 @@ def argument_parser():
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
     h_loglev  = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_loglev)
-    h_dirmode = 'mode for all mkdir, default = %s' % d_dirmode
-    h_filemode= 'mode for all saved files, default = %s' % d_filemode
+    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
+    h_group   = 'group ownership for all files, default = %s' % d_group
     h_parent  = 'parent frame name containing the detector geometry object, default = %s' % d_parent
     h_posx    = 'detector position x[um] relative IP, default = %f' % d_posx
     h_posy    = 'detector position y[um] relative IP, default = %f' % d_posy
@@ -102,6 +104,7 @@ def argument_parser():
     parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help=h_loglev)
     parser.add_argument('--dirmode',       default=d_dirmode, type=int, help=h_dirmode)
     parser.add_argument('--filemode',      default=d_filemode,type=int, help=h_filemode)
+    parser.add_argument('--group',         default=d_group,   type=str, help=h_group)
     parser.add_argument('-D', '--deploy',  default=d_deploy, action='store_true', help=h_deploy)
     parser.add_argument('-R', '--runrange',default=d_runrange,type=str, help=h_runrange)
     parser.add_argument('--parent',        default=d_parent,  type=str  , help=h_parent)
@@ -128,14 +131,17 @@ if __name__ == "__main__":
     kwa = vars(args)
     print('Arguments: %s\n' % str(args))
 
-    repoman = uc.RepoManager(args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START)
+    repoman = uc.RepoManager(args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START, group=args.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-    init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s', group=args.group)
     logger.info('log file: %s' % logname)
     repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     kwa['repoman'] = repoman
     ugd.geometry_deploy_constants(**kwa)
+
+    os.chmod(logname, args.filemode)
+    gu.change_file_ownership(logname, user=None, group=args.group)
 
     sys.exit(0)
 
