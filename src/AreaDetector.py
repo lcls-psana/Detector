@@ -1605,7 +1605,7 @@ class AreaDetector(object):
         return self._shaped_array_(par, self.pyda.ndarray_from_image(par, image, pix_scale_size_um, xy0_off_pix, do_update))
 
 
-    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True):
+    def save_txtnda(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True, group='ps-users'):
         """Saves n-d array in the formatted text file with hash-type cumments and metadata.
 
            Parameters
@@ -1621,10 +1621,10 @@ class AreaDetector(object):
         list_cmts.append('SOURCE  %s' % gu.string_from_source(self.source))
         # DO NOT ADD metadata for CSPAD and CSPAD2x2
         addmd = False if ndarr.size in (2*185*388, 32*185*388) else addmetad
-        self.pyda.save_txtnda(fname, ndarr, list_cmts, fmt, verbos, addmd)
+        self.pyda.save_txtnda(fname, ndarr, list_cmts, fmt, verbos, addmd, group)
 
 
-    def save_asdaq(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True):
+    def save_asdaq(self, fname='nda.txt', ndarr=None, cmts=(), fmt='%.1f', verbos=False, addmetad=True, group='ps-users'):
         """Saves per-pixel n-d array shaped and ordered as in DAQ.
 
            The same functionality as in the method save_txtnda(...), but array is shuffled to DAQ order.
@@ -1642,7 +1642,7 @@ class AreaDetector(object):
         """
         is_cspad2x2_natural = (ndarr.size == 2*185*388 and len(ndarr.shape)>1 and ndarr.shape[-1] == 388)
         nda = two2x1ToData2x2(ndarr) if is_cspad2x2_natural else ndarr
-        self.save_txtnda(fname, nda, cmts, fmt, verbos, addmetad)
+        self.save_txtnda(fname, nda, cmts, fmt, verbos, addmetad, group)
 
 
     def load_txtnda(self, fname):
