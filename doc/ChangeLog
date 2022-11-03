@@ -7,6 +7,33 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-??
+
+
+2022-11-03 Mikhail Dubrovin
+- COMMON ISSUES:
+	- add/use parameter group='ps-users' for dir/file ownership
+	- change dirmode=2775, filemode=664
+	- add adddict={'logfile':logname} to repoman.save_record_at_start
+  app/deploy_constants
+  app/epix10ka_deploy_constants
+  app/epix10ka_offset_calibration
+  app/epix10ka_pedestals_calibration
+  app/geometry_deploy_constants
+  app/jungfrau_dark_proc
+  app/jungfrau_deploy_constants
+  app/jungfrau_gain_constants - fix str_exp_run converting dsname to <exp>-r<runnum>
+  src/AreaDetector.py - add/use group='ps-users' to save_txtnda and save_asdaq
+  src/PyDetectorAccess.py - add/use group='ps-users' to save_txtnda
+  src/RepoManager.py
+  src/UtilsCalib.py
+  src/UtilsDeployConstants.py
+  src/UtilsEpix10kaCalib.py
+  src/UtilsGeometryDeploy.py
+  src/UtilsJungfrau.py
+  src/UtilsJungfrauCalib.py - replace parameter parser with pargs, popts in jungfrau_deploy_constants/jungfrau_dark_proc
+  src/UtilsLogging.py
+
 Tag: V02-00-53
 2022-10-17 Mikhail Dubrovin
  - src/UtilsEpix10ka.py - fix py2->py3 issue: idx/4 -> int(idx/4)
