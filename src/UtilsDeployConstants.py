@@ -75,8 +75,9 @@ def deploy_constants(**kwa):
     dircalib   = kwa.get('dircalib', None)
     ctype      = kwa.get('ctype', 'gain')   # None
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o2777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode',  0o2775)
+    filemode   = kwa.get('filemode', 0o664)
+    group      = kwa.get('group', 'ps-users')
     deploy     = kwa.get('deploy', False)
     repoman    = kwa.get('repoman', None)
     fname_only = kwa.get('repo_fname_only', False)
@@ -164,19 +165,19 @@ def deploy_constants(**kwa):
 
     if deploy:
         gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'),\
-                       filemode=filemode, dirmode=dirmode)
+                       filemode=filemode, dirmode=dirmode, group=group)
     else:
         logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
 
 
-def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None):
+def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None, dirmode=0o2775, filemode=0o664, group='ps-users'):
     """Usage:
     from Detector.UtilsDeployConstants import file_name_in_repo
     f = file_name_in_repo('xpptut15', 260, 'XcsEndstation.0:Epix100a.1', 'gain', tstamp='20220901120000', rundepl='123')
     """
     from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
     from Detector.RepoManager import RepoManager
-    kwa_rm = {'dirmode':0o2777, 'filemode':0o666, 'dir_log_at_start':DIR_LOG_AT_START}
+    kwa_rm = {'dirmode':dirmode, 'filemode':filemode, 'group':group, 'dir_log_at_start':DIR_LOG_AT_START}
     kwa = {'exp':exp, 'run':runnum, 'det':detname, 'ctype':ctype, 'tstamp':tstamp, 'runrange':rundepl}
     kwa.update(kwa_rm)
     kwa['repoman'] = RepoManager(DIR_REPO, **kwa_rm)
@@ -184,7 +185,8 @@ def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None):
     return deploy_constants(**kwa)
 
 
-def save_epix100a_ctype_in_repo(arr2d, exp, runnum, detname, ctype, tstamp=None, rundepl=None, fmt='%.4f', filemode=0o666, group='ps-users'):
+def save_epix100a_ctype_in_repo(arr2d, exp, runnum, detname, ctype, tstamp=None, rundepl=None, fmt='%.4f',\
+                                dirmode=0o2775, filemode=0o664, group='ps-users'):
     import numpy as np
     from Detector.GlobalUtils import info_ndarr
     from Detector.UtilsCalib import save_ndarray_in_textfile, change_file_ownership  #save_2darray_in_textfile
@@ -193,7 +195,7 @@ def save_epix100a_ctype_in_repo(arr2d, exp, runnum, detname, ctype, tstamp=None,
     assert arr2d.shape == (704,768)
     logger.info('save_epix100a_ctype_in_repo %s' % info_ndarr(arr2d, 'arr2d'))
 
-    fname = file_name_in_repo(exp, runnum, detname, ctype, tstamp=tstamp, rundepl=rundepl)
+    fname = file_name_in_repo(exp, runnum, detname, ctype, tstamp=tstamp, rundepl=rundepl, dirmode=dirmode, filemode=filemode, group=group)
     logger.info('save file: %s' % fname)
 
     save_ndarray_in_textfile(arr2d, fname, filemode, fmt)

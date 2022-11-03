@@ -13,7 +13,7 @@ Usage::
     ts_run, ts_now = tstamps_run_and_now(env, fmt=TSTAMP_FORMAT)
     ts_run = tstamp_for_dataset(dsname, fmt=TSTAMP_FORMAT)
 
-    save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o666)
+    save_log_record_at_start(dirrepo, fname, dirmode=0o2775, filemode=0o664)
     fname = find_file_for_timestamp(dirname, pattern, tstamp)
 
 This software was developed for the SIT project.
@@ -112,16 +112,18 @@ def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
     return lo, hi
 
 
-def save_log_record_at_start(dirrepo, fname, dirmode=0o2777, filemode=0o666, umask=0o0):
+def save_log_record_at_start(dirrepo, fname, dirmode=0o2775, filemode=0o664, umask=0o0, group='ps-users'):
     """Adds record on start to the log file <dirlog>/logs/log-<fname>-<year>.txt
     """
     os.umask(umask)
     rec = log_rec_at_start(tsfmt='%Y-%m-%dT%H:%M:%S', **{'dirrepo':dirrepo,})
-    repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode)
+    repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, group=group)
     logfname = repoman.logname_at_start(fname)
     fexists = os.path.exists(logfname)
     save_textfile(rec, logfname, mode='a')
-    if not fexists: os.chmod(logfname, filemode)
+    if not fexists:
+        os.chmod(logfname, filemode)
+        change_file_ownership(logfname, user=None, group=group)
     logger.info('record at start: %s\nsaved in: %s' % (rec,logfname))
     #return logfname, rec
 
@@ -136,19 +138,23 @@ def change_file_ownership(fname, user=None, group='ps-users'):
     os.chown(fname, uid, gid) # for non-default user - OSError: [Errno 1] Operation not permitted
 
 
-def save_2darray_in_textfile(nda, fname, fmode, fmt, umask=0o0):
+def save_2darray_in_textfile(nda, fname, fmode, fmt, umask=0o0, group='ps-users'):
     os.umask(umask)
     fexists = os.path.exists(fname)
     np.savetxt(fname, nda, fmt=fmt)
-    if not fexists: os.chmod(fname, fmode)
+    if not fexists:
+        os.chmod(fname, fmode)
+        change_file_ownership(fname, user=None, group=group)
     logger.info('saved:  %s' % fname)
 
 
-def save_ndarray_in_textfile(nda, fname, fmode, fmt, umask=0o0):
+def save_ndarray_in_textfile(nda, fname, fmode, fmt, umask=0o0, group='ps-users'):
     os.umask(umask)
     fexists = os.path.exists(fname)
     save_txt(fname=fname, arr=nda, fmt=fmt)
-    if not fexists: os.chmod(fname, fmode)
+    if not fexists:
+        os.chmod(fname, fmode)
+        change_file_ownership(fname, user=None, group=group)
     logger.debug('saved: %s fmode: %s fmt: %s' % (fname, oct(fmode), fmt))
 
 
@@ -174,8 +180,9 @@ class RepoManager(object):
 
     def __init__(self, dirrepo, **kwa):
         self.dirrepo = dirrepo.rstrip('/')
-        self.dirmode     = kwa.get('dirmode',  0o2777)
-        self.filemode    = kwa.get('filemode', 0o666)
+        self.dirmode     = kwa.get('dirmode',  0o2775)
+        self.filemode    = kwa.get('filemode', 0o664)
+        self.group       = kwa.get('group', 'ps-users')
         self.umask       = kwa.get('umask', 0o0)
         self.dirname_log = kwa.get('dirname_log', 'logs')
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))

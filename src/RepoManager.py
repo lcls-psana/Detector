@@ -46,8 +46,8 @@ logger = logging.getLogger(__name__)
 import os
 from time import time, strftime, localtime
 import PSCalib.GlobalUtils as cgu
-log_rec_at_start, create_directory, save_textfile =\
-  cgu.log_rec_at_start, cgu.create_directory, cgu.save_textfile
+log_rec_at_start, create_directory, save_textfile, change_file_ownership =\
+  cgu.log_rec_at_start, cgu.create_directory, cgu.save_textfile, cgu.change_file_ownership
 TSTAMP_FORMAT = '%Y%m%d%H%M%S'
 
 
@@ -67,6 +67,7 @@ class RepoManager():
         self.dettype     = kwa.get('dettype', None)
         self.filemode    = kwa.get('filemode', 0o666)
         self.umask       = kwa.get('umask', 0o0)
+        self.group       = kwa.get('group', 'ps-users')
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
         self.dir_log_at_start = kwa.get('dir_log_at_start', '/cds/group/psdm/logs/atstart')
@@ -78,7 +79,7 @@ class RepoManager():
     def makedir(self, d):
         """create and return directory d with mode defined in object property
         """
-        create_directory(d, self.dirmode)
+        create_directory(d, mode=self.dirmode, group=self.group)
         if not os.path.exists(d): logger.error('NOT CREATED DIRECTORY %s' % d)
         return d
 
@@ -239,7 +240,9 @@ class RepoManager():
         logfname = self.logname_at_start_lcls1(procname)
         fexists = os.path.exists(logfname)
         save_textfile(rec, logfname, mode='a')
-        if not fexists: os.chmod(logfname, self.filemode)
+        if not fexists:
+            os.chmod(logfname, self.filemode)
+            change_file_ownership(logfname, user=None, group=self.group)
         logger.info('record at start: %s\nsaved in: %s' % (rec, logfname))
 
 # EOF

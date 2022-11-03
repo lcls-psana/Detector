@@ -23,7 +23,7 @@ import sys
 import psana
 import numpy as np
 from time import time #, localtime, strftime
-from Detector.GlobalUtils import info_command_line_parameters
+from Detector.GlobalUtils import info_kwargs  # info_command_line_parameters
 
 import PSCalib.GlobalUtils as gu
 from Detector.PyDataAccess import get_jungfrau_gain_mode_object #get_jungfrau_data_object, get_jungfrau_config_object
@@ -143,13 +143,13 @@ def selected_record(i, events):
        or i>events-5
 
 
-def jungfrau_dark_proc(parser):
+def jungfrau_dark_proc(pargs, popts):
     """jungfrau dark data processing for single (of 3) gain mode.
     """
     t0_sec = time()
     tdt = t0_sec
 
-    (popts, pargs) = parser.parse_args()
+    #(popts, pargs) = parser.parse_args()
 
     kwargs = vars(popts) # dict of options
 
@@ -165,13 +165,15 @@ def jungfrau_dark_proc(parser):
 
     dirrepo = popts.dirrepo
 
-    dirmode  = kwargs.get('dirmode',  0o2777)
-    filemode = kwargs.get('filemode', 0o666)
+    dirmode  = kwargs.get('dirmode',  0o2775)
+    filemode = kwargs.get('filemode', 0o664)
+    group    = kwargs.get('group', 'ps-users')
 
     #clbdir = popts.clbdir
     #if clbdir is not None: psana.setOption('psana.calib-dir', clbdir)
 
-    logger.info(info_command_line_parameters(parser))
+    #logger.info(info_command_line_parameters(parser))
+    logger.info(info_kwargs(kwargs))
 
     ecm = False
     if evcode is not None:
@@ -379,8 +381,9 @@ def save_results(dpo, **kwa):
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     segind     = kwa.get('segind', None)
     panel_type = kwa.get('panel_type', 'jungfrau')
-    dirmode    = kwa.get('dirmode', 0o2777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode', 0o2775)
+    filemode   = kwa.get('filemode', 0o664)
+    group      = kwa.get('group', 'ps-users')
     fmt_peds   = kwa.get('fmt_peds',   '%.3f')
     fmt_rms    = kwa.get('fmt_rms',    '%.3f')
     fmt_status = kwa.get('fmt_status', '%4i')
@@ -415,7 +418,8 @@ def save_results(dpo, **kwa):
 
     #ctypes = list_save[:][0]
 
-    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START)
+    #repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START, group=group)
+    repoman = kwa.get('repoman', None)
     #dlog = repoman.dir_logs_year()
 
     panel_ids = detid.split('_')
@@ -435,7 +439,7 @@ def save_results(dpo, **kwa):
             dirname = repoman.makedir_type(panel_id, ctype)
             fname = '%s/%s_%s_gm%d-%s.dat' % (dirname, fname_prefix, ctype, gmindex, gmname)
             arr2d = arr[i,:] if segind is None else arr
-            uc.save_2darray_in_textfile(arr2d, fname, filemode, fmt)
+            uc.save_2darray_in_textfile(arr2d, fname, filemode, fmt, umask=0o0, group=group)
 
 
 def info_object_dir(o, sep=',\n  '):
@@ -473,7 +477,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
     return cpdic
 
 
-def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o666, errskip=True):
+def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o664, errskip=True, group='ps-users'):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -509,7 +513,7 @@ def merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname
 
     nda.shape = (3, 1, 512, 1024)
     logger.debug(info_ndarr(nda, 'merged %s'%ctype))
-    uc.save_ndarray_in_textfile(nda, ofname, fac_mode, fmt)
+    uc.save_ndarray_in_textfile(nda, ofname, fac_mode, fmt, umask=0o0, group=group)
 
     nda.shape = (3, 1, 512, 1024) # because save_ndarray_in_textfile changes shape
     return nda
@@ -529,14 +533,16 @@ def check_exists(path, errskip, msg):
             sys.exit(1)
 
 
-def jungfrau_deploy_constants(parser):
+def jungfrau_deploy_constants(pargs, popts):
     """jungfrau deploy constants
     """
     t0_sec = time()
-    logger.info(info_command_line_parameters(parser))
 
-    (popts, pargs) = parser.parse_args()
+    #(popts, pargs) = parser.parse_args()
     kwa = vars(popts) # dict of options
+
+    #logger.info(info_command_line_parameters(parser))
+    logger.info(info_kwargs(kwa))
 
     exp        = kwa.get('exp', None)
     detname    = kwa.get('det', None)
@@ -548,8 +554,9 @@ def jungfrau_deploy_constants(parser):
     deploy     = kwa.get('deploy', False)
     errskip    = kwa.get('errskip', False)
     logmode    = kwa.get('logmode', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o2777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode',  0o2775)
+    filemode   = kwa.get('filemode', 0o664)
+    group      = kwa.get('group', 'ps-users')
     gain0      = kwa.get('gain0', 41.5)    # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g0_gain.npy
     gain1      = kwa.get('gain1', -1.39)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g1_gain.npy
     gain2      = kwa.get('gain2', -0.11)   # ADU/keV ? /reg/g/psdm/detector/gains/jungfrau/MDEF/g2_gain.npy
@@ -592,7 +599,8 @@ def jungfrau_deploy_constants(parser):
 
     logger.debug('search for calibration files with tstamp <= %s' % tstamp)
 
-    repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START)
+    #repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START, group=group)
+    repoman = kwa.get('repoman', None)
 
     mpars = {\
       'pedestals':    ('pedestals', fmt_peds),\
@@ -622,7 +630,7 @@ def jungfrau_deploy_constants(parser):
             dir_ctype = repoman.dir_type(panel_id, ctype)
             #logger.info('  dir_ctype: %s' % dir_ctype)
             fname = '%s/%s_%s.txt' % (dir_ctype, fname_prefix, ctype)
-            nda = merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape_panel, fname, fmt, filemode, errskip=errskip)
+            nda = merge_jf_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape_panel, fname, fmt, filemode, errskip=errskip, group=group)
             logger.info('-- save array of panel constants "%s" merged for 3 gain ranges shaped as %s in file\n%s%s\n'\
                         % (ctype, str(nda.shape), 21*' ', fname))
 
@@ -641,7 +649,7 @@ def jungfrau_deploy_constants(parser):
         logger.info(info_ndarr(lst_nda, 'merged constants for %s' % octype))
         fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
         fmt = mpars[octype][1]
-        uc.save_ndarray_in_textfile(lst_nda, fmerge, filemode, fmt)
+        uc.save_ndarray_in_textfile(lst_nda, fmerge, filemode, fmt, umask=0o0, group=group)
 
         if dircalib is not None: calibdir = dircalib
         #ctypedir = .../calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'

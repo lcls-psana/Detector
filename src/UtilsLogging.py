@@ -23,7 +23,7 @@ def basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message
     logging.basicConfig(format=format, level=loglevel)
 
 
-def init_logger(loglevel='DEBUG', logfname=None, fmt=None):
+def init_logger(loglevel='DEBUG', logfname=None, fmt=None, group='ps-users'):
 
     int_loglevel = DICT_NAME_TO_LEVEL[loglevel.upper()]
 

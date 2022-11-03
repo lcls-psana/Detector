@@ -381,7 +381,7 @@ def _find_panel_calib_dir(panel, dnos, tstamp=None):
     elif tstamp is None: return sorted_lst[-1].dname # return latest
     else: # select for time stamp
         for i,o in enumerate(sorted_lst[1:]):
-            if o.int_ts > tstamp: return sorted_lst[i].dname # previous item in the list started from [1:]
+            if o.int_ts > int(tstamp): return sorted_lst[i].dname # previous item in the list started from [1:]
     return sorted_lst[-1].dname # return latest
 
 
@@ -401,10 +401,10 @@ def find_panel_calib_dirs(jfid, dname, tstamp=None):
     return [_find_panel_calib_dir(panel, dnos, tstamp) for panel in jfid.split('_')]
 
 
-def merge_panel_constants(dirs, ifname='%s/g%d_gain.npy', ofname='jf_pixel_gain', ofmt='%.4f'):
+def merge_panel_constants(dirs, ifname='%s/g%d_gain.npy', ofname='jf_pixel_gain', ofmt='%.4f', filemode=0o664, group='ps-users'):
     import sys
     from PSCalib.NDArrIO import save_txt
-
+    from Detector.UtilsCalib import change_file_ownership
     lst_gains = []
     for gi in range(3):
         lst_segs = []
@@ -427,10 +427,15 @@ def merge_panel_constants(dirs, ifname='%s/g%d_gain.npy', ofname='jf_pixel_gain'
 
     #sh = (3,<nsegs>,512,1024)
 
-    np.save('%s.npy'%ofname, nda)
+    fname = '%s.npy'%ofname
+    fexists = os.path.exists(fname)
+    np.save(fname, nda)
+    if not fexists:
+        os.chmod(fname, filemode)
+        change_file_ownership(fname, user=None, group=group)
     logger.info('Save file "%s"' % ('%s.npy'%ofname))
 
-    save_txt('%s.txt'%ofname, nda, fmt=ofmt)
+    save_txt('%s.txt'%ofname, nda, fmt=ofmt, filemode=filemode, group=group)
     logger.info('Save file "%s"' % ('%s.txt'%ofname))
 
 

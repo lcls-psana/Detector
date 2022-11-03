@@ -745,8 +745,9 @@ def offset_calibration(*args, **opts):
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
     usesmd     = opts.get('usesmd', False)
-    dirmode    = opts.get('dirmode', 0o2777)
-    filemode   = opts.get('filemode', 0o666)
+    dirmode    = opts.get('dirmode', 0o2775)
+    filemode   = opts.get('filemode', 0o664)
+    group      = opts.get('group', 'ps-users')
     ixoff      = opts.get('ixoff', 10)
     nperiods   = opts.get('nperiods', True)
     ccnum      = opts.get('ccnum', None)
@@ -799,14 +800,14 @@ def offset_calibration(*args, **opts):
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
 
-    create_directory(dir_panel,  mode=dirmode)
-    create_directory(dir_offset, mode=dirmode)
-    create_directory(dir_peds,   mode=dirmode)
-    create_directory(dir_plots,  mode=dirmode)
-    create_directory(dir_work,   mode=dirmode)
-    create_directory(dir_gain,   mode=dirmode)
-    create_directory(dir_rms,    mode=dirmode)
-    create_directory(dir_status, mode=dirmode)
+    create_directory(dir_panel,  mode=dirmode, group=group)
+    create_directory(dir_offset, mode=dirmode, group=group)
+    create_directory(dir_peds,   mode=dirmode, group=group)
+    create_directory(dir_plots,  mode=dirmode, group=group)
+    create_directory(dir_work,   mode=dirmode, group=group)
+    create_directory(dir_gain,   mode=dirmode, group=group)
+    create_directory(dir_rms,    mode=dirmode, group=group)
+    create_directory(dir_status, mode=dirmode, group=group)
 
     chi2_ml=np.zeros((ny,nx,2))
     chi2_hl=np.zeros((ny,nx,2))
@@ -911,10 +912,10 @@ def offset_calibration(*args, **opts):
                 logger.debug(msg)
 
                 fname = '%s_rms_%s.dat' % (prefix_rms, GAIN_MODES[nstep])
-                save_2darray_in_textfile(nda_rms, fname, filemode, fmt_rms)
+                save_2darray_in_textfile(nda_rms, fname, filemode, fmt_rms, umask=0o0, group=group)
 
                 fname = '%s_status_%s.dat' % (prefix_status, GAIN_MODES[nstep])
-                save_2darray_in_textfile(nda_status, fname, filemode, fmt_status)
+                save_2darray_in_textfile(nda_status, fname, filemode, fmt_status, umask=0o0, group=group)
 
             ####################
             elif not dooffs:
@@ -1108,16 +1109,16 @@ def offset_calibration(*args, **opts):
     fname_gain_AML_L = '%s_gainci_AML-L.dat' % prefix_gain
     fname_gain_AHL_H = '%s_gainci_AHL-H.dat' % prefix_gain
     fname_gain_AHL_L = '%s_gainci_AHL-L.dat' % prefix_gain
-    save_2darray_in_textfile(gain_ml_m, fname_gain_AML_M, filemode, fmt_gain)
-    save_2darray_in_textfile(gain_ml_l, fname_gain_AML_L, filemode, fmt_gain)
-    save_2darray_in_textfile(gain_hl_h, fname_gain_AHL_H, filemode, fmt_gain)
-    save_2darray_in_textfile(gain_hl_l, fname_gain_AHL_L, filemode, fmt_gain)
+    save_2darray_in_textfile(gain_ml_m, fname_gain_AML_M, filemode, fmt_gain, umask=0o0, group=group)
+    save_2darray_in_textfile(gain_ml_l, fname_gain_AML_L, filemode, fmt_gain, umask=0o0, group=group)
+    save_2darray_in_textfile(gain_hl_h, fname_gain_AHL_H, filemode, fmt_gain, umask=0o0, group=group)
+    save_2darray_in_textfile(gain_hl_l, fname_gain_AHL_L, filemode, fmt_gain, umask=0o0, group=group)
 
     #Save gain ratios:
     #fname_gain_RHL = '%s_gainci_RHoL.dat' % prefix_gain
     #fname_gain_RML = '%s_gainci_RMoL.dat' % prefix_gain
-    #save_2darray_in_textfile(divide_protected(gain_hl_h, gain_hl_l), fname_gain_RHL, filemode, fmt_gain)
-    #save_2darray_in_textfile(divide_protected(gain_ml_m, gain_ml_l), fname_gain_RML, filemode, fmt_gain)
+    #save_2darray_in_textfile(divide_protected(gain_hl_h, gain_hl_l), fname_gain_RHL, filemode, fmt_gain, umask=0o0, group=group)
+    #save_2darray_in_textfile(divide_protected(gain_ml_m, gain_ml_l), fname_gain_RML, filemode, fmt_gain, umask=0o0, group=group)
 
     if savechi2:
         #Save chi2s:
@@ -1129,10 +1130,10 @@ def offset_calibration(*args, **opts):
         fname_chi2_AML_L = '%s_chi2ci_AML-L.dat' % prefix_gain
         fname_chi2_AHL_H = '%s_chi2ci_AHL-H.dat' % prefix_gain
         fname_chi2_AHL_L = '%s_chi2ci_AHL-L.dat' % prefix_gain
-        save_2darray_in_textfile(chi2_ml_m, fname_chi2_AML_M, filemode, fmt_chi2)
-        save_2darray_in_textfile(chi2_ml_l, fname_chi2_AML_L, filemode, fmt_chi2)
-        save_2darray_in_textfile(chi2_hl_h, fname_chi2_AHL_H, filemode, fmt_chi2)
-        save_2darray_in_textfile(chi2_hl_l, fname_chi2_AHL_L, filemode, fmt_chi2)
+        save_2darray_in_textfile(chi2_ml_m, fname_chi2_AML_M, filemode, fmt_chi2, umask=0o0, group=group)
+        save_2darray_in_textfile(chi2_ml_l, fname_chi2_AML_L, filemode, fmt_chi2, umask=0o0, group=group)
+        save_2darray_in_textfile(chi2_hl_h, fname_chi2_AHL_H, filemode, fmt_chi2, umask=0o0, group=group)
+        save_2darray_in_textfile(chi2_hl_l, fname_chi2_AHL_L, filemode, fmt_chi2, umask=0o0, group=group)
 
     #Save offsets:
     offset_ml_m = fits_ml[:,:,0,1]
@@ -1143,23 +1144,23 @@ def offset_calibration(*args, **opts):
     fname_offset_AML_L = '%s_offset_AML-L.dat' % prefix_offset
     fname_offset_AHL_H = '%s_offset_AHL-H.dat' % prefix_offset
     fname_offset_AHL_L = '%s_offset_AHL-L.dat' % prefix_offset
-    save_2darray_in_textfile(offset_ml_m, fname_offset_AML_M, filemode, fmt_offset)
-    save_2darray_in_textfile(offset_ml_l, fname_offset_AML_L, filemode, fmt_offset)
-    save_2darray_in_textfile(offset_hl_h, fname_offset_AHL_H, filemode, fmt_offset)
-    save_2darray_in_textfile(offset_hl_l, fname_offset_AHL_L, filemode, fmt_offset)
+    save_2darray_in_textfile(offset_ml_m, fname_offset_AML_M, filemode, fmt_offset, umask=0o0, group=group)
+    save_2darray_in_textfile(offset_ml_l, fname_offset_AML_L, filemode, fmt_offset, umask=0o0, group=group)
+    save_2darray_in_textfile(offset_hl_h, fname_offset_AHL_H, filemode, fmt_offset, umask=0o0, group=group)
+    save_2darray_in_textfile(offset_hl_l, fname_offset_AHL_L, filemode, fmt_offset, umask=0o0, group=group)
 
     #Save offsets:
     offset_ahl = offset_hl_h - offset_hl_l # 2020-06-19 M.D. - difference at 0 is taken as offset for peds
     offset_aml = offset_ml_m - offset_ml_l # 2020-06-19 M.D. - difference at 0 is taken as offset for peds
     fname_offset_AHL = '%s_offset_AHL.dat' % prefix_offset
     fname_offset_AML = '%s_offset_AML.dat' % prefix_offset
-    save_2darray_in_textfile(offset_ahl, fname_offset_AHL, filemode, fmt_offset)
-    save_2darray_in_textfile(offset_aml, fname_offset_AML, filemode, fmt_offset)
+    save_2darray_in_textfile(offset_ahl, fname_offset_AHL, filemode, fmt_offset, umask=0o0, group=group)
+    save_2darray_in_textfile(offset_aml, fname_offset_AML, filemode, fmt_offset, umask=0o0, group=group)
 
     #Save darks accounting offset whenever appropriate:
     for i in range(5):  #looping through darks measured in Jack's order
         fname = '%s_pedestals_%s.dat' % (prefix_peds, GAIN_MODES[i])
-        save_2darray_in_textfile(darks[i,:,:], fname, filemode, fmt_peds)
+        save_2darray_in_textfile(darks[i,:,:], fname, filemode, fmt_peds, umask=0o0, group=group)
 
         if i==3:    # evaluate AHL_L from AHL_H
             ped_hl_h = darks[i,:,:]
@@ -1167,7 +1168,7 @@ def offset_calibration(*args, **opts):
             #ped_hl_l = ped_hl_h - offset_ahl + (offset_hl_h - ped_hl_h) * divide_protected(gain_hl_l, gain_hl_h) #V2
             ped_hl_l = offset_hl_l - (offset_hl_h - ped_hl_h) * divide_protected(gain_hl_l, gain_hl_h) #V3 Gabriel's
             fname = '%s_pedestals_AHL-L.dat' % prefix_peds
-            save_2darray_in_textfile(ped_hl_l, fname, filemode, fmt_peds)
+            save_2darray_in_textfile(ped_hl_l, fname, filemode, fmt_peds, umask=0o0, group=group)
 
         elif i==4:  # evaluate AML_L from AML_M
             ped_ml_m = darks[i,:,:]
@@ -1175,7 +1176,7 @@ def offset_calibration(*args, **opts):
             #ped_ml_l = ped_ml_m - offset_aml + (offset_ml_m - ped_ml_m) * divide_protected(gain_ml_l, gain_ml_m) #V2
             ped_ml_l = offset_ml_l - (offset_ml_m - ped_ml_m) * divide_protected(gain_ml_l, gain_ml_m) #V3 Gabriel's
             fname = '%s_pedestals_AML-L.dat' % prefix_peds
-            save_2darray_in_textfile(ped_ml_l, fname, filemode, fmt_peds)
+            save_2darray_in_textfile(ped_ml_l, fname, filemode, fmt_peds, umask=0o0, group=group)
 
     if display:
         plt.close("all")
@@ -1247,8 +1248,9 @@ def pedestals_calibration(*args, **opts):
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
     idx_sel    = opts.get('idx', None)
-    dirmode    = opts.get('dirmode', 0o2777)
-    filemode   = opts.get('filemode', 0o666)
+    dirmode    = opts.get('dirmode', 0o2775)
+    filemode   = opts.get('filemode', 0o664)
+    group      = opts.get('group', 'ps-users')
     usesmd     = opts.get('usesmd', False)
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
@@ -1381,12 +1383,12 @@ def pedestals_calibration(*args, **opts):
             #assert os.path.exists(dir_offset), 'Directory "%s" DOES NOT EXIST' % dir_offset
             #assert os.path.exists(dir_peds),   'Directory "%s" DOES NOT EXIST' % dir_peds
 
-            create_directory(dir_panel,  mode=dirmode)
-            create_directory(dir_peds,   mode=dirmode)
-            create_directory(dir_offset, mode=dirmode)
-            create_directory(dir_gain,   mode=dirmode)
-            create_directory(dir_rms,    mode=dirmode)
-            create_directory(dir_status, mode=dirmode)
+            create_directory(dir_panel,  mode=dirmode, group=group)
+            create_directory(dir_peds,   mode=dirmode, group=group)
+            create_directory(dir_offset, mode=dirmode, group=group)
+            create_directory(dir_gain,   mode=dirmode, group=group)
+            create_directory(dir_rms,    mode=dirmode, group=group)
+            create_directory(dir_status, mode=dirmode, group=group)
 
             #dark=block[:nrec,:].mean(0)  #Calculate mean
 
@@ -1394,13 +1396,13 @@ def pedestals_calibration(*args, **opts):
             dark, rms, status = proc_dark_block(block[:nrec,idx,:], **opts) # process pedestals per-panel (352, 384)
 
             fname = '%s_pedestals_%s.dat' % (prefix_peds, mode)
-            save_2darray_in_textfile(dark, fname, filemode, fmt_peds)
+            save_2darray_in_textfile(dark, fname, filemode, fmt_peds, umask=0o0, group=group)
 
             fname = '%s_rms_%s.dat' % (prefix_rms, mode)
-            save_2darray_in_textfile(rms, fname, filemode, fmt_rms)
+            save_2darray_in_textfile(rms, fname, filemode, fmt_rms, umask=0o0, group=group)
 
             fname = '%s_status_%s.dat' % (prefix_status, mode)
-            save_2darray_in_textfile(status, fname, filemode, fmt_status)
+            save_2darray_in_textfile(status, fname, filemode, fmt_status, umask=0o0, group=group)
 
             #if this is an auto gain ranging mode, also calculate the corresponding _L pedestal:
 
@@ -1416,7 +1418,7 @@ def pedestals_calibration(*args, **opts):
                 if all([v is not None for v in (offset_hl_h, offset_hl_l, gain_hl_h, gain_hl_l)]):
                     ped_hl_l = offset_hl_l - (offset_hl_h - ped_hl_h) * divide_protected(gain_hl_l, gain_hl_h) #V3 Gabriel's
                     fname = '%s_pedestals_AHL-L.dat' % prefix_peds
-                    save_2darray_in_textfile(ped_hl_l, fname, filemode, fmt_peds)
+                    save_2darray_in_textfile(ped_hl_l, fname, filemode, fmt_peds, umask=0o0, group=group)
 
             elif mode=='AML-M': # evaluate AML_L from AML_M
                 ped_ml_m = dark #[4,:,:]
@@ -1430,11 +1432,11 @@ def pedestals_calibration(*args, **opts):
                 if all([v is not None for v in (offset_ml_m, offset_ml_l, gain_ml_m, gain_ml_l)]):
                     ped_ml_l = offset_ml_l - (offset_ml_m - ped_ml_m) * divide_protected(gain_ml_l, gain_ml_m) #V3 Gabriel's
                     fname = '%s_pedestals_AML-L.dat' % prefix_peds
-                    save_2darray_in_textfile(ped_ml_l, fname, filemode, fmt_peds)
+                    save_2darray_in_textfile(ped_ml_l, fname, filemode, fmt_peds, umask=0o0, group=group)
     #logger.info('==== Completed pedestal calibration for rank %d ==== ' % rank)
 
 
-def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o777, errskip=True):
+def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, fmt='%.3f', fac_mode=0o664, errskip=True, group='ps-users'):
 
     logger.debug('In merge_panel_gain_ranges for\n  dir_ctype: %s\n  id: %s\n  ctype=%s tstamp=%s shape=%s'%\
                  (dir_ctype, panel_id, ctype, str(tstamp), str(shape)))
@@ -1520,7 +1522,7 @@ def merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, ofname, f
 
     nda.shape = (7, 1, 352, 384)
     logger.debug(info_ndarr(nda, 'merged %s'%ctype))
-    save_ndarray_in_textfile(nda, ofname, fac_mode, fmt)
+    save_ndarray_in_textfile(nda, ofname, fac_mode, fmt, umask=0o0, group=group)
 
     nda.shape = (7, 1, 352, 384) # because save_ndarray_in_textfile changes shape
     return nda
@@ -1568,7 +1570,7 @@ def check_exists(path, errskip, msg):
     if path is None or (not os.path.exists(path)):
         if errskip: logger.warning(msg)
         else:
-            msg += '\n  to fix this issue please process this or previous dark run using command jungfrau_dark_proc'\
+            msg += '\n  to fix this issue please process this or previous dark run using command epix10ka_pedestals_calibration / jungfrau_dark_proc'\
                    '\n  or add the command line parameter -E or --errskip to skip missing file errors, use default, and force to deploy constants.'
             logger.error(msg)
             sys.exit(1)
@@ -1593,8 +1595,9 @@ def deploy_constants(*args, **opts):
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
     fmt_status = opts.get('fmt_status', '%4i')
     logmode    = opts.get('logmode', 'DEBUG')
-    dirmode    = opts.get('dirmode',  0o2777)
-    filemode   = opts.get('filemode', 0o666)
+    dirmode    = opts.get('dirmode',  0o2775)
+    filemode   = opts.get('filemode', 0o664)
+    group      = opts.get('group', 'ps-users')
     high       = opts.get('high',   16.40) # ADU/keV #High gain: 132 ADU / 8.05 keV = 16.40 ADU/keV
     medium     = opts.get('medium', 5.466) # ADU/keV #Medium gain: 132 ADU / 8.05 keV / 3 = 5.466 ADU/keV
     low        = opts.get('low',    0.164) # ADU/keV#Low gain: 132 ADU / 8.05 keV / 100 = 0.164 ADU/keV
@@ -1673,14 +1676,14 @@ def deploy_constants(*args, **opts):
             fmt = CTYPE_FMT.get(octype,'%.5f')
             logger.debug('begin merging for ctype:%s, octype:%s, fmt:%s,\n  prefix:%s' % (ctype, octype, fmt, prefix))
             fname = '%s_%s.txt' % (prefix, ctype)
-            nda = merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, fname, fmt, filemode, errskip=errskip)
+            nda = merge_panel_gain_ranges(dir_ctype, panel_id, ctype, tstamp, shape, fname, fmt, filemode, errskip=errskip, group=group)
             if octype in dic_consts: dic_consts[octype].append(nda) # append for panel per ctype
             else:                    dic_consts[octype] = [nda,]
 
     logger.info('\n%s\nmerge panel constants and deploy them' % (80*'_'))
 
     dmerge = dir_merge(dirrepo)
-    create_directory(dmerge, mode=dirmode)
+    create_directory(dmerge, mode=dirmode, group=group)
     fmerge_prefix = fname_prefix_merge(dmerge, detname, tstamp, exp, irun)
 
     for octype, lst in dic_consts.items():
@@ -1688,7 +1691,7 @@ def deploy_constants(*args, **opts):
         logger.info(info_ndarr(mrg_nda, 'merged constants for %s' % octype))
         fmerge = '%s-%s.txt' % (fmerge_prefix, octype)
         fmt = CTYPE_FMT.get(octype,'%.5f')
-        save_ndarray_in_textfile(mrg_nda, fmerge, filemode, fmt)
+        save_ndarray_in_textfile(mrg_nda, fmerge, filemode, fmt, umask=0o0, group=group)
 
         if dircalib is not None: calibdir = dircalib
         #ctypedir = .../calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
@@ -1700,7 +1703,8 @@ def deploy_constants(*args, **opts):
             lfname   = None
             verbos   = True
             logger.info('deploy file %s/%s/%s' % (ctypedir, octype, ofname))
-            deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'))
+            deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'),\
+                       filemode=filemode, dirmode=dirmode, group=group)
         else:
             logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
 
@@ -1730,8 +1734,9 @@ def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
     dirrepo    = kwargs.get('dirrepo', CALIB_REPO_EPIX10KA)
     ctype      = kwargs.get('ctype', 'offset')
     fmt        = kwargs.get('fmt', '%.6f')
-    filemode   = kwargs.get('filemode', 0o666)
-    dirmode    = kwargs.get('dirmode', 0o2777)
+    filemode   = kwargs.get('filemode', 0o664)
+    dirmode    = kwargs.get('dirmode', 0o2775)
+    group      = kwargs.get('group', 'ps-users')
 
     dsname = 'exp=%s:run=%d'%(exp,runnum)
 
@@ -1772,15 +1777,15 @@ def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
         logging.debug('cdir: %s'% cdir)
         logging.debug('prefix: %s'% prefix)
 
-        create_directory(dir_panel,  mode=dirmode)
-        create_directory(cdir, mode=dirmode)
+        create_directory(dir_panel, mode=dirmode, group=group)
+        create_directory(cdir,      mode=dirmode, group=group)
 
         fname= '%s_%s_%s.dat' % (prefix, ctype, gmode)
 
         logging.info('%s\n  panel %02d: %s'% (78*'_', idx, panel_id)\
           + info_ndarr(arr2d, '\n  arr2d'))
 
-        save_2darray_in_textfile(arr2d, fname, filemode, fmt)
+        save_2darray_in_textfile(arr2d, fname, filemode, fmt, umask=0o0, group=group)
 
 
 if __name__ == "__main__":

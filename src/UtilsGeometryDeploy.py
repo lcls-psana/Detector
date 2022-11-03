@@ -71,8 +71,9 @@ def geometry_deploy_constants(**kwa):
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
     loglev     = kwa.get('loglev', 'DEBUG')
-    dirmode    = kwa.get('dirmode',  0o2777)
-    filemode   = kwa.get('filemode', 0o666)
+    dirmode    = kwa.get('dirmode',  0o2775)
+    filemode   = kwa.get('filemode', 0o664)
+    group      = kwa.get('group', 'ps-users')
     repoman    = kwa.get('repoman', None)
     name_parent= kwa.get('parent', 'IP')
 
@@ -158,7 +159,8 @@ def geometry_deploy_constants(**kwa):
         ofname   = '%s.data' % runrange
         lfname   = None
         logger.info('deploy calib file %s under %s/%s' % (fname, ctypedir, octype))
-        gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(loglev=='DEBUG'))
+        gu.deploy_file(fname, ctypedir, octype, ofname, lfname, verbos=(loglev=='DEBUG'),\
+                       filemode=filemode, dirmode=dirmode, group=group)
     else:
         logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
 # EOF
