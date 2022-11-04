@@ -103,7 +103,7 @@ def option_parser() :
     h_idx     = 'panel index (0-15/3 for epix10ka2m/quad), default = %s' % str(d_idx)
     h_nbs     = 'number of frames to calibrate offsets, default = %s' % str(d_nbs)
     h_nspace  = 'space between calibrated pixels, default = %s' % str(d_nspace)
-    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
     h_display = 'turn off graphical display, default = %s' % d_display
     h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
@@ -116,7 +116,7 @@ def option_parser() :
     h_skipncc = 'skip number of first consecutive calibcycles for debugging, default = %s' % str(d_skipncc)
     h_errskip = 'flag to skip errors and keep processing (stop otherwise), default = %s' % d_errskip
     h_savechi2= 'save chi2 files, default = %s' % d_savechi2
-    h_pixrc   = 'selected pixel for graphics: comma separated pixel row and column, ex. 23,234, default = %s' % d_pixrc
+    h_pixrc   = 'selected pixel for graphics: comma separated pixel row and colon, ex. 23,234, default = %s' % d_pixrc
     h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
     h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
     h_group   = 'group ownership for all files, default = %s' % d_group

@@ -86,7 +86,7 @@ def option_parser():
     h_ccnum   = 'calibcycle number [0,4] or all by default, default = %s' % str(d_ccnum)
     h_ccmax   = 'maximal number of calib-cycles to process, default = %s' % str(d_ccmax)
     h_idx     = 'selected panel index (0-15/3 for epix10ka2m/quad) or all by default, default = %s' % str(d_idx)
-    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
     h_errskip = 'flag to skip errors and keep processing (stop otherwise), default = %s' % d_errskip

@@ -247,7 +247,7 @@ def argument_parser():
     h_detname = 'detector name, e.g. %s' % d_detname
     h_expname = 'experiment name, e.g. %s' % d_expname
     h_runs    = 'run number or list of runs e.g. 12,14,18 or 12, default = %s' % str(d_runs)
-    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_events  = 'maximal number of events total (in runs, steps), default = %s' % d_events
     h_evskip  = 'number of events to skip in the beginning of each step, default = %s' % d_evskip
     h_evtkeys  = 'number of events to print event keys, default = %s' % d_evtkeys

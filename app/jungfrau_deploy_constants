@@ -51,7 +51,7 @@ def option_parser():
     h_run     = 'run number for beginning of the validity range, default = %s' % str(d_run)
     h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
-    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_paninds = 'comma-separated (str) panel indexds to generate constants for subset of panels (ex. 2 panel of 8 in the detector), default = %s' % d_paninds

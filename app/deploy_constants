@@ -69,7 +69,7 @@ def argument_parser():
     h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
     h_tstamp  = 'non-default time stamp (YYYYmmddHHMMSS) to search for constants in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
-    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'non-default deployment calib directory, different from standard one, default = %s' % d_dircalib
     h_ctype   = 'calibration type [gain, common_mode, etc.], default = %s' % str(d_ctype)
