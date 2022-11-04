@@ -19,7 +19,7 @@ USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> -C <calib-type> [-D]
       + '\n    -e xpptut15 -r 260                                      # exp=xpptut15:run=260'\
       + '\n    -e xpptut15 -r 260 -s :smd                              # exp=xpptut15:run=260:smd'\
       + '\n    -e xpptut15 -r 260 -s :dir=path/xtc::stream=0-79        # exp=xpptut15:run=260:dir=path/xtc::stream=0-79'\
-      + '\n    -x /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>  # /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>'\
+      + '\n    -x :dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/  # or /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>'\
       + '\n\nTEST COMMANDS:'\
       + '\nEx.1  for epix100a     : %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -D -c ./calib' % SCRNAME\
       + '\nEx.2  for Cspad CXI    : %s -e xpptut15 -r 380 -d CxiDs1.0:Cspad.0 -C gain -D -c ./calib' % SCRNAME\
@@ -37,6 +37,7 @@ USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> -C <calib-type> [-D]
 #      + '\nEx.12 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.1 -D -c ./calib' % SCRNAME\
 #      + '\nEx.13 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.2 -D -c ./calib' % SCRNAME\
 #      + '\nEx.14 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.3 -D -c ./calib' % SCRNAME\
+#      + '\nEx. for -x :smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc or exp=mfxlx5520:run=100:smd:dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/:stream=0-79'\
 
 
 if len(sys.argv)<2:
@@ -53,8 +54,7 @@ def argument_parser():
     d_run      = None # 260
     d_runrange = '0-end'
     d_tstamp   = None # 20180910111049
-    d_dssuffix = None # ':smd:dir=<path>/xtc/'
-    d_dsname   = None # 'exp=mfxlx5520:run=100:smd:dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/:stream=0-79' or '<path>/xtc/<file-name>.xtc'
+    d_dsnamex  = None # ':smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc or exp=mfxlx5520:run=100:smd:dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/:stream=0-79'
     d_dircalib = None # './calib'
     d_ctype    = 'gain'
     d_deploy   = False
@@ -69,8 +69,7 @@ def argument_parser():
     h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
     h_tstamp  = 'non-default time stamp (YYYYmmddHHMMSS) to search for constants in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
-    h_dssuffix= 'dataset name suffix beyond exp=<expname>:run=<runnum><dssuffix>, for example ":smd:dir=<path>/xtc/", default = %s' % d_dssuffix
-    h_dsname  = 'overrides exp=<expname>:run=<runnum><dssuffix> if specified, e.g. path to *.xtc file, default = %s' % d_dsname
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'non-default deployment calib directory, different from standard one, default = %s' % d_dircalib
     h_ctype   = 'calibration type [gain, common_mode, etc.], default = %s' % str(d_ctype)
@@ -86,8 +85,7 @@ def argument_parser():
     parser.add_argument('-d', '--det',     default=d_det,     type=str, help=h_det)
     parser.add_argument('-r', '--run',     default=d_run,     type=str, help=h_run)
     parser.add_argument('-t', '--tstamp',  default=d_tstamp,  type=int, help=h_tstamp)
-    parser.add_argument('-s', '--dssuffix',default=d_dssuffix,type=str, help=h_dssuffix)
-    parser.add_argument('-x', '--dsname',  default=d_dsname,  type=str, help=h_dsname)
+    parser.add_argument('-x', '--dsnamex', default=d_dsnamex,  type=str, help=h_dsnamex)
     parser.add_argument('-o', '--dirrepo', default=d_dirrepo, type=str, help=h_dirrepo)
     parser.add_argument('-c', '--dircalib',default=d_dircalib,type=str, help=h_dircalib)
     parser.add_argument('-C', '--ctype',   default=d_ctype,   type=str, help=h_ctype)
