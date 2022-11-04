@@ -13,7 +13,7 @@ SCRNAME = sys.argv[0].rsplit('/')[-1]
 
 USAGE = '\n  %s -d <detector> -e <experiment> -r <run-number(s)> [kwargs]' % SCRNAME\
       + '\nCOMMAND EXAMPLES:'\
-      + '\n  %s -d MecTargetChamber.0:Epix100a.1 -e meclu9418 -r 342' % SCRNAME\
+      + '\n  %s -d MecTargetChamber.0:Epix100a.1 -e meclu9418 -r 342 -x :smd:dir=/reg/d/psdm/mfx/mfxx32516/.../xtc/' % SCRNAME\
       + '\n  %s -d epix10k2M -e xpptut15 -r 550' % SCRNAME\
       + '\n  %s -d pnccd -e xpptut15 -r 450' % SCRNAME\
       + '\nHELP: %s -h' % SCRNAME
@@ -21,6 +21,7 @@ USAGE = '\n  %s -d <detector> -e <experiment> -r <run-number(s)> [kwargs]' % SCR
 from psana import DataSource, Detector
 from Detector.GlobalUtils import info_ndarr, info_kwargs, info_command_line # info_command_line_parameters
 import PSCalib.GlobalUtils as gu
+import Detector.UtilsCalib as uc
 
 
 def info_evt_keys(evt, fmt=' %s', sep='\n  ', title='evt.keys:'):
@@ -28,14 +29,14 @@ def info_evt_keys(evt, fmt=' %s', sep='\n  ', title='evt.keys:'):
 
 
 def ds_det(**kwa):
-    dsname   = kwa.get('dsname',  None) # 'exp=meclu9418:run=342:smd' or xtc file name
-    dssuffix = kwa.get('dssuffix', '')
+    dsnamex  = kwa.get('dsnamex', None) # 'exp=meclu9418:run=342:smd' or xtc file name
     expname  = kwa.get('expname', None) #meclu9418
     detname  = kwa.get('detname', None) #MecTargetChamber.0:Epix100a.1
     runs     = kwa.get('runs', None) #342,343
     logmode  = kwa.get('logmode', 'INFO')
 
-    if dsname is None: dsname = 'exp=%s:run=%s%s' % (expname, runs, dssuffix)
+    dsname = uc.str_dsname(exp, runs, dsnamex)
+
     logger.info('dsname: %s' % dsname)
     logger.info('detname: %s' % detname)
 
@@ -233,6 +234,7 @@ def argument_parser():
     d_detname = None # 'MecTargetChamber.0:Epix100a.1'
     d_expname = None # 'meclu9418' #None # 'ueddaq02'
     d_runs    = None # 342 # None # '66' # 1021 or 1021,1022-1025
+    d_dsnamex = None # :smd:dir=...:stream=...
     d_events  = 1000000
     d_evskip  = 0
     d_evtkeys = 2
@@ -240,12 +242,12 @@ def argument_parser():
     d_stskip  = 0
     d_stepnum = None
     d_logmode = 'INFO'
-    d_dssuffix= ':smd'
     #d_typeinfo= 'DRSE'
 
     h_detname = 'detector name, e.g. %s' % d_detname
     h_expname = 'experiment name, e.g. %s' % d_expname
     h_runs    = 'run number or list of runs e.g. 12,14,18 or 12, default = %s' % str(d_runs)
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
     h_events  = 'maximal number of events total (in runs, steps), default = %s' % d_events
     h_evskip  = 'number of events to skip in the beginning of each step, default = %s' % d_evskip
     h_evtkeys  = 'number of events to print event keys, default = %s' % d_evtkeys
@@ -253,18 +255,17 @@ def argument_parser():
     h_stskip  = 'number of steps to skip in the beginning of each run, default = %s' % d_stskip
     h_stepnum = 'step index (int)[0:...] to show details, default = %s' % d_stepnum
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
-    h_dssuffix= 'suffix added to the DataSource argument, e.g. :smd, default = %s' % d_dssuffix
     #h_typeinfo= 'type of information for output D-detector, R-run-loop, S-stepnum-loop, E-event-loop, default = %s' % d_typeinfo
 
     parser = ArgumentParser(description='Print info about experiment detector and run')
     parser.add_argument('-d', '--detname', type=str, help=h_detname)
     parser.add_argument('-e', '--expname', type=str, help=h_expname)
     parser.add_argument('-r', '--runs',    type=str, help=h_runs)
+    parser.add_argument('-x', '--dsnamex', default=d_dsnamex, type=str, help=h_dsnamex)
     parser.add_argument('-n', '--events', default=d_events, type=int, help=h_events)
     parser.add_argument('-m', '--evskip', default=d_evskip, type=int, help=h_evskip)
     parser.add_argument('-k', '--evtkeys', default=d_evtkeys, type=int, help=h_evtkeys)
     parser.add_argument('-L', '--logmode', default=d_logmode, type=str, help=h_logmode)
-    parser.add_argument('--dssuffix', default=d_dssuffix, type=str, help=h_dssuffix)
     parser.add_argument('--steps', default=d_steps, type=int, help=h_steps)
     parser.add_argument('--stskip', default=d_stskip, type=int, help=h_stskip)
     parser.add_argument('--stepnum', default=d_stepnum, type=int, help=h_stepnum)
