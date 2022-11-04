@@ -50,8 +50,7 @@ def argument_parser():
     d_run      = None # 1021
     d_runrange = '0-end'
     d_tstamp   = None # 20180910111049
-    d_dsname   = None # '<path>/xtc/<file-name>.xtc'
-    d_dssuffix = None # ':smd:dir=<path>/xtc/'
+    d_dsnamex  = None # ':smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc'
     d_dircalib = None # './calib'
     d_deploy   = False
     d_loglev   = 'INFO'
@@ -73,8 +72,7 @@ def argument_parser():
     h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
     h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
-    h_dssuffix= 'dataset name suffix beyond exp=<expname>:run=<runnum><dssuffix>, for example ":smd:dir=<path>/xtc/", default = %s' % d_dssuffix
-    h_dsname  = 'overrides exp=<expname>:run=<runnum><dssuffix> if specified, e.g. path to *.xtc file, default = %s' % d_dsname
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
@@ -97,8 +95,7 @@ def argument_parser():
     parser.add_argument('-d', '--det',     default=d_det,     type=str, help=h_det)
     parser.add_argument('-r', '--run',     default=d_run,     type=str, help=h_run)
     parser.add_argument('-t', '--tstamp',  default=d_tstamp,  type=int, help=h_tstamp)
-    parser.add_argument('-s', '--dssuffix',default=d_dssuffix,type=str, help=h_dssuffix)
-    parser.add_argument('-x', '--dsname',  default=d_dsname,  type=str, help=h_dsname)
+    parser.add_argument('-x', '--dsnamex', default=d_dsnamex, type=str, help=h_dsnamex)
     parser.add_argument('-o', '--dirrepo', default=d_dirrepo, type=str, help=h_dirrepo)
     parser.add_argument('-c', '--dircalib',default=d_dircalib,type=str, help=h_dircalib)
     parser.add_argument('-l', '--loglev',  default=d_loglev,  type=str, help=h_loglev)
