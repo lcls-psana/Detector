@@ -55,7 +55,7 @@ def usage(mode=0) :
     elif mode == 2 : return 'Try: %s -h' % proc_name
     else : return\
            '\n%prog -e <experiment> [-d <detector>] [-r <run-number>]'\
-           '\n       [-i <panel-index>] [-n <nspace>] [-x <xtc-directory>] [-o <output-result-directory>] [-L <logging-mode>] [-p]'\
+           '\n       [-i <panel-index>] [-n <nspace>] [-x <dsname-or-extension>] [-o <output-result-directory>] [-L <logging-mode>] [-p]'\
            '\nTEST COMMAND FOR GRAPHICS:'\
            '\n  %prog -e detdaq18 -d DetLab.0:Epix10ka2M.0 -r52 -i0 -o ./work        # plot all'\
            '\n  %prog -e detdaq18 -d DetLab.0:Epix10ka2M.0 -r52 -i0 -o ./work -P     # skip pedestal calib-cycles'\
@@ -79,7 +79,7 @@ def option_parser() :
     d_idx     = None # 0-15 for epix10ka2m, 0-3 for epix10kaquad
     d_nbs     = 4600 # number of frames
     d_nspace  = 7    # space between charge injected pisels
-    d_dsnamex = None # ':dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    d_dsnamex = None # ':dir=/reg/d/psdm/mfx/mfxx32516/scratch/.../xtc'
     d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo'
     d_display = True
     d_logmode = 'INFO'

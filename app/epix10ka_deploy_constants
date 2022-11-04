@@ -49,7 +49,7 @@ def usage(mode=0):
     else: return\
            '\n%prog -e <experiment> [-d <detector>] [-r <run-number>] [-L <logging-mode>] [-D] [...]'\
            '\nTEST COMMAND:'\
-           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -t 20180910111049 -x /reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined -o ./myrepo -c ./calib -L info -D'\
+           '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -t 20180910111049 -x :smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined -o ./myrepo -c ./calib -L info -D'\
            '\nREGULAR COMMAND:'\
            '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -D -L INFO'\
            '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r394 -t 396 -o ./work -D -c ./calib # deploys 394-end.data for all calibrations found for runs <= 386'\
@@ -65,7 +65,7 @@ def option_parser():
     d_run     = None # 1021
     d_runend  = 'end'
     d_tstamp  = None # 20180910111049
-    d_dsnamex = None # ':smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    d_dsnamex = None # ':smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/.../xtc/combined or exp=mfxx32516:run=11:smd:dir=...'
     d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo'
     d_dircalib= None # './calib
     d_deploy  = False
