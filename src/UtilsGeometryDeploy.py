@@ -26,8 +26,6 @@ gu = uc.cgu
 
 RAYONIX_PIXEL_SIZE = 44.271  # um 85.00 +/- 0.05mm/1920pixel
 
-def command_line(): return ' '.join(sys.argv)
-
 
 def str_rayonix_geo_matrix_segment(d):
     """returns str like 'MTRX:V2:3840:3840:44.271:44.271' using configuration data.
@@ -64,8 +62,7 @@ def geometry_deploy_constants(**kwa):
     detname    = kwa.get('det', None)
     run        = kwa.get('run', None)
     runrange   = kwa.get('runrange', '0-end')
-    dssuffix   = kwa.get('dssuffix', None)
-    _dsname    = kwa.get('dsname', None)
+    dsnamex    = kwa.get('dsnamex', None)
     tstamp     = kwa.get('tstamp', None)
     dirrepo    = kwa.get('dirrepo', './work')
     dircalib   = kwa.get('dircalib', None)
@@ -77,9 +74,7 @@ def geometry_deploy_constants(**kwa):
     repoman    = kwa.get('repoman', None)
     name_parent= kwa.get('parent', 'IP')
 
-    dsname = 'exp=%s:run=%s' % (exp, str(run)) # 'exp=xpptut15:run=54' # :idx, :smd or *.xtc file name
-    if dssuffix is not None: dsname += dssuffix
-    if _dsname is not None: dsname = _dsname
+    dsname = uc.str_dsname(exp, run, dsnamex)
 
     logger.info('open dataset %s' % dsname)
 
@@ -107,7 +102,7 @@ def geometry_deploy_constants(**kwa):
     if fname is None: fname = '%s/%s_default.data' % (dir_dettype, dettype) # use default if not found
     logger.info('file_for_timestamp(tsrun=%s): %s' % (tsrun, fname))
 
-    cmd = command_line()
+    cmd = ' '.join(sys.argv)
     if '--pos' in cmd or '--rot' in cmd or '--parent' in cmd or int_dettype == gu.RAYONIX:
 
         geo = GeometryAccess(fname, 0o377 if (loglev=='DEBUG') else 0)
