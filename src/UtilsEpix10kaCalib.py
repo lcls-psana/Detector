@@ -31,7 +31,7 @@ from Detector.GlobalUtils import info_ndarr, print_ndarr, divide_protected
 
 from Detector.UtilsCalib import evaluate_limits, tstamps_run_and_now, str_tstamp,\
        save_log_record_at_start, find_file_for_timestamp, save_ndarray_in_textfile, save_2darray_in_textfile,\
-       calib_group, env_time, TSTAMP_FORMAT
+       calib_group, env_time, TSTAMP_FORMAT, str_dsname
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -732,7 +732,7 @@ def offset_calibration(*args, **opts):
     idx        = opts.get('idx', 0)
     nbs        = opts.get('nbs', 4600)
     nspace     = opts.get('nspace', 7)
-    dirxtc     = opts.get('dirxtc', None)
+    dsnamex    = opts.get('dsnamex', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     display    = opts.get('display', True)
     fmt_offset = opts.get('fmt_offset', '%.6f')
@@ -744,7 +744,6 @@ def offset_calibration(*args, **opts):
     savechi2   = opts.get('savechi2', False)
     dopeds     = opts.get('dopeds', True)
     dooffs     = opts.get('dooffs', True)
-    usesmd     = opts.get('usesmd', False)
     dirmode    = opts.get('dirmode', 0o2775)
     filemode   = opts.get('filemode', 0o664)
     group      = opts.get('group', 'ps-users')
@@ -762,8 +761,8 @@ def offset_calibration(*args, **opts):
 
     irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
 
-    dsname = 'exp=%s:run=%s'%(exp,run) if dirxtc is None else 'exp=%s:run=%s:dir=%s'%(exp, run, dirxtc)
-    if usesmd: dsname += ':smd'
+    dsname = str_dsname(exp, run, dsnamex)
+
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
@@ -1242,7 +1241,7 @@ def pedestals_calibration(*args, **opts):
     nbs        = opts.get('nbs', 1024)
     ccnum      = opts.get('ccnum', None)
     ccmax      = opts.get('ccmax', 5)
-    dirxtc     = opts.get('dirxtc', None)
+    dsnamex    = opts.get('dsnamex', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     fmt_peds   = opts.get('fmt_peds', '%.3f')
     fmt_rms    = opts.get('fmt_rms',  '%.3f')
@@ -1251,7 +1250,6 @@ def pedestals_calibration(*args, **opts):
     dirmode    = opts.get('dirmode', 0o2775)
     filemode   = opts.get('filemode', 0o664)
     group      = opts.get('group', 'ps-users')
-    usesmd     = opts.get('usesmd', False)
     logmode    = opts.get('logmode', 'DEBUG')
     errskip    = opts.get('errskip', False)
 
@@ -1259,8 +1257,8 @@ def pedestals_calibration(*args, **opts):
 
     irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
 
-    dsname = 'exp=%s:run=%s'%(exp,run) if dirxtc is None else 'exp=%s:run=%s:dir=%s'%(exp, run, dirxtc)
-    if usesmd: dsname += ':smd'
+    dsname = str_dsname(exp, run, dsnamex)
+
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
@@ -1585,7 +1583,7 @@ def deploy_constants(*args, **opts):
     irun       = opts.get('run', None)
     erun       = opts.get('runend', 'end')
     tstamp     = opts.get('tstamp', None)
-    dirxtc     = opts.get('dirxtc', None)
+    dsnamex    = opts.get('dsnamex', None)
     dirrepo    = opts.get('dirrepo', CALIB_REPO_EPIX10KA)
     dircalib   = opts.get('dircalib', None)
     deploy     = opts.get('deploy', False)
@@ -1608,7 +1606,8 @@ def deploy_constants(*args, **opts):
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
-    dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    dsname = str_dsname(exp, str(irun), dsnamex)
+
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
@@ -1737,8 +1736,9 @@ def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
     filemode   = kwargs.get('filemode', 0o664)
     dirmode    = kwargs.get('dirmode', 0o2775)
     group      = kwargs.get('group', 'ps-users')
+    dsnamex    = kwargs.get('dsnamex', None)
 
-    dsname = 'exp=%s:run=%d'%(exp,runnum)
+    dsname = str_dsname(exp, runnum, dsnamex)
 
     cpdic = get_config_info_for_dataset_detname(dsname, detname) #, idx=0
     panel_ids = cpdic.get('panel_ids', None)
@@ -1790,7 +1790,7 @@ def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
 
 if __name__ == "__main__":
 
-    DIR_XTC_TEST = '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    DIR_XTC_TEST = ':dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
 
     def test_offset_calibration_epix10ka(tname):
         offset_calibration(exp     = 'mfxx32516',\
@@ -1798,7 +1798,7 @@ if __name__ == "__main__":
                            run     = 1021,\
                            nbs     = 4600,\
                            nspace  = 2,\
-                           dirxtc  = DIR_XTC_TEST,\
+                           dsnamex = DIR_XTC_TEST,\
                            dirrepo = './work',\
                            display = True)
 
@@ -1808,9 +1808,8 @@ if __name__ == "__main__":
                            det     = 'NoDetector.0:Epix10ka.3',\
                            run     = 1021,\
                            nbs     = 1024,\
-                           #nspace  = 2,\
                            mode    = 'AML-M',\
-                           dirxtc  = DIR_XTC_TEST,\
+                           dsnamex = DIR_XTC_TEST,\
                            dirrepo = './work')
 
 
@@ -1818,31 +1817,25 @@ if __name__ == "__main__":
         deploy_constants(  exp     = 'mfxx32516',\
                            det     = 'NoDetector.0:Epix10ka.3',\
                            run     = 1021,\
-                           #tstamp  = None,\
-                           #tstamp  = 20180314120622,\
                            tstamp  = 20180914120622,\
-                           dirxtc  = DIR_XTC_TEST,\
-                           #dirrepo = './work',\
+                           dsnamex = DIR_XTC_TEST,\
                            dircalib= './calib',\
                            deploy  = True)
 
 
     def test_offset_calibration_epix10ka2m(tname):
-        #offset_calibration(exp     = 'detdaq17',\
-        #                   det     = 'DetLab.0:Epix10ka2M.0',\
         offset_calibration(exp     = 'xcsx35617',\
                            det     = 'XcsEndstation.0:Epix10ka2M.0',\
                            run     = 6,\
                            idx     = 1,\
                            nbs     = 4600,\
                            nspace  = 4,\
-                           #dirxtc  = DIR_XTC_TEST,\
+                           dsnamex = DIR_XTC_TEST,\
                            dirrepo = './work',\
                            display = True)
 
 
     def test_save_epix10ka_ctype_in_repo(tname):
-        #nda = np.load('/reg/d/psdm/mfx/mfxlx4219/results/ePix10k2m/hockey/FL/hockeyOffsetInAdu.npy')
         nda = np.load('/reg/g/psdm/detector/data_test/npy/offsetph-mfxlx4219-r0356-epix10ka2m-16-352-384.npy')
         logging.info(info_ndarr(nda, 'nda'))
         exp = 'mfxlx4219'
