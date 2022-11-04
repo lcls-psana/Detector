@@ -975,7 +975,6 @@ def calib_group_for_tname_lower(name):
     return cgu.dic_det_tname_lower_to_calib_group.get(name, None)
 
 
-
 def info_pixel_status(status, bits=0xffff):
     arr1 = np.ones(status.shape, dtype=np.int32)
     statist_bits = np.select((status & bits,), (arr1,), 0)
@@ -983,4 +982,11 @@ def info_pixel_status(status, bits=0xffff):
     return 'number of pixels containing bits %4d(dec) %4s(oct): %d of total bad %d of total %d'%\
             (bits, oct(bits), statist_bits.sum(), statist_tot.sum(), status.size)
 
+
+def str_dsname(exp, run, dsnamex=None):
+    """ returns (str) dsname for psana.DataSource(dsname)
+    """
+    return dsnamex if dsnamex[0] != ':' else\
+           'exp=%s:run=%s%s'%(exp, str(run), dsnamex) if dsnamex else\
+           'exp=%s:run=%s'%(exp, str(run))
 # EOF
