@@ -548,7 +548,7 @@ def jungfrau_deploy_constants(pargs, popts):
     detname    = kwa.get('det', None)
     irun       = kwa.get('run', None)
     tstamp     = kwa.get('tstamp', None)
-    dirxtc     = kwa.get('dirxtc', None)
+    dsnamex    = kwa.get('dsnamex', None)
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
@@ -574,7 +574,7 @@ def jungfrau_deploy_constants(pargs, popts):
     fmt_offset = kwa.get('fmt_offset', '%.6f')
 
     panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3]
-    dsname = 'exp=%s:run=%d'%(exp,irun) if dirxtc is None else 'exp=%s:run=%d:dir=%s'%(exp, irun, dirxtc)
+    dsname = uc.str_dsname(exp, irun, dsnamex)
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))

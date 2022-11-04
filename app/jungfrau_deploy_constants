@@ -32,7 +32,7 @@ def option_parser():
     d_det     = None # 'NoDetector.0:Epix10ka.3'
     d_run     = None # 1021
     d_tstamp  = None # 20180910111049
-    d_dirxtc  = None # '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    d_dsnamex  = None # ':smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     d_dircalib= None # './calib'
     d_paninds = None
     d_deploy  = False
@@ -51,7 +51,7 @@ def option_parser():
     h_run     = 'run number for beginning of the validity range, default = %s' % str(d_run)
     h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
-    h_dirxtc  = 'non-default xtc directory which is used to access run start time, default = %s' % d_dirxtc
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_paninds = 'comma-separated (str) panel indexds to generate constants for subset of panels (ex. 2 panel of 8 in the detector), default = %s' % d_paninds
@@ -73,7 +73,7 @@ def option_parser():
     parser.add_option('-d', '--det',     default=d_det,     action='store', type='string', help=h_det)
     parser.add_option('-r', '--run',     default=d_run,     action='store', type='int',    help=h_run)
     parser.add_option('-t', '--tstamp',  default=d_tstamp,  action='store', type='int',    help=h_tstamp)
-    parser.add_option('-x', '--dirxtc',  default=d_dirxtc,  action='store', type='string', help=h_dirxtc)
+    parser.add_option('-x', '--dsnamex', default=d_dsnamex, action='store', type='string', help=h_dsnamex)
     parser.add_option('-o', '--dirrepo', default=d_dirrepo, action='store', type='string', help=h_dirrepo)
     parser.add_option('-c', '--dircalib',default=d_dircalib,action='store', type='string', help=h_dircalib)
     parser.add_option('-I', '--paninds', default=d_paninds, action='store', type='string', help=h_paninds)
