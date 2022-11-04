@@ -79,13 +79,12 @@ def option_parser() :
     d_idx     = None # 0-15 for epix10ka2m, 0-3 for epix10kaquad
     d_nbs     = 4600 # number of frames
     d_nspace  = 7    # space between charge injected pisels
-    d_dirxtc  = None # '/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    d_dsnamex = None # ':dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     d_dirrepo = CALIB_REPO_EPIX10KA # './myrepo'
     d_display = True
     d_logmode = 'INFO'
     d_dopeds  = True
     d_dooffs  = True
-    d_usesmd  = True
     d_nperiods= False
     d_ixoff   = 10
     d_ccnum   = None
@@ -104,13 +103,12 @@ def option_parser() :
     h_idx     = 'panel index (0-15/3 for epix10ka2m/quad), default = %s' % str(d_idx)
     h_nbs     = 'number of frames to calibrate offsets, default = %s' % str(d_nbs)
     h_nspace  = 'space between calibrated pixels, default = %s' % str(d_nspace)
-    h_dirxtc  = 'non-default xtc directory, default = %s' % d_dirxtc
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with column ":", default = %s' % d_dsnamex
     h_dirrepo = 'repository for calibration results, default = %s' % d_dirrepo
     h_display = 'turn off graphical display, default = %s' % d_display
     h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
     h_dopeds  = 'do pedestals evaluation, default = %s' % d_dopeds
     h_dooffs  = 'do offset evaluation, default = %s' % d_dooffs
-    h_usesmd  = 'add "smd" in dataset string, default = %s' % d_usesmd
     h_nperiods= 'use all found saw periods of the pulser, default = %s' % d_nperiods
     h_ixoff   = 'discard in fit number of events around switching point, default = %s' % str(d_ixoff)
     h_ccnum   = 'calibcycle number to process [0,102] or all by default, default = %s' % str(d_ccnum)
@@ -130,13 +128,12 @@ def option_parser() :
     parser.add_option('-i', '--idx',     default=d_idx,     action='store', type='int',    help=h_idx)
     parser.add_option('-b', '--nbs',     default=d_nbs,     action='store', type='int',    help=h_nbs)
     parser.add_option('-n', '--nspace',  default=d_nspace,  action='store', type='int',    help=h_nspace)
-    parser.add_option('-x', '--dirxtc',  default=d_dirxtc,  action='store', type='string', help=h_dirxtc)
+    parser.add_option('-x', '--dsnamex', default=d_dsnamex, action='store', type='string', help=h_dsnamex)
     parser.add_option('-o', '--dirrepo', default=d_dirrepo, action='store', type='string', help=h_dirrepo)
     parser.add_option('-p', '--display', default=d_display, action='store_false',          help=h_display)
     parser.add_option('-L', '--logmode', default=d_logmode, action='store', type='string', help=h_logmode)
     parser.add_option('-P', '--dopeds',  default=d_dopeds,  action='store_false',          help=h_dopeds)
     parser.add_option('-O', '--dooffs',  default=d_dooffs,  action='store_false',          help=h_dooffs)
-    parser.add_option('-S', '--usesmd',  default=d_usesmd,  action='store_false',          help=h_usesmd)
     parser.add_option('-N', '--nperiods',default=d_nperiods,action='store_false',          help=h_nperiods)
     parser.add_option('-X', '--ixoff',   default=d_ixoff,   action='store', type='int',    help=h_ixoff)
     parser.add_option('-c', '--ccnum',   default=d_ccnum,   action='store', type='int',    help=h_ccnum)
