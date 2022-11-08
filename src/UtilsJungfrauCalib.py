@@ -23,7 +23,7 @@ import sys
 import psana
 import numpy as np
 from time import time #, localtime, strftime
-from Detector.GlobalUtils import info_kwargs  # info_command_line_parameters
+#from Detector.GlobalUtils import info_kwargs  # info_command_line_parameters
 
 import PSCalib.GlobalUtils as gu
 from Detector.PyDataAccess import get_jungfrau_gain_mode_object #get_jungfrau_data_object, get_jungfrau_config_object
@@ -173,7 +173,6 @@ def jungfrau_dark_proc(pargs, popts):
     #if clbdir is not None: psana.setOption('psana.calib-dir', clbdir)
 
     #logger.info(info_command_line_parameters(parser))
-    logger.info(info_kwargs(kwargs))
 
     ecm = False
     if evcode is not None:
@@ -542,7 +541,7 @@ def jungfrau_deploy_constants(pargs, popts):
     kwa = vars(popts) # dict of options
 
     #logger.info(info_command_line_parameters(parser))
-    logger.info(info_kwargs(kwa))
+    #logger.info(info_kwargs(**kwa))
 
     exp        = kwa.get('exp', None)
     detname    = kwa.get('det', None)
