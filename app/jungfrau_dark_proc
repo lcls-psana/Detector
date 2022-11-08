@@ -68,7 +68,7 @@ def option_parser():
     h_rms_hi='rms high limit, default = %s' % d_rms_hi
     h_rmsnlo='number of sigma from mean for low limit on RMS, default = %s' % d_rmsnlo
     h_rmsnhi='number of sigma from mean for high limit on RMS, default = %s' % d_rmsnhi
-    h_fraclm='allowed fraction limit, default = %s' % d_fraclm
+    h_fraclm='allowed fraction [0,1] limit, default = %s' % d_fraclm
     h_plotim='control bit-word to plot images, default = %s' % d_plotim
     h_evcode='comma separated event codes for selection as OR combination, any negative %s'%\
              'code inverts selection, default = %s'%str(d_evcode)
@@ -135,6 +135,8 @@ if __name__ == "__main__":
     logger.info('log file: %s' % logname)
     repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
+    from Detector.GlobalUtils import info_command_line_parameters
+    logger.info(info_command_line_parameters(parser))
     popts.repoman = repoman
     jungfrau_dark_proc(pargs, popts)
 
