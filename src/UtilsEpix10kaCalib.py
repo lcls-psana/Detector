@@ -502,9 +502,6 @@ def proc_dark_block(block, **opts):
     arr_av1 = divide_protected(arr_sum1, arr_sum0)
     arr_av2 = divide_protected(arr_sum2, arr_sum0)
 
-    frac_int_lo = np.array(sta_int_lo/nrecs, dtype=np.float32)
-    frac_int_hi = np.array(sta_int_hi/nrecs, dtype=np.float32)
-
     arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
     #rms_ave = arr_rms.mean()
     rms_ave = mean_constrained(arr_rms, rms_lo, rms_hi)
@@ -512,18 +509,22 @@ def proc_dark_block(block, **opts):
     rms_min, rms_max = evaluate_limits(arr_rms, rmsnlo, rmsnhi, rms_lo, rms_hi, cmt='RMS')
     ave_min, ave_max = evaluate_limits(arr_av1, intnlo, intnhi, int_lo, int_hi, cmt='AVE')
 
-    arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (arr1,), 0)
-    arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (arr1,), 0)
-    arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (arr1,), 0)
-    arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (arr1,), 0)
-    arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (arr1,), 0)
-    arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (arr1,), 0)
+    nevlm = int(fraclm * nrecs)
+
+    arr_sta_rms_hi = np.select((arr_rms>rms_max,),  (arr1,), 0)
+    arr_sta_rms_lo = np.select((arr_rms<rms_min,),  (arr1,), 0)
+    arr_sta_int_hi = np.select((sta_int_hi>nevlm,), (arr1,), 0)
+    arr_sta_int_lo = np.select((sta_int_lo>nevlm,), (arr1,), 0)
+    arr_sta_ave_hi = np.select((arr_av1>ave_max,),  (arr1,), 0)
+    arr_sta_ave_lo = np.select((arr_av1<ave_min,),  (arr1,), 0)
 
     logger.info ('Bad pixel status:'\
                 +'\n  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)\
                 +'\n  status  2: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
-                +'\n  status  4: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
-                +'\n  status  8: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)\
+                +'\n  status  4: %8d pixel intensity > %g in more than %g fraction (%d/%d) of non-empty events'%\
+                  (arr_sta_int_hi.sum(), int_hi, fraclm, nevlm, nrecs)\
+                +'\n  status  8: %8d pixel intensity < %g in more than %g fraction (%d/%d) of non-empty events'%\
+                  (arr_sta_int_lo.sum(), int_lo, fraclm, nevlm, nrecs)\
                 +'\n  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)\
                 +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
                 )
