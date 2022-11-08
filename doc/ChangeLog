@@ -10,6 +10,32 @@ reverse time order.
 Tag: V02-00-??
 
 
+2022-11-08 Mikhail Dubrovin
+- COMMON
+  - fix issue with jungfrau bad pixel counting below int_lo and above int_hi; gate_lo/hi was used
+  - similar code for other detectors was also simplified
+  app/det_ndarr_raw_proc - common - simplify code for bad pixel counting
+  app/jungfrau_dark_proc - improve help, add logger.info(info_command_line_parameters)
+  app/jungfrau_deploy_constants - add logger.info(info_command_line_parameters)
+  src/GlobalUtils.py - in info_command_line_parameters use oct(v) for k=dirmode or filemode
+  src/UtilsCalib.py - remove comments, common - fix code for bad pixel counting
+  src/UtilsEpix10kaCalib.py - simplify code for bad pixel counting
+  src/UtilsJungfrauCalib.py - move output of info_command_line_parameters to the main script
+
+2022-11-04 Mikhail Dubrovin
+  src/UtilsCalib.py - add method str_dsname(exp, run, dsnamex=None)
+  src/UtilsEpix10kaCalib.py          - remove usesmd, dirxtc -> dsnamex
+  app/epix10ka_offset_calibration    - rename dirxtc to dsnamex; remove usesmd
+  app/epix10ka_pedestals_calibration - rename dirxtc to dsnamex; remove usesmd
+  app/epix10ka_deploy_constants      - rename dirxtc -> dsnamex
+  doc/ChangeLog
+  src/UtilsGeometryDeploy.py         - remove dssuffix, dsname -> dsnamex
+  app/geometry_deploy_constants      - remove dssuffix, dsname -> dsnamex
+  app/deploy_constants               - remove dssuffix, dsname -> dsnamex
+  app/jungfrau_deploy_constants      - dirxtc -> dsnamex
+  src/UtilsJungfrauCalib.py          - rename dirxtc to dsnamex
+  app/datinfo                        - dssuffix -> dsnamex
+
 2022-11-03 Mikhail Dubrovin
 - COMMON ISSUES:
 	- add/use parameter group='ps-users' for dir/file ownership
