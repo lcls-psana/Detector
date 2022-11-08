@@ -271,8 +271,6 @@ class DetNDArrRawProc(object):
             print('  mean rms=%.3f x %.1f = intensity gate= +/- %.3f around pixel average intensity' %\
                   (rms_ave, self.nsigma, gate_half))
 
-        #print_ndarr(arr_av1, 'arr_av1')
-
         self.gate_hi = np.minimum(arr_av1 + gate_half, self.arr1*self.int_hi)
         self.gate_lo = np.maximum(arr_av1 - gate_half, self.arr1*self.int_lo)
 
@@ -301,7 +299,6 @@ class DetNDArrRawProc(object):
 
         t0_sec = time()
 
-        # make shorter references
         det     = self.det
         ofname  = self.ofname
         plotim  = self.plotim
@@ -311,43 +308,40 @@ class DetNDArrRawProc(object):
         int_lo  = self.int_lo
         fraclm  = self.fraclm
         counter = self.counter
+        nevlm = int(fraclm * counter)
 
         arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
         arr_av2 = divide_protected(self.arr_sum2, self.arr_sum0)
 
-        frac_int_lo = np.array(self.sta_int_lo/counter, dtype=np.float32)
-        frac_int_hi = np.array(self.sta_int_hi/counter, dtype=np.float32)
-
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
 
         rms_min, rms_max = evaluate_limits(arr_rms, self.rmsnlo, self.rmsnhi, self.rms_lo, self.rms_hi, self.verbos, cmt='RMS')
-                           #if self.rms_lo is None or self.rms_hi is None or self.rms_hi == 0.\
-                           #else (self.rms_lo, self.rms_hi)
-        #if rms_min<0: rms_min=0
 
-        ave_min, ave_max = evaluate_limits(arr_av1, self.intnlo, self.intnhi, self.int_lo, self.int_hi, self.verbos, cmt='AVE')\
+        ave_min, ave_max = evaluate_limits(arr_av1, self.intnlo, self.intnhi, self.int_lo, self.int_hi, self.verbos, cmt='AVE')
 
-        arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (self.arr1,), 0)
-        arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (self.arr1,), 0)
-        arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (self.arr1,), 0)
-        arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (self.arr1,), 0)
-        arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
-        arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
+        arr_sta_rms_hi = np.select((arr_rms>rms_max,),       (self.arr1,), 0)
+        arr_sta_rms_lo = np.select((arr_rms<rms_min,),       (self.arr1,), 0)
+        arr_sta_int_hi = np.select((self.sta_int_hi>nevlm,), (self.arr1,), 0)
+        arr_sta_int_lo = np.select((self.sta_int_lo>nevlm,), (self.arr1,), 0)
+        arr_sta_ave_hi = np.select((arr_av1>ave_max,),       (self.arr1,), 0)
+        arr_sta_ave_lo = np.select((arr_av1<ave_min,),       (self.arr1,), 0)
 
         print('  Bad pixel status:')
         print('  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max))
         print('  status  8: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min))
-        print('  status  2: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm))
-        print('  status  4: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm))
+        print('  status  2: %8d pixel intensity > %g in more than %g fraction (%d/%d) of non-empty events'%\
+               (arr_sta_int_hi.sum(), int_hi, fraclm, nevlm, counter))
+        print('  status  4: %8d pixel intensity < %g in more than %g fraction (%d/%d) of non-empty events'%\
+               (arr_sta_int_lo.sum(), int_lo, fraclm, nevlm, counter))
         print('  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max))
         print('  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min))
 
         #0/1/2/4/8/16/32 for good/hot-rms/saturated/cold/cold-rms/average above limit/average below limit,
         arr_sta = np.zeros(self.shape, dtype=np.int64)
         arr_sta += arr_sta_rms_hi    # hot rms
-        arr_sta += arr_sta_rms_lo*8  # cold rms
         arr_sta += arr_sta_int_hi*2  # satturated
         arr_sta += arr_sta_int_lo*4  # cold
+        arr_sta += arr_sta_rms_lo*8  # cold rms
         arr_sta += arr_sta_ave_hi*16 # too large average
         arr_sta += arr_sta_ave_lo*32 # too small average
 
@@ -361,8 +355,8 @@ class DetNDArrRawProc(object):
         if plotim &  8: plot_det_image(det, evt, arr_msk,         tit='mask')
         if plotim & 16: plot_det_image(det, evt, self.arr_max,    tit='maximum')
         if plotim & 32: plot_det_image(det, evt, self.arr_min,    tit='minimum')
-        if plotim & 64: plot_det_image(det, evt, self.sta_int_lo, tit='statistics below threshold')
-        if plotim &128: plot_det_image(det, evt, self.sta_int_hi, tit='statistics above threshold')
+        if plotim & 64: plot_det_image(det, evt, self.sta_int_lo, tit='statistics below low threshold')
+        if plotim &128: plot_det_image(det, evt, self.sta_int_hi, tit='statistics above high threshold')
 
         cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]
 
