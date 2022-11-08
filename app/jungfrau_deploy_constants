@@ -103,6 +103,8 @@ if __name__ == "__main__":
     logger.info('log file: %s' % logname)
     repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
+    from Detector.GlobalUtils import info_command_line_parameters
+    logger.info(info_command_line_parameters(parser))
     popts.repoman = repoman
     jungfrau_deploy_constants(pargs, popts)
 
