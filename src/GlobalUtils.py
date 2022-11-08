@@ -52,8 +52,12 @@ def info_command_line_parameters(parser):
     s = 'Command: ' + ' '.join(sys.argv)+\
         '\n  Argument list: %s\n  Optional parameters:\n' % str(args)+\
         '    <key>      <value>              <default>\n'
-    for k,v in opts.items() :
-        s += '    %s %s %s\n' % (k.ljust(10), str(v).ljust(20), str(defs[k]).ljust(20))
+    for k,v in opts.items():
+        vdef = defs[k]
+        if k in ('dirmode', 'filemode'):
+            v = oct(v)
+            vdef = oct(vdef)
+        s += '    %s %s %s\n' % (k.ljust(10), str(v).ljust(20), str(vdef).ljust(20))
     return s
 
 
