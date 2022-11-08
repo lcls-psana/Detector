@@ -385,13 +385,8 @@ def proc_dark_block(block, **kwa):
       to get better interpolation for median and quantile values
     - use nrecs1 (< nrecs) due to memory and time consumption
     """
-    #blockf64 = np.random.random((nrecs1, ny, nx)) - 0.5 + block[:nrecs1,:]
-    #logger.debug(info_ndarr(blockf64, '1-st stage conversion uint16 to float64,'\
-    #                                 +' add random [0,1)-0.5 time = %.3f sec '%\
-    #                                  (time()-t1_sec), first=100, last=105))
 
     blockf64 = block[:nrecs1,:]
-    #arr_med = np.median(block, axis=0)
     arr_med = np.quantile(blockf64, frac05, axis=0, interpolation='linear')
     arr_qlo = np.quantile(blockf64, fraclo, axis=0, interpolation='lower')
     arr_qhi = np.quantile(blockf64, frachi, axis=0, interpolation='higher')
@@ -419,10 +414,6 @@ def proc_dark_block(block, **kwa):
     logger.info(s)
 
     logger.debug(info_ndarr(arr_med, '1st iteration proc time = %.3f sec arr_av1' % (time()-t0_sec)))
-    #gate_half = nsigma*rms_ave
-    #logger.debug('set gate_half=%.3f for intensity gated average, which is %.3f * sigma' % (gate_half,nsigma))
-    #gate_half = nsigma*abs_dev_med
-    #logger.debug('set gate_half=%.3f for intensity gated average, which is %.3f * abs_dev_med' % (gate_half,nsigma))
 
     # 2nd loop over recs in block to evaluate gated parameters
     logger.debug('begin 2nd iteration')
@@ -433,16 +424,10 @@ def proc_dark_block(block, **kwa):
     arr_max = np.zeros(shape, dtype=block.dtype)
     arr_min = np.ones (shape, dtype=block.dtype) * 0x3fff
 
-    gate_lo    = arr1_u16 * int_lo
-    gate_hi    = arr1_u16 * int_hi
-
-    #gate_hi = np.minimum(arr_av1 + gate_half, gate_hi).astype(dtype=block.dtype)
-    #gate_lo = np.maximum(arr_av1 - gate_half, gate_lo).astype(dtype=block.dtype)
-    gate_lo = np.maximum(arr_qlo, gate_lo).astype(dtype=block.dtype)
-    gate_hi = np.minimum(arr_qhi, gate_hi).astype(dtype=block.dtype)
+    gate_lo = np.maximum(arr_qlo, arr1_u16 * int_lo).astype(dtype=block.dtype)
+    gate_hi = np.minimum(arr_qhi, arr1_u16 * int_hi).astype(dtype=block.dtype)
     cond = gate_hi>gate_lo
     gate_hi[np.logical_not(cond)] +=1
-    #gate_hi = np.select((cond, np.logical_not(cond)), (gate_hi, gate_hi+1), 0)
 
     logger.debug(info_ndarr(gate_lo, '    gate_lo '))
     logger.debug(info_ndarr(gate_hi, '    gate_hi '))
@@ -451,16 +436,11 @@ def proc_dark_block(block, **kwa):
     arr_sum1 = np.zeros(shape, dtype=np.float64)
     arr_sum2 = np.zeros(shape, dtype=np.float64)
 
-    #blockdbl = np.array(block, dtype=np.float64)
-
     for nrec in range(nrecs):
         raw    = block[nrec,:]
         rawdbl = raw.astype(dtype=np.uint64) # blockdbl[nrec,:]
 
         logger.debug('nrec:%03d median(raw-ave): %f' % (nrec, np.median(raw.astype(dtype=np.float64) - arr_med)))
-        #logger.debug('nrec:%03d median(raw-ave): %.6f' % (nrec, np.median(raw.astype(dtype=np.float64) - arr_med)))
-        #logger.debug(info_ndarr(raw, '  raw     '))
-        #logger.debug(info_ndarr(arr_med, '  arr_med '))
 
         condlist = (np.logical_not(np.logical_or(raw<gate_lo, raw>gate_hi)),)
 
@@ -477,8 +457,7 @@ def proc_dark_block(block, **kwa):
     arr_av1 = divide_protected(arr_sum1, arr_sum0)
     arr_av2 = divide_protected(arr_sum2, arr_sum0)
 
-    frac_int_lo = np.array(sta_int_lo/nrecs, dtype=np.float32)
-    frac_int_hi = np.array(sta_int_hi/nrecs, dtype=np.float32)
+    nevlm = int(fraclm * nrecs)
 
     arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
     #rms_ave = arr_rms.mean()
@@ -487,18 +466,20 @@ def proc_dark_block(block, **kwa):
     rms_min, rms_max = evaluate_limits(arr_rms, rmsnlo, rmsnhi, rms_lo, rms_hi, cmt='RMS')
     ave_min, ave_max = evaluate_limits(arr_av1, intnlo, intnhi, int_lo, int_hi, cmt='AVE')
 
-    arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (arr1,), 0)
-    arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (arr1,), 0)
-    arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (arr1,), 0)
-    arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (arr1,), 0)
-    arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (arr1,), 0)
-    arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (arr1,), 0)
+    arr_sta_rms_hi = np.select((arr_rms>rms_max,),  (arr1,), 0)
+    arr_sta_rms_lo = np.select((arr_rms<rms_min,),  (arr1,), 0)
+    arr_sta_int_hi = np.select((sta_int_hi>nevlm,), (arr1,), 0)
+    arr_sta_int_lo = np.select((sta_int_lo>nevlm,), (arr1,), 0)
+    arr_sta_ave_hi = np.select((arr_av1>ave_max,),  (arr1,), 0)
+    arr_sta_ave_lo = np.select((arr_av1<ave_min,),  (arr1,), 0)
 
     logger.info('Bad pixel status:'\
                +'\n  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)\
                +'\n  status  2: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
-               +'\n  status  4: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
-               +'\n  status  8: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)\
+               +'\n  status  4: %8d pixel intensity > %g in more than %g fraction (%d/%d) of events'%\
+                    (arr_sta_int_hi.sum(), int_hi, fraclm, nevlm, nrecs)\
+               +'\n  status  8: %8d pixel intensity < %g in more than %g fraction (%d/%d) of events'%\
+                    (arr_sta_int_lo.sum(), int_lo, fraclm, nevlm, nrecs)\
                +'\n  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)\
                +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
                )
@@ -522,12 +503,6 @@ def proc_dark_block(block, **kwa):
     arr_sta_bad = np.select((cond,), (arr1,), 0)
     frac_bad = arr_sta_bad.sum()/float(arr_av1.size)
     logger.debug('fraction of panel pixels with gated average deviated from and replaced by median: %.6f' % frac_bad)
-
-    #logger.info('data block processing time = %.3f sec' % (time()-t0_sec))
-    #logger.debug(info_ndarr(arr_av1, 'arr_av1     [100:105] ', first=100, last=105))
-    #logger.debug(info_ndarr(arr_rms, 'pixel_rms   [100:105] ', first=100, last=105))
-    #logger.debug(info_ndarr(arr_sta, 'pixel_status[100:105] ', first=100, last=105))
-    #logger.debug(info_ndarr(arr_med, 'arr mediane [100:105] ', first=100, last=105))
 
     return arr_av1, arr_rms, arr_sta
 
@@ -609,8 +584,8 @@ def proc_block(block, **kwa):
       + '\n    event spectrum spread    median(abs(raw-med)): %.3f ADU - spectral peak width estimator' % med_abs_dev
     logger.info(s)
 
-    gate_lo    = arr1_u16 * int_lo
-    gate_hi    = arr1_u16 * int_hi
+    gate_lo = arr1_u16 * int_lo
+    gate_hi = arr1_u16 * int_hi
 
     gate_lo = np.maximum(np.floor(arr_qlo), gate_lo).astype(dtype=block.dtype)
     gate_hi = np.minimum(np.ceil(arr_qhi),  gate_hi).astype(dtype=block.dtype)
@@ -720,12 +695,10 @@ class DarkProc(object):
 
         fraclm  = self.fraclm
         counter = self.irec
+        nevlm = int(fraclm * counter)
 
         arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
         arr_av2 = divide_protected(self.arr_sum2, self.arr_sum0)
-
-        frac_int_lo = np.array(self.sta_int_lo/counter, dtype=np.float32)
-        frac_int_hi = np.array(self.sta_int_hi/counter, dtype=np.float32)
 
         arr_rms = np.sqrt(arr_av2 - np.square(arr_av1))
 
@@ -735,18 +708,20 @@ class DarkProc(object):
         rms_min, rms_max = evaluate_limits(arr_rms, rmsnlo, rmsnhi, rms_lo, rms_hi, cmt='RMS')
         ave_min, ave_max = evaluate_limits(arr_av1, intnlo, intnhi, int_lo, int_hi, cmt='AVE')
 
-        arr_sta_rms_hi = np.select((arr_rms>rms_max,),    (self.arr1,), 0)
-        arr_sta_rms_lo = np.select((arr_rms<rms_min,),    (self.arr1,), 0)
-        arr_sta_int_hi = np.select((frac_int_hi>fraclm,), (self.arr1,), 0)
-        arr_sta_int_lo = np.select((frac_int_lo>fraclm,), (self.arr1,), 0)
-        arr_sta_ave_hi = np.select((arr_av1>ave_max,),    (self.arr1,), 0)
-        arr_sta_ave_lo = np.select((arr_av1<ave_min,),    (self.arr1,), 0)
+        arr_sta_rms_hi = np.select((arr_rms>rms_max,),       (self.arr1,), 0)
+        arr_sta_rms_lo = np.select((arr_rms<rms_min,),       (self.arr1,), 0)
+        arr_sta_int_hi = np.select((self.sta_int_hi>nevlm,), (self.arr1,), 0)
+        arr_sta_int_lo = np.select((self.sta_int_lo>nevlm,), (self.arr1,), 0)
+        arr_sta_ave_hi = np.select((arr_av1>ave_max,),       (self.arr1,), 0)
+        arr_sta_ave_lo = np.select((arr_av1<ave_min,),       (self.arr1,), 0)
 
         logger.info('bad pixel status:'\
                +'\n  status  1: %8d pixel rms       > %.3f' % (arr_sta_rms_hi.sum(), rms_max)\
                +'\n  status  2: %8d pixel rms       < %.3f' % (arr_sta_rms_lo.sum(), rms_min)\
-               +'\n  status  4: %8d pixel intensity > %g in more than %g fraction of events' % (arr_sta_int_hi.sum(), int_hi, fraclm)\
-               +'\n  status  8: %8d pixel intensity < %g in more than %g fraction of events' % (arr_sta_int_lo.sum(), int_lo, fraclm)\
+               +'\n  status  4: %8d pixel intensity > %g in more than %g fraction (%d/%d) of non-empty events'%\
+                     (arr_sta_int_hi.sum(), int_hi, fraclm, nevlm, counter)\
+               +'\n  status  8: %8d pixel intensity < %g in more than %g fraction (%d/%d) of non-empty events'%\
+                     (arr_sta_int_lo.sum(), int_lo, fraclm, nevlm, counter)\
                +'\n  status 16: %8d pixel average   > %g'   % (arr_sta_ave_hi.sum(), ave_max)\
                +'\n  status 32: %8d pixel average   < %g'   % (arr_sta_ave_lo.sum(), ave_min)\
                )
@@ -789,8 +764,8 @@ class DarkProc(object):
         self.arr_sum1   += np.select(condlist, (raw_f64,), 0)
         self.arr_sum2   += np.select(condlist, (np.square(raw_f64),), 0)
 
-        self.sta_int_lo += np.select((cond_lo,), (self.arr1u64,), 0)
-        self.sta_int_hi += np.select((cond_hi,), (self.arr1u64,), 0)
+        self.sta_int_lo += np.select((_raw<self.int_lo,), (self.arr1u64,), 0)
+        self.sta_int_hi += np.select((_raw>self.int_hi,), (self.arr1u64,), 0)
 
         np.maximum(self.arr_max, _raw, out=self.arr_max)
         np.minimum(self.arr_min, _raw, out=self.arr_min)
