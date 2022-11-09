@@ -961,7 +961,8 @@ def info_pixel_status(status, bits=0xffff):
 def str_dsname(exp, run, dsnamex=None):
     """ returns (str) dsname for psana.DataSource(dsname)
     """
-    return dsnamex if dsnamex[0] != ':' else\
-           'exp=%s:run=%s%s'%(exp, str(run), dsnamex) if dsnamex else\
+    is_set = dsnamex is not None and dsnamex
+    return dsnamex if is_set and dsnamex[0] != ':' else\
+           'exp=%s:run=%s%s'%(exp, str(run), dsnamex) if is_set else\
            'exp=%s:run=%s'%(exp, str(run))
 # EOF
