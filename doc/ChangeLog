@@ -9,6 +9,8 @@ reverse time order.
 
 Tag: V02-00-??
 
+2022-11-09 Mikhail Dubrovin
+- src/UtilsCalib.py - in str_dsname enforce protection for dsname=None
 
 2022-11-08 Mikhail Dubrovin
 - COMMON
