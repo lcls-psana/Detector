@@ -7,7 +7,9 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag: V02-00-??
+Tag: V02-00-54
+2022-11-10 Mikhail Dubrovin
+- app/datinfo - fix exp->expname
 
 2022-11-09 Mikhail Dubrovin
 - src/UtilsCalib.py - in str_dsname enforce protection for dsname=None
