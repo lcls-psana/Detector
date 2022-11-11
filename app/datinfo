@@ -35,7 +35,7 @@ def ds_det(**kwa):
     runs     = kwa.get('runs', None) #342,343
     logmode  = kwa.get('logmode', 'INFO')
 
-    dsname = uc.str_dsname(exp, runs, dsnamex)
+    dsname = uc.str_dsname(expname, runs, dsnamex)
 
     logger.info('dsname: %s' % dsname)
     logger.info('detname: %s' % detname)
