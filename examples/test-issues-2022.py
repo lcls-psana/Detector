@@ -354,6 +354,14 @@ def issue_2022_09_26():
     print('epics.pvName("CXI:DS1:MMS:06.RBV"):', epics.pvName('CXI:DS1:MMS:06.RBV'))
     print('epics.getPV("CXI:DS1:MMS:06.RBV"):', epics.getPV('CXI:DS1:MMS:06.RBV'))  # <psana.Epics.EpicsPvCtrlDouble object at 0x7fe1863349f0>
 
+def issue_2022_11_14():
+    """
+    """
+    import psana
+    ds = psana.DataSource('exp=mecl1000821:run=900')
+    det = psana.Detector('epix100a_1_XTCS')
+    print(det.coords_x(900))
+
 
 def issue_2021_MM_DD():
     """ISSUE:
@@ -383,6 +391,7 @@ USAGE = '\nUsage:'\
       + '\n   12 - issue_2022_09_02 - Philip - save file with gains in repository for epix100a'\
       + '\n   13 - issue_2022_09_19 - py3 is default sinse 2022-09-15 fix DICT_NAME_TO_LEVEL dependence on py2/3'\
       + '\n   14 - issue_2022_09_26 - Chuck - request to access geometry correction z'\
+      + '\n   15 - issue_2022_11_14 - Vincent - py2->py3 transition issue with pixel coordinates'\
 
 TNAME = sys.argv[1] if len(sys.argv)>1 else '0'
 
@@ -400,6 +409,7 @@ elif TNAME in ('11',): issue_2022_09_01()
 elif TNAME in ('12',): issue_2022_09_02()
 elif TNAME in ('13',): issue_2022_09_19()
 elif TNAME in ('14',): issue_2022_09_26()
+elif TNAME in ('15',): issue_2022_11_14()
 
 else:
     print(USAGE)
