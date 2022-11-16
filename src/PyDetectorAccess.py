@@ -31,8 +31,8 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
 """
-from __future__ import print_function
-from __future__ import division
+#from __future__ import print_function
+#from __future__ import division
 
 #import logging
 #logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ def str_rayonix_geo_matrix_segment(d):
     return ugd.str_rayonix_geo_matrix_segment(d)
 
 
-class PyDetectorAccess(object):
+class PyDetectorAccess():
     """Class :py:class:`PyDetectorAccess` - python access to detector data.
     """
     GEO_NOT_LOADED     = 0
