@@ -44,10 +44,24 @@ def divide_protected(num, den, vsub_zero=0):
 
 def info_command_line_parameters(parser):
     """Prints input arguments and optional parameters"""
-    (popts, pargs) = parser.parse_args()
-    args = pargs                             # list of positional arguments
-    opts = vars(popts)                       # dict of options
-    defs = vars(parser.get_default_values()) # dict of default options
+    opts = {}
+    args = None
+    defs = None
+
+    from optparse import OptionParser
+    if isinstance(parser, OptionParser):
+      (popts, pargs) = parser.parse_args()
+      args = pargs                             # list of positional arguments
+      opts = vars(popts)                       # dict of options
+      defs = vars(parser.get_default_values()) # dict of default options
+    else: # ArgumentParser
+      args = parser.parse_args()  # Namespace
+      opts = vars(args)           # dict
+      defs = vars(parser.parse_args([]))
+
+    #print('args:', args)
+    #print('opts:', opts)
+    #print('defs:', defs)
 
     s = 'Command: ' + ' '.join(sys.argv)+\
         '\n  Argument list: %s\n  Optional parameters:\n' % str(args)+\
