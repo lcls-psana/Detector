@@ -7,6 +7,20 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-55
+2022-11-17 Mikhail Dubrovin
+  app/det_ndarr_raw_proc - switch to ArgumentParser, update list of parameters, move code to UtilsDarkProc.py
+  src/GlobalUtils.py - info_command_line_parameters make work with OptionParser and ArgumentParser
+  src/UtilsCalib.py - update class DarkProc(); add self.counter, self.status=1
+  src/UtilsDarkProc.py - add module with code for app/det_ndarr_raw_proc
+
+2022-11-14 Mikhail Dubrovin
+  src/WFDetector.py - code cleaning, remove object from class
+  examples/test-issues-2022.py - add issue_2022_11_14
+  PyDetectorAccess.py -> py3 - remove object and __future__
+  app/jungfrau_ndarr_dark_proc -> py3 - remove object and __future__
+  src/UtilsCalib.py
+
 Tag: V02-00-54
 2022-11-10 Mikhail Dubrovin
 - app/datinfo - fix exp->expname
