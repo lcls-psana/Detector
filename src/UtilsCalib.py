@@ -1,4 +1,6 @@
-from __future__ import print_function
+
+
+#from __future__ import print_function
 
 """
 :py:class:`UtilsCalib`
@@ -163,7 +165,7 @@ def file_name_prefix(panel_type, panel_id, tstamp, exp, irun, fname_aliases, **k
     return '%s_%s_%s_%s_r%04d' % (panel_type, panel_alias, tstamp, exp, irun), panel_alias
 
 
-class RepoManager(object):
+class RepoManager():
     """Supports repository directories/files naming structure
        <dirrepo>/<panel_id>/<constant_type>/<files-with-constants>
        <dirrepo>/logs/<year>/<log-files>
@@ -603,7 +605,7 @@ def proc_block(block, **kwa):
     return gate_lo, gate_hi, arr_med, arr_abs_dev
 
 
-class DarkProc(object):
+class DarkProc():
     """dark data accumulation and processing
     """
     def __init__(self, **kwa):
@@ -696,6 +698,7 @@ class DarkProc(object):
         fraclm  = self.fraclm
         counter = self.irec
         nevlm = int(fraclm * counter)
+        self.counter = counter
 
         arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
         arr_av2 = divide_protected(self.arr_sum2, self.arr_sum0)
@@ -802,6 +805,7 @@ class DarkProc(object):
             self.add_block()
             print('1st stage event block processing is completed')
             self.add_event(raw, self.irec)
+            self.status = 1
 
         if self.irec > self.nrecs-2:
             logger.info('record %d event loop is terminated, --nrecs=%d' % (self.irec, self.nrecs))
