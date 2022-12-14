@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-56
+2022-12-14 Mikhail Dubrovin
+  app/epix10ka_pedestals_calibration - add methods check_options and raise_exception
+  src/UtilsEpix10kaCalib.py - use runnum from orun.run() in data scan
+
 Tag: V02-00-55
 2022-11-17 Mikhail Dubrovin
   app/det_ndarr_raw_proc - switch to ArgumentParser, update list of parameters, move code to UtilsDarkProc.py
