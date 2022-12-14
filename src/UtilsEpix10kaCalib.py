@@ -557,6 +557,7 @@ def ids_epix10ka_any_for_dataset_detname(dsname, detname):
 
 
 def get_config_info_for_dataset_detname(dsname, detname, idx=0):
+    logger.info('   dsname: %s\n detname: %s' % (dsname, detname))
     ds = DataSource(dsname)
     det = Detector(detname)
     env = ds.env()
@@ -576,14 +577,19 @@ def get_config_info_for_dataset_detname(dsname, detname, idx=0):
     cpdic['panel_ids'] = ids_epix10ka2m(co)
     cpdic['dettype'] = det.dettype
     #cpdic['tstamp'] = str_tstamp(fmt=TSTAMP_FORMAT, time_sec=env_time(env))
-    for nevt,evt in enumerate(ds.events()):
-        raw = det.raw(evt)
-        if raw is not None:
-            tstamp, tstamp_now = tstamps_run_and_now(env)
-            cpdic['tstamp'] = tstamp
-            del ds
-            del det
-            break
+
+    for orun in ds.runs():
+      cpdic['runnum'] = orun.run()
+      #for step in orun.steps():
+      for nevt,evt in enumerate(orun.events()):
+          raw = det.raw(evt)
+          if raw is not None:
+              tstamp, tstamp_now = tstamps_run_and_now(env)
+              cpdic['tstamp'] = tstamp
+              del ds
+              del det
+              break
+      break
     logger.info('configuration info for %s %s segment=%d:\n%s' % (dsname, detname, idx, str(cpdic)))
     return cpdic
 
@@ -760,7 +766,7 @@ def offset_calibration(*args, **opts):
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
-    irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
+    #irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
 
     dsname = str_dsname(exp, run, dsnamex)
 
@@ -775,6 +781,7 @@ def offset_calibration(*args, **opts):
     panel_ids   = cpdic.get('panel_ids', None)
     expnum      = cpdic.get('expnum', None)
     shape       = cpdic.get('shape', None)
+    irun        = cpdic.get('runnum', None)
     ny,nx = shape
 
     if display:
@@ -1256,7 +1263,7 @@ def pedestals_calibration(*args, **opts):
 
     logger.setLevel(DICT_NAME_TO_LEVEL[logmode])
 
-    irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
+    #irun = int(run.split(',',1)[0].split('-',1)[0]) # int first run number from str of run(s)
 
     dsname = str_dsname(exp, run, dsnamex)
 
@@ -1267,7 +1274,7 @@ def pedestals_calibration(*args, **opts):
     #save_log_record_at_start(dirrepo, _name, dirmode, filemode)
 
     cpdic, tstamp, panel_ids, expnum, dettype, shape = config_info_for_pedestals(dsname, detname)
-
+    irun = cpdic.get('runnum', None)
     #read input xtc file and accumulate block of data
 
     #================= MPI
@@ -1336,6 +1343,7 @@ def pedestals_calibration(*args, **opts):
 
             if cpdic=={}:
                 cpdic, tstamp, panel_ids, expnum, dettype, shape = config_info_for_pedestals(dsname, detname)
+                irun = cpdic.get('runnum', None)
                 if cpdic=={}:
                     print('XXX Ev:%04d - configuration info is not available' % nevt, end='\r')
                 else:
@@ -1623,6 +1631,7 @@ def deploy_constants(*args, **opts):
     strsrc      = cpdic.get('strsrc',    None)
     panel_ids   = cpdic.get('panel_ids', None)
     dettype     = cpdic.get('dettype',   None)
+    irun        = cpdic.get('runnum',    None)
 
     global GAIN_FACTOR_DEF
     #GAIN_MODES     = ['FH','FM','FL','AHL-H','AML-M','AHL-L','AML-L']
