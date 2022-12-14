@@ -11,6 +11,20 @@ from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, init_logg
 logger = logging.getLogger(__name__)
 SCRNAME = sys.argv[0].split('/')[-1]
 
+def raise_exception(cmt):
+    raise IOError('WARNING: option %s MUST be specified.' % cmt)
+
+
+def check_options(popts):
+    if popts.det is None:
+        raise_exception('"-d <detector-name>"')
+    if popts.exp and popts.run is None:
+        raise_exception('"-r <run-number> along with -e <experiment>"')
+    if popts.exp is None and popts.run:
+        raise_exception('"-e <experiment>" along with "-r <run-number>"')
+    if popts.exp is None and popts.run is None and popts.dsnamex is None:
+        raise_exception('"-e <experiment> -r <run-number>" or/and "-x <data-source>"')
+
 
 def epix10ka_pedestals_calibration():
 
@@ -22,9 +36,7 @@ def epix10ka_pedestals_calibration():
     opts = vars(popts)
     defs = vars(parser.get_default_values())
 
-    if popts.exp is None: raise IOError('WARNING: option "-e <experiment>" MUST be specified.') # sys.exit()
-    if popts.det is None: raise IOError('WARNING: option "-d <detector-name>" MUST be specified.')
-    if popts.run is None: raise IOError('WARNING: option "-r <run-number>" MUST be specified.')
+    check_options(popts)
 
     #logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d: %(message)s', level=DICT_NAME_TO_LEVEL[popts.logmode])
     from Detector.UtilsCalib import RepoManager, cgu
