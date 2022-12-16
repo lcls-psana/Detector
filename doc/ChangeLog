@@ -7,6 +7,12 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-58
+2022-12-16 Mikhail Dubrovin
+  app/datinfo - add runnum_env = ds.env().configStore().get(EventId).run()
+  app/jungfrau_deploy_constants - add --runrange, change --run from int to str
+  src/UtilsJungfrauCalib.py - use --runrange, and changed --run as str
+
 Tag: V02-00-57
 2022-12-15 Mikhail Dubrovin
   app/deploy_constants - update USAGE
