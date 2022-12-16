@@ -12,14 +12,16 @@ SCRNAME = sys.argv[0].split('/')[-1]
 
 DESCRIPTION = 'Deployment of calibration parameters'
 
-USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> -C <calib-type> [-D] [-L <logging-mode>] [...]' % SCRNAME\
+USAGE = '\n%s -e <experiment> -r <run-number> -d <detector> -C <calib-type> [-D] [-L <logging-mode>] [...]' % SCRNAME\
+      + '\n%s -x exp=<experiment>:run=<run-number>:dir=<path-to-xtc>:stream=0-79 -d <detector> -C <calib-type> -c <path-to-calib> -R <run-range> -D' % SCRNAME\
       + '\n\nREGULAR COMMAND EXAMPLE:'\
-      + '\n  %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -D -c ./calib -D --runrange 10-20' % SCRNAME\
-      + '\n\n  Input parameters to select dataset:                     # DataSource argument:'\
-      + '\n    -e xpptut15 -r 260                                      # exp=xpptut15:run=260'\
-      + '\n    -e xpptut15 -r 260 -s :smd                              # exp=xpptut15:run=260:smd'\
-      + '\n    -e xpptut15 -r 260 -s :dir=path/xtc::stream=0-79        # exp=xpptut15:run=260:dir=path/xtc::stream=0-79'\
-      + '\n    -x :dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/  # or /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>'\
+      + '\n  %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -c ./calib --runrange 10-20 -D' % SCRNAME\
+      + '\n  %s -x exp=xpptut15:run=260:dir=/cds/data/psdm/xpp/xpptut15/xtc -d XcsEndstation.0:Epix100a.1 -C gain -c ./calib -D' % SCRNAME\
+      + '\n\n  Input parameters to select dataset:                  # DataSource argument:'\
+      + '\n    -e xpptut15 -r 260                                 # exp=xpptut15:run=260'\
+      + '\n    -e xpptut15 -r 260                                 # exp=xpptut15:run=260:smd'\
+      + '\n    -e xpptut15 -r 260 -x :dir=<path>/xtc:stream=0-79  # exp=xpptut15:run=260:dir=<path>/xtc:stream=0-79'\
+      + '\ne.g. -x :dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/      # or /cds/data/drpsrcf/mfx/mfxlv4920/xtc/<file-name.xtc>'\
       + '\n\nTEST COMMANDS:'\
       + '\nEx.1  for epix100a     : %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -D -c ./calib' % SCRNAME\
       + '\nEx.2  for Cspad CXI    : %s -e xpptut15 -r 380 -d CxiDs1.0:Cspad.0 -C gain -D -c ./calib' % SCRNAME\
@@ -66,10 +68,10 @@ def argument_parser():
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
     h_run     = 'run number of the existing dataset to get run time-stamp, detector full name etc., default = %s' % str(d_run)
+    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
     h_tstamp  = 'non-default time stamp (YYYYmmddHHMMSS) to search for constants in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
-    h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'non-default deployment calib directory, different from standard one, default = %s' % d_dircalib
     h_ctype   = 'calibration type [gain, common_mode, etc.], default = %s' % str(d_ctype)
@@ -84,8 +86,8 @@ def argument_parser():
     parser.add_argument('-e', '--exp',     default=d_exp,     type=str, help=h_exp)
     parser.add_argument('-d', '--det',     default=d_det,     type=str, help=h_det)
     parser.add_argument('-r', '--run',     default=d_run,     type=str, help=h_run)
-    parser.add_argument('-t', '--tstamp',  default=d_tstamp,  type=int, help=h_tstamp)
     parser.add_argument('-x', '--dsnamex', default=d_dsnamex,  type=str, help=h_dsnamex)
+    parser.add_argument('-t', '--tstamp',  default=d_tstamp,  type=int, help=h_tstamp)
     parser.add_argument('-o', '--dirrepo', default=d_dirrepo, type=str, help=h_dirrepo)
     parser.add_argument('-c', '--dircalib',default=d_dircalib,type=str, help=h_dircalib)
     parser.add_argument('-C', '--ctype',   default=d_ctype,   type=str, help=h_ctype)
