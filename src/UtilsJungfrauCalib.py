@@ -464,7 +464,11 @@ def jungfrau_config_info(dsname, detname, idx=0):
     cpdic['panel_ids'] = jungfrau_uniqueid(ds, detname).split('_')
     cpdic['dettype'] = det.dettype
     #cpdic['gain_mode'] = find_gain_mode(det, data=None) #data=raw: distinguish 5-modes w/o data
-    for nevt,evt in enumerate(ds.events()):
+    for orun in ds.runs():
+      cpdic['runnum'] = orun.run()
+      #for step in orun.steps():
+      #for nevt,evt in enumerate(ds.events()):
+      for nevt,evt in enumerate(orun.events()):
         raw = det.raw(evt)
         if raw is not None:
             tstamp, tstamp_now = uc.tstamps_run_and_now(env)
@@ -472,6 +476,7 @@ def jungfrau_config_info(dsname, detname, idx=0):
             del ds
             del det
             break
+      break
     logger.info('configuration info for %s %s segment=%d:\n%s' % (dsname, detname, idx, str(cpdic)))
     return cpdic
 
@@ -545,7 +550,8 @@ def jungfrau_deploy_constants(pargs, popts):
 
     exp        = kwa.get('exp', None)
     detname    = kwa.get('det', None)
-    irun       = kwa.get('run', None)
+    run        = kwa.get('run', None)
+    runrange   = kwa.get('runrange', None) # '0-end'
     tstamp     = kwa.get('tstamp', None)
     dsnamex    = kwa.get('dsnamex', None)
     dirrepo    = kwa.get('dirrepo', CALIB_REPO_JUNGFRAU)
@@ -573,7 +579,7 @@ def jungfrau_deploy_constants(pargs, popts):
     fmt_offset = kwa.get('fmt_offset', '%.6f')
 
     panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3]
-    dsname = uc.str_dsname(exp, irun, dsnamex)
+    dsname = uc.str_dsname(exp, run, dsnamex)
     _name = sys._getframe().f_code.co_name
 
     logger.info('In %s\n      dataset: %s\n      detector: %s' % (_name, dsname, detname))
@@ -588,6 +594,7 @@ def jungfrau_deploy_constants(pargs, popts):
     strsrc      = cpdic.get('strsrc',    None)
     panel_ids   = cpdic.get('panel_ids', None)
     dettype     = cpdic.get('dettype',   None)
+    irun        = cpdic.get('runnum',    None)
 
     shape_panel = shape[-2:]
     logger.info('shape of the detector: %s panel: %s' % (str(shape), str(shape_panel)))
@@ -656,7 +663,7 @@ def jungfrau_deploy_constants(pargs, popts):
         ctypedir = '%s/%s/%s' % (calibdir, calibgrp, strsrc)
 
         if deploy:
-            ofname   = '%d-end.data' % irun
+            ofname   = '%s.data'%runrange if runrange is not None else '%d-end.data'%irun
             lfname   = None
             verbos   = True
             logger.info('deploy file %s/%s/%s' % (ctypedir, octype, ofname))
