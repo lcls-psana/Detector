@@ -18,7 +18,7 @@ USAGE = '\n  %s -d <detector> -e <experiment> -r <run-number(s)> [kwargs]' % SCR
       + '\n  %s -d pnccd -e xpptut15 -r 450' % SCRNAME\
       + '\nHELP: %s -h' % SCRNAME
 
-from psana import DataSource, Detector
+from psana import DataSource, Detector, EventId
 from Detector.GlobalUtils import info_ndarr, info_kwargs, info_command_line # info_command_line_parameters
 import PSCalib.GlobalUtils as gu
 import Detector.UtilsCalib as uc
@@ -110,10 +110,12 @@ def loop_run_step_evt(**kwa):
     stskip  = kwa.get('stskip', 0)
     stepnum = kwa.get('stepnum', None)
     runnum = int(runs.replace(',',' ').replace('-',' ').replace(':',' ').split(' ')[0])
+    runnum_env = ds.env().configStore().get(EventId).run()
 
     dettype = gu.det_type_from_source(det.source) if hasattr('det', 'source') else 'N/A'
 
     logger.info('runnum: %s' % runnum)
+    logger.info('runnum ds.env().configStore().get(EventId).run(): %s' % str(runnum_env))
     logger.info('info_det: %s' % info_det(det, runnum, ds.env()))
     logger.info('calibDir: %s' % ds.env().calibDir().replace('//','/'))
     logger.info('dettype: %s' % dettype)
