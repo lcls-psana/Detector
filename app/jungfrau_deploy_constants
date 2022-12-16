@@ -31,8 +31,9 @@ def option_parser():
     d_exp     = None # 'mfxx32516'
     d_det     = None # 'NoDetector.0:Epix10ka.3'
     d_run     = None # 1021
+    d_runrange= None # '0-end'
     d_tstamp  = None # 20180910111049
-    d_dsnamex  = None # ':smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
+    d_dsnamex = None # ':smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/gabriel/pulser/xtc/combined'
     d_dircalib= None # './calib'
     d_paninds = None
     d_deploy  = False
@@ -49,6 +50,7 @@ def option_parser():
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
     h_run     = 'run number for beginning of the validity range, default = %s' % str(d_run)
+    h_runrange= 'validity run range for output calibration file, default = %s' % str(d_runrange)
     h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
     h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
@@ -71,7 +73,8 @@ def option_parser():
     parser = OptionParser(description=DESCRIPTION, usage=USAGE)
     parser.add_option('-e', '--exp',     default=d_exp,     action='store', type='string', help=h_exp)
     parser.add_option('-d', '--det',     default=d_det,     action='store', type='string', help=h_det)
-    parser.add_option('-r', '--run',     default=d_run,     action='store', type='int',    help=h_run)
+    parser.add_option('-r', '--run',     default=d_run,     action='store', type='string', help=h_run)
+    parser.add_option('-R', '--runrange',default=d_runrange,action='store', type='string', help=h_runrange)
     parser.add_option('-t', '--tstamp',  default=d_tstamp,  action='store', type='int',    help=h_tstamp)
     parser.add_option('-x', '--dsnamex', default=d_dsnamex, action='store', type='string', help=h_dsnamex)
     parser.add_option('-o', '--dirrepo', default=d_dirrepo, action='store', type='string', help=h_dirrepo)
