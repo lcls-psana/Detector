@@ -22,12 +22,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def str_dsname(exp=None, run=None, dssuffix=None, dsname=None, **other):
-    if dsname is not None: return dsname
-    s = 'exp=%s:run=%s' % (exp, str(run))
-    return s if dssuffix is None else '%s%s' % (s, dssuffix)
-
-
 def detector_name(det):
     """ returns detname like XcsEndstation-0-Epix100a-1
     """
@@ -68,8 +62,7 @@ def deploy_constants(**kwa):
     detname    = kwa.get('det', None)
     run        = kwa.get('run', None)
     runrange   = kwa.get('runrange', '0-end')
-    dssuffix   = kwa.get('dssuffix', None)
-    dsname     = kwa.get('dsname', None)
+    dsnamex    = kwa.get('dsnamex', None)
     tstamp     = kwa.get('tstamp', None)
     dirrepo    = kwa.get('dirrepo', './work')
     dircalib   = kwa.get('dircalib', None)
@@ -82,19 +75,16 @@ def deploy_constants(**kwa):
     repoman    = kwa.get('repoman', None)
     fname_only = kwa.get('repo_fname_only', False)
 
-    irun = int(run)
-
     assert ctype is not None, 'calibration type needs to be specified by -C CTYPE or --ctype CTYPE'
 
-
-    # = kwa.get('', None)
-    dsn = str_dsname(**kwa) #exp, run, dssuffix, dsname)
+    dsn = uc.str_dsname(exp, run, dsnamex)
     logger.debug('dataset_name: %s' % dsn)
 
     ds = psana.DataSource(dsn)
     env = ds.env()
-    #runnum = ds.runs().next().run()
+    irun = next(ds.runs()).run()
     det = psana.Detector(detname, env)
+
     #co = det.pyda.det_config_object(env)
     #cfg = env.configStore()
     #.deviceID() works for Rayonix
