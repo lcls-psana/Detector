@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-57
+2022-12-15 Mikhail Dubrovin
+  app/deploy_constants - update USAGE
+  src/UtilsDeployConstants.py - remove dssuffix, dsname; add/use dsnamex
+
 Tag: V02-00-56
 2022-12-14 Mikhail Dubrovin
   app/epix10ka_pedestals_calibration - add methods check_options and raise_exception
