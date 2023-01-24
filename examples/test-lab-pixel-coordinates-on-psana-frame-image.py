@@ -76,7 +76,7 @@ if True:
         print_ndarr(imgY,'img Y')
 
         fig = plt.figure(figsize=(10,5))#, title='img x and y', dpi=80, facecolor='w', edgecolor='w', frameon=True, move=(800,0))
-        fig.canvas.set_window_title('img x and y')
+        fig.canvas.manager.set_window_title('img x and y')
         #plt.imshow(imgX)
         #plt.colorbar()
 

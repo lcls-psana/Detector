@@ -68,7 +68,7 @@ def plot_avsi(x,y,fname):
     line0,=ax.plot(x,_y,'b-',linewidth=1)
     line1,=ax.plot(x,gbit,'r-',linewidth=1)
     ax.set_title(fname.rstrip('.png').rsplit('/',1)[-1], fontsize=6)#, color=color, fontsize=fstit, **kwargs)
-    fig.canvas.set_window_title(fname)
+    fig.canvas.manager.set_window_title(fname)
 
     move_fig(fig,650,200)
     #plt.plot()
@@ -186,7 +186,7 @@ def plot_fit(x,y,pf0,pf1,fname):
     ax.plot(x,np.polyval(pf1,x),'r-',linewidth=1)
 
     ax.set_title(fname.rstrip('.png').rsplit('/',1)[-1], fontsize=6)#, color=color, fontsize=fstit, **kwargs)
-    fig.canvas.set_window_title(fname)
+    fig.canvas.manager.set_window_title(fname)
     move_fig(fig,10,10)
     #plt.plot()
     fig.canvas.draw()
@@ -215,7 +215,7 @@ def move_fig(fig, x0=200, y0=100):
 
 def figure(figsize=(9,8), title='Image', dpi=80, facecolor='w', edgecolor='w', frameon=True, move=None, **kwargs):
     fig = plt.figure(figsize=figsize, dpi=dpi, facecolor=facecolor, edgecolor=edgecolor, frameon=frameon, **kwargs)
-    fig.canvas.set_window_title(title, **kwargs)
+    fig.canvas.manager.set_window_title(title, **kwargs)
     if move is not None:
         move_fig(fig,move[0], move[1])
     return fig
@@ -904,7 +904,7 @@ def offset_calibration(*args, **opts):
                             imsh, cbar = imshow_cbar(fig2, axim2, axcb2, raw, amin=None, amax=None, extent=None,\
                                                      interpolation='nearest', aspect='auto', origin='upper',\
                                                      orientation='vertical', cmap='inferno')
-                            fig2.canvas.set_window_title('Run:%d calib-cycle:%d mode:%s panel:%02d' % (orun.run(), nstep, mode, idx))
+                            fig2.canvas.manager.set_window_title('Run:%d calib-cycle:%d mode:%s panel:%02d' % (orun.run(), nstep, mode, idx))
                             fname = '%s-ev%02d-img-dark' % (figprefix, nevt)
                             axim2.set_title(fname.rsplit('/',1)[-1], fontsize=6)
                             fig2.savefig(fname+'.png')
@@ -989,7 +989,7 @@ def offset_calibration(*args, **opts):
                     imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec], amin=None, amax=None, extent=None,\
                                              interpolation='nearest', aspect='auto', origin='upper',\
                                              orientation='vertical', cmap='inferno')
-                    fig2.canvas.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
+                    fig2.canvas.manager.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
                     fname = '%s-img-charge' % figprefix
                     axim2.set_title(fname.rsplit('/',1)[-1], fontsize=6)
                     fig2.savefig(fname+'.png')
@@ -1067,7 +1067,7 @@ def offset_calibration(*args, **opts):
                     imsh, cbar = imshow_cbar(fig2, axim2, axcb2, block[nrec], amin=None, amax=None, extent=None,\
                                              interpolation='nearest', aspect='auto', origin='upper',\
                                              orientation='vertical', cmap='inferno')
-                    fig2.canvas.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
+                    fig2.canvas.manager.set_window_title('Run:%d calib-cycle:%d events:%d' % (orun.run(), nstep, evnum[nrec])) #, **kwargs)
                     fname = '%s-img-charge' % figprefix
                     axim2.set_title(fname.rsplit('/',1)[-1], fontsize=6)
                     fig2.savefig(fname+'.png')

@@ -6,6 +6,9 @@ Package author: Mikhail Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+Tag: V02-00-59
+2023-01-24 Mikhail Dubrovin
+  - src/UtilsEpix10kaCalib.py - canvas.set_window_title > canvas.manager.set_window_title
 
 Tag: V02-00-58
 2022-12-16 Mikhail Dubrovin
