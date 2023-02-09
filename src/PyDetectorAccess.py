@@ -530,7 +530,7 @@ class PyDetectorAccess():
 
 
     def pixel_size(self, par):
-        #if self.dettype == gu.RAYONIX: return self.pixel_size_rayonix()
+        if self.dettype == gu.RAYONIX: return self.pixel_size_rayonix()
         if self.geoaccess(par) is None: return None
         else:
             if  self.pixel_size_val is None:
