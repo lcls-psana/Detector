@@ -48,7 +48,7 @@ def argument_parser():
     d_filemode= 0o664
     d_group  = 'ps-users'
     d_nrecs1 = 50
-    d_nrecs  = 100
+    d_nrecs  = 1000
 
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
@@ -74,8 +74,8 @@ def argument_parser():
     h_dirmode= 'mode for all mkdir, default = %s' % oct(d_dirmode)
     h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
     h_group= 'group ownership for all files, default = %s' % d_group
-    h_nrecs='number of events to process, default = %s' % d_events
-    h_nrecs1='number of events to process at stage 1, default = %s' % d_events
+    h_nrecs='number of events to process, default = %s' % d_nrecs
+    h_nrecs1='number of events to process at stage 1, default = %s' % d_nrecs1
 
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
     parser.add_argument('-d', '--dsname',  default=d_dsname,  type=str,   help=h_dsname)
