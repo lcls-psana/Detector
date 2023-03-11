@@ -112,7 +112,7 @@ def loop_run_step_evt(**kwa):
     runnum = int(runs.replace(',',' ').replace('-',' ').replace(':',' ').split(' ')[0])
     runnum_env = ds.env().configStore().get(EventId).run()
 
-    dettype = gu.det_type_from_source(det.source) if hasattr('det', 'source') else 'N/A'
+    dettype = gu.det_type_from_source(det.source) if hasattr(det, 'source') else 'N/A'
 
     logger.info('runnum: %s' % runnum)
     logger.info('runnum ds.env().configStore().get(EventId).run(): %s' % str(runnum_env))
