@@ -320,6 +320,10 @@ class PyDetectorAccess():
         return self.cpstore(par).pixel_status()
 
 
+    def pixel_status_extra(self, par):
+        return self.cpstore(par).pixel_status_extra()
+
+
     def pixel_datast(self, par):
         return self.cpstore(par).pixel_datast()
 
