@@ -7,6 +7,13 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-61
+2023-03-14 Mikhail Dubrovin
+  - src/AreaDetector.py - add/use method status_extra, update status_as_mask
+  - src/PyDetectorAccess.py - add method pixel_status_extra
+  - examples/ex_epix10ka_images.py - fix print(...) for py3, cosmetic update
+  - add: examples/test-issues-2023.py - add issue_2023_03_14 to test mask = det.status_as_mask(runnum, mstcode=0xffff, mstextra=0x3)
+
 Tag: V02-00-60
 2023-03-10 Mikhail Dubrovin
 	modified:   app/datinfo - fix hasattr(det,...
