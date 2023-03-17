@@ -1,4 +1,4 @@
-#----------
+
 """
 Class :py:class:`AreaDetectorCompound` supports list of AreaDetector objects
 ============================================================================
@@ -11,7 +11,7 @@ Usage::
 
     import psana
     from Detector.AreaDetectorCompaund import AreaDetectorCompaund
- 
+
     ds = psana.DataSource('exp=xpptut15:run=460')
     env = ds.env()
     evt = ds.events().next()
@@ -29,8 +29,8 @@ Usage::
 
     raw = det.raw(evt)
 
-    list_raw   = det.list_raw(evt) 
-    list_calib = det.list_calib(evt) 
+    list_raw   = det.list_raw(evt)
+    list_calib = det.list_calib(evt)
 
     raw      = det.raw(evt)
     calib    = det.calib(evt)
@@ -57,7 +57,6 @@ If you use all or part of it, please give an appropriate acknowledgment.
 Created on 2019-04-02 Mikhail Dubrovin
 """
 from __future__ import print_function
-#----------
 
 import sys
 import numpy as np
@@ -66,7 +65,6 @@ from PSCalib.GeometryAccess import img_from_pixel_arrays
 from Detector.GlobalUtils import info_ndarr, print_ndarr
 from Detector.AreaDetector import AreaDetector # can't use just a Detector due to circular dependency
 
-#----------
 
 class AreaDetectorCompound(object):
     """Python access to the list of area detectors.
@@ -80,17 +78,16 @@ class AreaDetectorCompound(object):
                          'indexes_x', 'indexes_y', 'indexes_z',\
                          'common_mode_correction', 'common_mode_apply',\
                          'mask_geo', 'mask_comb', 'mask_edges', 'mask_neighbors', 'mask_calib',\
-                         'datast', 'status_as_mask', 'gain_mask', 'gain_mask_non_zero', 'areas'\
+                         'status_data', 'status_as_mask', 'gain_mask', 'gain_mask_non_zero', 'areas'\
                         ]
 
     WRAP_METHODS_2NDA  = ['coords_xy', 'indexes_xy', 'indexes_xy_at_z']
 
-    #----------
 
-    def __init__(self, detnames, env) :
-        """Constructor of the class :class:`AreaDetectorCompound`.
+    def __init__(self, detnames, env):
+        """Constructor of the class:class:`AreaDetectorCompound`.
            Parameters
-           - detnames : (list of str) - list of detector names, e.g. ['CxiDs2.0:Cspad.0','CxiDs2.0:Cspad.1']
+           - detnames: (list of str) - list of detector names, e.g. ['CxiDs2.0:Cspad.0','CxiDs2.0:Cspad.1']
         """
         # convert str like 'compound Jungfrau1M Jungfrau512k'
         # to the list ['Jungfrau1M', 'Jungfrau512k']
@@ -111,7 +108,6 @@ class AreaDetectorCompound(object):
 
         self.add_methods()
 
-    #----------
 
     def add_method_list(self, metname):
         """ Adds to self-class method with specified name like (for metname='raw'):
@@ -122,24 +118,6 @@ class AreaDetectorCompound(object):
             return [getattr(o, metname)(*args, **kwargs) for o in self.list_dets]
         setattr(self, 'list_%s'%metname , _prototype)
 
-    #----------
-
-#    def list_calib(self, *args, **kwargs) :
-#        """explicit implementation for debugging
-#        """
-#        olst = []
-#        for det in self.list_dets :
-#            print('\nmake calib for %s' % det.name)
-#            print_ndarr(det.pedestals(*args, **kwargs),    name='  -- list_calib pedestals', first=0, last=5) 
-#            print_ndarr(det.gain(*args, **kwargs),         name='  -- list_calib gain     ', first=0, last=5) 
-#            print_ndarr(det.offset(*args, **kwargs),       name='  -- list_calib offset   ', first=0, last=5)
-#            print_ndarr(det.raw(*args, **kwargs),          name='  -- list_calib raw      ', first=0, last=5) 
-#            nda = det.calib(*args, **kwargs)
-#            print_ndarr(nda,                               name='  -- list_calib calib    ', first=0, last=5)
-#            olst.append(nda)
-#        return olst
-
-    #----------
 
     def add_method_nda(self, metname):
         def _prototype(*args, **kwargs) :
@@ -154,7 +132,6 @@ class AreaDetectorCompound(object):
             return np.concatenate(list_nda, axis=concaxis) # concatinates for axis=0, other dimensions should be the same...
         setattr(self, metname, _prototype)
 
-    #----------
 
     def add_method_double_nda(self, metname):
         def _prototype(*args, **kwargs) :
@@ -165,7 +142,6 @@ class AreaDetectorCompound(object):
             return np.concatenate(list_nda0, axis=concaxis),  np.concatenate(list_nda1, axis=concaxis)
         setattr(self, metname, _prototype)
 
-    #----------
 
     def add_methods(self):
         """Generates methods from prototypes with names from WRAP_METHODS_LIST/NDA.
@@ -174,7 +150,6 @@ class AreaDetectorCompound(object):
         for name in self.WRAP_METHODS_NDA:  self.add_method_nda(name)
         for name in self.WRAP_METHODS_2NDA: self.add_method_double_nda(name)
 
-    #----------
 
     #def image(self, *args, **kwargs) :
     def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
@@ -182,7 +157,7 @@ class AreaDetectorCompound(object):
             NOTICE:
                - xy0_off_pix=(VERT,HORIZ) on regular image
                - do_update=True is required if indexes_x/y were called earlier with different xy0_off_pix
-        """ 
+        """
         #ix = self.indexes_x(evt, pix_scale_size_um, xy0_off_pix, do_update)
         #iy = self.indexes_y(evt, pix_scale_size_um, xy0_off_pix, do_update)
         ix, iy = self.indexes_xy(evt, pix_scale_size_um, xy0_off_pix, do_update)
@@ -195,14 +170,13 @@ class AreaDetectorCompound(object):
 
         return img_from_pixel_arrays(ix, iy, nda_in)
 
-    #----------
 
     def image_at_z(self, evt, zplane=None, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False) :
         """ returns 2d image for compound detector projected on plane at z (um).
             NOTICE:
                - xy0_off_pix=(VERT,HORIZ) on regular image
                - do_update=True is required if indexes_x/y were called earlier with different xy0_off_pix
-        """ 
+        """
         ix, iy = self.indexes_xy_at_z(evt, zplane, pix_scale_size_um, xy0_off_pix, do_update)
 
         if False :
@@ -213,15 +187,13 @@ class AreaDetectorCompound(object):
 
         return img_from_pixel_arrays(ix, iy, nda_in)
 
-    #----------
 
     def common_mode(self, par) :
         """ returns common mode array for the [0] detector in the list.
-        """ 
+        """
         lst = self.list_common_mode(par)
         return lst[0] if len(lst) else None
 
-#----------
 
 if __name__ == "__main__" :
     """
@@ -239,7 +211,7 @@ if __name__ == "__main__" :
           EventKey(type=psana.Jungfrau.ElementV2, src='DetInfo(MfxEndstation.0:Jungfrau.0)', alias='Jungfrau1M')
           EventKey(type=psana.Jungfrau.ElementV2, src='DetInfo(MfxEndstation.0:Jungfrau.1)', alias='Jungfrau512k')
        """
-       if ntest==1 : 
+       if ntest==1 :
          #psana.setOption('psana.calib-dir', './calib')
          return\
          'exp=xpptut15:run=460',\
@@ -262,13 +234,12 @@ if __name__ == "__main__" :
           'MecTargetChamber.0:Princeton.2',\
           'MecTargetChamber.0:Princeton.3']
 
-       if ntest==5 : 
+       if ntest==5 :
          return\
          'exp=xppx37817:run=60',\
          ['XppGon.0:Epix100a.1',\
           'XppGon.0:Epix100a.2']
 
-    #----------
 
     from time import time
 
@@ -311,7 +282,7 @@ if __name__ == "__main__" :
     print('detectors in AreaDetectorCompound:')
     for o in det.list_dets : print('%24s shape=%s %s' % (string_from_source(o.source), str(o.shape()), str(o)))
 
-    calibs = det.list_calib(evt) 
+    calibs = det.list_calib(evt)
     for nda in calibs :
         print_ndarr(nda, name='    -- per det list_calib', first=0, last=5)
 
@@ -332,7 +303,7 @@ if __name__ == "__main__" :
     #print_ndarr(det.indexes_x(evt, xy0_off_pix=(1500,1500)), name='indexes_x, off_pix=(1000,1000)', first=1000, last=1005)
 
     #img = reshape_to_2d(det.raw(evt))
-    
+
     #_ = det.image(evt, nda_in=calib, pix_scale_size_um=None, xy0_off_pix=None, do_update=False)
 
     # NOTICE:
@@ -347,7 +318,7 @@ if __name__ == "__main__" :
 
     print_ndarr(img, name='img', first=0, last=5)
 
-    if True : # True or False for to plot image or not 
+    if True : # True or False for to plot image or not
         from pyimgalgos.GlobalUtils import reshape_to_2d
         from pyimgalgos.GlobalGraphics import plotImageLarge, show
 
@@ -357,4 +328,4 @@ if __name__ == "__main__" :
 
     sys.exit('TEST %d IS COMPLETED' % ntest)
 
-#----------
+# EOF
