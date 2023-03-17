@@ -121,7 +121,7 @@ def test_epix10ka_methods(tname):
     #bkgd = det.bkgd(par)
     #print_ndarr(bkgd, 'bkgd')
 
-    #datast = det.datast(par)
+    #datast = det.status_data(par)
     #print_ndarr(datast, 'datast')
 
     status = det.status(par)
@@ -235,7 +235,7 @@ def test_epix10ka_methods(tname):
         #             (ave-0.1*rms, ave+0.3*rms) if tname=='5' else\
         #             (ave-2*rms, ave+6*rms)
         amin, amax = (ave-0.5*rms, ave+3*rms)
-        if   tname=='8' : amin, amax = (0, 40000)
+        if   tname=='8': amin, amax = (0, 40000)
         elif tname=='10': amin, amax = (-2.5, 5)
 
         img = None
