@@ -7,6 +7,22 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-62
+2023-03-17 Mikhail Dubrovin
+- rename pixel_status_extra > status_extra
+  modified:
+  app/det_raw_pixel_status
+  examples/ex_epix10ka_det.py
+  examples/ex_epix10ka_images.py
+  examples/ex_jungfrau_det.py
+  examples/test-issues-2023.py - add code to create/test status_data
+  src/AreaDetector.py - add pars mstextra, mstdata, add ctype='pixel_status'; rename datast > status_data
+  src/AreaDetectorCompound.py - code cleaning, rename datast > status_data
+  src/GlobalUtils.py
+  src/PyDetectorAccess.py - rename pixel_status_extra > status_extra, pixel_datast > status_data
+  src/UtilsRawPixelStatus.py - remove STD/4 > STD, rename ctype pixel_status_data > status_data
+
+
 Tag: V02-00-61
 2023-03-14 Mikhail Dubrovin
   - src/AreaDetector.py - add/use method status_extra, update status_as_mask
