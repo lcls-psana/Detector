@@ -8,9 +8,6 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
 """
-from __future__ import print_function
-#from __future__ import division
-
 import sys
 import numpy as np
 
@@ -58,10 +55,6 @@ def info_command_line_parameters(parser):
       args = parser.parse_args()  # Namespace
       opts = vars(args)           # dict
       defs = vars(parser.parse_args([]))
-
-    #print('args:', args)
-    #print('opts:', opts)
-    #print('defs:', defs)
 
     s = 'Command: ' + ' '.join(sys.argv)+\
         '\n  Argument list: %s\n  Optional parameters:\n' % str(args)+\
