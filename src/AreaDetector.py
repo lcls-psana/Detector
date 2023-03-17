@@ -56,14 +56,15 @@ Usage::
     gain   = det.gain(par)      # returns array of pixel gain from calib store type pixel_gain
     offset = det.offset(par)    # returns array of pixel offset from calib store type pixel_offset
     bkgd   = det.bkgd(par)      # returns array of pixel background from calib store type pixel_bkgd
-    status = det.status(par)    # returns array of pixel status from calib store type pixel_status
-    stextra= det.status_extra(par) # returns array of pixel status from calib store type pixel_status_extra
-    datast = det.datast(par)    # returns array of pixel status from calib store type pixel_datast
+    status = det.status(par, ctype='pixel_status') # returns array of pixel status from calib store type pixel_status
+    stextra= det.status_extra(par) # returns array of pixel status from calib store type status_extra
+    stdata = det.status_data(par)  # returns array of pixel status from calib store type status_data
     stmask = det.status_as_mask(par, **kwargs) # returns array of masked bad pixels in det.status
                                                # kwargs.mode=0/1/2 masks zero/four/eight neighbors around each bad pixel
                                                # kwargs.indexes=(0,1,2,3,4) - merging parameter for epix10ka2m
                                                # kwargs.mstcode=0xffff - bitword for pixel_status codes to mask uint16
-                                               # kwargs.mstextra=(1<<64)-1 - bitword for pixel_status_extra codes to mask uint64
+                                               # kwargs.mstextra=(1<<64)-1 - bitword for status_extra codes to mask uint64
+                                               # kwargs.mstdata=(1<<64)-1 - bitword for status_data codes to mask uint64
     mask   = det.mask_calib(par)  # returns array of pixel mask from calib store type pixel_mask
     cmod   = det.common_mode(par) # returns 1-d array of common mode parameters from calib store type common_mode
 
@@ -497,7 +498,7 @@ class AreaDetector():
 
            - rnum      : int - run number
            - calibtype : int - enumerated value from the list
-                         gu.PEDESTALS, PIXEL_STATUS, PIXEL_RMS, PIXEL_GAIN, PIXEL_MASK, PIXEL_BKGD, COMMON_MODE, PIXEL_STATUS_EXTRA.
+                         gu.PEDESTALS, PIXEL_STATUS, PIXEL_RMS, PIXEL_GAIN, PIXEL_MASK, PIXEL_BKGD, COMMON_MODE, STATUS_EXTRA.
 
            Returns
 
@@ -678,12 +679,13 @@ class AreaDetector():
         return self._shaped_array_(par, self.pyda.pixel_bkgd(par), gu.PIXEL_BKGD)
 
 
-    def status(self, par):
-        """Returns array of pixel_status from calib directory.
+    def status(self, par, ctype='pixel_status'):
+        """Returns array of pixel_status/status_extra/status_data from calib directory.
 
            Parameter
 
-           - par : int or psana.Event() - integer run number or psana event object.
+           - par (int) or psana.Event() - integer run number or psana event object.
+           - ctype (str) default='pixel_status' - status calib-type name, one of pixel_status, status_extra, status_data.
 
            Returns
 
@@ -694,15 +696,30 @@ class AreaDetector():
                                  4 - cold
                                  8 - cold rms
         """
-        return self._shaped_array_(par, self.pyda.pixel_status(par), gu.PIXEL_STATUS)
+        ictype = gu.dic_calib_name_to_type.get(ctype, None)
+        if ictype is None:
+            if self.pbits:
+                ctypes = [k for k in gu.dic_calib_name_to_type.keys() if 'status' in k]
+                print('WARNING: requested calib-type: %s IS UNKNOWN' % ctype,
+                      'known status calib-types: %s' % ctypes)
+            return None
+
+        stmethod = getattr(self.pyda, ctype, None)
+        if stmethod is None:
+            if self.pbits:
+                print('WARNING: object %s does not have method %s' % (str(self.pyda), str(stmethod)))
+            return None
+
+        return self._shaped_array_(par, stmethod(par), ictype)
+        #return self._shaped_array_(par, self.pyda.pixel_status(par), gu.PIXEL_STATUS)
 
 
     def status_extra(self, par):
-        """Returns array of pixel_status_extra from calib directory."""
-        return self._shaped_array_(par, self.pyda.pixel_status_extra(par), gu.PIXEL_STATUS_EXTRA)
+        """Returns array of status_extra from calib directory."""
+        return self._shaped_array_(par, self.pyda.status_extra(par), gu.STATUS_EXTRA)
 
 
-    def datast(self, par):
+    def status_data(self, par):
         """Returns array of pixel data status from calib directory,
            the same as status, but evaluated for non-dark data runs.
 
@@ -712,11 +729,11 @@ class AreaDetector():
 
            Returns
 
-           - np.array - per-pixel values loaded for calibration type pixel_datast.
+           - np.array - per-pixel values loaded for calibration type status_data.
                     status bits: 0 - good pixel
                                  1,2,4,8,.. TBD
         """
-        return self._shaped_array_(par, self.pyda.pixel_datast(par), gu.PIXEL_DATAST)
+        return self._shaped_array_(par, self.pyda.status_data(par), gu.STATUS_DATA)
 
 
     def status_as_mask(self, par, **kwargs):
@@ -726,7 +743,8 @@ class AreaDetector():
 
            - par  : int or psana.Event() - integer run number or psana event object.
            - kwargs.mstcode : bitword for mask pixel_status codes, def: 0xffff or (1<<16)-1
-           - kwargs.mstextra: bitword for mask pixel_status_extra codes, def: (1<<64)-1
+           - kwargs.mstextra: bitword for mask status_extra codes, def: (1<<64)-1
+           - kwargs.mstdata : bitword for mask status_data codes, def: (1<<64)-1
            - kwargs.mode    : int - 0/1/2 masks zero/four/eight neighbors around each bad pixel
            - kwargs.indexes : tuple of indexes standing for 'FH','FM','FL','AHL-H','AML-M'
 
@@ -735,23 +753,31 @@ class AreaDetector():
            - np.array - mask generated from calibration type pixel_status (1/0 for status 0/>0, respectively).
         """
         mstcode  = kwargs.get('mstcode', 0xffff)      # (uint16) bitword for pixel_status codes to mask
-        mstextra = kwargs.get('mstextra', (1<<64)-1)  # (uint64) bitword for pixel_status_extra codes to mask
+        mstextra = kwargs.get('mstextra', (1<<64)-1)  # (uint64) bitword for status_extra codes to mask
+        mstdata  = kwargs.get('mstdata', (1<<64)-1)  # (uint64) bitword for status_data codes to mask
         mode     = kwargs.get('mode', 0) # 0/1/2 masks zero/four/eight neighbors around each bad pixel
 
         smask = None
-        stat = self.status(par)
-        if stat is not None:
-            cond = (stat & mstcode) > 0
-            smask = np.asarray(np.select((cond,), (0,), default=1), dtype=DTYPE_MASK) # np.uint8
 
-        if mstextra>0:
-            stat_extra = self.status_extra(par)
-            if stat_extra is not None:
-                cond = (stat_extra & mstextra) > 0
-                smask_extra = np.asarray(np.select((cond,), (0,), default=1), dtype=DTYPE_MASK) # np.uint8
-                smask = gu.merge_masks(smask, smask_extra)
+        for ctype, stcode in (\
+            ('pixel_status', mstcode),\
+            ('status_extra', mstextra),\
+            ('status_data',  mstdata)):
+            stat = None
+            if stcode > 0:
+                stat = self.status(par, ctype=ctype)
+                if stat is None:
+                    if self.pbits>0: print('calib-type: %s constants are NOT AVAILABLE' % ctype)
+                    continue
+            cond = (stat & stcode) > 0
+            smask1 = np.asarray(np.select((cond,), (0,), default=1), dtype=DTYPE_MASK) # np.uint8
 
-        if smask is None: return None
+            smask = smask1 if smask is None else\
+                    gu.merge_masks(smask, smask1)
+
+        if smask is None:
+            if self.pbits>0: print('WARNING: status mask is None')
+            return None
 
         if self.is_epix10ka_any():
             smask = gu.merge_status(smask, **kwargs) # indexes=(0,1,2,3,4) or (0,1,2)
@@ -1098,10 +1124,11 @@ class AreaDetector():
            ----------
            - status   : bool : True  - mask from pixel_status constants,
                                        kwargs: mstcode=0xffff - pixel_status bits to use in mask,
-                                       kwargs: mstextra=(1<<64)-1 - pixel_status_extra bits to use in mask.
+                                       kwargs: mstextra=(1<<64)-1 - status_extra bits to use in mask.
+                                       kwargs: mstdata=(1<<64)-1 - status_data bits to use in mask.
                                        Status bits show why pixel is considered as bad.
                                        Content of the bitword depends on detector and code version.
-                                       It is wise to exclude pixels with any bad status by setting mstcode=0xffff.
+                                       It is wise to exclude pixels with any bad status by setting mstcode=(1<<64)-1.
                                        kwargs: indexes=(0,1,2,3,4) - list of gain range indexes to merge for epix10ka only
            - unbond   : bool : False - mask of unbond pixels for cspad 2x1 panels only
            - neighbor : bool : False - mask of neighbors of all bad pixels,
@@ -1120,12 +1147,13 @@ class AreaDetector():
         """
         mask = None
         if status:
-            mstcode  = kwargs.get('mstcode', 0xffff)
-            mstextra = kwargs.get('mstextra', (1<<64)-1)
-            indexes  = kwargs.get('indexes', (0,1,2,3,4) if self.is_epix10ka_any() else None)
-            mask = self.status_as_mask(par, mstcode=mstcode, mstextra=mstextra, mode=0, indexes=indexes)
-            # mode=0 - do not mask neighbors
-            # indexes=(0,1,2,3,4) - list of indexes of epix10ka... gain modes to merge status
+            #mstcode  = kwargs.get('mstcode', 0xffff)
+            #mstextra = kwargs.get('mstextra', (1<<64)-1)
+            #mstdata  = kwargs.get('mstdata', (1<<64)-1)
+            #indexes  = kwargs.get('indexes', (0,1,2,3,4) if self.is_epix10ka_any() else None)
+            #mode  = kwargs.get('mode', 0) # do not mask neighbors
+            #mask = self.status_as_mask(par, mstcode=mstcode, mstextra=mstextra, mstdata=mstdata, mode=0, indexes=indexes)
+            mask = self.status_as_mask(par, **kwargs)
 
         if unbond and (self.is_cspad2x2() or self.is_cspad()):
             mask_unbond = self.mask_geo(par, width=0, wcentral=0, mbits=4) # mbits=4 - unbonded pixels for cspad2x1 segments
@@ -1170,7 +1198,7 @@ class AreaDetector():
 
            - par     : int or psana.Event() - integer run number or psana event object.
            - calib   : bool - True/False = on/off mask from calib directory.
-           - status  : bool - True/False = on/off mask generated from calib pixel_status and pixel_status_extra.
+           - status  : bool - True/False = on/off mask generated from calib pixel_status and status_extra.
 
            Other parameters work for selected detectors with appropriate implementation (cspad, epix10ka, jungfrau etc.):
 
@@ -1181,7 +1209,8 @@ class AreaDetector():
            - unbondnbrs8: bool - True/False = on/off mask of unbonded pixel with eight neighbors.
            - kwargs     : dict - additional parameters passed to low level methods
                           kwargs.mstcode=0xffff - status_as_mask - bitword for mask from pixel_status codes
-                          kwargs.mstextra=(1<<64)-1 - status_as_mask - bitword for mask from pixel_status_extra codes
+                          kwargs.mstextra=(1<<64)-1 - status_as_mask - bitword for mask from status_extra codes
+                          kwargs.mstdata=(1<<64)-1 - status_as_mask - bitword for mask from status_data codes
                           kwargs.mode=0/1/2 - status_as_mask - masks zero/four/eight neighbors around each bad pixel
                           kwargs.indexes=(0,1,2,3,4) - status_as_mask list of gain indexes to merge for epix10ka2n
                           kwargs.mbits=1 - mask_geo - mask edges, +2 - mask central in mask_geo
@@ -1220,7 +1249,7 @@ class AreaDetector():
            - mbits : int - mask control bit-word.
 
                  = 0  - returns None
-                 + 1  - pixel_status and pixel_status_extra ("bad pixels" from dark processing or generated by users)
+                 + 1  - pixel_status and status_extra ("bad pixels" from dark processing or generated by users)
                  + 2  - pixel_mask (deployed by user in "pixel_mask" calib dir)
                  + 4  - edge pixels
                  + 8  - big "central" pixels of a cspad2x1
