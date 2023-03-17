@@ -99,8 +99,8 @@ def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8, prefix=
     med = np.median(arr_sel)
     spr = np.median(np.absolute(arr_sel-med))  # axis=None, out=None, overwrite_input=False, keepdims=False
     if spr == 0:
-       spr = np.std(arr_sel)/4
-       logger.warning('MEDIAN OF SPREAD FOR INT VALUES IS 0 replaced with STD/4 = % .3f' % spr)
+       spr = np.std(arr_sel)
+       logger.warning('MEDIAN OF SPREAD FOR INT VALUES IS 0 replaced with STD = % .3f' % spr)
 
     _vmin = med - snrmax*spr if vmin is None else max(med - snrmax*spr, vmin)
     _vmax = med + snrmax*spr if vmax is None else min(med + snrmax*spr, vmax)
@@ -431,7 +431,7 @@ def save_status(arr_status, args, dmd):
     expname    = dmd['expname']
     ts_run     = dmd['ts_run']
     panel_ids  = dmd['detid'].split('_')
-    ctype      = args.ctype # 'pixel_status_data'
+    ctype      = args.ctype # 'status_data'
     dirrepo    = args.dirrepo
     filemode   = args.filemode
     group      = args.group
