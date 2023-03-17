@@ -49,7 +49,7 @@ def argument_parser():
     d_group    = 'ps-users'
     d_databits = (1<<14)-1 # 0o37777  # 14 bits # 0o177777 - 16bit
     d_gainbits = 0
-    d_ctype    = 'pixel_status_data'
+    d_ctype    = 'status_data'
 
     h_dsname  = 'dataset name, default = %s' % d_dsname
     h_source  = 'input ndarray source name, default = %s' % d_source
