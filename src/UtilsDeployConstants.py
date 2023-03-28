@@ -41,8 +41,8 @@ def id_det(det, env):
         detid = id_epix(co)
     elif da.dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD):
         co = pda.get_epix10ka_any_config_object(env, da.source)
-        from Detector.UtilsEpix10ka2M import id_epix, id_epix10ka
-        detid = id_epix10ka(co)
+        from Detector.UtilsEpix10ka2M import id_epix10ka2m  # id_epix, id_epix10ka
+        detid = id_epix10ka2m(co)
     elif da.dettype == gu.JUNGFRAU:
         co = pda.get_jungfrau_config_object(env, da.source)
         from Detector.UtilsJungfrau import id_jungfrau_from_config
