@@ -40,6 +40,7 @@ def argument_parser():
     d_evcode = None
     d_upload = False
     d_segind = 0
+    d_gmode  = None
     d_nrecs  = 1000
     d_fraclo = 0.05    # fraction of statistics [0,1] below low limit
     d_frachi = 0.95    # fraction of statistics [0,1] below high limit
@@ -71,6 +72,7 @@ def argument_parser():
                 'code inverts selection, default = %s'%str(d_evcode)
     h_upload  = 'deprecated and not used, default = %s' % d_upload
     h_segind  = 'segment index to process, use it for multi-panel detectors with raw.shape.ndim>2, default = %s' % str(d_segind)
+    h_gmode   = 'gain mode name, use it for multi-gain detectors with raw.shape.ndim>3, ex: AHL-H, default = %s' % str(d_gmode)
     h_nrecs   = 'number of records to collect data, default = %s' % str(d_nrecs)
     h_fraclo  = 'fraction of statistics [0,1] below low  limit of the gate, default = %f' % d_fraclo
     h_frachi  = 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
@@ -107,6 +109,7 @@ def argument_parser():
     parser.add_argument('--group',          default=d_group,    type=str,   help=h_group)
     parser.add_argument('--databits',       default=d_databits, type=int,   help=h_databits)
     parser.add_argument('--gainbits',       default=d_gainbits, type=int,   help=h_gainbits)
+    parser.add_argument('--gmode',          default=d_gmode,    type=int,   help=h_gmode)
 #    parser.add_argument('-p', '--plotim',   default=d_plotim,   type=int,   help=h_plotim)
 #    parser.add_argument('-u', '--upload',   default=d_upload,   action='store_true', help=h_upload)
 
