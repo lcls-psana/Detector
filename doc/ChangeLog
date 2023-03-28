@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-63
+2023-03-28 Mikhail Dubrovin
+- UtilsRawPixelStatus.py - add method save_constants_in_repository for users
+- examples/test-issues-2023.py - add issue_2023_03_28() to test save_constants_in_repository for epixquad
+
 Tag: V02-00-62
 2023-03-17 Mikhail Dubrovin
 - rename pixel_status_extra > status_extra
