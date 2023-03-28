@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 SCRNAME = sys.argv[0].rsplit('/')[-1]
 
 
-def test_dsname_detname_shape(dettype):
+def test_dsname_detname_shape(kw):
     """
     datinfo -e xpptut15 -r 380 -d CxiDs1.0:Cspad.0
     datinfo -e xpptut15 -r 380 -d CxiDsu.0:Opal1000.0
@@ -36,7 +36,7 @@ def test_dsname_detname_shape(dettype):
        'jungfrau512k': ('exp=xpptut15:run=410', 'Jungfrau512k', (1, 512, 1024)),
        'jungfrau1m'  : ('exp=xpptut15:run=430', 'Jungfrau1M', (2, 512, 1024)),
        'jungfrau4m'  : ('exp=xpptut15:run=580', 'jungfrau4M', (8, 512, 1024)),
-    }[dettype]
+    }[kw]
 
 FNAME_STATUS = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
 
@@ -125,6 +125,39 @@ def issue_2023_03_23():
     us.save_constants_in_repository(a, **kwa)
 
 
+def issue_2023_03_28():
+    """The same as issue_2023_03_23, but for epix10kaquad
+
+    from psana import Detector, DataSource
+    ds = DataSource('exp=xpptut15:run=590')
+    det = Detector('Epix10kaQuad0')
+
+    import Detector.UtilsDeployConstants as udc
+
+    udc.id_det(det, ds.env())
+    """
+
+    # 'exp=xpptut15:run=590', 'Epix10kaQuad0', (4, 352, 384)
+    dsname, detname, shape_raw = test_dsname_detname_shape('epix10kaquad')
+    shape = (7,) + tuple(shape_raw)
+
+    import numpy as np
+    a = np.zeros(shape, dtype=np.uint64)
+    a[:, :, 150:200, 200:250] = 1
+
+    import Detector.GlobalUtils as gu
+    print(gu.info_ndarr(a, 'test status array:', last=10))
+
+    import Detector.UtilsRawPixelStatus as us
+    kwa = {\
+      'dsname' : dsname,\
+      'detname': detname,\
+      'ctype'  : 'status_user',\
+       'gmodes' : ('FH', 'FM', 'FL', 'AHL-H','AML-H', 'AHL-L','AML-L'),\
+    }
+    us.save_constants_in_repository(a, **kwa)
+
+
 def issue_2023_MM_DD():
     """ISSUE:
        REASON:
@@ -139,7 +172,9 @@ USAGE = '\n  python %s <test-name>' % SCRNAME\
       + '\n  where test-name: '\
       + '\n    0 - print usage'\
       + '\n    1 - issue_2023_03_14 - status_as_mask for epix100a'\
-      + '\n    2 - issue_2023_03_23 - save_status_array_in_repository'\
+      + '\n    2 - issue_2023_03_23 - save_constants_in_repository for epix100a'\
+      + '\n    3 - issue_2023_03_28 - save_constants_in_repository for epix10kaquad'\
+
 
 
 def argument_parser():
@@ -168,6 +203,7 @@ basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s',
 TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
 if   TNAME in  ('1',): issue_2023_03_14()
 elif TNAME in  ('2',): issue_2023_03_23()
+elif TNAME in  ('3',): issue_2023_03_28()
 else:
     print(USAGE)
     sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
