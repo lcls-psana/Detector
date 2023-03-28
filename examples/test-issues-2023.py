@@ -7,9 +7,43 @@ logger = logging.getLogger(__name__)
 SCRNAME = sys.argv[0].rsplit('/')[-1]
 
 
+def test_dsname_detname_shape(dettype):
+    """
+    datinfo -e xpptut15 -r 380 -d CxiDs1.0:Cspad.0
+    datinfo -e xpptut15 -r 380 -d CxiDsu.0:Opal1000.0
+    datinfo -e xpptut15 -r 310 -d XrayTransportDiagnostic.0:Opal1000.0
+    datinfo -e xpptut15 -r 260 -d XcsEndstation.0:Cspad2x2.3
+    datinfo -e xpptut15 -r 240 -d XppEndstation.0:Rayonix.0
+    datinfo -e xpptut15 -r 580 -d jungfrau4M # CxiDs1.0:Jungfrau.0
+    datinfo -e xpptut15 -r 430 -d Jungfrau1M #  MfxEndstation.0:Jungfrau.0
+    datinfo -e xpptut15 -r 410 -d Jungfrau512k # MfxEndstation.0:Jungfrau.1
+    datinfo -e xpptut15 -r 450 -d Camp.0:pnCCD.1
+    datinfo -e xpptut15 -r 540 -d epix10ka2m # dark run
+    datinfo -e xpptut15 -r 590 -d Epix10kaQuad0
+    datinfo -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1
+    datinfo -e xpptut15 -r 630 -d epix_alc3  # XppGon.0:Epix100a.3
+    """
+    return {
+       'rayonix'     : ('exp=xpptut15:run=240', 'XppEndstation.0:Rayonix.0', (1920, 1920)),
+       'cspad2x2'    : ('exp=xpptut15:run=260', 'XcsEndstation.0:Cspad2x2.3', (2, 185, 388)),
+       'cspad'       : ('exp=xpptut15:run=380', 'CxiDs1.0:Cspad.0', (32, 185, 388)),
+       'opal1000'    : ('exp=xpptut15:run=310', 'XrayTransportDiagnostic.0:Opal1000.0', (1024, 1024)),
+       'pnccd'       : ('exp=xpptut15:run=450', 'Camp.0:pnCCD.1', (4, 512, 512)),
+       'epix100a'    : ('exp=xpptut15:run=260', 'XcsEndstation.0:Epix100a.1', (704, 768)),
+       'epix_alc3'   : ('exp=xpptut15:run=630', 'epix_alc3', (704, 768)),
+       'epix10ka2m'  : ('exp=xpptut15:run=540', 'epix10ka2m', (16, 352, 384)),
+       'epix10kaquad': ('exp=xpptut15:run=590', 'Epix10kaQuad0', (4, 352, 384)),
+       'jungfrau512k': ('exp=xpptut15:run=410', 'Jungfrau512k', (1, 512, 1024)),
+       'jungfrau1m'  : ('exp=xpptut15:run=430', 'Jungfrau1M', (2, 512, 1024)),
+       'jungfrau4m'  : ('exp=xpptut15:run=580', 'jungfrau4M', (8, 512, 1024)),
+    }[dettype]
+
+FNAME_STATUS = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
+
+
 def test_status_extra(shape=(704, 768)):
     import numpy as np
-    fname = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
+    fname = FNAME_STATUS
     a = np.zeros(shape, dtype=np.uint16)
     for i in range(12): a[50*i:50*i+20, :] = i
     np.savetxt(fname, a, fmt='%d')
@@ -19,7 +53,7 @@ def test_status_extra(shape=(704, 768)):
 
 def test_status_data(shape=(704, 768)):
     import numpy as np
-    fname = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_data/0-end.data'
+    fname = FNAME_STATUS
     a = np.zeros(shape, dtype=np.uint16)
     for i in range(12): a[:, 50*i:50*i+20] = i
     np.savetxt(fname, a, fmt='%d')
@@ -86,6 +120,7 @@ def issue_2023_03_23():
       'dsname':'exp=xpptut15:run=260',\
       'detname':'XcsEndstation.0:Epix100a.1',\
       'ctype':'status_user',\
+      'gmodes':None,\
     }
     us.save_constants_in_repository(a, **kwa)
 
@@ -98,6 +133,13 @@ def issue_2023_MM_DD():
     metname = sys._getframe().f_code.co_name
     print('method: %s' % metname)
     print('docstring:', eval(metname).__doc__)
+
+
+USAGE = '\n  python %s <test-name>' % SCRNAME\
+      + '\n  where test-name: '\
+      + '\n    0 - print usage'\
+      + '\n    1 - issue_2023_03_14 - status_as_mask for epix100a'\
+      + '\n    2 - issue_2023_03_23 - save_status_array_in_repository'\
 
 
 def argument_parser():
@@ -121,14 +163,6 @@ def argument_parser():
 parser = argument_parser()
 args = parser.parse_args()
 basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', int_loglevel=None, str_loglevel=args.logmode)
-
-
-USAGE = '\nUsage:'\
-      + '\n  python %s <test-name>' % SCRNAME\
-      + '\n  where test-name: '\
-      + '\n    0 - print usage'\
-      + '\n    1 - issue_2023_03_14 - status_as_mask for epix100a'\
-      + '\n    2 - issue_2023_03_23 - save_status_array_in_repository'\
 
 
 TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
