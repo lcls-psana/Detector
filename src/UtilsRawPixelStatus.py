@@ -3,6 +3,9 @@
 
 Test data sample with command like
     datinfo -e xpplw3319 -r 293 -d epix_alc3
+
+    import Detector.UtilsRawPixelStatus as us
+
 """
 
 from time import time
@@ -28,6 +31,7 @@ def metadata(ds, orun, det):
       'dettype': dettype,
       'typename': gu.dic_det_type_to_name.get(dettype, None).lower(),
       'detid': udc.id_det(det, env),
+      'detname': det.name,
       'ts_run': ts_run,
       'ts_now': ts_now,
       'expname': env.experiment(),
@@ -334,7 +338,7 @@ def event_loop(args):
 
     ds  = DataSource(dsname)
     det = Detector(detname)
-    cd  = Detector('ControlData')
+    #cd  = Detector('ControlData')
 
     ecm = False
     if evcode is not None:
@@ -418,12 +422,12 @@ def event_loop(args):
           break
 
     arr_status = dpo.summary()
-    save_status(arr_status, args, metad)
+    save_constants(arr_status, args, metad)
 
     logger.info('Consumed time %.3f sec' % (time()-t0_sec))
 
 
-def save_status(arr_status, args, dmd):
+def save_constants(arr_status, args, dmd):
     fmt        = '%d'
     runnum     = dmd['runnum']
     itype      = dmd['dettype']
@@ -431,24 +435,111 @@ def save_status(arr_status, args, dmd):
     expname    = dmd['expname']
     ts_run     = dmd['ts_run']
     panel_ids  = dmd['detid'].split('_')
+    detname    = dmd['detname']
     ctype      = args.ctype # 'status_data'
     dirrepo    = args.dirrepo
     filemode   = args.filemode
     group      = args.group
     is_slice   = args.slice != '0:,0:'
     segind     = args.segind
+    gmode      = args.gmode
     panel_id   = panel_ids[segind]
     repoman    = args.repoman
+    #source     = args.source # detname
     dirdettype = repoman.makedir_dettype(dettype=typename)
     dirpanel   = repoman.dir_panel(panel_id)
-    fname_aliases = repoman.fname_aliases(dettype=typename, fname='.aliases_%s.txt' % typename)
-    fname_prefix, panel_alias = uc.file_name_prefix(typename, panel_id, ts_run, expname, runnum, fname_aliases)
+    fname_aliases = repoman.fname_aliases(dettype=typename) # , fname='.aliases_%s.txt' % typename)
+    fname_prefix, panel_alias = uc.file_name_prefix(typename, panel_id, ts_run, expname, runnum, fname_aliases, **{'detname':str(detname)})
     logger.debug('panel index: %02d alias: %s dir: %s\n  fname_prefix: %s' % (segind, panel_alias, dirpanel, fname_prefix))
     dirname = repoman.makedir_ctype(panel_id, ctype)
     fname = '%s/%s_%s' % (dirname, fname_prefix, ctype)
+    if gmode is not None: fname += '_%s' % gmode
     if is_slice: fname += '_slice'
     fname += '.dat'
     uc.save_2darray_in_textfile(arr_status, fname, filemode, fmt, umask=0o0, group=group)
+
+
+class Empty:
+    """reserved for name sapace"""
+    pass
+
+
+def save_constants_in_repository(arr, **kwa):
+    """User's interface method to save any constants in repository.
+
+    PARAMETERS of **kwa
+    -------------------
+
+    dsname (str) - parameter for DataSource
+    detname (str) - detector name
+    ctype (str) - calibration constants type, ex. pedestals, gain, offset, status_user, etc.
+    dirrepo (str) - root level of repository
+    segind (int) - segment index for multipanel detectors
+    gmodes (tuple) - gain mode names, ex. for epix10ka ('FH', 'FM', 'FL', 'AHL-H','AML-H', 'AHL-L','AML-L')
+    slice (str) - numpy style af array sloce for debugging
+    """
+    logger.debug('kwargs: %s' % str(kwa))
+    from Detector.dir_root import DIR_REPO_STATUS, DIR_LOG_AT_START # os, DIR_ROOT
+    import Detector.RepoManager as rm
+    #import Detector.UtilsEpix10ka as ue
+
+    args = Empty()
+    args.dsname   = kwa.get('dsname', None) # 'exp=xpplw3319:run=293'
+    args.detname  = kwa.get('detname', None) # 'XppGon.0:Epix100a.3' or its alias 'epix_alc3'
+    args.ctype    = kwa.get('ctype', 'status_user')
+    args.dirrepo  = kwa.get('dirrepo', DIR_REPO_STATUS)
+    args.filemode = kwa.get('filemode', 0o664)
+    args.dirmode  = kwa.get('filemode', 0o2775)
+    args.group    = kwa.get('group', 'ps-users')
+    args.segind   = kwa.get('segind', 0)
+    args.gmodes   = kwa.get('gmodes', None)
+    args.slice    = kwa.get('slice', '0:,0:')
+    args.repoman = rm.RepoManager(args.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+                                  dirmode=args.dirmode, filemode=args.filemode, group=args.group)
+    args.gmode    = None
+
+    ndim = arr.ndim
+    shape = arr.shape
+
+    assert isinstance(arr, np.ndarray)
+    assert ndim >= 2
+    assert ndim <= 4
+    assert args.dsname is not None
+    assert args.detname is not None
+
+    ds  = DataSource(args.dsname)
+    det = Detector(args.detname)
+    args.detname = det.name
+    orun, metad = None, None
+    for orun in ds.runs():
+        metad = metadata(ds, orun, det)
+        logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
+        break
+
+    panel_ids = metad['detid'].split('_')
+    nsegs = len(panel_ids)
+
+    if ndim == 2:
+        save_constants(arr, args, metad)
+
+    elif ndim == 3:
+        assert arr.shape[0] == nsegs, 'number of segments in the array shape %s should be the same as in metadata %s' % (str(shape), nsegs)
+        for i in range(nsegs):
+            args.segind = i
+            save_constants(arr[i,:], args, metad)
+
+    elif ndim == 4:
+        assert isinstance(args.gmodes, tuple),\
+            'gain mode names should be defined in tuple, gmodes=%s' % str(args.gmodes)
+        assert arr.shape[0] == len(args.gmodes),\
+            'number of gain modes in the array shape %s should be the same as in tuple gmodes %s' % (str(shape), str(args.gmodes))
+        assert arr.shape[1] == nsegs,\
+            'number of segments in the array shape %s should be the same as in metadata %s' % (str(shape), nsegs)
+        for n, gm in enumerate(args.gmodes):
+          for i in range(nsegs):
+            args.segind = i
+            args.gmode = gm
+            save_constants(arr[n,i,:], args, metad)
 
 
 def det_raw_pixel_status(args):
