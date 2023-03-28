@@ -20,7 +20,6 @@ def id_epix10ka(co, ielem=0):
        e.g., 3925999616-0996663297-3791650826-1232098304-0953206283-2655595777-0520093719
        co is psana.Epix.Config10kaQuadV1 or psana.Epix.Config10ka2MV1
     """
-
     quad_shape = getattr(co, "quad_shape", None)
     eco = co.elemCfg(ielem)
     qco = co.quad() if quad_shape is None else co.quad(ielem//4)
@@ -50,7 +49,11 @@ def ids_epix10ka2m(co):
     return ids
 
 
+def id_epix10ka2m(co):
+    return '_'.join(ids_epix10ka2m(co))
+
 ids_epix10kaquad = ids_epix10ka2m
+id_epix10kaquad = id_epix10ka2m
 
 
 def table_nxn_epix10ka_from_ndarr(nda):
