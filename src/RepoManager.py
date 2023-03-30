@@ -5,7 +5,7 @@
 Supports repository directories/files naming structure for app/deploy_constants
 
     dirrepo='/reg/g/psdm/detector/calib/constants/'
-    <dirrepo>/logs/<year>/<time-stamp>_log_<script-name>_<uid>.txt
+    <dirrepo>/[<dettype>]/logs/<year>/<time-stamp>_log_<script-name>_<uid>.txt
           ex: logs/2022/2022-04-15T084054_log_deploy_constants_dubrovin.txt
     <dirrepo>/<dettype>/
     <dirrepo>/epix100a/
@@ -19,20 +19,17 @@ Supports repository directories/files naming structure for app/deploy_constants
 
 
 Usage::
-    import sys
+
     import Detector.RepoManager as rm
+    # args - namespace of arguments,
+    # all args are optional and default values should work in general case.
+    args.dirrepo = './work'  # can be used for debugging and not spoiling real repository
+    repoman = rm.init_repoman_and_logger(args)
+    # do work, when dettype (ex. 'epix100a') is available call
+        repoman.set/dir/makedir_dettype(dettype)
+    # at the very end, before exit call
+    repoman.logfile_save()
 
-    SCRNAME = sys.argv[0].split('/')[-1]
-    DIR_REPO = '$SIT_ROOT/detector/calib/constants/'
-    DIR_LOG_AT_START = '$SIT_ROOT/logs/atstart/'
-
-    repoman = rm.RepoManager(DIR_REPO, dirmode=0o2777, filemode=0o666, dir_log_at_start=DIR_LOG_AT_START)
-    repoman.save_record_at_start(SCRNAME)
-
-    import PSCalib.GlobalUtils as gu
-    logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-    init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
-    logger.info('log file: %s' % logname)
 
 This software was developed for the SIT project.
 If you use all or part of it, please give an appropriate acknowledgment.
@@ -46,6 +43,8 @@ logger = logging.getLogger(__name__)
 import os
 from time import time, strftime, localtime
 import PSCalib.GlobalUtils as cgu
+from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
+
 log_rec_at_start, create_directory, save_textfile, change_file_ownership =\
   cgu.log_rec_at_start, cgu.create_directory, cgu.save_textfile, cgu.change_file_ownership
 TSTAMP_FORMAT = '%Y%m%d%H%M%S'
@@ -70,10 +69,12 @@ class RepoManager():
         self.group       = kwa.get('group', 'ps-users')
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
-        self.dir_log_at_start = kwa.get('dir_log_at_start', '/cds/group/psdm/logs/atstart')
+        self.dir_log_at_start = kwa.get('dir_log_at_start', DIR_LOG_AT_START)
+        self.logsuffix   = kwa.get('logsuffix', 'nondef')
         self.dirname_log = kwa.get('dirname_log', 'logs')
         self.dirname_def = kwa.get('dirname_def', 'default')
         #self.dirname_pan = kwa.get('dirname_pan', 'panels')
+        self.logname_tmp = None  # logname before the dettype is defined
 
 
     def makedir(self, d):
@@ -97,45 +98,56 @@ class RepoManager():
         return self.makedir(self.dir_in_repo(name))
 
 
-    def dir_logs(self):
-        """return directory <dirrepo>/logs
+    def set_dettype(self, dettype):
+        if dettype is not None:
+            self.dettype = dettype
+
+
+    def dir_dettype(self, dettype=None):
+        """returns path to the dettype directory like <dirrepo>/[<dettype>]
         """
-        return self.dir_in_repo(self.dirname_log)
+        self.set_dettype(dettype)
+        return self.dirrepo if self.dettype is None else\
+               os.path.join(self.dirrepo, self.dettype)
+
+
+    def makedir_dettype(self, dettype=None):
+        """create and returns path to the director type directory like <dirrepo>/[<dettype>]
+        """
+        d = self.makedir(self.dirrepo)
+        ddt = self.dir_dettype(dettype)
+        return d if self.dettype is None else\
+               self.makedir(ddt)
+
+
+    def dir_logs(self):
+        """return directory <dirrepo>/[dettype]/logs
+        """
+        d = self.dir_dettype()
+        return os.path.join(d, self.dirname_log)
+        #return self.dir_in_repo(self.dirname_log)
 
 
     def makedir_logs(self):
-        """create and return directory <dirrepo>/logs
+        """create and return directory <dirrepo>/[dettype]/logs
         """
-        d = self.makedir(self.dirrepo)
+        #d = self.makedir(self.dirrepo)
+        d = self.makedir_dettype()
         return self.makedir(self.dir_logs())
 
 
     def dir_logs_year(self, year=None):
-        """return directory <dirrepo>/logs/<year>
+        """return directory <dirrepo>/[dettype]/logs/<year>
         """
         _year = str_tstamp(fmt='%Y') if year is None else year
         return os.path.join(self.dir_logs(), _year)
 
 
     def makedir_logs_year(self, year=None):
-        """create and return directory <dirrepo>/logs/<year>
+        """create and return directory <dirrepo>/[dettype]/logs/<year>
         """
         d = self.makedir_logs()
         return self.makedir(self.dir_logs_year(year))
-
-
-    def dir_dettype(self, dettype=None):
-        """returns path to the dettype directory like <dirrepo>/<dettype>
-        """
-        if dettype is not None: self.dettype = dettype
-        return os.path.join(self.dirrepo, self.dettype)
-
-
-    def makedir_dettype(self, dettype=None):
-        """create and returns path to the director type directory like <dirrepo>/<dettype>
-        """
-        d = self.makedir(self.dirrepo)
-        return self.makedir(self.dir_dettype(dettype))
 
 
     def fname_aliases(self, dettype=None, fname='.aliases.txt'):
@@ -206,16 +218,19 @@ class RepoManager():
         return dirs
 
 
-    def logname(self, scrname):
+    def logname(self, logsuffix=None):
+        if logsuffix is not None: self.logsuffix = logsuffix
         tstamp = str_tstamp(fmt='%Y-%m-%dT%H%M%S')
-        return '%s/%s_log_%s.txt' % (self.makedir_logs_year(), tstamp, scrname)
-
+        s = '%s/%s_log_%s.txt' % (self.makedir_logs_year(), tstamp, self.logsuffix)
+        if self.logname_tmp is None:
+           self.logname_tmp = s
+        return s
 
     ### lcls2 style of logname_at_start_lcls1: DIR_LOG_AT_START/<year>/<year>_lcls1_<procname>.txt
 
-    def logname_at_start(self, scrname, year=None):
+    def logname_at_start(self, suffix, year=None):
         _year = str_tstamp(fmt='%Y') if year is None else str(year)
-        return '%s/%s_log_%s.txt' % (self.makedir_logs(), _year, scrname)
+        return '%s/%s_log_%s.txt' % (self.makedir_logs(), _year, suffix)
 
 
     def dir_log_at_start_year(self):
@@ -244,5 +259,50 @@ class RepoManager():
             os.chmod(logfname, self.filemode)
             change_file_ownership(logfname, user=None, group=self.group)
         logger.info('record at start: %s\nsaved in: %s' % (rec, logfname))
+
+
+    def logfile_save(self):
+        """The final call to repo-manager which
+           - moves originally created logfile under the dettype directory,
+           - change its access mode and group ownershp.
+        """
+        logname = self.logname() # may be different from logname_tmp after definition of dettype
+        if logname != self.logname_tmp:
+            cmd = 'mv %s %s' % (self.logname_tmp, logname)
+            logger.info('move logfile under dettype:\n%s' % '\n    '.join(cmd.split()))
+            os.system(cmd)
+            cmd = 'ln -s %s %s' % (logname, self.logname_tmp)
+            logger.info('create link to logfile')
+            os.system(cmd)
+
+        os.chmod(logname, self.filemode)
+        cgu.change_file_ownership(logname, user=None, group=self.group)
+
+
+def init_repoman_and_logger(args):
+    """wrapper for common pattern of initialization RepoManager and logger
+    """
+    import getpass
+    from Detector.UtilsLogging import sys, init_logger
+
+    scrname   = sys.argv[0].split('/')[-1]
+
+    dirrepo   = getattr(args, 'dirrepo', DIR_REPO)
+    logmode   = getattr(args, 'logmode', 'INFO')
+    logsuffix = getattr(args, 'logsuffix', '%s_%s' % (scrname, getpass.getuser()))
+    group     = getattr(args, 'group', 'ps-users')
+    filemode  = getattr(args, 'filemode', 0o664)
+    dirmode   = getattr(args, 'dirmode', 0o2775)
+    fmt       = getattr(args, 'fmt', '[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
+    dir_log_at_start = getattr(args, 'dir_log_at_start', DIR_LOG_AT_START)
+
+    if 'work' in args.dirrepo: dir_log_at_start = args.dirrepo
+    repoman = RepoManager(dirrepo, dir_log_at_start=dir_log_at_start,\
+                          dirmode=dirmode, filemode=filemode, group=group, logsuffix=logsuffix)
+    logname = repoman.logname()
+    init_logger(loglevel=logmode, logfname=logname, group=group, fmt=fmt)
+    logger.info('log file: %s' % logname)
+    repoman.save_record_at_start(scrname, adddict={'logfile':logname})
+    return repoman
 
 # EOF
