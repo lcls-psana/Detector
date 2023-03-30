@@ -1,11 +1,9 @@
 
-"""UtilsRawPixelStatus.py - utilities for command det_raw_pixel_status
-
-Test data sample with command like
-    datinfo -e xpplw3319 -r 293 -d epix_alc3
+""" UtilsRawPixelStatus.py - utilities for command det_raw_pixel_status
 
     import Detector.UtilsRawPixelStatus as us
 
+    us.save_constants_in_repository(arr, **kwargs) # saves user's array of constants in reppository defined bu **kwargs
 """
 
 from time import time
@@ -333,6 +331,8 @@ def event_loop(args):
     evcode = args.evcode
     segind = args.segind
     aslice = eval('np.s_[%s]' % args.slice)
+    repoman= args.repoman
+    logmode= args.logmode
 
     t0_sec = time()
 
@@ -446,9 +446,9 @@ def save_constants(arr_status, args, dmd):
     panel_id   = panel_ids[segind]
     repoman    = args.repoman
     #source     = args.source # detname
-    dirdettype = repoman.makedir_dettype(dettype=typename)
-    dirpanel   = repoman.dir_panel(panel_id)
+    #dirdettype = repoman.makedir_dettype(dettype=typename)
     fname_aliases = repoman.fname_aliases(dettype=typename) # , fname='.aliases_%s.txt' % typename)
+    dirpanel   = repoman.dir_panel(panel_id)
     fname_prefix, panel_alias = uc.file_name_prefix(typename, panel_id, ts_run, expname, runnum, fname_aliases, **{'detname':str(detname)})
     logger.debug('panel index: %02d alias: %s dir: %s\n  fname_prefix: %s' % (segind, panel_alias, dirpanel, fname_prefix))
     dirname = repoman.makedir_ctype(panel_id, ctype)
