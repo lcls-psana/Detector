@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
+DESCRIPTION = 'Proceses raw (on light) data from any detector and evaluate pixel status'
+
 import sys
+from Detector.dir_root import DIR_REPO_STATUS
 import Detector.UtilsLogging as ul
 logger = ul.logging.getLogger(__name__)
 
-from Detector.dir_root import os, DIR_ROOT, DIR_REPO_STATUS, DIR_LOG_AT_START
-
 SCRNAME = sys.argv[0].split('/')[-1]
-
-DESCRIPTION = 'Proceses raw (light) data from any detector and evaluate pixel status'
 
 USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
       +'\nEx.1:  %s -o work -n 1000 --nrecs 100 --snrmax 8 # test command' % SCRNAME\
@@ -17,9 +16,9 @@ USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
 
 def argument_parser():
     from argparse import ArgumentParser
-    d_dirrepo= DIR_REPO_STATUS  # 'work' # './panels' '/reg/g/psdm/detector/gains/jungfrau/panels'
-    d_dsname = 'exp=xpplw3319:run=293'  # None
-    d_source = 'epix_alc3'  # None
+    d_dirrepo= DIR_REPO_STATUS
+    d_dsname = 'exp=xpplw3319:run=293'
+    d_source = 'epix_alc3'
     d_events = 100
     d_evskip = 0
     d_stskip = None
@@ -110,8 +109,6 @@ def argument_parser():
     parser.add_argument('--databits',       default=d_databits, type=int,   help=h_databits)
     parser.add_argument('--gainbits',       default=d_gainbits, type=int,   help=h_gainbits)
     parser.add_argument('--gmode',          default=d_gmode,    type=int,   help=h_gmode)
-#    parser.add_argument('-p', '--plotim',   default=d_plotim,   type=int,   help=h_plotim)
-#    parser.add_argument('-u', '--upload',   default=d_upload,   action='store_true', help=h_upload)
 
     return parser
 
@@ -123,33 +120,16 @@ if __name__ == "__main__":
         sys.exit('MISSING COMMAND LINE PARAMETERS')
 
     parser = argument_parser()
-    args = parser.parse_args()
-    kwargs = vars(args)
-    #print('Arguments: %s\n' % str(args))
+    args = parser.parse_args() # namespace # kwargs = vars(args) # dict
 
-    import PSCalib.GlobalUtils as gu
-    import Detector.RepoManager as rm
-    import Detector.UtilsCalib as uc
-    import Detector.UtilsRawPixelStatus as rps
+    from Detector.GlobalUtils import info_command_line_parameters
+    from Detector.RepoManager import init_repoman_and_logger
+    from Detector.UtilsRawPixelStatus import det_raw_pixel_status
 
-    if 'work' in args.dirrepo: DIR_LOG_AT_START = args.dirrepo
-
-    repoman = rm.RepoManager(args.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
-                             dirmode=args.dirmode, filemode=args.filemode, group=args.group)
-    logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-    ul.init_logger(loglevel=args.logmode, logfname=logname, group=args.group, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
-    logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
-
-    import Detector.GlobalUtils as dgu
-    logger.info(dgu.info_command_line_parameters(parser))
-
-    args.repoman = repoman
-    rps.det_raw_pixel_status(args)
-
-    import os
-    os.chmod(logname, args.filemode)
-    uc.cgu.change_file_ownership(logname, user=None, group=args.group)
+    args.repoman = init_repoman_and_logger(args)
+    logger.info(info_command_line_parameters(parser))
+    det_raw_pixel_status(args)
+    args.repoman.logfile_save()
 
     sys.exit(0)
 
