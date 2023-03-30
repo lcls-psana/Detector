@@ -7,7 +7,7 @@ Usage::
         logging.basicConfig(format='[%(levelname).1s] L%(lineno)04d %(message)s', level=logging.INFO)
 """
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()  # __name__
 
 import sys
 PYTHON_VERSION_MAJOR = sys.version_info.major  # (int) 2 or 3
@@ -23,26 +23,30 @@ def basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message
     logging.basicConfig(format=format, level=loglevel)
 
 
-def init_logger(loglevel='DEBUG', logfname=None, fmt=None, group='ps-users'):
-
-    int_loglevel = DICT_NAME_TO_LEVEL[loglevel.upper()]
-
-    logger = logging.getLogger()
-    logger.setLevel(int_loglevel) # logging.DEBUG
-    fmt = fmt if fmt is not None else\
+def _formatter(fmt=None, int_loglevel=logging.DEBUG):
+    _fmt = fmt if fmt is not None else\
           '[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s' if int_loglevel==logging.DEBUG else\
           '[%(levelname).1s] L%(lineno)04d %(message)s'
-    formatter = logging.Formatter(fmt)
+    return logging.Formatter(_fmt)
 
+
+def init_logfile(loglevel='DEBUG', logfname=None, fmt=None):
+    int_loglevel = DICT_NAME_TO_LEVEL[loglevel.upper()]
+    file_handler = logging.FileHandler(logfname) #'log-in-file-test.log'
+    file_handler.setLevel(int_loglevel) # logging.DEBUG
+    file_handler.setFormatter(_formatter(fmt, int_loglevel))
+    logger.addHandler(file_handler)
+
+
+def init_logger(loglevel='DEBUG', logfname=None, fmt=None, group='ps-users'):
+    int_loglevel = DICT_NAME_TO_LEVEL[loglevel.upper()]
+    #logger = logging.getLogger()
+    logger.setLevel(int_loglevel) # logging.DEBUG
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(int_loglevel)
-    stdout_handler.setFormatter(formatter)
+    stdout_handler.setFormatter(_formatter(fmt, int_loglevel))
     logger.addHandler(stdout_handler)
-
     if logfname is not None:
-        file_handler = logging.FileHandler(logfname) #'log-in-file-test.log'
-        file_handler.setLevel(int_loglevel) # logging.DEBUG
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        init_logfile(loglevel, logfname, fmt)
 
 # EOF
