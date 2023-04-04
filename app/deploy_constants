@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 
-import os
 import sys
-
-from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
-
-#DIR_REPO = os.path.join(DIR_ROOT, 'detector/calib/constants/')
-#DIR_LOG_AT_START = os.path.join(DIR_ROOT, 'logs/atstart/')
+from Detector.dir_root import DIR_REPO  #, DIR_LOG_AT_START
+from Detector.UtilsLogging import STR_LEVEL_NAMES, logging  # , init_logger
+logger = logging.getLogger(__name__)
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
-DESCRIPTION = 'Deployment of calibration parameters'
+DESCRIPTION = 'Deployment of calibration constants'
 
 USAGE = '\n%s -e <experiment> -r <run-number> -d <detector> -C <calib-type> [-D] [-L <logging-mode>] [...]' % SCRNAME\
-      + '\n%s -x exp=<experiment>:run=<run-number>:dir=<path-to-xtc>:stream=0-79 -d <detector> -C <calib-type> -c <path-to-calib> -R <run-range> -D' % SCRNAME\
+      + '\n%s -x exp=<experiment>:run=<run-number>:dir=<path-to-xtc>:stream=0-79 -d <detector> -C <calib-type>' % SCRNAME\
+      + ' -c <path-to-calib> -R <run-range> -D'\
       + '\n\nREGULAR COMMAND EXAMPLE:'\
       + '\n  %s -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1 -C gain -c ./calib --runrange 10-20 -D' % SCRNAME\
       + '\n  %s -x exp=xpptut15:run=260:dir=/cds/data/psdm/xpp/xpptut15/xtc -d XcsEndstation.0:Epix100a.1 -C gain -c ./calib -D' % SCRNAME\
@@ -29,17 +27,9 @@ USAGE = '\n%s -e <experiment> -r <run-number> -d <detector> -C <calib-type> [-D]
       + '\nEx.4  for Cspad XPP    : %s -e xpptut15 -r 320 -d XppGon.0:Cspad.0 -C gain -D -c ./calib' % SCRNAME\
       + '\nEx.5  for cspad2x2     : %s -e xpptut15 -r 460 -d MecTargetChamber.0:Cspad2x2.3 -C gain -D -c ./calib' % SCRNAME\
       + '\nEx.6  for pnCCD        : %s -e xpptut15 -r 450 -d Camp.0:pnCCD.1 -C gain -D -c ./calib' % SCRNAME\
+      + '\nEx.7  test for epix100a: %s -x exp=xpptut15:run=260 -d XcsEndstation.0:Epix100a.1 -C status_extra -D -c ./calib' % SCRNAME\
+      + '\nEx.8  test for epix100a: %s -x exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -C status_extra -D -c ./calib' % SCRNAME\
       + '\n\nHelp:  %s -h\n' % SCRNAME
-
-#      + '\nEx.5  for jungfrau512k : %s -e xpptut15 -r 410 -d MfxEndstation.0:Jungfrau.1 -D -c ./calib' % SCRNAME\
-#      + '\nEx.6  for jungfrau1M   : %s -e xpptut15 -r 430 -d MfxEndstation.0:Jungfrau.0 -D -c ./calib' % SCRNAME\
-#      + '\nEx.7  for jungfrau4M   : %s -e xpptut15 -r 530 -d DetLab.0:Jungfrau.2 -D -c ./calib' % SCRNAME\
-#      + '\nEx.8  for epix10ka2m   : %s -e xpptut15 -r 570 -d MfxEndstation.0:Epix10ka2M.0 -D -c ./calib' % SCRNAME\
-#      + '\nEx.11 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.0 -D -c ./calib' % SCRNAME\
-#      + '\nEx.12 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.1 -D -c ./calib' % SCRNAME\
-#      + '\nEx.13 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.2 -D -c ./calib' % SCRNAME\
-#      + '\nEx.14 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.3 -D -c ./calib' % SCRNAME\
-#      + '\nEx. for -x :smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc or exp=mfxlx5520:run=100:smd:dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/:stream=0-79'\
 
 
 if len(sys.argv)<2:
@@ -56,7 +46,7 @@ def argument_parser():
     d_run      = None # 260
     d_runrange = '0-end'
     d_tstamp   = None # 20180910111049
-    d_dsnamex  = None # ':smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc or exp=mfxlx5520:run=100:smd:dir=/cds/data/drpsrcf/mfx/mfxlv4920/xtc/:stream=0-79'
+    d_dsnamex  = None # ':smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc or exp=mfxlx5520:run=100:smd:dir=/cds/data/...:stream=0-79'
     d_dircalib = None # './calib'
     d_ctype    = 'gain'
     d_deploy   = False
@@ -74,7 +64,7 @@ def argument_parser():
                 'By default run time is used, default = %s' % str(d_tstamp)
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'non-default deployment calib directory, different from standard one, default = %s' % d_dircalib
-    h_ctype   = 'calibration type [gain, common_mode, etc.], default = %s' % str(d_ctype)
+    h_ctype   = 'calibration type [gain, common_mode, etc.]. For status_extra constants of all status_* types are merged, default = %s' % str(d_ctype)
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
     h_loglev  = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_loglev)
     h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
@@ -103,33 +93,16 @@ def argument_parser():
 
 if __name__ == "__main__":
 
-    from Detector.UtilsLogging import STR_LEVEL_NAMES, init_logger, logging
-    logger = logging.getLogger(__name__)
-
-    #import PSCalib.GlobalUtils as gu
-    import Detector.UtilsCalib as uc
-    import Detector.RepoManager as rm
-    gu = uc.cgu
-
     parser = argument_parser()
     args = parser.parse_args()
     kwa = vars(args)
-    print('Arguments: %s\n' % str(args))
 
-    repoman = rm.RepoManager(args.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
-                             dirmode=args.dirmode, filemode=args.filemode, group=args.group)
-    logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
-    init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s', group=args.group)
-    logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
-
-    kwa['repoman'] = repoman
+    from Detector.RepoManager import init_repoman_and_logger
+    repoman = kwa['repoman'] = init_repoman_and_logger(args, parser)
 
     import Detector.UtilsDeployConstants as udc
     udc.deploy_constants(**kwa)
-
-    os.chmod(logname, args.filemode)
-    gu.change_file_ownership(logname, user=None, group=args.group)
+    repoman.logfile_save()
 
     sys.exit(0)
 
