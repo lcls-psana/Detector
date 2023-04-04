@@ -10,8 +10,10 @@ logger = ul.logging.getLogger(__name__)
 SCRNAME = sys.argv[0].split('/')[-1]
 
 USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
-      +'\nEx.1:  %s -o work -n 1000 --nrecs 100 --snrmax 8 # test command' % SCRNAME\
-      +'\nEx.2:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 # regular processing command' % SCRNAME\
+      +'\nEx.1:  %s -o work --nrecs 10 # test command' % SCRNAME\
+      +'\nEx.2:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 --nrecs 10 # test command' % SCRNAME\
+      +'\nEx.3:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 # regular processing command' % SCRNAME\
+      +'\nEx.4:  %s -d exp=xpptut15:run=260 -s XcsEndstation.0:Epix100a.1 -t status_data --nrecs 10  # generate status_* for test' % SCRNAME\
       +'\n\nHelp:  %s -h\n' % SCRNAME
 
 def argument_parser():
@@ -122,12 +124,10 @@ if __name__ == "__main__":
     parser = argument_parser()
     args = parser.parse_args() # namespace # kwargs = vars(args) # dict
 
-    from Detector.GlobalUtils import info_command_line_parameters
     from Detector.RepoManager import init_repoman_and_logger
-    from Detector.UtilsRawPixelStatus import det_raw_pixel_status
+    args.repoman = init_repoman_and_logger(args, parser)
 
-    args.repoman = init_repoman_and_logger(args)
-    logger.info(info_command_line_parameters(parser))
+    from Detector.UtilsRawPixelStatus import det_raw_pixel_status
     det_raw_pixel_status(args)
     args.repoman.logfile_save()
 
