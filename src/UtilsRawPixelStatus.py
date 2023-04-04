@@ -510,11 +510,14 @@ def save_constants_in_repository(arr, **kwa):
     ds  = DataSource(args.dsname)
     det = Detector(args.detname)
     args.detname = det.name
-    orun, metad = None, None
-    for orun in ds.runs():
-        metad = metadata(ds, orun, det)
-        logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
-        break
+    orun = next(ds.runs())
+    metad = metadata(ds, orun, det)
+    logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
+#    orun, metad = None, None
+#    for orun in ds.runs():
+#        metad = metadata(ds, orun, det)
+#        logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
+#        break
 
     panel_ids = metad['detid'].split('_')
     nsegs = len(panel_ids)
