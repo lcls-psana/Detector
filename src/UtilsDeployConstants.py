@@ -12,6 +12,7 @@ Created on 2022-06-01 by Mikhail Dubrovin
 """
 
 import os
+import sys
 import psana
 import Detector.PyDataAccess as pda
 import Detector.UtilsCalib as uc
@@ -58,6 +59,7 @@ def detector_id_or_name(det, env):
 
 
 def deploy_constants(**kwa):
+
     exp        = kwa.get('exp', None)
     detname    = kwa.get('det', None)
     run        = kwa.get('run', None)
@@ -82,8 +84,10 @@ def deploy_constants(**kwa):
 
     ds = psana.DataSource(dsn)
     env = ds.env()
-    irun = next(ds.runs()).run()
+    orun = next(ds.runs())
+    irun = orun.run()
     det = psana.Detector(detname, env)
+    expname = env.experiment()
 
     #co = det.pyda.det_config_object(env)
     #cfg = env.configStore()
@@ -112,8 +116,8 @@ def deploy_constants(**kwa):
 
     fname_aliases = repoman.fname_aliases(dettype)  # '<repodir>/<dettype>/.aliases.txt'
     #alias = uc.alias_for_id(detid, fname=fname_aliases, exp=exp, run=irun)  # '0001'
-    kwa = {'src':strsrc}
-    fname_prefix, alias = uc.file_name_prefix(dettype, detid, _tstamp, exp, irun, fname_aliases, **kwa)
+    kwa_fnp = {'src':strsrc}
+    fname_prefix, alias = uc.file_name_prefix(dettype, detid, _tstamp, expname, irun, fname_aliases, **kwa_fnp)
     # 'epix100a_0001_20160318190730_xpptut15_r0260', '0001'
 
     logger.debug('fname_aliases: %s alias: %s' % (fname_aliases, alias))
@@ -121,11 +125,13 @@ def deploy_constants(**kwa):
 
     if fname_only:
         prefix = fname_prefix if runrange in ('0-end', None) else\
-                 uc.file_name_prefix(dettype, detid, _tstamp, exp, int(runrange), fname_aliases, **kwa)[0]
+                 uc.file_name_prefix(dettype, detid, _tstamp, expname, int(runrange), fname_aliases, **kwa_fnp)[0]
         return '%s/%s_%s.txt' % (dir_ctype, prefix, ctype)
 
     pattern = '%s_%s' % (dettype, alias) #  ex. 'epix100a_0001'
-    fname = uc.find_file_for_timestamp(dir_ctype, pattern, _tstamp)
+
+    fname = merge_status_extra(detid, fname_prefix, pattern, _tstamp, **kwa) if ctype == 'status_extra' else\
+            uc.find_file_for_timestamp(dir_ctype, pattern, _tstamp)
 
     logger.info('file_for_timestamp(tstamp=%s): %s' % (_tstamp, fname))
     if fname is None:
@@ -143,10 +149,11 @@ def deploy_constants(**kwa):
     ctypedir = '%s/%s/%s' % (calibdir, calibgrp, strsrc)         # 'calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
     octype = {'gain':'pixel_gain',
               'rms':'pixel_rms',
+              'pixel_status':'pixel_status',
               'status':'pixel_status',
+              'status_extra':'status_extra',
               'pixel_gain':'pixel_gain',
               'pixel_rms':'pixel_rms',
-              'pixel_status':'pixel_status',
               'common_mode':'common_mode',
               'geometry':'geometry'}[ctype]
     ofname = '%s.data' % runrange
@@ -158,6 +165,51 @@ def deploy_constants(**kwa):
                        filemode=filemode, dirmode=dirmode, group=group)
     else:
         logger.warning('Add option -D to deploy files under directory %s' % ctypedir)
+
+
+def merge_status_extra(detid, fname_prefix, pattern, _tstamp, **kwa):
+    """merge constants of all status_* ctypes saved in ctype status_merged"""
+
+    import numpy as np
+
+    repoman    = kwa.get('repoman', None)
+    ctype      = kwa.get('ctype', 'status_extra')   # None
+    fmt_status = kwa.get('fmt_status', '%d')
+    filemode   = kwa.get('filemode', 0o664)
+    group      = kwa.get('group', 'ps-users')
+    ctype_merged = 'status_merged'
+    DTYPE_STATUS_EXTRA = gu.dic_calib_type_to_dtype[gu.STATUS_EXTRA]
+
+    dir_panel = repoman.dir_panel(detid)
+    logger.info('dir_panel: %s' % dir_panel)
+
+    status_ctypes = [ct for ct in os.listdir(dir_panel) if 'status_' in ct and ct != ctype_merged]
+    logger.info('status_ctypes:\n  %s' % '\n  '.join(status_ctypes))
+
+    dirs_ct = [repoman.dir_ctype(detid, ctype=ct) for ct in status_ctypes]
+    logger.debug('dirs_ct:\n  %s' % '\n  '.join(dirs_ct))
+
+    fnames_ct = [uc.find_file_for_timestamp(dct, pattern, _tstamp) for dct in dirs_ct]
+    logger.info('status files to merge:\n  %s' % '\n  '.join(fnames_ct))
+
+    merged = None
+
+    for f in fnames_ct:
+        nda = np.loadtxt(f, dtype=DTYPE_STATUS_EXTRA)
+        if nda is None: continue
+        elif merged is None: merged = nda
+        else: merged = np.bitwise_or(merged, nda)
+
+    if merged is None:
+        logger.warning('status_extra constants are missing - merging array is None')
+        return None
+
+    dir_ctype = repoman.makedir_ctype(detid, ctype=ctype_merged)
+    fname = '%s/%s_%s.txt' % (dir_ctype, fname_prefix, ctype_merged)
+    uc.save_ndarray_in_textfile(merged, fname, filemode, fmt_status, umask=0o0, group=group)
+    logger.info('merged array of all status_* is saved in repository as:\n  %s' % fname)
+
+    return fname
 
 
 def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None, dirmode=0o2775, filemode=0o664, group='ps-users'):
