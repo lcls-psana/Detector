@@ -10,33 +10,30 @@ SCRNAME = sys.argv[0].rsplit('/')[-1]
 def test_dsname_detname_shape(kw):
     """
     datinfo -e xpptut15 -r 380 -d CxiDs1.0:Cspad.0
-    datinfo -e xpptut15 -r 380 -d CxiDsu.0:Opal1000.0
-    datinfo -e xpptut15 -r 310 -d XrayTransportDiagnostic.0:Opal1000.0
-    datinfo -e xpptut15 -r 260 -d XcsEndstation.0:Cspad2x2.3
-    datinfo -e xpptut15 -r 240 -d XppEndstation.0:Rayonix.0
-    datinfo -e xpptut15 -r 580 -d jungfrau4M # CxiDs1.0:Jungfrau.0
-    datinfo -e xpptut15 -r 430 -d Jungfrau1M #  MfxEndstation.0:Jungfrau.0
-    datinfo -e xpptut15 -r 410 -d Jungfrau512k # MfxEndstation.0:Jungfrau.1
-    datinfo -e xpptut15 -r 450 -d Camp.0:pnCCD.1
-    datinfo -e xpptut15 -r 540 -d epix10ka2m # dark run
-    datinfo -e xpptut15 -r 590 -d Epix10kaQuad0
-    datinfo -e xpptut15 -r 260 -d XcsEndstation.0:Epix100a.1
-    datinfo -e xpptut15 -r 630 -d epix_alc3  # XppGon.0:Epix100a.3
     """
     return {
-       'rayonix'     : ('exp=xpptut15:run=240', 'XppEndstation.0:Rayonix.0', (1920, 1920)),
-       'cspad2x2'    : ('exp=xpptut15:run=260', 'XcsEndstation.0:Cspad2x2.3', (2, 185, 388)),
-       'cspad'       : ('exp=xpptut15:run=380', 'CxiDs1.0:Cspad.0', (32, 185, 388)),
-       'opal1000'    : ('exp=xpptut15:run=310', 'XrayTransportDiagnostic.0:Opal1000.0', (1024, 1024)),
-       'pnccd'       : ('exp=xpptut15:run=450', 'Camp.0:pnCCD.1', (4, 512, 512)),
-       'epix100a'    : ('exp=xpptut15:run=260', 'XcsEndstation.0:Epix100a.1', (704, 768)),
-       'epix_alc3'   : ('exp=xpptut15:run=630', 'epix_alc3', (704, 768)),
-       'epix10ka2m'  : ('exp=xpptut15:run=540', 'epix10ka2m', (16, 352, 384)),
-       'epix10kaquad': ('exp=xpptut15:run=590', 'Epix10kaQuad0', (4, 352, 384)),
-       'jungfrau512k': ('exp=xpptut15:run=410', 'Jungfrau512k', (1, 512, 1024)),
-       'jungfrau1m'  : ('exp=xpptut15:run=430', 'Jungfrau1M', (2, 512, 1024)),
-       'jungfrau4m'  : ('exp=xpptut15:run=580', 'jungfrau4M', (8, 512, 1024)),
+       'rayonix'       : ('exp=xpptut15:run=240', 'XppEndstation.0:Rayonix.0', (1920, 1920)),
+       'cspad2x2'      : ('exp=xpptut15:run=460', 'XcsEndstation.0:Cspad2x2.3', (2, 185, 388)),
+       'cspad2x2.3'    : ('exp=xpptut15:run=260', 'MecTargetChamber.0:Cspad2x2.3', (2, 185, 388)),
+       'cspad'         : ('exp=xpptut15:run=380', 'CxiDs1.0:Cspad.0', (32, 185, 388)),
+       'cspad2'        : ('exp=xpptut15:run=380', 'CxiDs2.0:Cspad.0', (32, 185, 388)),
+       'cspad_xpp'     : ('exp=xpptut15:run=320', 'XppGon.0:Cspad.0', (32, 185, 388)),
+       'opal1000'      : ('exp=xpptut15:run=310', 'XrayTransportDiagnostic.0:Opal1000.0', (1024, 1024)),
+       'pnccd'         : ('exp=xpptut15:run=450', 'Camp.0:pnCCD.1', (4, 512, 512)),
+       'epix100a'      : ('exp=xpptut15:run=260', 'XcsEndstation.0:Epix100a.1', (704, 768)),
+       'epix_alc3'     : ('exp=xpptut15:run=630', 'epix_alc3', (704, 768)),
+       'epix10ka2m'    : ('exp=xpptut15:run=540', 'epix10ka2m', (16, 352, 384)),
+       'epix10ka2m.0'  : ('exp=xpptut15:run=570', 'MfxEndstation.0:Epix10ka2M.0', (16, 352, 384)),
+       'epix10kaquad'  : ('exp=xpptut15:run=590', 'Epix10kaQuad0', (4, 352, 384)),
+       'epix10kaquad.1': ('exp=xpptut15:run=590', 'Epix10kaQuad1', (4, 352, 384)),
+       'epix10kaquad.2': ('exp=xpptut15:run=590', 'Epix10kaQuad2', (4, 352, 384)),
+       'epix10kaquad.3': ('exp=xpptut15:run=590', 'Epix10kaQuad3', (4, 352, 384)),
+       'jungfrau512k'  : ('exp=xpptut15:run=410', 'Jungfrau512k', (1, 512, 1024)),
+       'jungfrau1m'    : ('exp=xpptut15:run=430', 'Jungfrau1M', (2, 512, 1024)),
+       'jungfrau4m'    : ('exp=xpptut15:run=580', 'jungfrau4M', (8, 512, 1024)),
+       'jungfrau4m.2'  : ('exp=xpptut15:run=530', 'DetLab.0:Jungfrau.2', (8, 512, 1024)),
     }[kw]
+
 
 FNAME_STATUS = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
 
