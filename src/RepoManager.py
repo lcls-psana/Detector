@@ -27,8 +27,7 @@ Usage::
     repoman = rm.init_repoman_and_logger(args)
     # do work, when dettype (ex. 'epix100a') is available call
         repoman.set/dir/makedir_dettype(dettype)
-    # at the very end, before exit call
-    repoman.logfile_save()
+    repoman.logfile_save()  # because destructor does not work...
 
 
 This software was developed for the SIT project.
@@ -139,8 +138,8 @@ class RepoManager():
     def dir_logs_year(self, year=None):
         """return directory <dirrepo>/[dettype]/logs/<year>
         """
-        _year = str_tstamp(fmt='%Y') if year is None else year
-        return os.path.join(self.dir_logs(), _year)
+        if year is not None: self.year = str(year)
+        return os.path.join(self.dir_logs(), self.year)
 
 
     def makedir_logs_year(self, year=None):
@@ -220,8 +219,7 @@ class RepoManager():
 
     def logname(self, logsuffix=None):
         if logsuffix is not None: self.logsuffix = logsuffix
-        tstamp = str_tstamp(fmt='%Y-%m-%dT%H%M%S')
-        s = '%s/%s_log_%s.txt' % (self.makedir_logs_year(), tstamp, self.logsuffix)
+        s = '%s/%s_log_%s.txt' % (self.makedir_logs_year(), self.tstamp, self.logsuffix)
         if self.logname_tmp is None:
            self.logname_tmp = s
         return s
@@ -229,8 +227,8 @@ class RepoManager():
     ### lcls2 style of logname_at_start_lcls1: DIR_LOG_AT_START/<year>/<year>_lcls1_<procname>.txt
 
     def logname_at_start(self, suffix, year=None):
-        _year = str_tstamp(fmt='%Y') if year is None else str(year)
-        return '%s/%s_log_%s.txt' % (self.makedir_logs(), _year, suffix)
+        if year is not None: self.year = str(year)
+        return '%s/%s_log_%s.txt' % (self.makedir_logs(), self.year, suffix)
 
 
     def dir_log_at_start_year(self):
@@ -269,17 +267,20 @@ class RepoManager():
         logname = self.logname() # may be different from logname_tmp after definition of dettype
         if logname != self.logname_tmp:
             cmd = 'mv %s %s' % (self.logname_tmp, logname)
-            logger.info('move logfile under dettype:\n%s' % '\n    '.join(cmd.split()))
+            logger.info('\n  move logfile: %s\n  to: %s\n  and create link' % (self.logname_tmp, logname))
             os.system(cmd)
             cmd = 'ln -s %s %s' % (logname, self.logname_tmp)
-            logger.info('create link to logfile')
             os.system(cmd)
 
         os.chmod(logname, self.filemode)
         cgu.change_file_ownership(logname, user=None, group=self.group)
 
 
-def init_repoman_and_logger(args):
+#    def __del__(self):
+#        self.logfile_save()
+
+
+def init_repoman_and_logger(args, parser=None):
     """wrapper for common pattern of initialization RepoManager and logger
     """
     import getpass
@@ -303,6 +304,10 @@ def init_repoman_and_logger(args):
     init_logger(loglevel=logmode, logfname=logname, group=group, fmt=fmt)
     logger.info('log file: %s' % logname)
     repoman.save_record_at_start(scrname, adddict={'logfile':logname})
+
+    if parser is not None:
+        from Detector.GlobalUtils import info_command_line_parameters
+        logger.info(info_command_line_parameters(parser))
     return repoman
 
 # EOF
