@@ -7,6 +7,21 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-64
+2023-04-04 Mikhail Dubrovin
+  app/deploy_constants - use init_repoman_and_logger, updatee usage and help
+  app/det_raw_pixel_status - use init_repoman_and_logger, updatee usage
+  examples/test-issues-2023.py - add more datasets from xpptut15 to test_dsname_detname_shape
+  src/RepoManager.py - add optional parameter to init_repoman_and_logger(args, parser=None)
+  src/UtilsDeployConstants.py - add/use method merge_status_extra
+  src/UtilsRawPixelStatus.py - replace for orun in ds.runs() with orun = next(ds.runs())
+
+2023-03-30 Mikhail Dubrovin
+  app/det_raw_pixel_status - refactoring initialization of RepoManager and logger
+  src/RepoManager.py - add methods logfile_save and init_repoman_and_logger
+  src/UtilsLogging.py - split code for methods _formatter, init_logfile, modify init_logger
+  src/UtilsRawPixelStatus.py - cosmetic update
+
 Tag: V02-00-63
 2023-03-28 Mikhail Dubrovin
 - UtilsRawPixelStatus.py - add method save_constants_in_repository for users
