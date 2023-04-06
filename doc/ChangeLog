@@ -7,6 +7,12 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-65
+2023-04-06 Mikhail Dubrovin
+- implementation of Featuires 2 and 3 from [JAC-2022, Sadri, Automatic bad pixel mask maker...]
+  app/det_raw_pixel_status - add parameter d_features = '1,2,3,4,5', gmode > str
+  src/UtilsRawPixelStatus.py - add/use methods feature_02/3
+
 Tag: V02-00-64
 2023-04-04 Mikhail Dubrovin
   app/deploy_constants - use init_repoman_and_logger, updatee usage and help
