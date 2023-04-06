@@ -91,7 +91,7 @@ def find_outliers(arr, title='', vmin=None, vmax=None):
     return bad_lo, bad_hi, arr1_lo, arr1_hi, s_lo, s_hi
 
 
-def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8, prefix=''):
+def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8):
     """vmin/vmax - absolutly allowed min/max of the value
     """
     assert isinstance(arr, np.ndarray)
@@ -107,8 +107,6 @@ def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8, prefix=
     _vmin = med - snrmax*spr if vmin is None else max(med - snrmax*spr, vmin)
     _vmax = med + snrmax*spr if vmax is None else min(med + snrmax*spr, vmax)
 
-    #if prefix: plot_array(arr, title=title, vmin=_vmin, vmax=_vmax, prefix=prefix)
-
     s_sel = '%s selected %d of %d pixels in' % (title, arr_sel.size, arr.size)\
           + ' range (%s, %s)' % (str(vmin), str(vmax))\
           + ' med: %.3f spr: %.3f' % (med, spr)
@@ -123,9 +121,9 @@ def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8, prefix=
     return _arr1_lo, _arr1_hi, _s_lo, _s_hi
 
 
-def set_pixel_status_bits(status, arr, title='', vmin=None, vmax=None, snrmax=8, bit_lo=1<<0, bit_hi=1<<1, prefix=''):
+def set_pixel_status_bits(status, arr, title='', vmin=None, vmax=None, snrmax=8, bit_lo=1<<0, bit_hi=1<<1):
     assert isinstance(arr, np.ndarray)
-    arr1_lo, arr1_hi, s_lo, s_hi = evaluate_pixel_status(arr, title=title, vmin=vmin, vmax=vmax, snrmax=snrmax, prefix=prefix)
+    arr1_lo, arr1_hi, s_lo, s_hi = evaluate_pixel_status(arr, title=title, vmin=vmin, vmax=vmax, snrmax=snrmax)
     status += arr1_lo * bit_lo
     status += arr1_hi * bit_hi
     s_lo = '%20s: %s' % (oct(bit_lo), s_lo)
@@ -177,6 +175,7 @@ class DataProc:
         self.status = 0
         self.shwind = eval('(%s)' % args.shwind)
         self.block  = None
+        self.features = eval('(%s)' % args.features)
 
 
     def init_block(self, raw):
@@ -193,18 +192,64 @@ class DataProc:
 
 
     def feature_01(self):
-        """Feature 1: mean intensity of frames"""
+        logger.info("""Feature 1: mean intensity of frames""")
         block_data = self.block & self.databits
         intensity_mean = np.sum(block_data, axis=(-2,-1)) / self.ssize
         logger.info(info_ndarr(intensity_mean, '\n  per-record intensity MEAN IN FRAME:', last=20))
 
         intensity_med = np.median(block_data, axis=(-2,-1))
         logger.info(info_ndarr(intensity_med, '\n  per-record intensity MEDIAN IN FRAME:', last=20))
-        arr1_lo, arr1_hi, s_lo, s_hi = evaluate_pixel_status(intensity_med, title='Feat.1: intensity_med', vmin=0, vmax=self.databits, snrmax=self.snrmax, prefix='')
+        arr1_lo, arr1_hi, s_lo, s_hi = evaluate_pixel_status(intensity_med, title='Feat.1: intensity_med',\
+                                             vmin=0, vmax=self.databits, snrmax=self.snrmax)
         arr0 = np.zeros_like(arr1_lo, dtype=np.uint64)  # dtype=bool
         arr1_good_frames = np.select((arr1_lo>0, arr1_hi>0), (arr0, arr0), 1)
         logger.info('Total number of good events: %d' % arr1_good_frames.sum())
         return arr1_good_frames
+
+
+    def feature_02(self):
+        logger.info("""Feature 2: dark mean in good range""")
+        block_good = self.block[self.bool_good_frames,:] & self.databits
+        logger.info(info_ndarr(block_good, 'block of good records:', last=5))
+        return np.mean(block_good, axis=0, dtype=np.float)
+
+
+    def feature_03(self):
+        logger.info("""Feature 3: dark RMS in good range""")
+        block_good = self.block[self.bool_good_frames,:] & self.databits
+        logger.info(info_ndarr(block_good, 'block of good records:', last=5))
+        return np.std(block_good, axis=0, dtype=np.float)
+
+
+    def feature_04(self):
+        logger.info("""Feature 4: TBD""")
+        return None
+
+
+    def feature_05(self):
+        logger.info("""Feature 5: TBD""")
+        return None
+
+
+    def feature_06(self):
+        logger.info("""Feature 6: average SNR of pixels over time""")
+
+        ngframes = self.inds_good_frames.size
+        shape_res = (ngframes,) + self.shape_fr
+        block_res = np.zeros(shape_res, dtype=np.float)
+
+        for i, igood in enumerate(self.inds_good_frames):
+            frame = self.block[igood,:] & self.databits
+            logger.debug(info_ndarr(frame, '%04d frame data' % igood))
+            block_res[i,:] = res = self.residuals_frame_f06(frame) #  self.block[0,:])
+
+            res_med = np.median(res)
+            res_spr = np.median(np.absolute(res - res_med))
+
+            s = 'frame: %04d res_med: %.3f res_spr: %.3f frame residuals' % (igood, res_med, res_spr)
+            logger.info(info_ndarr(res, s, last=3))
+
+        return block_res
 
 
     def residuals_frame_f06(self, frame):
@@ -228,65 +273,71 @@ class DataProc:
         return residuals
 
 
-    def feature_06(self):
-        """Feature 6: average SNR of pixels over time"""
-
-        ngframes = self.inds_good_frames.size
-        shape_res = (ngframes,) + self.shape_fr
-        block_res = np.zeros(shape_res, dtype=np.float)
-
-        for i, igood in enumerate(self.inds_good_frames):
-            frame = self.block[igood,:] & self.databits
-            logger.debug(info_ndarr(frame, '%04d frame data' % igood))
-            block_res[i,:] = res = self.residuals_frame_f06(frame) #  self.block[0,:])
-
-            res_med = np.median(res)
-            res_spr = np.median(np.absolute(res - res_med))
-
-            s = 'frame: %04d res_med: %.3f res_spr: %.3f frame residuals' % (igood, res_med, res_spr)
-            logger.info(info_ndarr(res, s, last=3))
-
-        return block_res
-
-
     def summary(self):
         logger.info(info_ndarr(self.block, '\nSummary for data block:'))
         #logger.info('%s\nraw data found/selected in %d events' % (80*'_', self.irec+1))
-
+        self.block = self.block[:self.irec,:]
+        logger.info(info_ndarr(self.block, 'block of all records:', last=5))
         bsh = self.block.shape
         self.ssize = bsh[-1]*bsh[-2]
 
-        arr1_good_frames = self.feature_01()
-        logger.info(info_ndarr(arr1_good_frames, 'arr1_good_frames:'))
-        self.inds_good_frames = np.where(arr1_good_frames>0)[0] # array if indices for good frames
-        logger.info('%s\n%s' % (info_ndarr(self.inds_good_frames, 'inds_good_frames:', last=0),\
+        if 1 in self.features:
+            arr1_good_frames = self.feature_01()
+            logger.info(info_ndarr(arr1_good_frames, 'arr1_good_frames:'))
+            self.bool_good_frames = arr1_good_frames>0
+            self.inds_good_frames = np.where(self.bool_good_frames)[0] # array if indices for good frames
+            logger.info('%s\n%s' % (info_ndarr(self.inds_good_frames, 'inds_good_frames:', last=0),\
                     str(self.inds_good_frames)))
-
-        block_res = self.feature_06()
-
-        res_med = np.median(block_res, axis=0)
-        res_spr = np.median(np.absolute(block_res - res_med), axis=0)
-
-        logger.info(info_ndarr(block_res, 'block of residuals:', last=20))
-        logger.info(info_ndarr(res_med, 'median over frames per-pixel residuals:', last=20))
-        logger.info(info_ndarr(res_spr, 'median over frames per-pixel spread of res:', last=20))
-
-        prefix = 'prefix'
+        else:
+            logger.info('Feature 1 for mean intensity of frames is not requested. All frames are used for further processing.')
+            self.inds_good_frames = np.arange(self.irec, dtype=np.uint)
+            self.bool_good_frames = np.ones(self.irec, dtype=np.bool)
 
         arr_sta = np.zeros(self.shape_fr, dtype=np.uint64)
-        f = '\n  %s\n  %s'
-        s = '\n\nSummary of the bad pixel status evaluation, %s array' % self.args.ctype
-        s += f % set_pixel_status_bits(arr_sta, res_med, title='Feat.6 res_med', vmin=-self.databits, vmax=self.databits, snrmax=self.snrmax, bit_lo=1<<0, bit_hi=1<<1, prefix=prefix)
-        s += f % set_pixel_status_bits(arr_sta, res_spr, title='Feat.6 res_spr', vmin=-self.databits, vmax=self.databits, snrmax=self.snrmax, bit_lo=1<<2, bit_hi=1<<3, prefix=prefix)
 
-        #stus_bad_total = np.select((arr_sta>0,), (arr1[myslice],), 0)
+        f = '\n  %s\n  %s'
+        ss = '\n\nSummary of the bad pixel status evaluation for SNR=%.2f, %s array' % (self.snrmax, self.args.ctype)
+
+        if 2 in self.features:
+            arr_mean = self.feature_02()
+            logger.info(info_ndarr(arr_mean, 'median over good records:', last=5))
+            ss += f % set_pixel_status_bits(arr_sta, arr_mean, title='Feat.2 mean', vmin=0, vmax=self.databits,
+                                            snrmax=self.snrmax, bit_lo=1<<0, bit_hi=1<<1)
+
+        if 3 in self.features:
+            arr_std = self.feature_03()
+            logger.info(info_ndarr(arr_std, 'std over good records:', last=5))
+            ss += f % set_pixel_status_bits(arr_sta, arr_std, title='Feat.3 std', vmin=0, vmax=self.databits,
+                                            snrmax=self.snrmax, bit_lo=1<<2, bit_hi=1<<3)
+
+        if 4 in self.features:
+            arr = self.feature_04()
+
+        if 5 in self.features:
+            arr = self.feature_05()
+
+        if 6 in self.features:
+            block_res = self.feature_06()
+
+            res_med = np.median(block_res, axis=0)
+            res_spr = np.median(np.absolute(block_res - res_med), axis=0)
+
+            logger.info(info_ndarr(block_res, 'block of residuals:', last=20))
+            logger.info(info_ndarr(res_med, 'median over frames per-pixel residuals:', last=20))
+            logger.info(info_ndarr(res_spr, 'median over frames per-pixel spread of res:', last=20))
+
+            ss += f % set_pixel_status_bits(arr_sta, res_med, title='Feat.6 res_med', vmin=-self.databits, vmax=self.databits,
+                                            snrmax=self.snrmax, bit_lo=1<<4, bit_hi=1<<5)
+            ss += f % set_pixel_status_bits(arr_sta, res_spr, title='Feat.6 res_spr', vmin=-self.databits, vmax=self.databits,\
+                                            snrmax=self.snrmax, bit_lo=1<<6, bit_hi=1<<7)
+
         arr1 = np.ones(self.shape_fr, dtype=np.uint64)
         stus_bad_total = np.select((arr_sta>0,), (arr1,), 0)
         num_bad_pixels = stus_bad_total.sum()
 
         size = arr_sta.size
-        s += '\n    Any bad status bit: %8d / %d (%6.3f%%) pixels' % (num_bad_pixels, size, 100*num_bad_pixels/size)
-        logger.info(s)
+        ss += '\n    Any bad status bit: %8d / %d (%6.3f%%) pixels' % (num_bad_pixels, size, 100*num_bad_pixels/size)
+        logger.info(ss)
 
         return arr_sta
         #sys.exit('TEST EXIT')
@@ -330,9 +381,9 @@ def event_loop(args):
     stskip = args.stskip
     evcode = args.evcode
     segind = args.segind
-    aslice = eval('np.s_[%s]' % args.slice)
     repoman= args.repoman
     logmode= args.logmode
+    aslice = eval('np.s_[%s]' % args.slice)
 
     t0_sec = time()
 
@@ -352,8 +403,6 @@ def event_loop(args):
     nstep_tot = 0
     nevt_tot  = 0
     metad = None
-
-    #sys.exit('TEST EXIT')
 
     for orun in ds.runs():
       nrun_tot += 1
@@ -513,12 +562,6 @@ def save_constants_in_repository(arr, **kwa):
     orun = next(ds.runs())
     metad = metadata(ds, orun, det)
     logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
-#    orun, metad = None, None
-#    for orun in ds.runs():
-#        metad = metadata(ds, orun, det)
-#        logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
-#        break
-
     panel_ids = metad['detid'].split('_')
     nsegs = len(panel_ids)
 
