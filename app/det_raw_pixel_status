@@ -14,6 +14,7 @@ USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
       +'\nEx.2:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 --nrecs 10 # test command' % SCRNAME\
       +'\nEx.3:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 # regular processing command' % SCRNAME\
       +'\nEx.4:  %s -d exp=xpptut15:run=260 -s XcsEndstation.0:Epix100a.1 -t status_data --nrecs 10  # generate status_* for test' % SCRNAME\
+      +'\nEx.5:  %s -d exp=xpplw3319:run=287 -s XppGon.0:Epix100a.3 --nrecs 10 # test dark processing' % SCRNAME\
       +'\n\nHelp:  %s -h\n' % SCRNAME
 
 def argument_parser():
@@ -52,6 +53,7 @@ def argument_parser():
     d_databits = (1<<14)-1 # 0o37777  # 14 bits # 0o177777 - 16bit
     d_gainbits = 0
     d_ctype    = 'status_data'
+    d_features = '1,2,3,4,5'
 
     h_dsname  = 'dataset name, default = %s' % d_dsname
     h_source  = 'input ndarray source name, default = %s' % d_source
@@ -73,7 +75,7 @@ def argument_parser():
                 'code inverts selection, default = %s'%str(d_evcode)
     h_upload  = 'deprecated and not used, default = %s' % d_upload
     h_segind  = 'segment index to process, use it for multi-panel detectors with raw.shape.ndim>2, default = %s' % str(d_segind)
-    h_gmode   = 'gain mode name, use it for multi-gain detectors with raw.shape.ndim>3, ex: AHL-H, default = %s' % str(d_gmode)
+    h_gmode   = 'gain mode name-suffix, use it for multi-gain detectors with raw.shape.ndim>3, ex: AHL-H, default = %s' % str(d_gmode)
     h_nrecs   = 'number of records to collect data, default = %s' % str(d_nrecs)
     h_fraclo  = 'fraction of statistics [0,1] below low  limit of the gate, default = %f' % d_fraclo
     h_frachi  = 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
@@ -88,6 +90,7 @@ def argument_parser():
     h_databits = 'data bits in ADC for code of intensity, default = %s' % oct(d_databits)
     h_gainbits = 'gain mode switch bits in ADC, default = %s' % oct(d_gainbits)
     h_ctype    = 'type of calibration constants to save, default = %s' % d_ctype
+    h_features = '(str) comma-separated list of Features [JAC-2022, Sadri, Automatic bad pixel mask maker...] from 1 to 6 to evaluate bad pixels, default = %s' % d_features
 
     parser = ArgumentParser(description=DESCRIPTION, usage=USAGE)
     parser.add_argument('-d', '--dsname',   default=d_dsname,   type=str,   help=h_dsname)
@@ -105,12 +108,13 @@ def argument_parser():
     parser.add_argument('-t', '--ctype',    default=d_ctype,    type=str,   help=h_ctype)
     parser.add_argument('-L', '--logmode',  default=d_logmode,  type=str,   help=h_logmode)
     parser.add_argument('-o', '--dirrepo',  default=d_dirrepo,  type=str,   help=h_dirrepo)
+    parser.add_argument('-F', '--features', default=d_features, type=str,   help=h_features)
     parser.add_argument('--dirmode',        default=d_dirmode,  type=int,   help=h_dirmode)
     parser.add_argument('--filemode',       default=d_filemode, type=int,   help=h_filemode)
     parser.add_argument('--group',          default=d_group,    type=str,   help=h_group)
     parser.add_argument('--databits',       default=d_databits, type=int,   help=h_databits)
     parser.add_argument('--gainbits',       default=d_gainbits, type=int,   help=h_gainbits)
-    parser.add_argument('--gmode',          default=d_gmode,    type=int,   help=h_gmode)
+    parser.add_argument('--gmode',          default=d_gmode,    type=str,   help=h_gmode)
 
     return parser
 
