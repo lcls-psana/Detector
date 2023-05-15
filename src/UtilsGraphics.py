@@ -26,7 +26,7 @@ import pyimgalgos.Graphics as gr
 #from psana.pyalgos.generic.NDArrUtils import info_ndarr
 from Detector.GlobalUtils import info_ndarr
 
-def arr_median_limits(arr, amin=None, amax=None, nneg=None, npos=None, fraclo=0.05, frachi=0.95):
+def arr_median_limits(arr, amin=None, amax=None, nneg=None, npos=None, fraclo=0.01, frachi=0.99):
     """ returns tuple of intensity limits (amin, amax) evaluated from arr or passed directly.
     """
     if not(None in (amin, amax)): return amin, amax
