@@ -75,7 +75,7 @@ def jungfrau_gain_constants():
     verbose = loglev != 'INFO'
     if verbose: print_command_line_parameters(parser)
 
-    repoman = uc.RepoManager(repdir, dir_log_at_start=DIR_LOG_AT_START,\
+    repoman = uc.RepoManager(dirrepo=repdir, dir_log_at_start=DIR_LOG_AT_START,\
                              dirmode=popts.dirmode, filemode=popts.filemode, group=popts.group)
     logname = repoman.logname('%s_%s_%s' % (SCRNAME, str_exp_run(DSNAME), gu.get_login()))
     ul.init_logger(loglevel=loglev, logfname=logname, group=popts.group, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
