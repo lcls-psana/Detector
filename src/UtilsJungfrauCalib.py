@@ -417,7 +417,7 @@ def save_results(dpo, **kwa):
 
     #ctypes = list_save[:][0]
 
-    #repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START, group=group)
+    #repoman = uc.RepoManager(dirrepo=dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START, group=group)
     repoman = kwa.get('repoman', None)
     #dlog = repoman.dir_logs_year()
 
@@ -605,7 +605,7 @@ def jungfrau_deploy_constants(pargs, popts):
 
     logger.debug('search for calibration files with tstamp <= %s' % tstamp)
 
-    #repoman = uc.RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START, group=group)
+    #repoman = uc.RepoManager(dirrepo=dirrepo, dirmode=dirmode, filemode=filemode, dir_log_at_start=DIR_LOG_AT_START, group=group)
     repoman = kwa.get('repoman', None)
 
     mpars = {\
