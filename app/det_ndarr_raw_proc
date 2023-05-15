@@ -124,7 +124,7 @@ if __name__ == "__main__":
     import Detector.UtilsCalib as uc
     import PSCalib.GlobalUtils as gu
 
-    repoman = uc.RepoManager(opts.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+    repoman = uc.RepoManager(dirrepo=opts.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
                              dirmode=opts.dirmode, filemode=opts.filemode, group=opts.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     logname = None
