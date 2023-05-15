@@ -40,7 +40,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 import os
+import sys
 from time import time, strftime, localtime
+import getpass
+
 import PSCalib.GlobalUtils as cgu
 from Detector.dir_root import DIR_REPO, DIR_LOG_AT_START
 
@@ -48,19 +51,17 @@ log_rec_at_start, create_directory, save_textfile, change_file_ownership =\
   cgu.log_rec_at_start, cgu.create_directory, cgu.save_textfile, cgu.change_file_ownership
 TSTAMP_FORMAT = '%Y%m%d%H%M%S'
 
+SCRNAME = sys.argv[0].rsplit('/')[-1]
 
 def str_tstamp(fmt='%Y-%m-%dT%H:%M:%S', time_sec=None):
-    """Returns string timestamp for specified format and time in sec or current time by default
-    """
+    """Returns string timestamp for specified format and time in sec or current time by default"""
     return strftime(fmt, localtime(time_sec))
 
 
 class RepoManager():
-    """Supports repository directories/files naming structure for app/deploy_constants.
-    """
-
-    def __init__(self, dirrepo, **kwa):
-        self.dirrepo = dirrepo.rstrip('/')
+    """Supports repository directories/files naming structure for app/deploy_constants."""
+    def __init__(self, **kwa):
+        self.dirrepo     = kwa.get('dirrepo', DIR_REPO).rstrip('/')
         self.dirmode     = kwa.get('dirmode',  0o2777)
         self.dettype     = kwa.get('dettype', None)
         self.filemode    = kwa.get('filemode', 0o666)
@@ -69,30 +70,26 @@ class RepoManager():
         self.year        = kwa.get('year', str_tstamp(fmt='%Y'))
         self.tstamp      = kwa.get('tstamp', str_tstamp(fmt='%Y-%m-%dT%H%M%S'))
         self.dir_log_at_start = kwa.get('dir_log_at_start', DIR_LOG_AT_START)
-        self.logsuffix   = kwa.get('logsuffix', 'nondef')
+        self.logsuffix   = kwa.get('logsuffix', '%s_%s' % (SCRNAME, getpass.getuser()))
         self.dirname_log = kwa.get('dirname_log', 'logs')
         self.dirname_def = kwa.get('dirname_def', 'default')
-        #self.dirname_pan = kwa.get('dirname_pan', 'panels')
         self.logname_tmp = None  # logname before the dettype is defined
 
 
     def makedir(self, d):
-        """create and return directory d with mode defined in object property
-        """
+        """creates and returns directory d with mode defined in object property"""
         create_directory(d, mode=self.dirmode, group=self.group)
         if not os.path.exists(d): logger.error('NOT CREATED DIRECTORY %s' % d)
         return d
 
 
     def dir_in_repo(self, name):
-        """return directory <dirrepo>/<name>
-        """
+        """returns directory <dirrepo>/<name>"""
         return os.path.join(self.dirrepo, name)
 
 
     def makedir_in_repo(self, name):
-        """create and return directory <dirrepo>/<name>
-        """
+        """creates and returns directory <dirrepo>/<name>"""
         d = self.makedir(self.dirrepo)
         return self.makedir(self.dir_in_repo(name))
 
@@ -103,48 +100,43 @@ class RepoManager():
 
 
     def dir_dettype(self, dettype=None):
-        """returns path to the dettype directory like <dirrepo>/[<dettype>]
+        """returns path to the dettype directory like
+           <dirrepo>/<dettype>
+           if sel.dettype is not None or script directory like
+           <dirrepo>/scripts/<script-name>
         """
         self.set_dettype(dettype)
-        return self.dirrepo if self.dettype is None else\
-               os.path.join(self.dirrepo, self.dettype)
+        subdir = 'scripts/%s' % SCRNAME if self.dettype is None else self.dettype
+        return os.path.join(self.dirrepo, subdir)
 
 
     def makedir_dettype(self, dettype=None):
-        """create and returns path to the director type directory like <dirrepo>/[<dettype>]
-        """
-        d = self.makedir(self.dirrepo)
-        ddt = self.dir_dettype(dettype)
-        return d if self.dettype is None else\
-               self.makedir(ddt)
+        """creates and returns path to the director type directory like <dirrepo>/[<dettype>] or <dirrepo>/scripts/<script-name>"""
+        assert os.path.exists(self.makedir(self.dirrepo))
+        return self.makedir(self.dir_dettype(dettype))
 
 
     def dir_logs(self):
-        """return directory <dirrepo>/[dettype]/logs
-        """
+        """returns directory <dirrepo>/[dettype or scripts/<script-name>]/logs"""
         d = self.dir_dettype()
         return os.path.join(d, self.dirname_log)
-        #return self.dir_in_repo(self.dirname_log)
 
 
     def makedir_logs(self):
-        """create and return directory <dirrepo>/[dettype]/logs
-        """
+        """creates and returns directory <dirrepo>/[dettype]/logs"""
         #d = self.makedir(self.dirrepo)
         d = self.makedir_dettype()
         return self.makedir(self.dir_logs())
 
 
     def dir_logs_year(self, year=None):
-        """return directory <dirrepo>/[dettype]/logs/<year>
-        """
+        """returns directory <dirrepo>/[dettype]/logs/<year>"""
         if year is not None: self.year = str(year)
         return os.path.join(self.dir_logs(), self.year)
 
 
     def makedir_logs_year(self, year=None):
-        """create and return directory <dirrepo>/[dettype]/logs/<year>
-        """
+        """creates and returns directory <dirrepo>/[dettype]/logs/<year>"""
         d = self.makedir_logs()
         return self.makedir(self.dir_logs_year(year))
 
@@ -155,14 +147,12 @@ class RepoManager():
 
 
     def dir_default(self, dettype=None):
-        """returns path to panel directory like <dirrepo>/<dettype>/<dirname_def>
-        """
+        """returns path to panel directory like <dirrepo>/<dettype>/<dirname_def>"""
         return os.path.join(self.dir_dettype(dettype), self.dirname_def)
 
 
     def makedir_default(self, dettype=None):
-        """create and returns path to panel directory like <dirrepo>/<dettype>/<dirname_def>
-        """
+        """create and returns path to panel directory like <dirrepo>/<dettype>/<dirname_def>"""
         d = self.makedir_dettype(dettype)
         dp = self.makedir(self.dir_default())
         logger.info('default directory: %s' % dp)
@@ -174,8 +164,7 @@ class RepoManager():
 
 
     def dir_panel(self, panel_id):
-        """returns path to panel directory like <dirrepo>/<dettype>/<panel_id>
-        """
+        """returns path to panel directory like <dirrepo>/<dettype>/<panel_id>"""
         return os.path.join(self.dir_dettype(), panel_id)
 
 
@@ -189,14 +178,12 @@ class RepoManager():
 
 
     def dir_ctype(self, panel_id, ctype): # ctype='pedestals'
-        """returns path to the directory like <dirrepo>/<dettype>/<panel_id>/<ctype>
-        """
+        """returns path to the directory like <dirrepo>/<dettype>/<panel_id>/<ctype>"""
         return '%s/%s' % (self.dir_panel(panel_id), ctype)
 
 
     def makedir_ctype(self, panel_id, ctype): # ctype='pedestals'
-        """create and returns path to the directory like <dirrepo>/<dettype>/<panel_id>/<ctype>
-        """
+        """create and returns path to the directory like <dirrepo>/<dettype>/<panel_id>/<ctype>"""
         d = self.makedir_panel(panel_id)
         return self.makedir(self.dir_ctype(panel_id, ctype))
 
@@ -209,8 +196,7 @@ class RepoManager():
 
 
     def makedir_ctypes(self, panel_id, ctypes=('gain', 'common_mode', 'geometry')):
-        """create structure of subdirectories in calibration repository under <dirrepo>/<panel_id>/...
-        """
+        """create structure of subdirectories in calibration repository under <dirrepo>/<panel_id>/..."""
         dp = self.makedir_panel(panel_id)
         dirs = self.dir_ctypes(panel_id, ctypes=ctypes)
         for d in dirs: self.makedir(d)
@@ -224,7 +210,6 @@ class RepoManager():
            self.logname_tmp = s
         return s
 
-    ### lcls2 style of logname_at_start_lcls1: DIR_LOG_AT_START/<year>/<year>_lcls1_<procname>.txt
 
     def logname_at_start(self, suffix, year=None):
         if year is not None: self.year = str(year)
@@ -281,16 +266,12 @@ class RepoManager():
 
 
 def init_repoman_and_logger(args, parser=None):
-    """wrapper for common pattern of initialization RepoManager and logger
-    """
-    import getpass
+    """wrapper for common pattern of initialization RepoManager and logger"""
     from Detector.UtilsLogging import sys, init_logger
-
-    scrname   = sys.argv[0].split('/')[-1]
 
     dirrepo   = getattr(args, 'dirrepo', DIR_REPO)
     logmode   = getattr(args, 'logmode', 'INFO')
-    logsuffix = getattr(args, 'logsuffix', '%s_%s' % (scrname, getpass.getuser()))
+    logsuffix = getattr(args, 'logsuffix', '%s_%s' % (SCRNAME, getpass.getuser()))
     group     = getattr(args, 'group', 'ps-users')
     filemode  = getattr(args, 'filemode', 0o664)
     dirmode   = getattr(args, 'dirmode', 0o2775)
@@ -298,12 +279,12 @@ def init_repoman_and_logger(args, parser=None):
     dir_log_at_start = getattr(args, 'dir_log_at_start', DIR_LOG_AT_START)
 
     if 'work' in args.dirrepo: dir_log_at_start = args.dirrepo
-    repoman = RepoManager(dirrepo, dir_log_at_start=dir_log_at_start,\
+    repoman = RepoManager(dirrepo=dirrepo, dir_log_at_start=dir_log_at_start,\
                           dirmode=dirmode, filemode=filemode, group=group, logsuffix=logsuffix)
     logname = repoman.logname()
     init_logger(loglevel=logmode, logfname=logname, group=group, fmt=fmt)
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(scrname, adddict={'logfile':logname})
+    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     if parser is not None:
         from Detector.GlobalUtils import info_command_line_parameters

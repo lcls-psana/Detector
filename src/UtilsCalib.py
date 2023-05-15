@@ -119,7 +119,7 @@ def save_log_record_at_start(dirrepo, fname, dirmode=0o2775, filemode=0o664, uma
     """
     os.umask(umask)
     rec = log_rec_at_start(tsfmt='%Y-%m-%dT%H:%M:%S', **{'dirrepo':dirrepo,})
-    repoman = RepoManager(dirrepo, dirmode=dirmode, filemode=filemode, group=group)
+    repoman = RepoManager(dirrepo=dirrepo, dirmode=dirmode, filemode=filemode, group=group)
     logfname = repoman.logname_at_start(fname)
     fexists = os.path.exists(logfname)
     save_textfile(rec, logfname, mode='a')
@@ -175,7 +175,7 @@ class RepoManager():
     Usage::
 
       from Detector.UtilsCalib import RepoManager
-      repoman = RepoManager(dirrepo)
+      repoman = RepoManager(dirrepo=dirrepo)
       d = repoman.dir_logs()
       d = repoman.makedir_logs()
     """
