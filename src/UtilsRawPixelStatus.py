@@ -7,15 +7,17 @@
 """
 
 from time import time
+import os
 import sys
+import numpy as np
+
 import Detector.UtilsLogging as ul
 logger = ul.logging.getLogger(__name__)  # where __name__ = 'Detector.UtilsRawPixelStatus'
 from psana import DataSource, Detector
 from Detector.GlobalUtils import info_ndarr  # print_ndarr, divide_protected
 import PSCalib.GlobalUtils as gu
 import Detector.UtilsCalib as uc
-
-import numpy as np
+import Detector.RepoManager as rm
 
 
 def metadata(ds, orun, det):
@@ -25,6 +27,7 @@ def metadata(ds, orun, det):
     dettype = det.pyda.dettype
     ts_run, ts_now = uc.tstamps_run_and_now(env, fmt=uc.TSTAMP_FORMAT)
     #print('\nXXX dir(env)', dir(env))
+    runnum = orun.run()
     return {
       'dettype': dettype,
       'typename': gu.dic_det_type_to_name.get(dettype, None).lower(),
@@ -34,7 +37,9 @@ def metadata(ds, orun, det):
       'ts_now': ts_now,
       'expname': env.experiment(),
       'calibdir': env.calibDir(),
-      'runnum': orun.run()
+      'runnum': runnum,
+      'pedestals': det.pedestals(runnum),
+      'rms': det.rms(runnum),
       }
 
 
@@ -162,7 +167,7 @@ def selected_number(n):
 
 class DataProc:
     """data accumulation and processing"""
-    def __init__(self, args, **kwa):
+    def __init__(self, args, metad, **kwa):
         self.args = args
         self.kwa = kwa
         self.aslice = eval('np.s_[%s]' % args.slice)
@@ -176,11 +181,16 @@ class DataProc:
         self.shwind = eval('(%s)' % args.shwind)
         self.block  = None
         self.features = eval('(%s)' % args.features)
+        self.metad = metad
+        self.fname = fname_block(args, metad)
+        logger.info('file name for data block: %s' % self.fname)
 
 
     def init_block(self, raw):
         self.shape_fr = tuple(raw.shape)
         self.shape_bl = (self.nrecs,) + self.shape_fr
+        self.load_data_file()
+        if self.block is not None: return
         self.block = np.zeros(self.shape_bl, dtype=raw.dtype)
         logger.info(info_ndarr(self.block, 'created empty data block'))
         self.irec = -1
@@ -250,6 +260,25 @@ class DataProc:
             logger.info(info_ndarr(res, s, last=3))
 
         return block_res
+
+
+    def feature_11(self):
+        logger.info("""Feature 11: Chuck's aftifact catcher""")
+        #block_good = self.block[self.bool_good_frames,:] & self.databits
+        block_data = self.block & self.databits
+        logger.info(info_ndarr(block_data, 'block of data records:', last=5))
+        peds = self.metad['pedestals']
+        logger.info(info_ndarr(peds, 'pedestals:', last=5))
+        std = np.std(block_data, axis=0, dtype=np.float)
+        arr = np.mean(block_data, axis=0, dtype=np.float) - peds
+        med = np.median(block_data, axis=0) - peds
+
+        np.save('blk_std.npy', std)
+        np.save('blk_mean.npy', arr)
+        np.save('blk_med.npy', med)
+        logger.info('Saved files blk_*.npy')
+
+        return arr
 
 
     def residuals_frame_f06(self, frame):
@@ -330,6 +359,8 @@ class DataProc:
                                             snrmax=self.snrmax, bit_lo=1<<4, bit_hi=1<<5)
             ss += f % set_pixel_status_bits(arr_sta, res_spr, title='Feat.6 res_spr', vmin=-self.databits, vmax=self.databits,\
                                             snrmax=self.snrmax, bit_lo=1<<6, bit_hi=1<<7)
+        if 11 in self.features:
+            arr = self.feature_11()
 
         arr1 = np.ones(self.shape_fr, dtype=np.uint64)
         stus_bad_total = np.select((arr_sta>0,), (arr1,), 0)
@@ -371,19 +402,55 @@ class DataProc:
         return self.status
 
 
-def event_loop(args):
+    def load_data_file(self):
+        fname = self.fname
+        if fname is None: return
+        if not os.path.exists(fname): return
+        self.block = np.load(fname)
+        logger.warning('DATA BLOCK IS LOADED FROM FILE: %s' % fname)
+        logger.info(info_ndarr(self.block, 'loaded data block'))
+        self.irec = self.block.shape[0] # - 2
+        #self.status = 1
 
-    dsname = args.dsname
-    detname= args.source
-    events = args.events
-    evskip = args.evskip
-    steps  = args.steps
-    stskip = args.stskip
-    evcode = args.evcode
-    segind = args.segind
-    repoman= args.repoman
-    logmode= args.logmode
-    aslice = eval('np.s_[%s]' % args.slice)
+
+    def save_data_file(self):
+        fname = self.fname
+        s = ''
+        if fname is None:
+           s = 'file name for data block is not defined\n    DO NOT SAVE'
+        elif os.path.exists(fname):
+           s = 'EXISTING FILE %s\n    DO NOT SAVE' % fname
+        elif self.block is None:
+           s = 'data block is None\n    DO NOT SAVE'
+        else:
+           np.save(fname, self.block)
+           s = info_ndarr(self.block, 'data block') + '\n    saved in %s' % fname
+        logger.info(s)
+
+
+def fname_block(args, metad):
+    detname = args.source.replace(':','-').replace('.','-')
+    sslice = str(args.slice).replace(':','-').replace(',','_')
+    return 'blk-%s-r%04d-%s-seg%s-nrecs%04d-slice%s.npy' % (metad['expname'], metad['runnum'],\
+             detname, args.segind, min(args.events, args.nrecs), sslice)
+
+
+def event_loop(parser):
+
+    args = parser.parse_args() # namespace # kwargs = vars(args) # dict
+    logger.debug('Arguments: %s\n' % str(args))
+
+    dsname  = args.dsname
+    detname = args.source
+    events  = args.events
+    evskip  = args.evskip
+    steps   = args.steps
+    stskip  = args.stskip
+    evcode  = args.evcode
+    segind  = args.segind
+    logmode = args.logmode
+    aslice  = eval('np.s_[%s]' % args.slice)
+    repoman = args.repoman = rm.init_repoman_and_logger(args, parser)
 
     t0_sec = time()
 
@@ -397,18 +464,27 @@ def event_loop(args):
         ecm = EventCodeManager(evcode, verbos=0)
         logger.info('requested event-code list %s' % str(ecm.event_code_list()))
 
-    kwa_dpo = {}
-    dpo = DataProc(args, **kwa_dpo)
     nrun_tot  = 0
     nstep_tot = 0
     nevt_tot  = 0
     metad = None
+    kwa_dpo = {}
+    dpo = None
 
     for orun in ds.runs():
       nrun_tot += 1
       if metad is None:
          metad = metadata(ds, orun, det)
          logger.info(' '.join(['\n%s: %s'%(k.ljust(10), str(v)) for k, v in metad.items()]))
+
+         peds = metad['pedestals']
+         rms  = metad['rms']
+         logger.info(info_ndarr(peds, 'pedestals:', last=5))
+         logger.info(info_ndarr(rms, 'rms:', last=5))
+         np.save('cc_peds.npy', peds)
+         np.save('cc_rms.npy', rms)
+
+         dpo = DataProc(args, metad, **kwa_dpo)
 
       logger.info('==== run %s' % str(orun.run()))
 
@@ -473,7 +549,10 @@ def event_loop(args):
     arr_status = dpo.summary()
     save_constants(arr_status, args, metad)
 
+    dpo.save_data_file()
+
     logger.info('Consumed time %.3f sec' % (time()-t0_sec))
+    repoman.logfile_save()
 
 
 def save_constants(arr_status, args, dmd):
@@ -529,7 +608,6 @@ def save_constants_in_repository(arr, **kwa):
     """
     logger.debug('kwargs: %s' % str(kwa))
     from Detector.dir_root import DIR_REPO_STATUS, DIR_LOG_AT_START # os, DIR_ROOT
-    import Detector.RepoManager as rm
     #import Detector.UtilsEpix10ka as ue
 
     args = Empty()
@@ -543,7 +621,7 @@ def save_constants_in_repository(arr, **kwa):
     args.segind   = kwa.get('segind', 0)
     args.gmodes   = kwa.get('gmodes', None)
     args.slice    = kwa.get('slice', '0:,0:')
-    args.repoman = rm.RepoManager(args.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
+    args.repoman = rm.RepoManager(dirrepo=args.dirrepo, dir_log_at_start=DIR_LOG_AT_START,\
                                   dirmode=args.dirmode, filemode=args.filemode, group=args.group)
     args.gmode    = None
 
@@ -588,8 +666,7 @@ def save_constants_in_repository(arr, **kwa):
             save_constants(arr[n,i,:], args, metad)
 
 
-def det_raw_pixel_status(args):
-    logger.debug('Arguments: %s\n' % str(args))
-    event_loop(args)
+det_raw_pixel_status = event_loop
+#def det_raw_pixel_status(parser): event_loop(parser)
 
 # EOF
