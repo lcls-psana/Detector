@@ -4,8 +4,8 @@ DESCRIPTION = 'Proceses raw (on light) data from any detector and evaluate pixel
 
 import sys
 from Detector.dir_root import DIR_REPO_STATUS
-import Detector.UtilsLogging as ul
-logger = ul.logging.getLogger(__name__)
+from Detector.UtilsLogging import STR_LEVEL_NAMES  # logging
+#logger = logging.getLogger(__name__)
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -80,7 +80,7 @@ def argument_parser():
     h_fraclo  = 'fraction of statistics [0,1] below low  limit of the gate, default = %f' % d_fraclo
     h_frachi  = 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
     h_dirrepo = 'repository for cadd_argumentalibration results, default = %s' % d_dirrepo
-    h_logmode = 'logging mode, one of %s, default = %s' % (ul.STR_LEVEL_NAMES, d_logmode)
+    h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
     h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
     h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
     h_group   = 'group ownership for all files, default = %s' % d_group
@@ -122,18 +122,12 @@ def argument_parser():
 if __name__ == "__main__":
 
     if len(sys.argv)<2:
-        print('%s\n%s\n%s' % (40*'_', DESCRIPTION, USAGE))
-        sys.exit('MISSING COMMAND LINE PARAMETERS')
+        sys.exit('%s\n%s\n%s\nEXIT - MISSING COMMND LINE PARAMETERS' % (40*'_', DESCRIPTION, USAGE))
 
     parser = argument_parser()
-    args = parser.parse_args() # namespace # kwargs = vars(args) # dict
-
-    from Detector.RepoManager import init_repoman_and_logger
-    args.repoman = init_repoman_and_logger(args, parser)
 
     from Detector.UtilsRawPixelStatus import det_raw_pixel_status
-    det_raw_pixel_status(args)
-    args.repoman.logfile_save()
+    det_raw_pixel_status(parser)
 
     sys.exit(0)
 
