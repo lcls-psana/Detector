@@ -222,7 +222,7 @@ def file_name_in_repo(exp, runnum, detname, ctype, tstamp=None, rundepl=None, di
     kwa_rm = {'dirmode':dirmode, 'filemode':filemode, 'group':group, 'dir_log_at_start':DIR_LOG_AT_START}
     kwa = {'exp':exp, 'run':runnum, 'det':detname, 'ctype':ctype, 'tstamp':tstamp, 'runrange':rundepl}
     kwa.update(kwa_rm)
-    kwa['repoman'] = RepoManager(DIR_REPO, **kwa_rm)
+    kwa['repoman'] = RepoManager(dirrepo=DIR_REPO, **kwa_rm)
     kwa['repo_fname_only'] = True
     return deploy_constants(**kwa)
 
