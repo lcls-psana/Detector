@@ -128,7 +128,7 @@ if __name__ == "__main__":
     kwa = vars(args)
     print('Arguments: %s\n' % str(args))
 
-    repoman = uc.RepoManager(args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START, group=args.group)
+    repoman = uc.RepoManager(dirrepo=args.dirrepo, dirmode=args.dirmode, filemode=args.filemode, dir_log_at_start=DIR_LOG_AT_START, group=args.group)
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     init_logger(loglevel=args.loglev, logfname=logname, fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s', group=args.group)
     logger.info('log file: %s' % logname)
