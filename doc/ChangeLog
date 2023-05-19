@@ -7,6 +7,34 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-66
+2023-05-19 Mikhail Dubrovin
+modified:
+ ../app/det_raw_pixel_status - update USAGE, change default parameters
+ UtilsRawPixelStatus.py - compleatiing det_raw_pixel_status Feat.11, tuning for production release
+
+2023-05-15 Mikhail Dubrovin
+modified:
+../app/datinfo - add ds.env().experiment()add ds.env().experiment()
+../app/det_calib_ave_and_max - multiple updates, extend output file names with exp, det, run  etc.
+../app/det_ndarr_raw_proc - replace RepoManager repodir parameter with optional
+../app/det_raw_calib_image - add/use argument_parser
+../app/det_raw_pixel_status,
+../app/epix10ka_deploy_constants,
+../app/epix10ka_offset_calibration,
+../app/epix10ka_pedestals_calibration,
+../app/geometry_deploy_constants,
+../app/jungfrau_dark_proc,
+../app/jungfrau_deploy_constants,
+../app/jungfrau_gain_constants,
+GlobalUtils.py - dirrepo as optional parameter
+RepoManager.py,
+UtilsCalib.py,
+UtilsDeployConstants.py - use optional RepoManager(dirrepo=...
+UtilsGraphics.py - change default parameterrs for arr_median_limits
+UtilsJungfrauCalib.py - cosmetic
+UtilsRawPixelStatus.py - development in progress
+
 Tag: V02-00-65
 2023-04-06 Mikhail Dubrovin
 - implementation of Featuires 2 and 3 from [JAC-2022, Sadri, Automatic bad pixel mask maker...]
