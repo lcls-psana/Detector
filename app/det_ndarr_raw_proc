@@ -36,7 +36,7 @@ def argument_parser():
     d_nsigma = 6.0
     d_plotim = 0
     d_verbos = 7
-    d_savebw = 0o377
+    d_savebw = 255
     d_intnlo = 6.0
     d_intnhi = 6.0
     d_rmsnlo = 6.0
@@ -62,7 +62,7 @@ def argument_parser():
     h_fraclm='allowed fraction limit, default = %s' % d_fraclm
     h_nsigma='number of sigma for gated average, default = %s' % d_nsigma
     h_plotim='control bit-word to plot images, default = %s' % d_plotim
-    h_verbos='control bit-word for verbosity, default = %s' % d_verbos
+    h_verbos='control bit-word for verbosity, default = %s' % oct(d_verbos)
     h_savebw='control bit-word to save arrays, default = %s' % oct(d_savebw)
     h_intnlo='number of sigma from mean for low  limit on INTENSITY, default = %s' % d_intnlo
     h_intnhi='number of sigma from mean for high limit on INTENSITY, default = %s' % d_intnhi
