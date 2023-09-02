@@ -615,12 +615,12 @@ class DarkProc():
         self.plotim = kwa.get('plotim', 1)
         self.savebw = kwa.get('savebw', 0xffff)
         self.fraclm = kwa.get('fraclm', 0.1)
-        self.int_lo = kwa.get('int_lo', 1)       # lowest  intensity accepted for dark evaluation
-        self.int_hi = kwa.get('int_hi', 16000)   # highest intensity accepted for dark evaluation
+        self.int_lo = kwa.get('intlow', 1)       # lowest  intensity accepted for dark evaluation
+        self.int_hi = kwa.get('inthig', 16000)   # highest intensity accepted for dark evaluation
         self.intnlo = kwa.get('intnlo', 6.0)     # intensity ditribution number-of-sigmas low
         self.intnhi = kwa.get('intnhi', 6.0)     # intensity ditribution number-of-sigmas high
-        self.rms_lo = kwa.get('rms_lo', 0.001)   # rms ditribution low
-        self.rms_hi = kwa.get('rms_hi', 16000)   # rms ditribution high
+        self.rms_lo = kwa.get('rmslow', 0.001)   # rms ditribution low
+        self.rms_hi = kwa.get('rmshig', 16000)   # rms ditribution high
         self.rmsnlo = kwa.get('rmsnlo', 6.0)     # rms ditribution number-of-sigmas low
         self.rmsnhi = kwa.get('rmsnhi', 6.0)     # rms ditribution number-of-sigmas high
         self.datbits= kwa.get('datbits', 0x3fff) # data bits 0x3fff is 14-bit mask for epix10ka and Jungfrau
