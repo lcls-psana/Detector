@@ -7,17 +7,14 @@ import psana
 from time import time
 from Detector.GlobalUtils import selected_record  # print_ndarr, divide_protected
 
-from time import localtime, strftime  # , time
+from time import localtime, strftime
 
 import Detector.UtilsCalib as uc
-#from Detector.tmpDetNDArrRawProc import DetNDArrRawProc
-
 
 def event_time_fiducials(evt):
     evtid = evt.get(psana.EventId)
     tsec, tnsec = evtid.time()
     return tsec, tnsec, evtid.fiducials()
-
 
 def replace(in_tmp, pattern, subst):
     """If pattern in the in_tmp replace it with subst.
@@ -29,10 +26,8 @@ def replace(in_tmp, pattern, subst):
     else:
         return in_tmp
 
-
 def str_tstamp(fmt='%Y-%m-%dT%H:%M:%S', time_sec=None):
     return strftime(fmt, localtime(time_sec))
-
 
 def fname_template(evt, env, src, ofname, nevts):
     """Replaces parts of the file name specified as
@@ -57,13 +52,13 @@ def fname_template(evt, env, src, ofname, nevts):
 class DarkProcDet(uc.DarkProc):
 
     def __init__(self, src, **kwa):
+
         uc.DarkProc.__init__(self, **kwa)
         self.src = src
         self.det = None
         self.ofname = kwa.get('ofname', 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt')
         self.dsname = kwa['dsname']
         logger.info('create DarkProcDet object for %s' % src)
-
 
     def event(self, evt, env, ievt):
         if self.det is None: self.det = psana.Detector(self.src)
@@ -73,12 +68,10 @@ class DarkProcDet(uc.DarkProc):
             return None
         return uc.DarkProc.event(self, raw, ievt)
 
-
     def summary(self, evt, env):
         uc.DarkProc.summary(self)
         if self.plotim: self.show_plot_results()
         if self.savebw: self.save_results(evt, env)
-
 
     def save_results(self, evt, env):
         det = self.det
@@ -104,8 +97,6 @@ class DarkProcDet(uc.DarkProc):
         #if savebw & 64 and cmod is not None:
         #    np.savetxt(template % 'cmo', cmod, fmt='%d', delimiter=' ', newline=' ')
         #    det.save_asdaq(template % 'cmm', cmod, cmts + ['ARR_TYPE  common_mode'],'%d', verbos, False)
-
-
 
 def det_ndarr_raw_proc(**kwa):
 
@@ -134,8 +125,13 @@ def det_ndarr_raw_proc(**kwa):
         ecm = EventCodeManager(evcode, verbos)
         logger.info('requested event-code list %s' % str(ecm.event_code_list()))
 
+    # rename parameters to use in class DarkProc
+    kwa['int_lo'] = kwa['intlow']
+    kwa['int_hi'] = kwa['inthig']
+    kwa['rms_lo'] = kwa['rmslow']
+    kwa['rms_hi'] = kwa['rmshig']
+
     lst_dpo = [DarkProcDet(src, **kwa) for src in source.split(',')]
-    #lst_dpo = [DetNDArrRawProc(src, **kwa) for src in source.split(',')]
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
