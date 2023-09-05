@@ -7,6 +7,12 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-70
+2023-09-05 Mikhail Dubrovin
+ src/UtilsCalib.py - return back parameters int_lo, int_hi, rms_lo, rms_hi, in DarkProc othervise jungfrau would not work
+ src/UtilsDarkProc.py - add in kwa parameters int_lo, int_hi, rms_lo, rms_hi defined from command line det_ndarr_raw_proc
+ src/UtilsJungfrauCalib.py - remove from __future__ import print_function
+
 Tag: V02-00-69
 2023-09-02 Mikhail Dubrovin
 - src/UtilsCalib.py - fix input parameter names to intlow, inthig, rmslow, rmshig
