@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-71
+2023-09-13 Mikhail Dubrovin
+- fix issue reported by Silke - mask from status was not merged correctly for epix10ka* gain ranges
+- src/AreaDetector.py - use gu.merge_masks_for_gain_index
+
 Tag: V02-00-70
 2023-09-05 Mikhail Dubrovin
  src/UtilsCalib.py - return back parameters int_lo, int_hi, rms_lo, rms_hi, in DarkProc othervise jungfrau would not work

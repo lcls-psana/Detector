@@ -214,8 +214,6 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Author Mikhail Dubrovin
 """
-#from __future__ import print_function
-#from __future__ import division
 
 import sys
 import _psana
@@ -780,7 +778,7 @@ class AreaDetector():
             return None
 
         if self.is_epix10ka_any():
-            smask = gu.merge_status(smask, **kwargs) # indexes=(0,1,2,3,4) or (0,1,2)
+            smask = gu.merge_masks_for_gain_index(smask, **kwargs) # indexes=(0,1,2,3,4) or (0,1,2)
 
         if mode: smask = gu.mask_neighbors(smask, allnbrs=(True if mode>=2 else False))
 
@@ -788,7 +786,8 @@ class AreaDetector():
             return gu.merge_masks(gu.merge_masks(smask[0,:], smask[1,:]), smask[2,:])
 
         if self.is_cspad2x2(): return smask # stat already has a shape (2,185,388)
-        return self._shaped_array_(par, smask, gu.PIXEL_STATUS)
+
+        return self._shaped_array_(par, smask, gu.PIXEL_MASK)
 
 
     def mask_neighbors(self, mask, allnbrs=True):
