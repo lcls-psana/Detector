@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 
-DESCRIPTION = 'Proceses raw (on light) data from any detector and evaluate pixel status'
+DESCRIPTION = 'Evaluates pixel status of any detector using raw dark/light data'
 
 import sys
 from Detector.dir_root import DIR_REPO_STATUS
 from Detector.UtilsLogging import STR_LEVEL_NAMES  # logging
-#logger = logging.getLogger(__name__)
 
 SCRNAME = sys.argv[0].split('/')[-1]
 
-USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
-      +'\nEx.1:  %s -d exp=xpplw3319:run=287 -s XppGon.0:Epix100a.3 -F 1,2,3 -n 1000   # dark processing for Feat.1 & 2 & 3' % SCRNAME\
-      +'\nEx.2:  %s -d exp=xpplw3319:run=287 -s XppGon.0:Epix100a.3 -F 2,3 -n 1000     # dark processing for Feat.2 & 3' % SCRNAME\
-      +'\nEx.3:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 -F 1,6 -n 1000     # light processing for Feat.1 & 6' % SCRNAME\
-      +'\nEx.4:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 -F 6,  -n 1000     # light processing for Feat.6' % SCRNAME\
-      +'\nEx.5:  %s -d exp=xpplw3319:run=293 -s XppGon.0:Epix100a.3 -F 11, -n 1000000  # light processing for Feat.11' % SCRNAME\
-      +'\nEx.6:  %s -d exp=xpptut15:run=260 -s XcsEndstation.0:Epix100a.1 -t status_data --nrecs 10  # generate status_* for test' % SCRNAME\
+USAGE ='\n%s -k <dataset> -d <detname> ...' % SCRNAME\
+      +'\nEx.1:  %s -k exp=xpplw3319:run=287 -d XppGon.0:Epix100a.3 -F 1,2,3 -n 1000   # dark processing for Feat.1 & 2 & 3' % SCRNAME\
+      +'\nEx.2:  %s -k exp=xpplw3319:run=287 -d XppGon.0:Epix100a.3 -F 2,3 -n 1000     # dark processing for Feat.2 & 3' % SCRNAME\
+      +'\nEx.3:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 1,6 -n 1000     # light processing for Feat.1 & 6' % SCRNAME\
+      +'\nEx.4:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 6,  -n 1000     # light processing for Feat.6' % SCRNAME\
+      +'\nEx.5:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 11, -n 1000000  # light processing for Feat.11' % SCRNAME\
+      +'\nEx.6:  %s -k exp=xpptut15:run=260 -d XcsEndstation.0:Epix100a.1 -t status_data --nrecs 10  # generate status_* for test' % SCRNAME\
       +'\n  where Feature # means'\
       +'\n   1: mean intensity of frames in good range'\
       +'\n   2: dark mean in good range'\
@@ -28,34 +27,21 @@ USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
 
 def argument_parser():
     from argparse import ArgumentParser
-    d_dirrepo= DIR_REPO_STATUS
-    d_dsname = 'exp=xpplw3319:run=293'
-    d_source = 'epix_alc3'
-    d_events = 1000
-    d_evskip = 0
-    d_stskip = None
-    d_steps  = None
-    d_slice  = None  # '0:,0:'
-    d_shwind = '15,15'
-    d_snrmax  = 8.0
-    d_int_lo = 1
-    d_int_hi = 16000
-    d_intnlo = 6.0
-    d_intnhi = 6.0
-    d_rms_lo = 0.001
-    d_rms_hi = 16000
-    d_rmsnlo = 6.0
-    d_rmsnhi = 6.0
-    d_fraclm = 0.1
-    d_plotim = 0
-    d_evcode = None
-    d_upload = False
-    d_segind = 0
-    d_gmode  = None
-    d_nrecs  = 1000
-    d_fraclo = 0.05    # fraction of statistics [0,1] below low limit
-    d_frachi = 0.95    # fraction of statistics [0,1] below high limit
-    d_logmode = 'INFO'
+    d_dirrepo  = DIR_REPO_STATUS
+    d_dskwargs = 'exp=xpplw3319:run=293'
+    d_detname  = 'epix_alc3'
+    d_events   = 1000
+    d_evskip   = 0
+    d_stskip   = None
+    d_steps    = None
+    d_slice    = None  # '0:,0:'
+    d_shwind   = '15,15'
+    d_snrmax   = 8.0
+    d_evcode   = None
+    d_segind   = 0
+    d_gmode    = None
+    d_nrecs    = 1000
+    d_logmode  = 'INFO'
     d_dirmode  = 0o2775
     d_filemode = 0o664
     d_group    = 'ps-users'
@@ -64,46 +50,33 @@ def argument_parser():
     d_ctype    = 'status_data'
     d_features = '1,2,3'
 
-    h_dsname  = 'dataset name, default = %s' % d_dsname
-    h_source  = 'input ndarray source name, default = %s' % d_source
-    h_events  = 'maximal number of events total (in runs, steps), default = %s' % d_events
-    h_evskip  =  'number of events to skip in the beginning of each step, default = %s' % d_evskip
-    h_stskip  = 'step/calibcycle number [0,2] or all by default, default = %s' % str(d_stskip)
-    h_steps   = 'maximal number of steps or all by default, default = %s' % str(d_steps)
-    h_int_lo  = 'intensity low limit, default = %s' % d_int_lo
-    h_int_hi  = 'intensity high limit, default = %s' % d_int_hi
-    h_intnlo  = 'number of sigma from mean for low limit on INTENSITY, default = %s' % d_intnlo
-    h_intnhi  = 'number of sigma from mean for high limit on INTENSITY, default = %s' % d_intnhi
-    h_rms_lo  = 'rms low limit, default = %s' % d_rms_lo
-    h_rms_hi  = 'rms high limit, default = %s' % d_rms_hi
-    h_rmsnlo  = 'number of sigma from mean for low limit on RMS, default = %s' % d_rmsnlo
-    h_rmsnhi  = 'number of sigma from mean for high limit on RMS, default = %s' % d_rmsnhi
-    h_fraclm  = 'allowed fraction [0,1] limit, default = %s' % d_fraclm
-    h_plotim  = 'control bit-word to plot images, default = %s' % d_plotim
-    h_evcode  = 'comma separated event codes for selection as OR combination, any negative %s'%\
-                'code inverts selection, default = %s'%str(d_evcode)
-    h_upload  = 'deprecated and not used, default = %s' % d_upload
-    h_segind  = 'segment index to process, use it for multi-panel detectors with raw.shape.ndim>2, default = %s' % str(d_segind)
-    h_gmode   = 'gain mode name-suffix, use it for multi-gain detectors with raw.shape.ndim>3, ex: AHL-H, default = %s' % str(d_gmode)
-    h_nrecs   = 'number of records to collect data, default = %s' % str(d_nrecs)
-    h_fraclo  = 'fraction of statistics [0,1] below low  limit of the gate, default = %f' % d_fraclo
-    h_frachi  = 'fraction of statistics [0,1] below high limit of the gate, default = %f' % d_frachi
-    h_dirrepo = 'repository for cadd_argumentalibration results, default = %s' % d_dirrepo
-    h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
-    h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
-    h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
-    h_group   = 'group ownership for all files, default = %s' % d_group
-    h_slice   = 'FOR DEBUGGING ONLY (str) slice of the panel image 2-d array selected for plots and pixel status, ex. "0:144,0:192", default = %s' % d_slice
-    h_shwind   = 'window shape for feature 6 fitting to plane, ex. "15,15", default = %s' % d_shwind
-    h_snrmax   = 'width of the good region in terms on number of spreads, default = %s' % d_snrmax
-    h_databits = 'data bits in ADC for code of intensity, default = %s' % oct(d_databits)
-    h_gainbits = 'gain mode switch bits in ADC, default = %s' % oct(d_gainbits)
-    h_ctype    = 'type of calibration constants to save, default = %s' % d_ctype
+    h_dskwargs = '(str) DataSource parameters, default = %s' % d_dskwargs
+    h_detname  = '(str) detector/detname name, default = %s' % d_detname
+    h_events   = '(int) maximal number of events total (in runs, steps), default = %d' % d_events
+    h_evskip   = '(int) number of events to skip in the beginning of each step, default = %d' % d_evskip
+    h_stskip   = '(int) number of steps to skip before processing or process all by default, default = %s' % str(d_stskip)
+    h_steps    = '(int) maximal number of steps or all by default, default = %s' % str(d_steps)
+    h_evcode   = '(str) comma separated event codes for selection as OR combination; any negative '\
+                 'code inverts selection, default = %s' % str(d_evcode)
+    h_segind   = '(int) segment index for multi-panel detectors with raw.shape.ndim>2, default = %d' % d_segind
+    h_gmode    = '(str) gain mode name-suffix for multi-gain detectors with raw.shape.ndim>3, ex: AHL-H, default = %s' % str(d_gmode)
+    h_nrecs    = '(int) number of records to collect data, default = %s' % str(d_nrecs)
+    h_dirrepo  = '(str) repository for calibration results, default = %s' % d_dirrepo
+    h_logmode  = '(str) logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    h_dirmode  = '(int) mode for all mkdir, default = %s' % oct(d_dirmode)
+    h_filemode = '(int) mode for all saved files, default = %s' % oct(d_filemode)
+    h_group    = '(str) group ownership for all files, default = %s' % d_group
+    h_slice    = '(str) FOR DEBUGGING ONLY (str) slice of the panel image 2-k array selected for plots and pixel status, ex. "0:144,0:192", default = %s' % d_slice
+    h_shwind   = '(str) window shape for feature 6 fitting to plane, ex. "15,15", default = %s' % d_shwind
+    h_snrmax   = '(int) width of the good region in terms on number of spread/rms, default = %s' % d_snrmax
+    h_databits = '(int) data bits in ADC for code of intensity, default = %s' % oct(d_databits)
+    h_gainbits = '(int) gain mode switch bits in ADC, default = %s' % oct(d_gainbits)
+    h_ctype    = '(str) type of calibration constants to save, default = %s' % d_ctype
     h_features = '(str) comma-separated list of Features [JAC-2022, Sadri, Automatic bad pixel mask maker...] from 1 to 6 to evaluate bad pixels, default = %s' % d_features
 
     parser = ArgumentParser(description=DESCRIPTION, usage=USAGE)
-    parser.add_argument('-d', '--dsname',   default=d_dsname,   type=str,   help=h_dsname)
-    parser.add_argument('-s', '--source',   default=d_source,   type=str,   help=h_source)
+    parser.add_argument('-k', '--dskwargs', default=d_dskwargs, type=str,   help=h_dskwargs)
+    parser.add_argument('-d', '--detname',  default=d_detname,  type=str,   help=h_detname)
     parser.add_argument('-n', '--events',   default=d_events,   type=int,   help=h_events)
     parser.add_argument('-m', '--evskip',   default=d_evskip,   type=int,   help=h_evskip)
     parser.add_argument('-N', '--steps',    default=d_steps,    type=int,   help=h_steps)
