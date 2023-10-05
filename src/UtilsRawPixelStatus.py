@@ -559,15 +559,15 @@ def event_loop(parser):
     defs = parser.parse_args([])
     logger.debug('Arguments: %s\n' % str(args))
 
-    dsname  = args.dsname
-    detname = args.source
-    events  = args.events
-    evskip  = args.evskip
-    steps   = args.steps
-    stskip  = args.stskip
-    evcode  = args.evcode
-    segind  = args.segind
-    logmode = args.logmode
+    dskwargs = args.dskwargs  # dsname 'exp=xpplw3319:run=293'
+    detname  = args.detname   # source
+    events   = args.events
+    evskip   = args.evskip
+    steps    = args.steps
+    stskip   = args.stskip
+    evcode   = args.evcode
+    segind   = args.segind
+    logmode  = args.logmode
     if not ',' in args.features: args.features += ','  # to evaluate it as a tuple
     features= eval('(%s)' % args.features)
     aslice  = args.aslice = None if args.slice is None else\
@@ -581,7 +581,7 @@ def event_loop(parser):
 
     t0_sec = time()
 
-    ds  = DataSource(dsname)
+    ds  = DataSource(dskwargs)
     det = Detector(detname)
     #cd  = Detector('ControlData')
 
@@ -728,7 +728,7 @@ def save_constants_in_repository(arr, **kwa):
     PARAMETERS of **kwa
     -------------------
 
-    dsname (str) - parameter for DataSource
+    dskwargs (str) - parameter for DataSource, e.g. 'exp=xpplw3319:run=293'
     detname (str) - detector name
     ctype (str) - calibration constants type, ex. pedestals, gain, offset, status_user, etc.
     dirrepo (str) - root level of repository
@@ -741,7 +741,7 @@ def save_constants_in_repository(arr, **kwa):
     #import Detector.UtilsEpix10ka as ue
 
     args = Empty()
-    args.dsname   = kwa.get('dsname', None) # 'exp=xpplw3319:run=293'
+    args.dskwargs = kwa.get('dskwargs', None) # 'exp=xpplw3319:run=293'
     args.detname  = kwa.get('detname', None) # 'XppGon.0:Epix100a.3' or its alias 'epix_alc3'
     args.ctype    = kwa.get('ctype', 'status_user')
     args.dirrepo  = kwa.get('dirrepo', DIR_REPO_STATUS)
@@ -761,10 +761,10 @@ def save_constants_in_repository(arr, **kwa):
     assert isinstance(arr, np.ndarray)
     assert ndim >= 2
     assert ndim <= 4
-    assert args.dsname is not None
+    assert args.dskwargs is not None
     assert args.detname is not None
 
-    ds  = DataSource(args.dsname)
+    ds  = DataSource(args.dskwargs)
     det = Detector(args.detname)
     args.detname = det.name
     orun = next(ds.runs())
