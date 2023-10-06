@@ -21,7 +21,6 @@ import Detector.UtilsCalib as uc
 import Detector.RepoManager as rm
 from pyimgalgos.HBins import HBins
 
-
 def metadata(ds, orun, det):
     """ returns (dict) metadata evaluated from input objects"""
     import Detector.UtilsDeployConstants as udc
@@ -43,10 +42,8 @@ def metadata(ds, orun, det):
       'rms': det.rms(runnum),
       }
 
-
 def fplane(x, y, p):
     return x*p[0] + y*p[1] + p[2]
-
 
 def fit_to_plane(xs, ys, zs):
     """xs, ys, zs - np.arrays (OF THE SAME SIZE) of (x,y) points and value z.
@@ -63,7 +60,6 @@ def fit_to_plane(xs, ys, zs):
     resids = np.array([r[0] for r in resids.tolist()])
     return pars, resids
 
-
 def residuals_to_plane(a):
     """uses a.shape to make a grid, fit array to plane on grid, find and return residuals."""
     assert isinstance(a, np.ndarray)
@@ -76,7 +72,6 @@ def residuals_to_plane(a):
     _, res = fit_to_plane(cs, rs, a)
     res.shape = sh
     return res
-
 
 def find_outliers(arr, title='', vmin=None, vmax=None):
     assert isinstance(arr, np.ndarray)
@@ -94,7 +89,6 @@ def find_outliers(arr, title='', vmin=None, vmax=None):
     s_hi = '%8d / %d (%6.3f%%) pixels %s >= %s'%\
             (sum_hi, size, 100*sum_hi/size, title, 'unlimited' if vmax is None else '%.3f' % vmax)
     return bad_lo, bad_hi, arr1_lo, arr1_hi, s_lo, s_hi
-
 
 def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8):
     """vmin/vmax - absolutly allowed min/max of the value"""
@@ -124,7 +118,6 @@ def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8):
 
     return _arr1_lo, _arr1_hi, _s_lo, _s_hi
 
-
 def set_pixel_status_bits(status, arr, title='', vmin=None, vmax=None,\
                           snrmax=8, bit_lo=1<<0, bit_hi=1<<1):
     assert isinstance(arr, np.ndarray)
@@ -136,7 +129,6 @@ def set_pixel_status_bits(status, arr, title='', vmin=None, vmax=None,\
     s_hi = '%20s: %s' % (oct(bit_hi), s_hi)
     return s_lo, s_hi
 
-
 def edges1d(size, step):
     """returns (list) [0, step, 2*step, ..., (size-step)]"""
     assert isinstance(size, int)
@@ -145,7 +137,6 @@ def edges1d(size, step):
     es = list(range(0, size, step))
     if es[-1] > (size-step): es[-1] = size-step
     return es
-
 
 def corners2d(shf, shw):
     """returns list of 2-d corner indices [(r0,c0), (r0,c1), ...]
@@ -158,13 +149,11 @@ def corners2d(shf, shw):
     cs, rs = np.meshgrid(cols, rows)
     return list(zip(rs.ravel(), cs.ravel()))
 
-
 def selected_number(n):
     return n<5\
        or (n<50 and not n%10)\
        or (n<500 and not n%100)\
        or (not n%1000)
-
 
 def bifurgaus(x, *p):
     """Bifurcated Gaussian - assumes ydata = f(xdata, *params) + eps."""
@@ -172,25 +161,28 @@ def bifurgaus(x, *p):
     sig = np.select((x<x0,), (s1,), default=s2)
     return a0 * np.exp(-0.5*((x-x0)/sig)**2)
 
-
 def fit_bifurgaus(x, y, p0=None):
     from scipy.optimize import curve_fit
     return curve_fit(bifurgaus, x, y, p0=p0)
 
-
 class DataProc:
-    """data accumulation and processing"""
+    """data accumulation and processing.
+    dpo = DataProc(...)
+    dpo.event(raw, evnum)
+    arr_status = dpo.summary()
+    save_constants(arr_status, args, metad)
+    """
     def __init__(self, args, metad, **kwa):
         self.args = args
         self.kwa = kwa
-        self.aslice = args.aslice  # None or eval('np.s_[%s]' % args.slice)
-        self.segind = args.segind
-        self.nrecs  = args.nrecs
-        self.snrmax  = args.snrmax
+        self.aslice   = args.aslice  # None or eval('np.s_[%s]' % args.slice)
+        self.segind   = args.segind
+        self.nrecs    = args.nrecs
+        self.snrmax   = args.snrmax
         self.gainbits = args.gainbits
         self.databits = args.databits
-        self.irec   = -1
-        self.status = 0
+        self.irec = -1
+        self.state = 0
         self.shwind = eval('(%s)' % args.shwind)
         self.block  = None
         self.nda_max  = None
@@ -202,22 +194,24 @@ class DataProc:
         self._do_block = not self._do_max
         self._dir_work = None
 
-
     def init_block(self, raw, do_load=False):
         self.shape_fr = tuple(raw.shape)
         self.shape_bl = (self.nrecs,) + self.shape_fr
-        if do_load: self.load_data_file()
+        if do_load: self.load_block_file()
         if self.block is not None: return
         self.block = np.zeros(self.shape_bl, dtype=raw.dtype)
         logger.info(info_ndarr(self.block, 'created empty data block'))
-        self.irec = 0
-        self.status = 0
+        self.state = 0
+        self.irec = -1
         self.add_record(raw)
 
-
     def add_record(self, raw):
-        self.block[self.irec,:] = raw
-
+        if self.irec < self.nrecs-1:
+            self.irec +=1
+            self.block[self.irec,:] = raw
+        else:
+            self.state = 1 # block is full
+            logger.info('Ev total: %d accumulated requested number of records --nrecs: %d - break' % (self._evnum, self.irec))
 
     def feature_01(self):
         logger.info("""Feature 1: mean intensity of frames in good range""")
@@ -234,13 +228,11 @@ class DataProc:
         logger.info('Total number of good events: %d' % arr1_good_frames.sum())
         return arr1_good_frames
 
-
     def feature_02(self):
         logger.info("""Feature 2: dark mean in good range""")
         block_good = self.block[self.bool_good_frames,:] & self.databits
         logger.info(info_ndarr(block_good, 'block of good records:', last=5))
         return np.mean(block_good, axis=0, dtype=np.float)
-
 
     def feature_03(self):
         logger.info("""Feature 3: dark RMS in good range""")
@@ -248,16 +240,13 @@ class DataProc:
         logger.info(info_ndarr(block_good, 'block of good records:', last=5))
         return np.std(block_good, axis=0, dtype=np.float)
 
-
     def feature_04(self):
         logger.info("""Feature 4: TBD""")
         return None
 
-
     def feature_05(self):
         logger.info("""Feature 5: TBD""")
         return None
-
 
     def feature_06(self):
         logger.info("""Feature 6: light average SNR of pixels over time""")
@@ -278,7 +267,6 @@ class DataProc:
             logger.info(info_ndarr(res, s, last=3))
 
         return block_res
-
 
     def feature_11(self):
         logger.info("""Feature 11: light intensity max-peds in good range""")
@@ -337,7 +325,6 @@ class DataProc:
         self.save_max_files()
         return max_peds
 
-
     def residuals_frame_f06(self, frame):
         assert isinstance(frame, np.ndarray)
         assert frame.ndim==2
@@ -358,12 +345,12 @@ class DataProc:
                          (r, c, info_ndarr(res, 'residuals'), res_med, res_spr))
         return residuals
 
-
     def summary(self):
         logger.info(info_ndarr(self.block, '\nSummary:'))
         #logger.info('%s\nraw data found/selected in %d events' % (80*'_', self.irec+1))
+        _nrecs = self.irec + 1
         if self._do_block:
-            self.block = self.block[:self.irec,:]
+            self.block = self.block[:_nrecs,:]
             logger.info(info_ndarr(self.block, 'block of all records:', last=5))
             bsh = self.block.shape
             self.ssize = bsh[-1]*bsh[-2]
@@ -377,8 +364,8 @@ class DataProc:
                     str(self.inds_good_frames)))
         else:
             logger.info('Feature 1 for mean intensity of frames is not requested. All frames are used for further processing.')
-            self.inds_good_frames = np.arange(self.irec, dtype=np.uint)
-            self.bool_good_frames = np.ones(self.irec, dtype=np.bool)
+            self.inds_good_frames = np.arange(_nrecs, dtype=np.uint)
+            self.bool_good_frames = np.ones(_nrecs, dtype=np.bool)
 
         arr_sta = np.zeros(self.shape_fr, dtype=np.uint64)
         f = '\n  %s\n  %s'
@@ -431,11 +418,10 @@ class DataProc:
 
         return arr_sta
 
-
     def event(self, raw, evnum):
+        self._evnum = evnum # use it for messages only
         logger.debug(info_ndarr(raw, 'event %d raw:' % evnum))
-
-        if raw is None: return self.status
+        if raw is None: return self.state
 
         ndim = raw.ndim
         assert ndim > 1, 'raw.ndim: %d' % ndim
@@ -445,24 +431,20 @@ class DataProc:
         _raw = raw if ndim==2 else\
                raw[self.segind,:]
 
-        self.irec +=1
+        if self.aslice is not None:
+            _raw = _raw[self.aslice]
+
         if self._do_block:
-          if self.irec < self.nrecs:
-            if self.aslice is not None: _raw = _raw[self.aslice]
-            if self.block is None: self.init_block(_raw)
+            if self.block is None: self.init_block(_raw, do_load=False)
             else: self.add_record(_raw)
 
-        elif self._do_max:
+        #elif self._do_max:
+        else:
             _raw = _raw & self.databits
             if self.nda_max is None: self.init_nda_max(_raw)
             else: np.maximum(_raw, self.nda_max, out=self.nda_max)
 
-        else:
-            logger.info('nevt:%d accumulated requested number of records --nrecs: %d - break' % (evnum, self.irec))
-            self.status = 1
-
-        return self.status
-
+        return self.state
 
     def dir_work(self):
         if self._dir_work is None:
@@ -470,22 +452,16 @@ class DataProc:
             segind     = self.args.segind
             panel_id   = panel_ids[segind]
             self._dir_work = self.args.repoman.makedir_ctype(panel_id, 'work')
-            #self._dir_work = os.path.join(os.getcwd(), 'work')
-            #gu.create_directory(self._dir_work)  # mode=self.dirmode, group=self.group)
         return self._dir_work
-
 
     def fname_arr_max(self):
         return '%s/arr-%s-max.npy' % (self.dir_work(), self.fname)
 
-
     def fname_arr_max_peds(self):
         return '%s/arr-%s-max-peds.npy' % (self.dir_work(), self.fname)
 
-
     def fname_arr_blk(self):
         return '%s/arr-%s-blk.npy' % (self.dir_work(), self.fname)
-
 
     def save_max_files(self):
         fname = self.fname_arr_max()
@@ -501,29 +477,39 @@ class DataProc:
             np.save(fname, self.max_peds)
             logger.info('saved: %s' % fname)
 
+    def shaped_as_frame(self, shfr, msg=''):
+        cond = shfr == self.shape_fr
+        if not cond:
+            logger.warning('%s array from file has shape: %s INCONSISTENT with current raw[slice] shape: %s - IGNORE FILE'%\
+                           (msg, str(shfr), str(self.shape_fr)))
+        return cond
 
     def init_nda_max(self, raw):
         fname = self.fname_arr_max()
-        self.shape_fr = raw.shape
+        self.shape_fr = tuple(raw.shape)
         if os.path.exists(fname):
             logger.info('load max aray from file: %s' % fname)
-            self.nda_max = np.load(fname)
-            self.status = 1
+            _nda_max = np.load(fname)
+            if not self.shaped_as_frame(tuple(_nda_max.shape), msg='nda_max'):
+                return
+            self.nda_max = _nda_max
+            self.state = 1
         else:
             self.nda_max = np.array(raw)
 
-
-    def load_data_file(self):
+    def load_block_file(self):
         if 6 in self.features: return
         fname = self.fname_arr_blk()
         if fname is None: return
         if not os.path.exists(fname): return
-        self.block = np.load(fname)
+        _block = np.load(fname)
+        if not self.shaped_as_frame(tuple(_block.shape)[-2:], msg='block'):
+            return
+        self.block = _block
         logger.warning('DATA BLOCK IS LOADED FROM FILE: %s' % fname)
         logger.info(info_ndarr(self.block, 'loaded data block'))
-        self.irec = self.block.shape[0] # - 2
-        #self.status = 1
-
+        self.irec = self.block.shape[0] - 1
+        #self.state = 1
 
     def save_data_file(self):
         fname = self.fname_arr_blk()
@@ -539,9 +525,8 @@ class DataProc:
            s = info_ndarr(self.block, 'data block') + '\n    saved in %s' % fname
         logger.info(s)
 
-
 def fname_part(args, metad):
-    detname = args.source.replace(':','-').replace('.','-')
+    detname = args.detname.replace(':','-').replace('.','-')
     feats = args.features.strip(',').replace(',','-')
     part = '%s-r%04d-%s-seg%s-evs%06d-feat-%s' % (metad['expname'], metad['runnum'],\
              detname, args.segind, args.events, feats)
@@ -551,7 +536,6 @@ def fname_part(args, metad):
             #sslice = str(args.slice).replace(':','-').replace(',','_').strip('-')
             part += '-slice'   # % sslice
     return part
-
 
 def event_loop(parser):
 
@@ -602,7 +586,7 @@ def event_loop(parser):
       nrun_tot += 1
       if metad is None:
          metad = metadata(ds, orun, det)
-         logger.info(' '.join(['\n%s: %s'%(k.ljust(10), info_ndarr(v)\
+         logger.info('metadata from DataSource and Detector:\n' + ' '.join(['\n%s: %s'%(k.ljust(10), info_ndarr(v)\
                      if isinstance(v, np.ndarray) else str(v)) for k, v in metad.items()]))
          if args.logmode == 'DEBUG':
             peds = metad['pedestals']
@@ -621,36 +605,36 @@ def event_loop(parser):
 
       for nstep_run, step in enumerate(orun.steps()):
         nstep_tot += 1
-        logger.info('  == calibcycle %02d ==' % nstep_tot)
+        logger.info('  == step %02d ==' % nstep_tot)
 
         if steps is not None and nstep_tot >= steps:
             logger.info('nstep_tot:%d >= number of steps:%d - break' % (nstep_tot, steps))
             break
 
-        elif stskip is not None and nstep < stskip:
-            logger.info('nstep:%d < number of steps to skip:%d - continue' % (nstep, stskip))
+        elif stskip is not None and nstep_tot < stskip:
+            logger.info('nstep:%d < number of steps to skip:%d - continue' % (nstep_tot, stskip))
             continue
 
         break_steps = False
 
-        for nevt, evt in enumerate(step.events()):
-
+        for i, evt in enumerate(step.events()):
+            nevt = i + 1
             nevt_tot += 1
             raw = det.raw(evt)
 
             if raw is None: #skip empty frames
-                logger.info('Ev:%05d rec:%05d raw=None' % (nevt, dpo.irec))
+                logger.info('Ev total:%05d in step:%05d rec:%05d raw=None' % (nevt_tot, nevt, dpo.irec))
                 continue
 
             if evskip is not None and nevt < evskip:
-                logger.info('nevt:%d < number of events in cc to skip --evskip:%d - continue' % (nevt_tot, evskip))
+                logger.info('Ev total:%05d in step:%05d < --evskip:%d - continue' % (nevt_tot, nevt, evskip))
                 continue
 
             if selected_number(nevt):
-                logger.info(info_ndarr(raw, 'Ev:%05d rec:%05d raw' % (nevt_tot, dpo.irec)))
+                logger.info(info_ndarr(raw, 'Ev total:%05d in step:%05d rec:%05d raw' % (nevt_tot, nevt, dpo.irec)))
 
             if ecm and not ecm.select(evt):
-                logger.debug('==== Ev:%05d is skipped due to event code selection - continue' % nevt_tot)
+                logger.debug('==== Ev total:%05d in step:%d is skipped due to event code selection - continue' % (nevt_tot, nevt))
                 continue
 
             resp = dpo.event(raw, nevt_tot)
@@ -661,8 +645,8 @@ def event_loop(parser):
                 logger.info('BREAK EVENTS')
                 break
 
-            if events is not None and nevt >= events:
-                logger.info('BREAK EVENTS nevt:%d >= number of events in cc to collect --events:%d' % (nevt_tot, events))
+            if events is not None and nevt_tot >= events:
+                logger.info('BREAK EVENTS nevt_tot:%d >= --events:%d' % (nevt_tot, events))
                 break_steps = True
                 break_runs = True
                 break
@@ -702,7 +686,7 @@ def save_constants(arr_status, args, dmd):
     panel_id   = panel_ids[segind]
     repoman    = args.repoman
     features   = eval('(%s)' % args.features)  # list of int
-    #source     = args.source # detname
+    #detname    = args.detname
     #dirdettype = repoman.makedir_dettype(dettype=typename)
     fname_aliases = repoman.fname_aliases(dettype=typename) # , fname='.aliases_%s.txt' % typename)
     dirpanel   = repoman.dir_panel(panel_id)
@@ -716,11 +700,9 @@ def save_constants(arr_status, args, dmd):
     fname += '.dat'
     uc.save_2darray_in_textfile(arr_status, fname, filemode, fmt, umask=0o0, group=group)
 
-
 class Empty:
     """reserved for name sapace"""
     pass
-
 
 def save_constants_in_repository(arr, **kwa):
     """User's interface method to save any constants in repository.
