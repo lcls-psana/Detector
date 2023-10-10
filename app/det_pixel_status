@@ -10,12 +10,9 @@ SCRNAME = sys.argv[0].split('/')[-1]
 
 USAGE ='\n%s works with 2-d raw arrays ONLY! For 3-d the segment index --segind needs to be specified' % SCRNAME\
       +'\n%s -k <dataset> -d <detname> ...' % SCRNAME\
-      +'\nEx.1:  %s -k exp=xpplw3319:run=287 -d XppGon.0:Epix100a.3 -F 1,2,3 -n 1000   # dark processing for Feat.1 & 2 & 3' % SCRNAME\
-      +'\nEx.2:  %s -k exp=xpplw3319:run=287 -d XppGon.0:Epix100a.3 -F 2,3 -n 1000     # dark processing for Feat.2 & 3' % SCRNAME\
-      +'\nEx.3:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 1,6 -n 1000     # light processing for Feat.1 & 6' % SCRNAME\
-      +'\nEx.4:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 6,  -n 1000     # light processing for Feat.6' % SCRNAME\
-      +'\nEx.5:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 11, -n 1000000  # light processing for Feat.11' % SCRNAME\
-      +'\nEx.6:  %s -k exp=xpptut15:run=260 -d XcsEndstation.0:Epix100a.1 -t status_data --nrecs 10  # generate status_* for test' % SCRNAME\
+      +'\nEx.1:  %s -k exp=xpplw3319:run=287 -d XppGon.0:Epix100a.3 -F 1,2,3 -n 1000   # dark  processing for Feat.1 & 2 & 3' % SCRNAME\
+      +'\nEx.2:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 1,6 -n 1000     # light processing for Feat.1 & 6' % SCRNAME\
+      +'\nEx.3:  %s -k exp=xpplw3319:run=293 -d XppGon.0:Epix100a.3 -F 11, -n 1000000  # light processing for Feat.11' % SCRNAME\
       +'\n Feature # stands for'\
       +'\n   1: mean intensity of frames in good range'\
       +'\n   2: dark mean in good range'\
@@ -105,12 +102,12 @@ def argument_parser():
 if __name__ == "__main__":
 
     if len(sys.argv)<2:
-        sys.exit('%s\n%s\n%s\nEXIT - MISSING COMMND LINE PARAMETERS' % (40*'_', DESCRIPTION, USAGE))
+        sys.exit('%s\n%s\n%s\nEXIT - MISSING PARAMETERS' % (40*'_', DESCRIPTION, USAGE))
 
     parser = argument_parser()
 
-    from Detector.UtilsRawPixelStatus import det_raw_pixel_status
-    det_raw_pixel_status(parser)
+    from Detector.UtilsPixelStatus import det_pixel_status
+    det_pixel_status(parser)
 
     sys.exit(0)
 
