@@ -1,7 +1,7 @@
 
-""" UtilsRawPixelStatus.py - utilities for command det_raw_pixel_status
+""" UtilsPixelStatus.py - utilities for command det_pixel_status
 
-    import Detector.UtilsRawPixelStatus as us
+    import Detector.UtilsPixelStatus as us
 
     us.save_constants_in_repository(arr, **kwargs)
     - saves user's array of constants in reppository defined by **kwargs
@@ -13,7 +13,7 @@ import sys
 import numpy as np
 
 import Detector.UtilsLogging as ul
-logger = ul.logging.getLogger(__name__)  # where __name__ = 'Detector.UtilsRawPixelStatus'
+logger = ul.logging.getLogger(__name__)  # where __name__ = 'Detector.UtilsPixelStatus'
 from psana import DataSource, Detector
 from Detector.GlobalUtils import info_ndarr  # print_ndarr, divide_protected
 import PSCalib.GlobalUtils as gu
@@ -73,7 +73,7 @@ def residuals_to_plane(a):
     res.shape = sh
     return res
 
-def find_outliers(arr, title='', vmin=None, vmax=None):
+def find_outliers(arr, title='', vmin=None, vmax=None, fmt='%.3f'):
     assert isinstance(arr, np.ndarray)
     size = arr.size
     arr0 = np.zeros_like(arr, dtype=bool)
@@ -85,15 +85,15 @@ def find_outliers(arr, title='', vmin=None, vmax=None):
     sum_lo = arr1_lo.sum()
     sum_hi = arr1_hi.sum()
     s_lo = '%8d / %d (%6.3f%%) pixels %s <= %s'%\
-            (sum_lo, size, 100*sum_lo/size, title, 'unlimited' if vmin is None else '%.3f' % vmin)
+            (sum_lo, size, 100*sum_lo/size, title, 'unlimited' if vmin is None else fmt % vmin)
     s_hi = '%8d / %d (%6.3f%%) pixels %s >= %s'%\
-            (sum_hi, size, 100*sum_hi/size, title, 'unlimited' if vmax is None else '%.3f' % vmax)
+            (sum_hi, size, 100*sum_hi/size, title, 'unlimited' if vmax is None else fmt % vmax)
     return bad_lo, bad_hi, arr1_lo, arr1_hi, s_lo, s_hi
 
 def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8):
     """vmin/vmax - absolutly allowed min/max of the value"""
     assert isinstance(arr, np.ndarray)
-    bad_lo, bad_hi, arr1_lo, arr1_hi, s_lo, s_hi = find_outliers(arr, title=title, vmin=vmin, vmax=vmax)
+    bad_lo, bad_hi, arr1_lo, arr1_hi, s_lo, s_hi = find_outliers(arr, title=title, vmin=vmin, vmax=vmax, fmt='%.0f')
 
     arr_sel = arr[np.logical_not(np.logical_or(bad_lo, bad_hi))]
     med = np.median(arr_sel)
@@ -113,7 +113,7 @@ def evaluate_pixel_status(arr, title='', vmin=None, vmax=None, snrmax=8):
     _, _, _arr1_lo, _arr1_hi, _s_lo, _s_hi = find_outliers(arr, title=title, vmin=_vmin, vmax=_vmax)
 
     gap = 13*' '
-    logger.info('%s\n    %s\n  %s\n  %s\n%s%s\n%s%s\n  %s\n  %s' %\
+    logger.info('%s\n    %s\n         absolute limits:\n  %s\n  %s\n         evaluated limits:\n%s%s\n%s%s\n  %s\n  %s' %\
         (20*'=', info_ndarr(arr, title, last=0), s_lo, s_hi, gap, s_sel, gap, s_range, _s_lo, _s_hi))
 
     return _arr1_lo, _arr1_hi, _s_lo, _s_hi
@@ -181,14 +181,14 @@ class DataProc:
         self.snrmax   = args.snrmax
         self.gainbits = args.gainbits
         self.databits = args.databits
-        self.irec = -1
-        self.state = 0
-        self.shwind = eval('(%s)' % args.shwind)
-        self.block  = None
+        self.irec     = -1
+        self.state    = 0
+        self.shwind   = eval('(%s)' % args.shwind)
+        self.block    = None
         self.nda_max  = None
         self.features = eval('(%s)' % args.features)
-        self.metad = metad
-        self.fname = fname_part(args, metad)
+        self.metad    = metad
+        self.fname    = fname_part(args, metad)
         logger.info('file name for data block: %s' % self.fname)
         self._do_max = 11 in self.features
         self._do_block = not self._do_max
@@ -206,6 +206,9 @@ class DataProc:
         self.add_record(raw)
 
     def add_record(self, raw):
+        """check if block has space for the next record, increment irec and add record,
+           othervise set self.state = 1 - block is full
+        """
         if self.irec < self.nrecs-1:
             self.irec +=1
             self.block[self.irec,:] = raw
@@ -248,6 +251,26 @@ class DataProc:
         logger.info("""Feature 5: TBD""")
         return None
 
+    def residuals_frame_f06(self, frame):
+        assert isinstance(frame, np.ndarray)
+        assert frame.ndim==2
+        corners = corners2d(frame.shape, self.shwind)
+        logger.debug('Feature 6: in frame %s window %s corners:\n %s\nNumber of corners: %d'%\
+                     (str(frame.shape), str(self.shwind), str(corners), len(corners)))
+
+        residuals = np.zeros_like(frame, dtype=np.float)
+        wr, wc = self.shwind
+        for r,c in corners: # evaluate residuals to the plane fit in frame windows
+            sl = np.s_[r:r+wr, c:c+wc]
+            arrw = frame[sl]
+            res = residuals_to_plane(arrw)
+            res_med = np.median(res)
+            res_spr = np.median(np.absolute(res - res_med))
+            residuals[sl] = res
+            logger.debug('  corner r: %d c:%d %s\n   residuals med: %.3f spr: %.3f'%\
+                         (r, c, info_ndarr(res, 'residuals'), res_med, res_spr))
+        return residuals
+
     def feature_06(self):
         logger.info("""Feature 6: light average SNR of pixels over time""")
 
@@ -282,68 +305,17 @@ class DataProc:
         pos = med
         logger.info('\n  median(max-peds): %.3f\n  absolute spread: %.3f' % (med, absspr))
 
-        if False: # finding spectral histogram peak position
-            lim_lo = med - snrmax*absspr
-            lim_hi = med + snrmax*absspr
-
-            nint = int(lim_hi - lim_lo)
-            nbins = nint*2
-            logger.info('\n  lim_lo: %.3f\n  lim_hi: %.3f\n    nint: %d' % (lim_lo, lim_hi, nint))
-
-            hb = HBins((lim_lo, lim_hi), nbins=nbins)
-            hisbindata = hb.bin_count(self.max_peds.ravel())[1:-2]  # get rid of histogram edge bins
-            hisbincent = hb.bincenters()[1:-2]
-            logger.info(info_ndarr(hisbincent, 'spectral hist bin centers'))
-            logger.info(info_ndarr(hisbindata, 'spectral hist bin data'))
-            hismaxval = hisbindata.max()
-            hismaxinds = np.where(hisbindata==hismaxval)
-            hismaxpos = hisbincent[hismaxinds][0]
-            logger.info('\n  hismaxval: %.3f\n  hismaxpos: %.3 ' % (hismaxval, hismaxpos))
-            d = max_peds - hismaxpos
-            pos = hismaxpos
-
         diff_pos = np.median(d[d>=0])
         diff_neg = np.median(d[d<0])
 
         self.max_lim_hi = pos + snrmax*diff_pos
         self.max_lim_lo = pos + snrmax*diff_neg
 
-        if False: # do bifurcated gaussian fit to spectral histogram data
-            p0 = (hismaxval, hismaxpos, diff_neg, diff_pos)  # a0, x0, s1 (negative), s2 (positive)
-            res = fit_bifurgaus(hisbincent, hisbindata, p0=p0)
-            popt, pcov = res
-            logger.info('bifurcated gaussian fit results a0, x0, s1, s2:', popt)
-            #print('pcov', pcov)
-            a0, x0, s1, s2 = popt
-
-            self.max_lim_lo = x0 - snrmax * abs(s1)
-            self.max_lim_hi = x0 + snrmax * abs(s2)
-
         logger.info('\n  limits for median(max-peds) + snrmax * diff_pos/neg = %.3f + %.3f * %.3f/%.3f\n  lim_lo: %.3f\n  lim_hi: %.3f' %\
                     (pos, snrmax, diff_pos, diff_neg, self.max_lim_lo, self.max_lim_hi))
 
         self.save_max_files()
         return max_peds
-
-    def residuals_frame_f06(self, frame):
-        assert isinstance(frame, np.ndarray)
-        assert frame.ndim==2
-        corners = corners2d(frame.shape, self.shwind)
-        logger.debug('Feature 6: in frame %s window %s corners:\n %s\nNumber of corners: %d'%\
-                     (str(frame.shape), str(self.shwind), str(corners), len(corners)))
-
-        residuals = np.zeros_like(frame, dtype=np.float)
-        wr, wc = self.shwind
-        for r,c in corners: # evaluate residuals to the plane fit in frame windows
-            sl = np.s_[r:r+wr, c:c+wc]
-            arrw = frame[sl]
-            res = residuals_to_plane(arrw)
-            res_med = np.median(res)
-            res_spr = np.median(np.absolute(res - res_med))
-            residuals[sl] = res
-            logger.debug('  corner r: %d c:%d %s\n   residuals med: %.3f spr: %.3f'%\
-                         (r, c, info_ndarr(res, 'residuals'), res_med, res_spr))
-        return residuals
 
     def summary(self):
         logger.info(info_ndarr(self.block, '\nSummary:'))
@@ -778,6 +750,6 @@ def save_constants_in_repository(arr, **kwa):
             save_constants(arr[n,i,:], args, metad)
 
 
-det_raw_pixel_status = event_loop
+det_pixel_status = event_loop
 
 # EOF
