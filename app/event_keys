@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import os
 import sys
 import psana
@@ -8,58 +7,51 @@ from time import time
 
 LIST_SELECTED_RECS = []
 
-def proc_rec(s, f, verbos, pattrn) :
+def proc_rec(s, f, verbos, pattrn):
     rec, ptrn = str(s), str(pattrn)
-    if pattrn is not None :
-        if not(ptrn in rec) : return
-        if rec in LIST_SELECTED_RECS : return
-        else : LIST_SELECTED_RECS.append(rec)
+    if pattrn is not None:
+        if not(ptrn in rec): return
+        if rec in LIST_SELECTED_RECS: return
+        else: LIST_SELECTED_RECS.append(rec)
+    if verbos: print(rec)
+    if f is not None: f.write('%s\n'%rec)
 
-    if verbos : print(rec)
-    if f is not None : f.write('%s\n'%rec)
-
-def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
-
+def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn):
     SKIP   = evskip
     EVENTS = events + SKIP
-
-    if verbos :
-        print('scan dataset       : %s' % (dsname))
-        print('output file        : %s' % (ofname))
-        print('first event        : %d' % (SKIP))
-        print('last event         : %d' % (EVENTS))
-        print('mode bits          : %d' % (modebw))
-        print('verbose            : %d' % (verbos))
-        print('pattern to squeeze : %s' % (pattrn))
+    if verbos:
+        print('scan dataset      : %s' % (dsname))
+        print('output file       : %s' % (ofname))
+        print('first event       : %d' % (SKIP))
+        print('last event        : %d' % (EVENTS))
+        print('mode bits         : %d' % (modebw))
+        print('verbose           : %d' % (verbos))
+        print('pattern to squeeze: %s' % (pattrn))
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
-
     t0_sec = time()
     counter=0
-
     do_print = verbos and pattrn is None
 
     f = open(ofname,'w') if ofname is not None else None
-    for i, evt in enumerate(ds.events()) :
+    for i, evt in enumerate(ds.events()):
 
-        if i<SKIP : continue
-        if not i<EVENTS : break
+        if i<SKIP: continue
+        if not i<EVENTS: break
 
-        if do_print : print('%s\nEvent# %3d' % (85*'_', i))
+        if do_print: print('%s\nEvent# %3d' % (85*'_', i))
 
-        if modebw & 1 :
-            for s in evt.keys() : proc_rec(s, f, verbos, pattrn)
-
-        if modebw & 2 :
-            for s in env.configStore().keys() : proc_rec(s, f, verbos, pattrn)
-
-        if modebw & 4 :
-            for s in env.calibStore().keys() : proc_rec(s, f, verbos, pattrn)
+        if modebw & 1:
+            for s in evt.keys(): proc_rec(s, f, verbos, pattrn)
+        if modebw & 2:
+            for s in env.configStore().keys(): proc_rec(s, f, verbos, pattrn)
+        if modebw & 4:
+            for s in env.calibStore().keys(): proc_rec(s, f, verbos, pattrn)
 
         counter += 1
 
-    if do_print : print('%s' % (85*'_'))
+    if do_print: print('%s' % (85*'_'))
 
     if ofname is not None:
         f.close()
@@ -67,15 +59,16 @@ def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
 
     print('Loop over %d events of the dataset %s consumes %f sec.' % (counter, dsname, time()-t0_sec))
 
-def usage(mode=0) :
-    if mode == 1 : return 'This command gets EventKeys in the dataset, prints and saves them in the file.'
-    else : return\
+def usage(mode=0):
+    if mode == 1: return 'This command gets EventKeys in the dataset, prints and saves them in the file.'
+    else: return\
            '       %prog -d <dataset> [-f <file-prefix>] [-n <events-collect>] [-s <events-skip>] [-m <mode-control-bits>] [-v]'+\
            '\nEx.1:  %prog -d exp=cxif5315:run=169 -f evt-keys.txt -n 5 -m 1 -v'+\
            '\nEx.2:  %prog -d exp=cxi01516:run=92:stream=0-79:smd -n 10 -m 1'+\
-           '\nEx.3:  %prog -d exp=cxi01516:run=92:stream=0-79:smd -n 10 -p EventKey -f evt-keys.txt'
+           '\nEx.3:  %prog -d exp=cxi01516:run=92:stream=0-79:smd -n 10 -p EventKey -f evt-keys.txt'+\
+           '\nEx.4:  %prog -d /sdf/group/lcls/ds/ana/detector/data_test/xtc/xppn4116-e851-r0137-s00-c00.xtc -n 10 -s -1 -m 1 -p EventKey'
 
-def command_line_parser() :
+def command_line_parser():
     from optparse import OptionParser
 
     dsname_def = None # 'exp=cxif5315:run=169'
@@ -88,7 +81,7 @@ def command_line_parser() :
     pattrn_def = None
 
     parser = OptionParser(description=usage(1), usage ='usage: %prog [options]\n' + usage())
-    parser.add_option('-d', '--dsname',  dest='dsname', default=dsname_def, action='store', type='string', help='dataset name, default = %s' % dsname_def)
+    parser.add_option('-d', '--dsname',  dest='dsname', default=dsname_def, action='store', type='string', help='DataSource (str) argument, ex: exp=cxif5315:run=169, default = %s' % dsname_def)
     parser.add_option('-f', '--ofname',  dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
     parser.add_option('-n', '--events',  dest='events', default=events_def, action='store', type='int',    help='number of events to collect, default = %s' % events_def)
     parser.add_option('-s', '--evskip',  dest='evskip', default=evskip_def, action='store', type='int',    help='number of events to skip, default = %s' % evskip_def)
@@ -99,24 +92,15 @@ def command_line_parser() :
     (opts, args) = parser.parse_args()
     return (opts, args)
 
-if __name__ == "__main__" :
-
+if __name__ == "__main__":
     (opts, args) = command_line_parser()
-
-    if len(sys.argv)==1 :
+    if len(sys.argv)==1:
         print(usage(1))
         sys.exit ('Help: %s -h' % os.path.basename(sys.argv[0]))
-
-    if opts.verbos :
+    if opts.verbos:
         print('Command:', ' '.join(sys.argv))
-    #    print('Options:')
-    #    for k,v in opts.__dict__.items() : print('  %s : %s' % (k, str(v)))
-    #    print('Arguments: ', args)
-
-    if opts.dsname is None : sys.exit('WARNING: Dataset must be specified.')
-
+    if opts.dsname is None: sys.exit('WARNING: Dataset must be specified.')
     event_loop(opts.dsname, opts.ofname, opts.events, opts.evskip, opts.modebw, opts.verbos, opts.pattrn)
-
     sys.exit(0)
 
 # EOF
