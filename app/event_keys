@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
-#------------------------------
 from __future__ import print_function
 import os
 import sys
 import psana
 from time import time
 
-#------------------------------
 LIST_SELECTED_RECS = []
-#------------------------------
 
 def proc_rec(s, f, verbos, pattrn) :
     rec, ptrn = str(s), str(pattrn)
@@ -20,8 +17,6 @@ def proc_rec(s, f, verbos, pattrn) :
 
     if verbos : print(rec)
     if f is not None : f.write('%s\n'%rec)
-
-#------------------------------
 
 def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
 
@@ -39,7 +34,7 @@ def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
 
     ds  = psana.DataSource(dsname)
     env = ds.env()
-    
+
     t0_sec = time()
     counter=0
 
@@ -72,8 +67,6 @@ def event_loop(dsname, ofname, events, evskip, modebw, verbos, pattrn) :
 
     print('Loop over %d events of the dataset %s consumes %f sec.' % (counter, dsname, time()-t0_sec))
 
-#------------------------------
-
 def usage(mode=0) :
     if mode == 1 : return 'This command gets EventKeys in the dataset, prints and saves them in the file.'
     else : return\
@@ -81,8 +74,6 @@ def usage(mode=0) :
            '\nEx.1:  %prog -d exp=cxif5315:run=169 -f evt-keys.txt -n 5 -m 1 -v'+\
            '\nEx.2:  %prog -d exp=cxi01516:run=92:stream=0-79:smd -n 10 -m 1'+\
            '\nEx.3:  %prog -d exp=cxi01516:run=92:stream=0-79:smd -n 10 -p EventKey -f evt-keys.txt'
-
-#------------------------------
 
 def command_line_parser() :
     from optparse import OptionParser
@@ -92,10 +83,10 @@ def command_line_parser() :
     events_def = 10
     evskip_def = 0
     modebw_def = 1
-    verbos_def = True      
-    plotim_def = True       
-    pattrn_def = None      
-    
+    verbos_def = True
+    plotim_def = True
+    pattrn_def = None
+
     parser = OptionParser(description=usage(1), usage ='usage: %prog [options]\n' + usage())
     parser.add_option('-d', '--dsname',  dest='dsname', default=dsname_def, action='store', type='string', help='dataset name, default = %s' % dsname_def)
     parser.add_option('-f', '--ofname',  dest='ofname', default=ofname_def, action='store', type='string', help='output file prefix, default = %s' % ofname_def)
@@ -104,11 +95,9 @@ def command_line_parser() :
     parser.add_option('-m', '--modebw',  dest='modebw', default=modebw_def, action='store', type='int',    help='mode bits: 1/2/4 - keys/config/calib, default = %s' % modebw_def)
     parser.add_option('-v', '--verbos',  dest='verbos', default=verbos_def, action='store_false',          help='verbosity, default = %s' % str(verbos_def))
     parser.add_option('-p', '--pattrn',  dest='pattrn', default=pattrn_def, action='store', type='string', help='pattern to save one record in file, default = %s' % pattrn_def)
- 
+
     (opts, args) = parser.parse_args()
     return (opts, args)
-
-#------------------------------
 
 if __name__ == "__main__" :
 
@@ -117,7 +106,7 @@ if __name__ == "__main__" :
     if len(sys.argv)==1 :
         print(usage(1))
         sys.exit ('Help: %s -h' % os.path.basename(sys.argv[0]))
-        
+
     if opts.verbos :
         print('Command:', ' '.join(sys.argv))
     #    print('Options:')
@@ -130,4 +119,4 @@ if __name__ == "__main__" :
 
     sys.exit(0)
 
-#------------------------------
+# EOF
