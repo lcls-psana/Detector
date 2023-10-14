@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-73
+2023-10-13 Daniel Damiani
+- src/PyDetectorAccess.py - added support for Uxi.ConfigV2
+
 Tag: V02-00-72
 2023-10-09 Mikhail Dubrovin
 - code preparation to production version of det_pixel_status command
