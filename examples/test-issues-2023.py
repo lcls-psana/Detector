@@ -155,6 +155,27 @@ def issue_2023_03_28():
     us.save_constants_in_repository(a, **kwa)
 
 
+def issue_2023_10_12():
+    """access to test data from file for epix100a
+    #event_keys -d /sdf/group/lcls/ds/ana/detector/data_test/xtc/mecdaq115-e993-r0174-s00-c00.xtc -m2
+    event_keys -d /sdf/group/lcls/ds/ana/detector/data_test/xtc/xppn4116-e851-r0137-s00-c00.xtc -n 10 -s -1 -m 1 -p EventKey
+    """
+    from psana import Detector, DataSource
+    ds = DataSource('/sdf/group/lcls/ds/ana/detector/data_test/xtc/mecdaq115-e993-r0174-s00-c00.xtc')
+    #ds = DataSource('/sdf/group/lcls/ds/ana/detector/data_test/xtc/xppn4116-e851-r0137-s00-c00.xtc')
+    #ds = DataSource('/sdf/group/lcls/ds/ana/detector/data_test/xtc/xppn4116-e851-r0137-s00-c00.xtc')
+    #det = Detector('XppGon.0:Epix100a.1')
+    for i, evt in enumerate(ds.events()):
+        if i>0: break
+        print('dir(evt)', dir(evt))
+        print('\nXXX evt.keys():')
+        for k in evt.keys():
+           print(k)
+    env = ds.env()
+    print('dir(env)', dir(env))
+    print('env.experiment() "%s"' % str(env.experiment()))
+
+
 def issue_2023_MM_DD():
     """ISSUE:
        REASON:
@@ -171,7 +192,7 @@ USAGE = '\n  python %s <test-name>' % SCRNAME\
       + '\n    1 - issue_2023_03_14 - status_as_mask for epix100a'\
       + '\n    2 - issue_2023_03_23 - save_constants_in_repository for epix100a'\
       + '\n    3 - issue_2023_03_28 - save_constants_in_repository for epix10kaquad'\
-
+      + '\n    4 - issue_2023_10_12 - access to test data from file for epix100a'\
 
 
 def argument_parser():
@@ -201,6 +222,7 @@ TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
 if   TNAME in  ('1',): issue_2023_03_14()
 elif TNAME in  ('2',): issue_2023_03_23()
 elif TNAME in  ('3',): issue_2023_03_28()
+elif TNAME in  ('4',): issue_2023_10_12()
 else:
     print(USAGE)
     sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)

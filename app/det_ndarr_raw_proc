@@ -49,6 +49,7 @@ def argument_parser():
     d_group  = 'ps-users'
     d_nrecs1 = 50
     d_nrecs  = 1000
+    d_expname = None
 
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
@@ -76,6 +77,7 @@ def argument_parser():
     h_group= 'group ownership for all files, default = %s' % d_group
     h_nrecs='number of events to process, default = %s' % d_nrecs
     h_nrecs1='number of events to process at stage 1, default = %s' % d_nrecs1
+    h_expname='expname needed in case of data input from stand-alone xtc file, default = %s' % d_expname
 
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
     parser.add_argument('-d', '--dsname',  default=d_dsname,  type=str,   help=h_dsname)
@@ -104,6 +106,7 @@ def argument_parser():
     parser.add_argument('--group',         default=d_group,   type=str,   help=h_group)
     parser.add_argument('--nrecs',         default=d_nrecs,   type=int,   help=h_nrecs)
     parser.add_argument('--nrecs1',        default=d_nrecs1,  type=int,   help=h_nrecs1)
+    parser.add_argument('--expname',       default=d_expname, type=str,   help=h_expname)
 
     return parser
 

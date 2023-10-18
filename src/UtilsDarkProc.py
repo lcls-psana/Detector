@@ -29,14 +29,14 @@ def replace(in_tmp, pattern, subst):
 def str_tstamp(fmt='%Y-%m-%dT%H:%M:%S', time_sec=None):
     return strftime(fmt, localtime(time_sec))
 
-def fname_template(evt, env, src, ofname, nevts):
+def fname_template(evt, exp, src, ofname, nevts):
     """Replaces parts of the file name specified as
        #src, #exp, #run, #evts, #type, #date, #time, #fid, #sec, #nsec
        with actual values
     """
     tsec, tnsec, fid = event_time_fiducials(evt)
     template = replace(ofname,   '#src', src)
-    template = replace(template, '#exp', env.experiment())
+    template = replace(template, '#exp', exp)
     template = replace(template, '#run', 'r%04d'%evt.run())
     template = replace(template, '#type', '%s')
     template = replace(template, '#date', str_tstamp('%Y-%m-%d', tsec))
@@ -58,6 +58,7 @@ class DarkProcDet(uc.DarkProc):
         self.det = None
         self.ofname = kwa.get('ofname', 'nda-#exp-#run-#src-#evts-#type-#date-#time-#fid-#sec-#nsec.txt')
         self.dsname = kwa['dsname']
+        self.expname = kwa['expname']
         logger.info('create DarkProcDet object for %s' % src)
 
     def event(self, evt, env, ievt):
@@ -82,11 +83,13 @@ class DarkProcDet(uc.DarkProc):
         verbos = 0o177777
         addmetad = True
 
+        exp = self.expname if self.expname is not None else env.experiment()
+
         #cmod = self._common_mode_pars(arr_av1, arr_rms, arr_msk)
         cmts = ['DATASET  %s' % self.dsname, 'STATISTICS  %d' % counter]
 
         # Save n-d array in text file %
-        template = fname_template(evt, env, src, ofname, counter)
+        template = fname_template(evt, exp, src, ofname, counter)
 
         if savebw &  1: det.save_asdaq(template % 'ave', self.arr_av1, cmts + ['ARR_TYPE  average'], '%8.2f', verbos, addmetad)
         if savebw &  2: det.save_asdaq(template % 'rms', self.arr_rms, cmts + ['ARR_TYPE  RMS'],     '%8.2f', verbos, addmetad)

@@ -7,6 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+=======
+
+Tag: V02-00-74
+2023-10-18 Mikhail Dubrovin
+- examples/test-issues-2023.py - add issue_2023_10_12
+- app/det_ndarr_raw_proc - add parameter --expname to read stand-alone xtc files
+- src/UtilsDarkProc.py - use parameter --expname
+
 Tag: V02-00-73
 2023-10-13 Daniel Damiani
 - src/PyDetectorAccess.py - added support for Uxi.ConfigV2
