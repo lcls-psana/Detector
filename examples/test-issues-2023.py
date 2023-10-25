@@ -163,7 +163,6 @@ def issue_2023_10_12():
     from psana import Detector, DataSource
     ds = DataSource('/sdf/group/lcls/ds/ana/detector/data_test/xtc/mecdaq115-e993-r0174-s00-c00.xtc')
     #ds = DataSource('/sdf/group/lcls/ds/ana/detector/data_test/xtc/xppn4116-e851-r0137-s00-c00.xtc')
-    #ds = DataSource('/sdf/group/lcls/ds/ana/detector/data_test/xtc/xppn4116-e851-r0137-s00-c00.xtc')
     #det = Detector('XppGon.0:Epix100a.1')
     for i, evt in enumerate(ds.events()):
         if i>0: break
@@ -174,6 +173,29 @@ def issue_2023_10_12():
     env = ds.env()
     print('dir(env)', dir(env))
     print('env.experiment() "%s"' % str(env.experiment()))
+
+
+def issue_2023_10_18():
+    """ISSUE: UXI was not seen in data exp=xcsl1004621:run=2
+       REASON: Dan've made changes in daq not available in ana-4.0.53-py3
+       FIXED: fixed in ana-4.0.54-py3
+    """
+    import Detector.GlobalUtils as gu
+    import psana
+    ds = psana.DataSource('exp=xcsl1004621:run=2')
+    det = psana.Detector('XcsEndstation.0:Uxi.1')
+    for i, evt in enumerate(ds.events()):
+        if i < 1:
+          print('\nEv %03d keys():' % i)
+          for k in evt.keys():
+            s = str(k)
+            print(s)
+            #if 'Uxi' in s: break
+        print(gu.info_ndarr(det.raw(evt), 'Ev %03d det.raw' % i, last=10))
+
+    print('\n\nds.env().configStore().keys():')
+    for k in ds.env().configStore().keys():
+        print(k)
 
 
 def issue_2023_MM_DD():
@@ -193,6 +215,7 @@ USAGE = '\n  python %s <test-name>' % SCRNAME\
       + '\n    2 - issue_2023_03_23 - save_constants_in_repository for epix100a'\
       + '\n    3 - issue_2023_03_28 - save_constants_in_repository for epix10kaquad'\
       + '\n    4 - issue_2023_10_12 - access to test data from file for epix100a'\
+      + '\n    5 - issue_2023_10_18 - philip issue with uxi'\
 
 
 def argument_parser():
@@ -223,6 +246,7 @@ if   TNAME in  ('1',): issue_2023_03_14()
 elif TNAME in  ('2',): issue_2023_03_23()
 elif TNAME in  ('3',): issue_2023_03_28()
 elif TNAME in  ('4',): issue_2023_10_12()
+elif TNAME in  ('5',): issue_2023_10_18()
 else:
     print(USAGE)
     sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)

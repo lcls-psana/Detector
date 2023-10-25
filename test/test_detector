@@ -1,0 +1,158 @@
+#!@PYTHON@
+"""
+   Usage::
+   scons test-Detector # see also setings in Detector/SConscript for UTESTS=['test_calibrun']
+
+   OR for test purpose:
+   python Detector/test/test_calibrun
+
+   WARNING unittest DOES NOT LIKE TABS IN CODE !!!!! USE SPACES !!!!!
+"""
+import sys
+import unittest
+import psana
+from Detector.GlobalUtils import np, info_ndarr
+from data_test.absolute_path import os, path_to_xtc_test_file
+
+PATH = path_to_xtc_test_file(fname='xppn4116_run137_3events.xtc')
+
+def _stdout(s):
+    #print(s) # WORKS TOO
+    sys.stdout.write(s)
+    sys.stdout.flush()
+
+def subproc_in_log(command_seq, logname, env=None, shell=False, tmax_sec=500):
+    """Incranation of CalibManager.GlobalUtils.subproc_in_log
+       execute command_seq in subprocess, output results in log file,
+       returns error message or completein message.
+       ex: command_seq=['bsub', '-q', cp.batch_queue, '-o', 'log-ls.txt', 'ls -l']
+    """
+    from time import time, sleep
+    import subprocess
+    import logging
+    logger = logging.getLogger(__name__)
+
+    log = open(logname, 'w')
+    p = subprocess.Popen(command_seq, stdout=log, stderr=log, env=env, shell=shell) #, stdin=subprocess.STDIN, stderr=subprocess.PIPE
+    #p.wait()
+    t0_sec = time()
+    _stdout('subprocess is started with tmp log: %s\n' % logname)
+    while p.poll() is None:
+      sleep(5)
+      dt = time()-t0_sec
+      _stdout(('\r' if dt>5 else '') + 'subprocess is working for %.0f sec ' % dt)
+      if p and dt>tmax_sec:
+        _stdout('\nsubprocess is working too long - terminated' % dt)
+        break
+    log.close()
+    err = p.stderr.read() if p and p.stderr is not None else 'subprocess is completed'
+    return err
+
+
+def path_default_geometry(defname='geometry-def-epix100a.data'):
+    """Returns path to default geometry
+        defname = 'geometry-def-epix100a.data'
+             	  'geometry-def-pnccd.data'
+             	  'geometry-def-cspad.data'
+             	  'geometry-def-cspad2x2.data'
+             	  'geometry-def-jungfrau4m.data'
+             	  'geometry-def-epix10ka2m.data'
+             	  'geometry-def-epix10kaquad.data'
+    """
+    import CalibManager.AppDataPath as apputils
+    return apputils.AppDataPath('Detector/' + defname).path()
+
+
+def deploy_constants_from_file(fname, dircalib='./calib', cdtype='Epix100a::CalibV1/XppGon.0:Epix100a.1', ctype='geometry', cfname='0-end.data'):
+    from PSCalib.GlobalUtils import deploy_file
+    ctypedir = '%s/%s' % (dircalib, cdtype)
+    _stdout('\nfname: %s' % fname)
+    deploy_file(fname, ctypedir, ctype, cfname, lfname=None, verbos=True)
+
+    ofname = '%s/%s/%s' % (ctypedir, ctype, cfname) # './calib/Epix100a::CalibV1/XppGon.0:Epix100a.1/geometry/0-end.data'
+    assert os.path.exists(ofname)
+    _stdout('\ndeployed geometry: %s  ' % ofname)
+
+
+class test_calibrun(unittest.TestCase):
+
+    def setUp(self):
+        """
+        Method called to prepare the test fixture. This is called immediately
+        before calling the test method; any exception raised by this method
+        will be considered an error rather than a test failure.
+        """
+        self.logname = 'log-subproc.txt'
+        self.dircalib = './calib'
+        self.dirwork = './work'
+        psana.setOption('psana.calib-dir', self.dircalib)
+        self.test_det_image_completed = False
+
+    def tearDown(self) :
+        """
+        Method called immediately after each test method has been called and
+        the result recorded. This is called even if the test method raised
+        an exception, so the implementation in subclasses may need to be
+        particularly careful about checking internal state. Any exception raised
+        by this method will be considered an error rather than a test failure.
+        This method will only be called if the setUp() succeeds, regardless
+        of the outcome of the test method.
+        """
+        if os.path.exists(self.logname):
+            _stdout('\nremove tmp log: %s\n' % self.logname)
+            os.remove(self.logname)
+
+        import shutil
+
+        if self.test_det_image_completed:
+            if os.path.exists(self.dircalib):
+                for d in (self.dircalib, self.dirwork):
+                    _stdout('\nremove dir: %s' % d)
+                    shutil.rmtree(d)
+                    #os.rmdir(d)
+                    #os.remove(d)
+
+    def test_right_answer(self):
+        assert 2*2 == 4
+
+    def test_xtc_file_is_available(self):
+        assert os.path.exists(PATH)
+
+    def test_det_raw(self):
+        ds = psana.DataSource(PATH)
+        det = psana.Detector('XppGon.0:Epix100a.1') # 'XppEndstation.0:Opal1000.1'
+        evt = next(ds.events())
+        s = info_ndarr(det.raw(evt))
+        print('\n1-st event raw: %s' % s)
+        assert s == 'shape:(704, 768) size:540672 dtype:uint16 [3861 4050 3976 3992 3778...]'
+
+    def test_calibrun(self):
+        fname_peds = '%s/Epix100a::CalibV1/XppGon.0:Epix100a.1/pedestals/137-end.data' % self.dircalib
+        cmd = 'calibrun -e xppn4116 -r 137 -x %s -d EPIX100A -c %s -w work -P -D --nrecs1 2 -n 4 -m 4' % (PATH, self.dircalib)
+        assert 'calibrun' in cmd
+        #cmd = 'ls -l'
+        _stdout('\nsubmit in subprocess command:\n  %s\n' % cmd)
+        err = subproc_in_log(cmd.split(), self.logname, shell=False)
+        assert err == 'subprocess is completed', 'error message from subprocess: %s' % err
+        _stdout('\nresponce: %s' % err)
+        assert os.path.exists(fname_peds)
+        peds = np.loadtxt(fname_peds, dtype=np.float32)
+        s = info_ndarr(peds)
+        _stdout('\npedestals: %s' % s)
+        assert s == 'shape:(704, 768) size:540672 dtype:float32 [3862.  4052.  3975.  3992.5 3776. ...]'
+
+    def test_det_image(self):
+        fname = path_default_geometry(defname='geometry-def-epix100a.data')
+        deploy_constants_from_file(fname, self.dircalib, cdtype='Epix100a::CalibV1/XppGon.0:Epix100a.1', ctype='geometry', cfname='0-end.data')
+        ds = psana.DataSource(PATH)
+        det = psana.Detector('XppGon.0:Epix100a.1') # 'XppEndstation.0:Opal1000.1'
+        evt = next(ds.events())
+        s = info_ndarr(det.image(evt), first=10000, last=10005)
+        print('\n1-st event det.image: %s' % s)
+        assert s == 'shape:(709, 773) size:548057 dtype:float32 [-0.16992188 -0.6699219   2.8300781   1.3300781   0.        ...]'
+        self.test_det_image_completed = True
+
+if __name__ == '__main__':
+     unittest.main(argv=[sys.argv[0], '-v'])
+
+# EOF

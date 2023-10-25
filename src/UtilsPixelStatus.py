@@ -337,7 +337,7 @@ class DataProc:
         else:
             logger.info('Feature 1 for mean intensity of frames is not requested. All frames are used for further processing.')
             self.inds_good_frames = np.arange(_nrecs, dtype=np.uint)
-            self.bool_good_frames = np.ones(_nrecs, dtype=np.bool)
+            self.bool_good_frames = np.ones(_nrecs, dtype=bool)
 
         arr_sta = np.zeros(self.shape_fr, dtype=np.uint64)
         f = '\n  %s\n  %s'

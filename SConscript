@@ -1,12 +1,8 @@
-#--------------------------------------------------------------------------
-# File and Version Information:
-#  $Id$
-#
-# Description:
+#--------------------------------------
 #  SConscript file for package Detector
-#------------------------------------------------------------------------
+#--------------------------------------
 
-# Do not delete following line, it must be present in 
+# Do not delete following line, it must be present in
 # SConscript file for any SIT project
 Import('*')
 
@@ -14,7 +10,7 @@ Import('*')
 # For the standard SIT packages which build libraries, applications,
 # and Python modules it is usually sufficient to call
 # standardSConscript() function which defines rules for all
-# above targets. Many standard packages do not need any special options, 
+# above targets. Many standard packages do not need any special options,
 # but those which need can modify standardSConscript() behavior using
 # a number of arguments, here is a complete list:
 #
@@ -28,7 +24,8 @@ Import('*')
 #    CCFLAGS - additional flags passed to C/C++ compilers
 #    NEED_QT - set to True to enable Qt support
 #
-#
 #standardSConscript()
+#standardSConscript(PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref", CCFLAGS="-std=gnu++11")
+standardSConscript(UTESTS=['test_detector', 'test_unittest_sample'], PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref", CCFLAGS="-std=gnu++11")
 
-standardSConscript(PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref", CCFLAGS="-std=gnu++11")
+# EOF

@@ -1,0 +1,31 @@
+#!@PYTHON@
+"""
+   Usage::
+   scons test-Detector # see also setings in Detector/SConscript for UTESTS=['test_unittest_sample']
+
+   OR for test purpose:
+   python Detector/test/test_unittest_sample
+"""
+import sys
+import unittest
+
+def func(x):
+    return x + 1
+
+class test_unittest_sample(unittest.TestCase):
+
+    def setUp(self):
+        print('\nprint: %s' % __file__)
+        sys.stdout.write('stdout: %s\n' % __file__)
+        sys.stdout.flush()
+
+    def tearDown(self) :
+        pass
+
+    def test_right_answer(self):
+        assert func(3) == 4
+
+if __name__ == '__main__':
+     unittest.main(argv=[sys.argv[0], '-v'])
+
+# EOF

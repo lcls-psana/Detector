@@ -7,6 +7,15 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-75
+2023-10-25 Mikhail Dubrovin
+add unittest for epix100a calibrun, det.raw, det.image
+- SConscript - add standardSConscript(UTESTS=['test_detector', 'test_unittest_sample'],...
+- examples/test-issues-2023.py - add issue_2023_10_18
+- src/UtilsPixelStatus.py - dtype=np.bool > bool due to np.bool is deprecated
+- test/test_detector - unittest for epix100a calibrun, det.raw, det.image
+- test/test_unittest_sample  - unittest sample
+
 Tag: V02-00-74
 2023-10-18 Mikhail Dubrovin
 - examples/test-issues-2023.py - add issue_2023_10_12
