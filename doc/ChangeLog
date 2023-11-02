@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-??
+2023-11-02 Mikhail Dubrovin
+- examples/ex_jungfrau_det.py - /reg/d/psdm/det/detdaq17/xtc > /sdf/group/lcls/ds/ana/detector/data_test/xtc/
+
 Tag: V02-00-75
 2023-10-25 Mikhail Dubrovin
 add unittest for epix100a calibrun, det.raw, det.image

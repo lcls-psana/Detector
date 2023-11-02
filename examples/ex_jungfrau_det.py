@@ -173,7 +173,8 @@ if __name__ == "__main__":
     if   tname=='1': test_jungfrau_methods('exp=xpptut15:run=410', 'Jungfrau512k')
     elif tname=='2': test_jungfrau_methods('exp=xpptut15:run=430', 'Jungfrau1M')
     elif tname=='3': test_jungfrau_methods('/reg/d/psdm/xpp/xpptut13/scratch/cpo/e968-r0177-s01-c00.xtc', 'DetLab.0:Jungfrau.2') # OR:
-    elif tname=='4': test_jungfrau_methods('/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc',         'DetLab.0:Jungfrau.2')
+    #elif tname=='4': test_jungfrau_methods('/reg/d/psdm/det/detdaq17/xtc/e968-r0177-s01-c00.xtc',         'DetLab.0:Jungfrau.2')
+    elif tname=='4': test_jungfrau_methods('/sdf/group/lcls/ds/ana/detector/data_test/xtc/detdaq17-e968-r0127-s00-c00.xtc', 'DetLab.0:Epix10ka2M.0')
     # MISSING DATA
     #elif tname=='3': test_jungfrau_methods('exp=xpptut13:run=177', 'DetLab.0:Jungfrau.2') # OR:
     #elif tname=='1': test_jungfrau_methods('exp=mecls3216:run=2',   'MecTargetChamber.0:Jungfrau.0')
