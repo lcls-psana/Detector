@@ -772,12 +772,12 @@ class PyDetectorAccess():
         offset = d.offset()
 
         d16 = d.data16()
-        if d16 is not None and d16 != []:
+        if d16 is not None and len(d16)>0:
             if self.do_offset: return np.array(d16, dtype=np.int32) - d.offset()
             else             : return d16
 
         d8 = d.data8()
-        if d8 is not None and d8 != []:
+        if d8 is not None and len(d8)>0:
             if self.do_offset: return np.array(d8, dtype=np.int32) - d.offset()
             else             : return d8
 
