@@ -6,8 +6,9 @@ from time import time
 
 from Detector.GlobalUtils import info_command_line_parameters
 from Detector.UtilsEpix10kaCalib import pedestals_calibration, CALIB_REPO_EPIX10KA, DIR_LOG_AT_START, GAIN_MODES_IN
-
 from Detector.UtilsLogging import STR_LEVEL_NAMES, DICT_NAME_TO_LEVEL, init_logger, logging
+from data_test.absolute_path import path_to_xtc_test_file
+PATH_TO_XTC = path_to_xtc_test_file(fname='data-xcsl1004621-r0010-3events-epix10kaquad.xtc')
 logger = logging.getLogger(__name__)
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -47,7 +48,8 @@ def epix10ka_pedestals_calibration():
     init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
     #logger.info('DIR_LOG_AT_START: %s' % DIR_LOG_AT_START)
-    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
+    if popts.dirrepo != 'work':
+        repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     pedestals_calibration(*args, **opts)
 
@@ -70,7 +72,8 @@ def usage(mode=0):
            '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021  -L INFO'\
            '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r394 -o ./work'\
            '\n  %prog -e xcslt5117 -d XcsEndstation.0:Epix10ka2M.0 -r19 -c1 -i15 -o ./work'\
-           '\n  mpirun -n 5 epix10ka_pedestals_calibration -e xcslt5117 -d XcsEndstation.0:Epix10ka2M.0 -r19 -o ./work -L INFO'
+           '\n  mpirun -n 5 epix10ka_pedestals_calibration -e xcslt5117 -d XcsEndstation.0:Epix10ka2M.0 -r19 -o ./work -L INFO'\
+           '\n  %prog -d XcsEndstation.0:Epix10kaQuad.0 -e xcsl1004621 -r 10 -c 0 -x ' + PATH_TO_XTC + ' -o work'\
 
 
 def option_parser():

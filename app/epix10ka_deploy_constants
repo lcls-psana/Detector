@@ -7,6 +7,8 @@ from time import time
 from Detector.GlobalUtils import info_command_line_parameters
 from Detector.UtilsEpix10kaCalib import deploy_constants, CALIB_REPO_EPIX10KA, DIR_LOG_AT_START, GAIN_MODES_IN
 import Detector.UtilsLogging as ul
+from data_test.absolute_path import path_to_xtc_test_file
+PATH_TO_XTC = path_to_xtc_test_file(fname='data-xcsl1004621-r0010-3events-epix10kaquad.xtc')
 logger = ul.logging.getLogger(__name__)
 SCRNAME = sys.argv[0].split('/')[-1]
 
@@ -32,7 +34,8 @@ def epix10ka_deploy_constants():
     logname = repoman.logname('%s_%s' % (SCRNAME, getpass.getuser()))
     ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
+    if popts.dirrepo != 'work':
+        repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     deploy_constants(*args, **opts)
 
@@ -54,7 +57,9 @@ def usage(mode=0):
            '\n  %prog -e mfxx32516 -d NoDetector.0:Epix10ka.3 -r 1021 -D -L INFO'\
            '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r394 -t 396 -o ./work -D -c ./calib # deploys 394-end.data for all calibrations found for runs <= 386'\
            '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r544 -o ./work -D -c ./calib'\
-           '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r544 -o ./work -D -c ./calib --proc=g --low=0.25 --medium=1 --high=1'
+           '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r544 -o ./work -D -c ./calib --proc=g --low=0.25 --medium=1 --high=1'\
+           '\n  %prog -e xcsx35617 -d XcsEndstation.0:Epix10ka2M.0 -r544 -o ./work -D -c ./calib'\
+           '\n  %prog -e xcsl1004621 -d XcsEndstation.0:Epix10kaQuad.0 -r 10 -x ' + PATH_TO_XTC + ' -o work -D -c calib'\
 
 
 def option_parser():
