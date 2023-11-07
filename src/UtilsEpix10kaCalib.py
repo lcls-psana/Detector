@@ -616,8 +616,11 @@ def fname_prefix_merge(dmerge, detname, tstamp, exp, irun):
     return '%s/%s-%s-%s-r%04d' % (dmerge, detname, tstamp, exp, irun)
 
 
-def file_name_prefix(panel_id, tstamp, exp, irun):
-    panel_alias = alias_for_id(panel_id, fname=FNAME_PANEL_ID_ALIASES)
+def file_name_prefix(panel_id, tstamp, exp, irun, dirrepo):
+    fname_aliases = FNAME_PANEL_ID_ALIASES if dirrepo != 'work' else\
+                    '%s/.aliases.txt' % dirrepo  # 'work/.aliases.txt'
+    panel_alias = alias_for_id(panel_id, fname=fname_aliases)
+    logger.info('use panel aliases from file: %s\n    panel alias: %s' % (fname_aliases, panel_alias))
     return 'epix10ka_%s_%s_%s_r%04d' % (panel_alias, tstamp, exp, irun), panel_alias
 
 
@@ -802,7 +805,7 @@ def offset_calibration(*args, **opts):
     panel_id = get_panel_id(panel_ids, idx)
 
     dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
-    fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
+    fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun, dirrepo)
     prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
     fname_work = file_name_npz(dir_work, fname_prefix, expnum, nspace)
@@ -1381,7 +1384,7 @@ def pedestals_calibration(*args, **opts):
             #    sys.exit(msg)
 
             dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
-            fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
+            fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun, dirrepo)
             #prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
             prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
                 path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
@@ -1660,7 +1663,7 @@ def deploy_constants(*args, **opts):
         logger.info('%s\nmerge constants for panel:%02d id: %s' % (110*'_', ind, panel_id))
 
         dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
-        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun)
+        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, irun, dirrepo)
         #prefix_offset, prefix_peds, prefix_plots, prefix_gain = path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain)
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
             path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
@@ -1778,7 +1781,7 @@ def save_epix10ka_ctype_in_repo(nda, exp, runnum, detname, gmode, **kwargs):
         arr2d = nda[idx,:]
 
         dir_panel, dir_offset, dir_peds, dir_plots, dir_work, dir_gain, dir_rms, dir_status = dir_names(dirrepo, panel_id)
-        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, rundepl)
+        fname_prefix, panel_alias = file_name_prefix(panel_id, tstamp, exp, rundepl, dirrepo)
         prefix_offset, prefix_peds, prefix_plots, prefix_gain, prefix_rms, prefix_status =\
                 path_prefixes(fname_prefix, dir_offset, dir_peds, dir_plots, dir_gain, dir_rms, dir_status)
 
