@@ -5,7 +5,8 @@ import sys
 from Detector.UtilsJungfrauCalib import jungfrau_deploy_constants, CALIB_REPO_JUNGFRAU, DIR_LOG_AT_START, uc, gu
 import Detector.UtilsLogging as ul
 logger = ul.logging.getLogger(__name__)
-
+from data_test.absolute_path import path_to_xtc_test_file
+PATH_TO_XTC = path_to_xtc_test_file(fname='data-xppl1001021-r0023-3events-jungfrau1m.xtc')
 SCRNAME = sys.argv[0].split('/')[-1]
 
 DESCRIPTION = 'Deployment jungfrau calibration parameters'
@@ -15,8 +16,9 @@ USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> [-D] [-L <logging-mo
       + '\nEx.1:  %s -e cxilu9218 -d CxiDs1.0:Jungfrau.0 -r238' % SCRNAME\
       + '\nEx.2:  %s -e cxilu9218 -d CxiDs1.0:Jungfrau.0 -r238 -D -c ./calib' % SCRNAME\
       + '\nEx.3:  %s -e cxic00318 -d CxiDs1.0:Jungfrau.0 -r375 -D -c ./calib -o ./work' % SCRNAME\
+      + '\nEx.4:  %s -d XppEndstation.0:Jungfrau.0 -e xppl1001021 -r23 -x %s -o work -c calib -D -E # for unittest' % (SCRNAME, PATH_TO_XTC)\
       + '\n\nREGULAR COMMAND:'\
-      + '\nEx.3:  %s -e cxilu9218 -d CxiDs1.0:Jungfrau.0 -r238 -D' % SCRNAME\
+      + '\nEx.5:  %s -e cxilu9218 -d CxiDs1.0:Jungfrau.0 -r238 -D' % SCRNAME\
       + '\n\nHelp:  %s -h\n' % SCRNAME
 
 if len(sys.argv)<2:
@@ -104,7 +106,8 @@ if __name__ == "__main__":
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
+    if popts.dirrepo != 'work':
+        repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     from Detector.GlobalUtils import info_command_line_parameters
     logger.info(info_command_line_parameters(parser))

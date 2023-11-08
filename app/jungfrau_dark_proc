@@ -5,7 +5,8 @@ import sys
 import Detector.UtilsLogging as ul
 logger = ul.logging.getLogger(__name__)
 from Detector.UtilsJungfrauCalib import jungfrau_dark_proc, CALIB_REPO_JUNGFRAU, DIR_LOG_AT_START, uc, gu
-
+from data_test.absolute_path import path_to_xtc_test_file
+PATH_TO_XTC = path_to_xtc_test_file(fname='data-xppl1001021-r0023-3events-jungfrau1m.xtc')
 SCRNAME = sys.argv[0].split('/')[-1]
 
 DESCRIPTION = 'Proceses jungfrau dark data'
@@ -15,6 +16,7 @@ USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
       +'\nEx.2:  %s -d exp=cxilu9218:run=242,243,244:smd -s CxiDs1.0:Jungfrau.0 -I1 # speed-up for single panel' % SCRNAME\
       +'\nEx.3:  %s -d exp=cxilu9218:run=238:smd -s CxiDs1.0:Jungfrau.0 --evcode 162 # use drop-shots as dark events' % SCRNAME\
       +'\nEx.4:  %s -d exp=cxic00318:run=375:smd -s CxiDs1.0:Jungfrau.0 --nrecs1=50 --nrecs=100 -o work # test bad gain switch 221,228,224 sec' % SCRNAME\
+      +'\nEx.5:  %s -d %s -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work # for unittest' % (SCRNAME, PATH_TO_XTC)\
       +'\n\nHelp:  %s -h\n' % SCRNAME
 
 
@@ -133,7 +135,8 @@ if __name__ == "__main__":
     logname = repoman.logname('%s_%s' % (SCRNAME, gu.get_login()))
     ul.init_logger(loglevel=popts.logmode, logfname=logname, group=popts.group) # fmt='[%(levelname).1s] %(filename)s L%(lineno)04d %(message)s')
     logger.info('log file: %s' % logname)
-    repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
+    if popts.dirrepo != 'work':
+        repoman.save_record_at_start(SCRNAME, adddict={'logfile':logname})
 
     from Detector.GlobalUtils import info_command_line_parameters
     logger.info(info_command_line_parameters(parser))
