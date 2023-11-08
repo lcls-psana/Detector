@@ -98,7 +98,8 @@ def rundescriptor_in_dsname(dsname):
 
 
 def is_single_run_dataset(dsname):
-    return rundescriptor_in_dsname(dsname).isdigit()
+    resp = rundescriptor_in_dsname(dsname)
+    return None if resp is None else resp.isdigit()
 
 
 def evaluate_limits(arr, nneg=5, npos=5, lim_lo=1, lim_hi=16000, cmt='') :
