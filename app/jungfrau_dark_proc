@@ -16,7 +16,7 @@ USAGE ='\n%s -d <dataset> -s <source> ...' % SCRNAME\
       +'\nEx.2:  %s -d exp=cxilu9218:run=242,243,244:smd -s CxiDs1.0:Jungfrau.0 -I1 # speed-up for single panel' % SCRNAME\
       +'\nEx.3:  %s -d exp=cxilu9218:run=238:smd -s CxiDs1.0:Jungfrau.0 --evcode 162 # use drop-shots as dark events' % SCRNAME\
       +'\nEx.4:  %s -d exp=cxic00318:run=375:smd -s CxiDs1.0:Jungfrau.0 --nrecs1=50 --nrecs=100 -o work # test bad gain switch 221,228,224 sec' % SCRNAME\
-      +'\nEx.5:  %s -d %s -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work # for unittest' % (SCRNAME, PATH_TO_XTC)\
+      +'\nEx.5:  %s -d %s -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work --expname xppl1001021# for unittest' % (SCRNAME, PATH_TO_XTC)\
       +'\n\nHelp:  %s -h\n' % SCRNAME
 
 
@@ -56,6 +56,7 @@ def option_parser():
     d_dirmode  = 0o2775
     d_filemode = 0o664
     d_group    = 'ps-users'
+    d_expname  = None # 'mfxx32516'
 
     h_dsname='dataset name, default = %s' % d_dsname
     h_source='input ndarray source name, default = %s' % d_source
@@ -89,6 +90,7 @@ def option_parser():
     h_group   = 'group ownership for all files, default = %s' % d_group
     #h_savebw='control bit-word to save arrays: 1/2/4/8/16/32/...'\
     #         ' - ave/rms/status/mask/max/min/sta_int_lo/sta_int_hi, default = (oct) %s' % oct(d_savebw)
+    h_expname = 'experiment name for info in case of local xtc file, default = %s' % d_expname
 
     parser = OptionParser(description=DESCRIPTION, usage = USAGE)
     parser.add_option('-d', '--dsname', dest='dsname', default=d_dsname, action='store', type='string', help=h_dsname)
@@ -117,9 +119,10 @@ def option_parser():
     parser.add_option('--frachi',       dest='frachi', default=d_frachi, action='store', type='float',  help=h_frachi)
     parser.add_option('-o', '--dirrepo',dest='dirrepo',default=d_dirrepo,action='store', type='string', help=h_dirrepo)
     parser.add_option('--logmode',      dest='logmode',default=d_logmode,action='store', type='string', help=h_logmode)
-    parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
-    parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)
-    parser.add_option('--group',         default=d_group,   action='store', type='string', help=h_group)
+    parser.add_option('--dirmode',      default=d_dirmode, action='store', type='int',    help=h_dirmode)
+    parser.add_option('--filemode',     default=d_filemode,action='store', type='int',    help=h_filemode)
+    parser.add_option('--group',        default=d_group,   action='store', type='string', help=h_group)
+    parser.add_option('--expname',      default=d_expname, action='store', type='string', help=h_expname)
     #parser.add_option('-S', '--savebw', dest='savebw', default=d_savebw, action='store', type='int',    help=h_savebw)
 
     return parser
