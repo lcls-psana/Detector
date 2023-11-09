@@ -13,6 +13,7 @@ import unittest
 import psana
 from Detector.GlobalUtils import np, info_ndarr
 from data_test.absolute_path import os, path_to_xtc_test_file
+from PSCalib.GlobalUtils import create_directory
 
 def _stdout(s):
     """replacement of print(s) # WORKS TOO"""
@@ -100,6 +101,10 @@ def clean_work_space(logname, dircalib, dirwork):
             #os.rmdir(d)
             #os.remove(d)
 
+def logname_prefix(dirwork, prefix='log-subproc-det'):
+    create_directory(dirwork, mode=0o775, group='ps-users')
+    return os.path.join(dirwork, prefix)
+
 
 class test_D01_opal1000(unittest.TestCase):
 
@@ -133,8 +138,7 @@ class test_D02_epix100a(unittest.TestCase):
         #print('\n\n======== %s' % self.__class__.__name__) ##.split('_')[-1])
         self.dircalib = './calib'
         self.dirwork = './work'
-        self.logname = 'log-subproc-epix100a.txt'
-        #self.logname = os.path.join(self.dirwork, 'log-subproc-epix100a.txt')
+        self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix100a')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
         self.turn_off = True  # False
@@ -198,8 +202,7 @@ class test_D03_epix10kaquad(unittest.TestCase):
         self.fname_xtc = path_to_xtc_test_file(fname='data-xcsl1004621-r0010-3events-epix10kaquad.xtc')
         self.dircalib = './calib'
         self.dirwork = './work'
-        #self.logname = os.path.join(self.dirwork, 'log-subproc-epix10kaquad.txt')
-        self.logname = 'log-subproc-epix10kaquad.txt'
+        self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix10kaquad')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
         self.turn_off = True
@@ -227,7 +230,7 @@ class test_D03_epix10kaquad(unittest.TestCase):
         common = '-d XcsEndstation.0:Epix10kaQuad.0 -e xcsl1004621 -r 10 -x %s -o work' % self.fname_xtc
         cmd = 'epix10ka_pedestals_calibration %s -c 0' % common
         print('\nsubmit in subprocess command:\n  %s' % cmd)
-        err = subproc_in_log(cmd.split(), self.logname, shell=False)
+        err = subproc_in_log(cmd.split(), '%s-process.txt' % self.logname, shell=False)
         assert err == 'subprocess is completed', 'error message from subprocess: %s' % err
         print('\nresponce: %s' % err)
         fname_panel_peds = 'work/0000000002-0171340801-3774873622-0472991045-0020573736-0000000000-0000000000/'\
@@ -243,7 +246,7 @@ class test_D03_epix10kaquad(unittest.TestCase):
         common = '-d XcsEndstation.0:Epix10kaQuad.0 -e xcsl1004621 -r 10 -x %s -o work' % self.fname_xtc
         cmd = 'epix10ka_deploy_constants %s -D -c calib' % common
         print('\nsubmit in subprocess command:\n  %s' % cmd)
-        err = subproc_in_log(cmd.split(), self.logname, shell=False)
+        err = subproc_in_log(cmd.split(), '%s-deploy.txt' % self.logname, shell=False)
         assert err == 'subprocess is completed', 'error message from subprocess: %s' % err
         print('\nresponce: %s' % err)
         fname_peds = '%s/Epix10kaQuad::CalibV1/XcsEndstation.0:Epix10kaQuad.0/pedestals/10-end.data' % self.dircalib
@@ -273,8 +276,7 @@ class test_D04_jungfrau1m(unittest.TestCase):
         self.fname_xtc = path_to_xtc_test_file(fname='data-xppl1001021-r0023-3events-jungfrau1m.xtc')
         self.dircalib = './calib'
         self.dirwork = './work'
-        #self.logname = os.path.join(self.dirwork, 'log-subproc-jungfrau1m.txt')
-        self.logname = 'log-subproc-jungfrau1m.txt'
+        self.logname = logname_prefix(self.dirwork, prefix='log-subproc-jungfrau1m')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
         self.turn_off = False
@@ -299,13 +301,13 @@ class test_D04_jungfrau1m(unittest.TestCase):
            jungfrau_dark_proc -d FNAMEX -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work
         """
         if is_turned_off(self.turn_off): return
-        cmd = 'jungfrau_dark_proc -d %s -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work' % self.fname_xtc
+        cmd = 'jungfrau_dark_proc -d %s -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work --expname xppl1001021' % self.fname_xtc
         print('\nsubmit in subprocess command:\n  %s' % cmd)
-        err = subproc_in_log(cmd.split(), self.logname, shell=False)
+        err = subproc_in_log(cmd.split(), '%s-process.txt' % self.logname, shell=False)
         assert err == 'subprocess is completed', 'error message from subprocess: %s' % err
         print('\nresponce: %s' % err)
         fname_panel_peds = 'work/190408-181206-50c246de810058/pedestals/'\
-	                   'jungfrau_0010_20231102080104__r0023_pedestals_gm0-Normal.dat'
+	                   'jungfrau_0001_20231102080104_xppl1001021_r0023_pedestals_gm0-Normal.dat'
         path_exists(fname_panel_peds, msg='file exists: ')
 
     def test_04_jungfrau_deploy_constants(self):
@@ -316,7 +318,7 @@ class test_D04_jungfrau1m(unittest.TestCase):
         if is_turned_off(self.turn_off): return
         cmd = 'jungfrau_deploy_constants -d XppEndstation.0:Jungfrau.0 -e xppl1001021 -r23 -D -x %s -o work -c calib -E' % self.fname_xtc
         print('\nsubmit in subprocess command:\n  %s' % cmd)
-        err = subproc_in_log(cmd.split(), self.logname, shell=False)
+        err = subproc_in_log(cmd.split(), '%s-deploy.txt' % self.logname, shell=False)
         assert err == 'subprocess is completed', 'error message from subprocess: %s' % err
         print('\nresponce: %s' % err)
         fname_peds = '%s/Jungfrau::CalibV1/XppEndstation.0:Jungfrau.0/pedestals/23-end.data' % self.dircalib
