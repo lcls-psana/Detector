@@ -86,13 +86,10 @@ def is_turned_off(turned_off=True):
     if turned_off: print('\nWARNING: TEST IS TURNED OFF')
     return turned_off
 
-def clean_work_space(logname, dircalib, dirwork):
-    print('WARNING: WORCSPACE IS NOT CLEANED')
-    return
-
-    #if os.path.exists(logname):
-    #    print('\nremove tmp log: %s' % logname)
-    #    os.remove(logname)
+def clean_work_space(dircalib, dirwork):
+    if False:
+        print('WARNING: WORCSPACE IS NOT CLEANED')
+        return
     import shutil
     if os.path.exists(dircalib):
         for d in (dircalib, dirwork):
@@ -141,7 +138,7 @@ class test_D02_epix100a(unittest.TestCase):
         self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix100a')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
-        self.turn_off = True  # False
+        self.turn_off = False
 
     def tearDown(self):
         """
@@ -154,7 +151,7 @@ class test_D02_epix100a(unittest.TestCase):
         of the outcome of the test method.
         """
         if self.test_det_completed:
-            clean_work_space(self.logname, self.dircalib, self.dirwork)
+            clean_work_space(self.dircalib, self.dirwork)
 
     def test_01_xtc_file_is_available(self):
         """- test that xtc file is available for epix100a"""
@@ -205,11 +202,11 @@ class test_D03_epix10kaquad(unittest.TestCase):
         self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix10kaquad')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
-        self.turn_off = True
+        self.turn_off = False
 
     def tearDown(self):
         if self.test_det_completed:
-            clean_work_space(self.logname, self.dircalib, self.dirwork)
+            clean_work_space(self.dircalib, self.dirwork)
 
     def test_01_xtc_file_is_available(self):
         """- test that xtc file is available for epix10ka(quad)"""
@@ -283,7 +280,7 @@ class test_D04_jungfrau1m(unittest.TestCase):
 
     def tearDown(self):
         if self.test_det_completed:
-            clean_work_space(self.logname, self.dircalib, self.dirwork)
+            clean_work_space(self.dircalib, self.dirwork)
 
     def test_01_xtc_file_is_available(self):
         """- test that xtc file is available for jungfrau1m"""
