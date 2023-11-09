@@ -7,9 +7,21 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag: V02-00-??
-2023-11-02 Mikhail Dubrovin
+Tag: V02-00-76
+2023-11-09 Mikhail Dubrovin
+- app/jungfrau_dark_proc, app/jungfrau_deploy_constants
+	- add import path_to_xtc_test_file, Ex.5 for unittest, and if popts.dirrepo != 'work': save_record_at_start
+- app/jungfrau_dark_proc
+	- add --expname for info in case of local xtc file
+- src/UtilsCalib.py - in is_single_run_dataset add protection for None
+- src/UtilsJungfrauCalib.py - add/use fname_panel_id_aliases, expname for jungfrau_dark_proc
 - examples/ex_jungfrau_det.py - /reg/d/psdm/det/detdaq17/xtc > /sdf/group/lcls/ds/ana/detector/data_test/xtc/
+- test/test_unittest_sample  - unittest sample
+- test/test_detector
+  - add import path_to_xtc_test_file, Ex.5 for unittest, and if popts.dirrepo != 'work': save_record_at_start
+  - unittest for epix100a calibrun, det.raw, det.image
+  - add/use logname_prefix to move logs under work/, update jungfrau_dark_proc for --expname
+  - clean_work_space - remove parameters logname, set self.turn_off = False for epix100a, epix10kaquad, and jungfrau1m
 
 Tag: V02-00-75
 2023-10-25 Mikhail Dubrovin
