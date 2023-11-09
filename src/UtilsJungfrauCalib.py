@@ -164,6 +164,7 @@ def jungfrau_dark_proc(pargs, popts):
     segind = popts.segind
 
     dirrepo = popts.dirrepo
+    expname = popts.expname
 
     dirmode  = kwargs.get('dirmode',  0o2775)
     filemode = kwargs.get('filemode', 0o664)
@@ -374,6 +375,13 @@ def jungfrau_dark_proc(pargs, popts):
     logger.info('%s\ntotal consumed time = %.3f sec.' % (40*'_', time()-t0_sec))
 
 
+def fname_panel_id_aliases(dirrepo):
+    fname = FNAME_PANEL_ID_ALIASES if dirrepo != 'work' else\
+            os.path.join(dirrepo, os.path.basename(FNAME_PANEL_ID_ALIASES))
+    logger.info('file name for aliases: %s' % fname)
+    return fname
+
+
 def save_results(dpo, **kwa):
     logger.info('save_results')
 
@@ -387,15 +395,18 @@ def save_results(dpo, **kwa):
     fmt_rms    = kwa.get('fmt_rms',    '%.3f')
     fmt_status = kwa.get('fmt_status', '%4i')
     fmt_minmax = kwa.get('fmt_status', '%6i')
+    expname    = kwa.get('expname', None)
 
     runnum     = dpo.runnum
-    exp        = dpo.exp
+    exp        = dpo.exp if expname is None else expname
     calibdir   = dpo.calibdir
     ts_run     = dpo.ts_run
     ts_now     = dpo.ts_now
     detid      = dpo.detid
     gmindex    = dpo.gmindex
     gmname     = dpo.gmname
+
+    fname_aliases = fname_panel_id_aliases(dirrepo)
 
     logger.info('exp:%s run:%d ts_run:%s ts_now:%s' % (exp, runnum, ts_run, ts_now))
     logger.info('calibdir: %s' % calibdir)
@@ -431,7 +442,7 @@ def save_results(dpo, **kwa):
         dirpanel = repoman.dir_panel(panel_id)
         logger.info('panel %02d dir: %s' % (i, dirpanel))
 
-        fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, ts_run, exp, runnum, FNAME_PANEL_ID_ALIASES)
+        fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, ts_run, exp, runnum, fname_aliases)
         logger.debug('fname_prefix: %s' % fname_prefix)
 
         for ctype, arr, fmt in list_save:
@@ -578,6 +589,8 @@ def jungfrau_deploy_constants(pargs, popts):
     fmt_gain   = kwa.get('fmt_gain',   '%.6f')
     fmt_offset = kwa.get('fmt_offset', '%.6f')
 
+    fname_aliases = fname_panel_id_aliases(dirrepo)
+
     panel_inds = None if paninds is None else [int(i) for i in paninds.split(',')] # conv str '0,1,2,3' to list [0,1,2,3]
     dsname = uc.str_dsname(exp, run, dsnamex)
     _name = sys._getframe().f_code.co_name
@@ -629,7 +642,7 @@ def jungfrau_deploy_constants(pargs, popts):
 
         check_exists(dirpanel, errskip, 'panel directory does not exist %s' % dirpanel)
 
-        fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, tstamp, exp, irun, FNAME_PANEL_ID_ALIASES)
+        fname_prefix, panel_alias = uc.file_name_prefix(panel_type, panel_id, tstamp, exp, irun, fname_aliases)
         logger.debug('fname_prefix: %s' % fname_prefix)
 
         for octype, (ctype, fmt) in mpars.items():
