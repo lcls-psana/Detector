@@ -12,7 +12,7 @@ import sys
 import unittest
 import psana
 from Detector.GlobalUtils import np, info_ndarr
-from data_test.absolute_path import os, path_to_xtc_test_file
+from data_test_access.absolute_path import os, path_to_xtc_test_file
 from PSCalib.GlobalUtils import create_directory
 
 def _stdout(s):
@@ -220,7 +220,7 @@ class test_D03_epix10kaquad(unittest.TestCase):
 
     def test_03_epix10ka_pedestals_calibration(self):
         """- test command epix10ka_pedestals_calibration
-           FNAMEX = /sdf/home/d/dubrovin/LCLS/con-py3/data_test/xtc/data-xcsl1004621-r0010-3events-epix10kaquad.xtc
+           FNAMEX = /tmp/data_test/xtc/data-xcsl1004621-r0010-3events-epix10kaquad.xtc
            epix10ka_pedestals_calibration -d XcsEndstation.0:Epix10kaQuad.0 -e xcsl1004621 -r 10 -c 0 -x FNAMEX -o work
         """
         if is_turned_off(self.turn_off): return
@@ -236,7 +236,7 @@ class test_D03_epix10kaquad(unittest.TestCase):
 
     def test_04_epix10ka_deploy_constants(self):
         """- test command epix10ka_deploy_constants
-           FNAMEX = /sdf/home/d/dubrovin/LCLS/con-py3/data_test/xtc/data-xcsl1004621-r0010-3events-epix10kaquad.xtc
+           FNAMEX = /tmp/data_test/xtc/data-xcsl1004621-r0010-3events-epix10kaquad.xtc
            epix10ka_deploy_constants -d XcsEndstation.0:Epix10kaQuad.0 -e xcsl1004621 -r 10 -x FNAMEX -o work -D -c calib
         """
         if is_turned_off(self.turn_off): return
@@ -294,7 +294,7 @@ class test_D04_jungfrau1m(unittest.TestCase):
 
     def test_03_jungfrau_dark_proc(self):
         """- test command jungfrau_dark_proc
-           FNAMEX = /sdf/home/d/dubrovin/LCLS/con-py3/data_test/xtc/data-xppl1001021-r0023-3events-jungfrau1m.xtc
+           FNAMEX = /tmp/data_test/xtc/data-xppl1001021-r0023-3events-jungfrau1m.xtc
            jungfrau_dark_proc -d FNAMEX -s XppEndstation.0:Jungfrau.0 --nrecs 3 --nrecs1 2 -o work
         """
         if is_turned_off(self.turn_off): return
@@ -309,7 +309,7 @@ class test_D04_jungfrau1m(unittest.TestCase):
 
     def test_04_jungfrau_deploy_constants(self):
         """- test command epix10ka_deploy_constants
-           FNAMEX = /sdf/home/d/dubrovin/LCLS/con-py3/data_test/xtc/data-xppl1001021-r0023-3events-jungfrau1m.xtc
+           FNAMEX = /tmp/data_test/xtc/data-xppl1001021-r0023-3events-jungfrau1m.xtc
            jungfrau_deploy_constants -d XppEndstation.0:Jungfrau.0 -e xppl1001021 -r23 -D -x FNAMEX -o work -c calib -E
         """
         if is_turned_off(self.turn_off): return

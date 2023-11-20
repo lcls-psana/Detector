@@ -7,7 +7,7 @@ from time import time
 from Detector.GlobalUtils import info_command_line_parameters
 from Detector.UtilsEpix10kaCalib import deploy_constants, CALIB_REPO_EPIX10KA, DIR_LOG_AT_START, GAIN_MODES_IN
 import Detector.UtilsLogging as ul
-from data_test.absolute_path import path_to_xtc_test_file
+from data_test_access.absolute_path import path_to_xtc_test_file
 PATH_TO_XTC = path_to_xtc_test_file(fname='data-xcsl1004621-r0010-3events-epix10kaquad.xtc')
 logger = ul.logging.getLogger(__name__)
 SCRNAME = sys.argv[0].split('/')[-1]

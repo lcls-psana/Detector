@@ -7,6 +7,15 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-77
+2023-11-20 Mikhail Dubrovin
+- replace data_test.absolute_path with data_test_access...
+modified:   app/epix10ka_deploy_constants
+modified:   app/epix10ka_pedestals_calibration
+modified:   app/jungfrau_dark_proc
+modified:   app/jungfrau_deploy_constants
+modified:   test/test_detector
+
 Tag: V02-00-76
 2023-11-09 Mikhail Dubrovin
 - app/jungfrau_dark_proc, app/jungfrau_deploy_constants
