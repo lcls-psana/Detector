@@ -8,7 +8,7 @@ See:
 Created on 2022-02-16 by Mikhail Dubrovin
 """
 
-from __future__ import print_function
+#from __future__ import print_function
 
 import os
 os.environ['LIBGL_ALWAYS_INDIRECT'] = '1' # get rid of libGL error: unable to load driver: swrast_dri.so
@@ -173,7 +173,7 @@ logger.info('experiment %s' % env.experiment())
 logger.info('run        %d' % runnum)
 logger.info('dataset    %s' % (dsname))
 logger.info('detname    %s' % (detname))
-logger.info('calibDir:  %s' % env.calibDir().replace('//','/')
+logger.info('calibDir:  %s' % env.calibDir().replace('//','/'))
 
 print('TIME Detector initialization time = %.6f sec' % (time()-t0_sec))
 t0_sec = time()
