@@ -138,7 +138,7 @@ class test_D02_epix100a(unittest.TestCase):
         self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix100a')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
-        self.turn_off = False
+        self.turn_off = True
 
     def tearDown(self):
         """
@@ -170,13 +170,16 @@ class test_D02_epix100a(unittest.TestCase):
         cmd = 'calibrun -e xppn4116 -r 137 -x %s -d EPIX100A -c %s -w work -P -D --nrecs1 2 -n 4 -m 4' % (self.fname_xtc, self.dircalib)
         #cmd = 'ls -l'
         _stdout('\nsubmit in subprocess command:\n  %s\n' % cmd)
+        print('submit in subprocess command:\n  %s\n' % cmd)
         err = subproc_in_log(cmd.split(), self.logname, shell=False)
         assert err == 'subprocess is completed', 'error message from subprocess: %s' % err
-        _stdout('\nresponce: %s' % err)
+        #_stdout('\nresponce: %s' % err)
+        print('\nresponce: %s\n' % err)
         assert os.path.exists(fname_peds)
         peds = np.loadtxt(fname_peds, dtype=np.float32)
         s = info_ndarr(peds)
-        _stdout('\npedestals: %s' % s)
+        #_stdout('\npedestals: %s' % s)
+        print('pedestals: %s\n' % s)
         assert s == 'shape:(704, 768) size:540672 dtype:float32 [3862.  4052.  3975.  3992.5 3776. ...]'
 
     def test_04_epix100a_det_image(self):
