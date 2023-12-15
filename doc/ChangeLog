@@ -6,6 +6,11 @@ Package author: Mikhail Dubrovin
 
 Please describe any modifications that you made to the package in the
 reverse time order.
+
+Tag: V02-00-79
+2023-12-14 Mikhail Dubrovin
+- add pytest_detector.py with implementation for epix100a
+
 Tag: V02-00-78
 2023-12-13 Mikhail Dubrovin
 - test/test_detector - self.turn_off = True for test_D02_epix100a
