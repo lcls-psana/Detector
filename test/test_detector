@@ -138,7 +138,7 @@ class test_D02_epix100a(unittest.TestCase):
         self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix100a')
         psana.setOption('psana.calib-dir', self.dircalib)
         self.test_det_completed = False
-        self.turn_off = True
+        self.turn_off = False
 
     def tearDown(self):
         """
