@@ -43,7 +43,7 @@ print_comment(ntest)
 
 if ntest==0 : # random mask
     ones = np.ones_like(img, dtype=np.int16)
-    ranarr = random_standard(shape=img.shape, mu=0, sigma=1, dtype=np.float)
+    ranarr = random_standard(shape=img.shape, mu=0, sigma=1, dtype=float)
     mask = np.select((ranarr>-1,), (ones,), default=0)
     img = mask
 
@@ -58,7 +58,7 @@ elif ntest==2 : # common mode correction in columns common_mode_cols
 elif ntest==3 : # common mode correction in columns common_mode_cols
     hrows = img.shape[0]/2
     ones = np.ones_like(img, dtype=np.int16)
-    ranarr = random_standard(shape=img.shape, mu=0, sigma=1, dtype=np.float)
+    ranarr = random_standard(shape=img.shape, mu=0, sigma=1, dtype=float)
     mask = np.select((ranarr>-1,), (ones,), default=0)
     ucm.common_mode_cols(img[:hrows,:], mask=mask[:hrows,:], cormax=CORMAX)
 
@@ -75,7 +75,7 @@ elif ntest==6 : # common mode correction in rows common_mode_rows
     img = img.T
     hcols = img.shape[1]/2
     ones = np.ones_like(img, dtype=np.int16)
-    ranarr = random_standard(shape=img.shape, mu=0, sigma=1, dtype=np.float)
+    ranarr = random_standard(shape=img.shape, mu=0, sigma=1, dtype=float)
     mask = np.select((ranarr>-1,), (ones,), default=0)
     ucm.common_mode_rows(img[:,hcols:], mask=mask[:,hcols:], cormax=CORMAX)
 

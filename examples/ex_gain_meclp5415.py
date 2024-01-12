@@ -11,7 +11,7 @@ from Detector.GlobalUtils import print_ndarr
 def ex_01(tname) :
     import numpy as np
     sh=(704, 768)
-    arr = 1.001*np.ones(sh, dtype=np.float)
+    arr = 1.001*np.ones(sh, dtype=float)
     fname = '0-end.data'
     np.savetxt(fname, arr, fmt='%.3f')
     print('save file: %s' % fname)

@@ -235,13 +235,13 @@ class DataProc:
         logger.info("""Feature 2: dark mean in good range""")
         block_good = self.block[self.bool_good_frames,:] & self.databits
         logger.info(info_ndarr(block_good, 'block of good records:', last=5))
-        return np.mean(block_good, axis=0, dtype=np.float)
+        return np.mean(block_good, axis=0, dtype=float)
 
     def feature_03(self):
         logger.info("""Feature 3: dark RMS in good range""")
         block_good = self.block[self.bool_good_frames,:] & self.databits
         logger.info(info_ndarr(block_good, 'block of good records:', last=5))
-        return np.std(block_good, axis=0, dtype=np.float)
+        return np.std(block_good, axis=0, dtype=float)
 
     def feature_04(self):
         logger.info("""Feature 4: TBD""")
@@ -258,7 +258,7 @@ class DataProc:
         logger.debug('Feature 6: in frame %s window %s corners:\n %s\nNumber of corners: %d'%\
                      (str(frame.shape), str(self.shwind), str(corners), len(corners)))
 
-        residuals = np.zeros_like(frame, dtype=np.float)
+        residuals = np.zeros_like(frame, dtype=float)
         wr, wc = self.shwind
         for r,c in corners: # evaluate residuals to the plane fit in frame windows
             sl = np.s_[r:r+wr, c:c+wc]
@@ -276,7 +276,7 @@ class DataProc:
 
         ngframes = self.inds_good_frames.size
         shape_res = (ngframes,) + self.shape_fr
-        block_res = np.zeros(shape_res, dtype=np.float)
+        block_res = np.zeros(shape_res, dtype=float)
 
         for i, igood in enumerate(self.inds_good_frames):
             frame = self.block[igood,:] & self.databits

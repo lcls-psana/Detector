@@ -981,8 +981,8 @@ class PyDetectorAccess():
            % (nbrChannels, nbrSamples, sampInterval))
 
         shape = (nbrChannels, nbrSamples)
-        wf = np.zeros(shape, dtype=np.float)
-        wt = np.zeros(shape, dtype=np.float)
+        wf = np.zeros(shape, dtype=float)
+        wt = np.zeros(shape, dtype=float)
 
         for chan in range(nbrChannels):
             elem = d.data(chan)
@@ -1107,7 +1107,7 @@ class PyDetectorAccess():
             return self.gm
         else:
             f=float(gain-1.)
-            return np.array(self.gm,dtype=np.float) * f + 1
+            return np.array(self.gm,dtype=float) * f + 1
 
 
     def cspad2x2_gain_mask(self, gain=None):
@@ -1151,7 +1151,7 @@ class PyDetectorAccess():
             return self.gm
         else:
             f=float(gain-1.)
-            return np.array(self.gm,dtype=np.float) * f + 1
+            return np.array(self.gm,dtype=float) * f + 1
 
 
     def raw_data_cspad_v0(self, evt, env):
