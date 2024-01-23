@@ -561,6 +561,9 @@ def get_jungfrau_config_object(env, src):
 
     cfg = env.configStore()
 
+    o = cfg.get(_psana.Jungfrau.ConfigV4, src)
+    if o is not None: return o
+
     o = cfg.get(_psana.Jungfrau.ConfigV3, src)
     if o is not None: return o
 
@@ -642,6 +645,9 @@ def get_uxi_config_object(env, src):
     """get uxi config object
     """
     cfg = env.configStore()
+
+    o = cfg.get(_psana.Uxi.ConfigV3, src)
+    if o is not None: return o
 
     o = cfg.get(_psana.Uxi.ConfigV2, src)
     if o is not None: return o
