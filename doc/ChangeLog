@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-82
+2024-01-23 Daniel Damiani
+- src/DetectorTypes.py - set detector type for MFX-USB-ENCODER-01 to UsdUsbDetector
+- src/PyDataAccess.py - add support for Uxi ConfigV3 and Jungfrau ConfigV4
+
 Tag: V02-00-80
 2023-12-15 Mikhail Dubrovin
 test/test_detector - in class test_D02_epix100a self.turn_off = False - turn on main tests
