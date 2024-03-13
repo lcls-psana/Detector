@@ -26,14 +26,12 @@ If you use all or part of it, please give an appropriate acknowledgment.
 
 Created on 2017-10-03 by Mikhail Dubrovin
 """
-from __future__ import print_function
-#from __future__ import division
-
 
 import logging
 logger = logging.getLogger(__name__)
 
 import os
+import sys
 
 import numpy as np
 from time import time
@@ -50,15 +48,77 @@ BW3 = 0o140000 # 49152 or 3<<14
 MSK =  0x3fff # 16383 or (1<<14)-1 - 14-bit mask
 
 
-class Storage(object):
+class Storage():
     def __init__(self):
         #self.offs = None
-        self.arr1 = None
+        #self.arr1 = None
         self.mask = None
         self.gfac = {} # {detname:nda}
 
-
 store = Storage() # singleton
+
+
+class Cache():
+    """ Wrapper around dict {detname:DetCache} for cache of calibration constants.
+    """
+    def __init__(self):
+        self.calibcons = {}
+
+    def add_detcache(self, det, evt):
+        detname = string_from_source(det.source)
+        if isinstance(detname, str):
+            o = self.calibcons[detname] = DetCache(det, evt)
+            return o
+        return None
+
+    def detcache_for_detname(self, detname):
+        return self.calibcons.get(detname, None)
+
+    def detcache_for_detobject(self, det):
+        detname = string_from_source(det.source)
+        return self.detcache_for_detname(detname)
+
+cache = Cache() # singleton
+
+
+class DetCache():
+    """ Cash of calibration constants for jungfrau.
+    """
+    def __init__(self, det, evt):
+        self.poff = None
+        #self.arr1 = None
+        self.gfac = None
+        self.mask = None
+        self.outa = None
+        self.cmps  = None
+        self.isset = False
+        self.add_calibcons(det, evt)
+
+    def add_calibcons(self, det, evt):
+
+        self.detname = string_from_source(det.source)
+
+        #arr  = np.array(det.raw(evt), dtype=np.float32)
+        peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 512, 1024) dtype:float32
+        if peds is None: return
+
+        gain = det.gain(evt)      # - 4d gains
+        offs = det.offset(evt)    # - 4d offset
+
+        if gain is None: gain = np.ones_like(peds)  # - 4d gains
+        if offs is None: offs = np.zeros_like(peds) # - 4d gains
+
+        self.poff = peds + offs
+        self.gfac = divide_protected(np.ones_like(peds), gain)
+        #self.arr1 = np.ones(peds.shape[1:], dtype=np.int8)
+        self.outa = np.zeros(peds.shape[1:], dtype=np.float32)
+
+        #self.cmps  = det.common_mode(evt) if cmpars is None else cmpars
+        #self.mask = det.mask_total(evt, **kwa)
+
+        self.isset = True
+
+
 
 
 def map_gain_range_index(det, evt, **kwa):
@@ -132,7 +192,7 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     offs = det.offset(evt)    # - 4d offset
     detname = string_from_source(det.source)
 
-    cmp  = det.common_mode(evt) if cmpars is None else cmpars
+    cmps  = det.common_mode(evt) if cmpars is None else cmpars
     if gain is None: gain = np.ones_like(peds)  # - 4d gains
     if offs is None: offs = np.zeros_like(peds) # - 4d gains
 
@@ -141,9 +201,9 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     if gfac is None:
        gfac = divide_protected(np.ones_like(peds), gain)
        store.gfac[detname] = gfac
-       store.arr1 = np.ones_like(arr, dtype=np.int8)
+       #store.arr1 = np.ones_like(arr, dtype=np.int8)
 
-    #print_ndarr(cmp,  'XXX: common mode parameters ')
+    #print_ndarr(cmps,  'XXX: common mode parameters ')
     #print_ndarr(arr,  'XXX: calib_jungfrau arr ')
     #print_ndarr(peds, 'XXX: calib_jungfrau peds')
     #print_ndarr(gain, 'XXX: calib_jungfrau gain')
@@ -191,9 +251,9 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
        store.mask = det.mask_total(evt, **kwa)
     mask = store.mask
 
-    if cmp is not None:
-      mode, cormax = int(cmp[1]), cmp[2]
-      npixmin = cmp[3] if len(cmp)>3 else 10
+    if cmps is not None:
+      mode, cormax = int(cmps[1]), cmps[2]
+      npixmin = cmps[3] if len(cmps)>3 else 10
       if mode>0:
         #arr1 = store.arr1
         #grhg = np.select((gr0,  gr1), (arr1, arr1), default=0)
@@ -218,6 +278,148 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
         logger.debug('TIME: common-mode correction time = %.6f sec' % (time()-t0_sec_cm))
 
     return arrf * factor if mask is None else arrf * factor * mask # gain correction
+
+
+
+
+
+
+
+def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
+    """
+    v2 - improving performance, reduce time and memory consumption, use peds-offset constants
+    Returns calibrated jungfrau data
+
+    - gets constants
+    - gets raw data
+    - evaluates (code - pedestal - offset)
+    - applys common mode correction if turned on
+    - apply gain factor
+
+    Parameters
+
+    - det (psana.Detector) - Detector object
+    - evt (psana.Event)    - Event object
+    - cmpars (tuple) - common mode parameters
+        - cmpars[0] - algorithm # 7-for jungfrau
+        - cmpars[1] - control bit-word 1-in rows, 2-in columns
+        - cmpars[2] - maximal applied correction
+    - **kwa - used here and passed to det.mask_v2 or det.mask_comb
+      - nda_raw - if not None, substitutes evt.raw()
+      - mbits - DEPRECATED parameter of the det.mask_comb(...)
+      - mask - user defined mask passed as optional parameter
+    """
+
+    src = det.source # - src (psana.Source)   - Source object
+
+    nda_raw = kwa.get('nda_raw', None)
+    loop_segs = kwa.get('loop_segs', True)
+    arr = det.raw(evt) if nda_raw is None else nda_raw # shape:(<npanels>, 512, 1024) dtype:uint16
+    if arr is None: return None
+
+    detname = string_from_source(det.source)
+    #print('XXX type(detname):', type(detname))
+    odc = cache.detcache_for_detname(detname)
+    first_entry = odc is None
+    if first_entry:
+       odc = cache.add_detcache(det, evt)
+       odc.cmps = det.common_mode(evt) if cmpars is None else cmpars
+       odc.mask = det.mask_total(evt, **kwa)
+
+    poff = odc.poff # 4d pedestals + offset shape:(3, 1, 512, 1024) dtype:float32
+    gfac = odc.gfac # 4d gain factors evaluated form gains
+    mask = odc.mask
+    outa = odc.outa
+    cmps = odc.cmps
+
+    if first_entry:
+        logger.debug('\n  ====================== det.name: %s' % det.name\
+                   +'\n  detname from source: %s' % string_from_source(det.source)\
+                   +info_ndarr(arr,  '\n  calib_jungfrau_v2 first entry:\n    arr ')\
+                   +info_ndarr(poff, '\n    peds+off')\
+                   +info_ndarr(gfac, '\n    gfac')\
+                   +info_ndarr(mask, '\n    mask')\
+                   +info_ndarr(outa, '\n    outa')\
+                   +info_ndarr(cmps, '\n    common mode parameters ')
+                   +'\n    loop over segments: %s' % loop_segs)
+
+    if loop_segs:
+      nsegs = arr.shape[0]
+      shseg = arr.shape[-2:] # (512, 1024)
+      for i in range(nsegs):
+        arr1  = arr[i,:]
+        mask1 = mask[i,:]
+        gfac1 = gfac[:,i,:,:]
+        poff1 = poff[:,i,:,:]
+        arr1.shape  = (1,) + shseg
+        mask1.shape = (1,) + shseg
+        gfac1.shape = (3,1,) + shseg
+        poff1.shape = (3,1,) + shseg
+        #print(info_ndarr(arr1,  'XXX  arr1 '))
+        #print(info_ndarr(poff1, 'XXX  poff1 '))
+        out1 = calib_jungfrau_single_panel(arr1, gfac1, poff1, mask1, cmps)
+        #print(info_ndarr(out1, 'XXX  out1 '))
+        outa[i,:] = out1[0,:]
+      #print(info_ndarr(outa, 'XXX  outa '))
+      #sys.exit('TEST EXIT')
+      return outa
+    else:
+      return calib_jungfrau_single_panel(arr, gfac, poff, mask, cmps)
+
+
+def calib_jungfrau_single_panel(arr, gfac, poff, mask, cmps):
+    """ example for 8-panel detector
+    arr:  shape:(8, 512, 1024) size:4194304 dtype:uint16 [2906 2945 2813 2861 3093...]
+    poff: shape:(3, 8, 512, 1024) size:12582912 dtype:float32 [2922.283 2938.098 2827.207 2855.296 3080.415...]
+    gfac: shape:(3, 8, 512, 1024) size:12582912 dtype:float32 [0.02490437 0.02543429 0.02541406 0.02539831 0.02544083...]
+    mask: shape:(8, 512, 1024) size:4194304 dtype:uint8 [1 1 1 1 1...]
+    cmps: shape:(16,) size:16 dtype:float64 [  7.   1. 100.   0.   0....]
+    """
+
+    # Define bool arrays of ranges
+    gr0 = arr <  BW1              # 490 us
+    gr1 =(arr >= BW1) & (arr<BW2) # 714 us
+    gr2 = arr >= BW3              # 400 us
+
+    factor = np.select((gr0, gr1, gr2), (gfac[0,:], gfac[1,:], gfac[2,:]), default=1) # 2msec
+    pedoff = np.select((gr0, gr1, gr2), (poff[0,:], poff[1,:], poff[2,:]), default=0)
+
+    # Subtract offset-corrected pedestals
+    arrf = np.array(arr & MSK, dtype=np.float32)
+    arrf -= pedoff
+
+    if cmps is not None:
+      mode, cormax = int(cmps[1]), cmps[2]
+      npixmin = cmps[3] if len(cmps)>3 else 10
+      if mode>0:
+        #arr1 = store.arr1
+        #grhg = np.select((gr0,  gr1), (arr1, arr1), default=0)
+        logger.debug(info_ndarr(gr0, 'gain group0'))
+        logger.debug(info_ndarr(mask, 'mask'))
+        t0_sec_cm = time()
+        gmask = np.bitwise_and(gr0, mask) if mask is not None else gr0
+        #sh = (nsegs, 512, 1024)
+        hrows = 256 #512/2
+        for s in range(arrf.shape[0]):
+          if mode & 4: # in banks: (512/2,1024/16) = (256,64) pixels # 100 ms
+            common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=16, cormax=cormax, npix_min=npixmin)
+            common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=16, cormax=cormax, npix_min=npixmin)
+
+          if mode & 1: # in rows per bank: 1024/16 = 64 pixels # 275 ms
+            common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=16, cormax=cormax, npix_min=npixmin)
+
+          if mode & 2: # in cols per bank: 512/2 = 256 pixels  # 290 ms
+            common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax, npix_min=npixmin)
+            common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax, npix_min=npixmin)
+
+        logger.debug('TIME: common-mode correction time = %.6f sec' % (time()-t0_sec_cm))
+
+    return arrf * factor if mask is None else arrf * factor * mask # gain correction
+
+
+
+
+
 
 
 def id_jungfrau_module(mco, fmt='%s-%s-%s'): # '%020d-%020d-%020d'
