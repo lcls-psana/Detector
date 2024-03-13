@@ -35,7 +35,8 @@ def test_dsname_detname_shape(kw):
     }[kw]
 
 
-FNAME_STATUS = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
+#FNAME_STATUS = '/cds/data/psdm/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
+FNAME_STATUS = '/sdf/data/lcls/ds/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndstation.0:Epix100a.1/status_extra/0-end.data'
 
 
 def test_status_extra(shape=(704, 768)):
@@ -208,16 +209,6 @@ def issue_2023_MM_DD():
     print('docstring:', eval(metname).__doc__)
 
 
-USAGE = '\n  python %s <test-name>' % SCRNAME\
-      + '\n  where test-name: '\
-      + '\n    0 - print usage'\
-      + '\n    1 - issue_2023_03_14 - status_as_mask for epix100a'\
-      + '\n    2 - issue_2023_03_23 - save_constants_in_repository for epix100a'\
-      + '\n    3 - issue_2023_03_28 - save_constants_in_repository for epix10kaquad'\
-      + '\n    4 - issue_2023_10_12 - access to test data from file for epix100a'\
-      + '\n    5 - issue_2023_10_18 - philip issue with uxi'\
-
-
 def argument_parser():
     from argparse import ArgumentParser
     d_tname = '0'
@@ -228,7 +219,7 @@ def argument_parser():
     h_dsname  = 'dataset name, default = %s' % d_dsname
     h_detname  = 'input ndarray source name, default = %s' % d_detname
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
-    parser = ArgumentParser(description='%s is a bunch of tests for annual issues' % SCRNAME, usage=USAGE)
+    parser = ArgumentParser(description='%s is a bunch of tests for annual issues' % SCRNAME, usage=USAGE())
     parser.add_argument('tname',            default=d_tname,    type=str,   help=h_tname)
     parser.add_argument('-d', '--dsname',   default=d_dsname,   type=str,   help=h_dsname)
     parser.add_argument('-s', '--detname',  default=d_detname,  type=str,   help=h_detname)
@@ -236,21 +227,31 @@ def argument_parser():
     return parser
 
 
-parser = argument_parser()
-args = parser.parse_args()
-basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', int_loglevel=None, str_loglevel=args.logmode)
+def USAGE():
+    import inspect
+    return '\n  %s <TNAME>\n' % sys.argv[0].split('/')[-1]\
+    + '\n'.join([s for s in inspect.getsource(selector).split('\n') if "TNAME in" in s])
 
 
-TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
-if   TNAME in  ('1',): issue_2023_03_14()
-elif TNAME in  ('2',): issue_2023_03_23()
-elif TNAME in  ('3',): issue_2023_03_28()
-elif TNAME in  ('4',): issue_2023_10_12()
-elif TNAME in  ('5',): issue_2023_10_18()
-else:
-    print(USAGE)
-    sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
+def selector():
+    parser = argument_parser()
+    args = parser.parse_args()
+    basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', int_loglevel=None, str_loglevel=args.logmode)
 
-sys.exit('END OF TEST %s'%TNAME)
 
+    TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
+    if   TNAME in  ('1',): issue_2023_03_14() # status_as_mask for epix100a
+    elif TNAME in  ('2',): issue_2023_03_23() # save_constants_in_repository for epix100a
+    elif TNAME in  ('3',): issue_2023_03_28() # save_constants_in_repository for epix10kaquad
+    elif TNAME in  ('4',): issue_2023_10_12() # access to test data from file for epix100a
+    elif TNAME in  ('5',): issue_2023_10_18() # philip issue with uxi
+    else:
+        print(USAGE())
+        sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
+
+    sys.exit('END OF TEST %s'%TNAME)
+
+
+if __name__ == "__main__":
+    selector()
 # EOF
