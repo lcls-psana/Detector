@@ -308,6 +308,10 @@ class PyDetectorAccess():
         return self.cpstore(par).pixel_offset()
 
 
+    def pixel_offsetpeds(self, par):
+        return self.cpstore(par).pixel_offset()
+
+
     def pixel_mask(self, par):
         return self.cpstore(par).pixel_mask()
 
