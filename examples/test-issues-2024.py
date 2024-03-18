@@ -43,35 +43,48 @@ FNAME_STATUS = '/sdf/data/lcls/ds/XPP/xpptut15/calib/Epix100a::CalibV1/XcsEndsta
 
 def issue_2024_03_08():
     """ISSUE: Vincent: det.image does not pass parameters to det.calib
-       REASON:
+              Esposito, Vincent <espov@slac.stanford.edu>
+              Dubrovin, Mikhail, Damiani, Daniel S.
+              Hi Mikhail,
+              Here is an example of the image method not passing any argument to calib:
+              Jungfrau1M in exp = 'xpply2121'; run = 400
+              Basically what I see is in the AreaDetector file(
+              /sdf/group/lcls/ds/ana/sw/conda1/inst/envs/ana-4.0.59-py3/lib/python3.9/site-packages/Detector/AreaDetector.py)
+              The way the image method handles calib is on line 1625: nda = nda_in if nda_in is not None else self.calib(evt),
+              where there is no options to pass extra kwargs to the calib call.
+              I think this should be a relatively easy thing to implement, but I am maybe overlooking something.
+              Cheers,
+              Vincent
+       REASON: **kwargs
        FIXED:
-
-       Esposito, Vincent <espov@slac.stanford.edu>
-       Dubrovin, Mikhail, Damiani, Daniel S.
-       Hi Mikhail,
-       Here is an example of the image method not passing any argument to calib:
-       Jungfrau1M in exp = 'xpply2121'; run = 400
-       Basically what I see is in the AreaDetector file(
-       /sdf/group/lcls/ds/ana/sw/conda1/inst/envs/ana-4.0.59-py3/lib/python3.9/site-packages/Detector/AreaDetector.py)
-       The way the image method handles calib is on line 1625: nda = nda_in if nda_in is not None else self.calib(evt),
-       where there is no options to pass extra kwargs to the calib call.
-       I think this should be a relatively easy thing to implement, but I am maybe overlooking something.
-       Cheers,
-       Vincent
 
        datinfo -e xpply2121 -r400 -d jungfrau1M  # XppEndstation.0:Jungfrau.0
     """
-    import Detector.GlobalUtils as gu
     import psana
+    import Detector.GlobalUtils as gu
+    import Detector.UtilsGraphics as ug
+    flimg = None
     ds = psana.DataSource('exp=xpply2121:run=400')
     det = psana.Detector('XppEndstation.0:Jungfrau.0')
     for i, evt in enumerate(ds.events()):
-        if i > 10: break
+        if i > 2: break
         print('Ev %03d' % i)
         print(gu.info_ndarr(det.raw(evt),   '  det.raw', last=10))
-        print(gu.info_ndarr(det.calib(evt), '  det.calib', last=5))
-        print(gu.info_ndarr(det.image(evt), '  det.image', last=5))
+        #clb = det.calib(evt)
+        #img = det.image(evt, nda_in=clb)  ### <<< testing this line for **kwargs passed inside to calib
+        #img = det.image(evt, cmpars=(7,7,200,10), edges=True, mrows=10, mcols=10)  ### <<< testing this line for **kwargs passed inside to calib
+        img = det.image(evt, nda_in=None, cmpars=(7,0,200,10), edges=True, mrows=10, mcols=10,
+                        central=True, wcentral=5)  ### <<< testing this line for **kwargs passed inside to calib
+        #print(gu.info_ndarr(clb, '  det.calib', last=5))
+        print(gu.info_ndarr(img, '  det.image', last=5))
 
+        if flimg is None:
+            flimg = ug.fleximage(img, arr=None, h_in=8, nneg=1, npos=3)
+        else:
+            flimg.update(img, arr=None)
+        ug.gr.show(mode='DO NOT HOLD')
+        #break
+    ug.gr.show()
 
 
 def issue_2024_03_12():
@@ -112,7 +125,7 @@ def argument_parser():
     d_tname = '0'
     d_dsname = 'exp=xpplw3319:run=293'  # None
     d_detname = 'epix_alc3'  # None
-    d_logmode = 'INFO'
+    d_logmode = 'INFO' # 'DEBUG'  # 'INFO'
     h_tname  = 'test name, usually numeric number, default = %s' % d_tname
     h_dsname  = 'dataset name, default = %s' % d_dsname
     h_detname  = 'input ndarray source name, default = %s' % d_detname
@@ -135,7 +148,7 @@ def selector():
     parser = argument_parser()
     args = parser.parse_args()
     basic_config(format='[%(levelname).1s] L%(lineno)04d: %(filename)s %(message)s', int_loglevel=None, str_loglevel=args.logmode)
-
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING) # get rid of messages
 
     TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
     if   TNAME in  ('1',): issue_2024_03_08() # Vincent: det.image does not pass parameters to det.calib
