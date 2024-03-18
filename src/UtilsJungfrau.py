@@ -64,10 +64,10 @@ class Cache():
     def __init__(self):
         self.calibcons = {}
 
-    def add_detcache(self, det, evt):
+    def add_detcache(self, det, evt, **kwa):
         detname = string_from_source(det.source)
         if isinstance(detname, str):
-            o = self.calibcons[detname] = DetCache(det, evt)
+            o = self.calibcons[detname] = DetCache(det, evt, **kwa)
             return o
         return None
 
@@ -84,15 +84,19 @@ cache = Cache() # singleton
 class DetCache():
     """ Cash of calibration constants for jungfrau.
     """
-    def __init__(self, det, evt):
+    def __init__(self, det, evt, **kwa):
         self.poff = None
         #self.arr1 = None
+        self.kwa = kwa
         self.gfac = None
         self.mask = None
         self.outa = None
         self.cmps  = None
         self.isset = False
         self.add_calibcons(det, evt)
+
+    def kwargs_are_the_same(self, **kwa):
+        return self.kwa == kwa
 
     def add_calibcons(self, det, evt):
 
@@ -154,6 +158,8 @@ def event_constants(cons, grmaps, default=0):
 
 def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     """
+    DEPRECATED, use calib_jungfrau_v2 with better caching of combined calib constats and less memory consumption
+
     Returns calibrated jungfrau data
 
     - gets constants
@@ -322,9 +328,18 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
     odc = cache.detcache_for_detname(detname)
     first_entry = odc is None
     if first_entry:
-       odc = cache.add_detcache(det, evt)
+       #print('  XXX before det.mask_total **kwa:', kwa)
+       odc = cache.add_detcache(det, evt, **kwa)
        odc.cmps = det.common_mode(evt) if cmpars is None else cmpars
        odc.mask = det.mask_total(evt, **kwa)
+
+    #t0_sec = time()
+    if kwa != odc.kwa:
+        logger.warning('IGNORED ATTEMPT to call det.calib/image with different **kwargs (due to caching)'\
+                       + '\n  **kwargs at first entry: %s' % str(odc.kwa)\
+                       + '\n  **kwargs at this entry: %s' % str(kwa)\
+                       + '\n  MUST BE FFIXED - please consider to use the same **kwargs during the run in all calls to det.calib/image.')
+    #print('XXX time to check **kwargs = %.6f sec' % (time()-t0_sec)) # ~3us
 
     poff = odc.poff # 4d pedestals + offset shape:(3, 1, 512, 1024) dtype:float32
     gfac = odc.gfac # 4d gain factors evaluated form gains
