@@ -224,7 +224,7 @@ from   PSCalib.GeometryObject import data2x2ToTwo2x1, two2x1ToData2x2
 from   Detector.PyDetectorAccess import PyDetectorAccess
 from   Detector.GlobalUtils import info_ndarr
 
-from Detector.UtilsJungfrau import calib_jungfrau
+from Detector.UtilsJungfrau import calib_jungfrau_v2 # calib_jungfrau
 from Detector.UtilsEpix10ka import calib_epix10ka_any
 
 DTYPE_MASK = gu.dic_calib_type_to_dtype[gu.PIXEL_MASK]
@@ -1027,7 +1027,7 @@ class AreaDetector():
 
         if self.is_jungfrau():
             kwargs['mbits']=mbits
-            return calib_jungfrau(self, evt, cmpars, **kwargs)
+            return calib_jungfrau_v2(self, evt, cmpars, **kwargs)
         if self.is_epix10ka_any():
             kwargs['mbits']=mbits
             return calib_epix10ka_any(self, evt, cmpars, **kwargs)
@@ -1606,13 +1606,13 @@ class AreaDetector():
         return self.pyda.image_yaxis(par, pix_scale_size_um, y0_off_pix)
 
 
-    def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False):
+    def image(self, evt, nda_in=None, pix_scale_size_um=None, xy0_off_pix=None, do_update=False, **kwargs):
         """Returns 2-d array of intensities for imaging.
 
            Parameters
 
            - evt               : psana.Event() - psana event object.
-           - nda_in            : input n-d array which needs to be converted in image; default - use calib methood.
+           - nda_in            : input n-d array which needs to be converted to image; default - use calib methood.
            - pix_scale_size_um : float - pixel scale size [um] which is used to convert coordinate in index.
            - xy0_off_pix       : list of floats - image (x,y) origin offset in order to make all indexes positively defined.
            - do_update         : bool - force to update cached array.
@@ -1622,7 +1622,31 @@ class AreaDetector():
            - np.array - 2-d array of intensities for imaging.
         """
         rnum = self.runnum(evt)
-        nda = nda_in if nda_in is not None else self.calib(evt)
+
+        nda = nda_in if nda_in is not None else self.calib(evt, **kwargs)
+
+#        nda = nda_in if nda_in is not None else\
+#              self.calib(evt, **{
+#                'cmpars': kwargs.get('cmpars', None),         # common mode parameters
+#                'mbits' : kwargs.get('mbits', None),          # deprecated, by default mask_v2 is used with pars as below
+#                'status'    : kwargs.get('status', True),     # mask from pixel_status constants
+#                    'mstcode'   : kwargs.get('mstcode', 0xffff),       # pixel_status bits to use in mask
+#                    'mstextra'   : kwargs.get('mstextra', (1<<64)-1),  # status_extra bits to use in mask
+#                    'mstdata'   : kwargs.get('mstdata', (1<<64)-1),    # status_data bits to use in mask
+#                    'indexes'   : kwargs.get('indexes', (0,1,2,3,4)),  # list of gain range indexes to merge for epix10ka only
+#                'unbond'    : kwargs.get('unbond', False),    # mask of unbond pixels for cspad 2x1 panels only
+#                'neighbors' : kwargs.get('neighbors', False), # mask of neighbors of all bad pixels
+#                    'rad'   : kwargs.get('rad', 5),           # radial parameter of masked region
+#                    'ptrn'  : kwargs.get('ptrn', 'r'),        # 'r'-rhombus, 'c'-circle, othervise square region around each bad pixel
+#                'edges'     : kwargs.get('edges', False),     # mask edge rows and columns of each panel
+#                    'mrows' : kwargs.get('mrows', 1),         # number of masked edge rows
+#                    'mcols' : kwargs.get('mcols', 1),         # number of masked edge columns
+#                'central'   : kwargs.get('central', False),   # mask central rows and columns of each panel consisting of ASICS
+#                    'wcentral' : kwargs.get('wcentral', 1),   # number of masked central rows and columns in the segment for cspad2x1, epix100, epix10ka, jungfrau
+#                'calib'     : kwargs.get('calib', False),     # apply user's defined mask from pixel_mask constants
+#              })
+
+        #print(info_ndarr(nda, '  XXX in image() after det.calib()', last=5))
 
         if nda is None: return None
 
