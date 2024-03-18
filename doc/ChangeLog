@@ -9,10 +9,11 @@ reverse time order.
 
 Tag: V02-00-83
 2024-03-18 Mikhail Dubrovin
-- examples/test-issues-2024.py - update issue_2024_03_08,12
-- src/AreaDetector.py - add **kwargs to det.imagee, pass them to det.calib
-- src/UtilsGraphics.py - update docstring in the file head, remove comments
-- src/UtilsJungfrau.py - save self.kwa in class DetCache, in calib_jungfrau_v2 add warning if kwargs havee changed
+- add **kwargs to det.image and pass them to det.calib, add warning if the cashed kwargs have changed
+  - examples/test-issues-2024.py - update issue_2024_03_08,12
+  - src/AreaDetector.py - add **kwargs to det.imagee, pass them to det.calib
+  - src/UtilsGraphics.py - update docstring in the file head, remove comments
+  - src/UtilsJungfrau.py - save self.kwa in class DetCache, in calib_jungfrau_v2 add warning if kwargs havee changed
 
 2024-03-12 Mikhail Dubrovin
   - examples/test-issues-2023.py - auto-generate USAGE
