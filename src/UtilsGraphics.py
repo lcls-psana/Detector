@@ -2,11 +2,11 @@
 """
     Wrapper for graphical utils.
 
-    #from psana.psana.detector.UtilsGraphics import *
-    #from psana.psana.detector.UtilsGraphics import gr, fleximage, arr_median_limits
+    #from Detector.UtilsGraphics import *
+    from Detector.UtilsGraphics import gr, fleximage, arr_median_limits
 
-    img = det.raw.image(evt)
-    arr = det.raw.calib(evt)
+    img = det.image(evt)
+    arr = det.calib(evt)
     amin, amax = arr_median_limits(arr, nneg=1, npos=3)
 
     flimg = fleximage(img, arr=arr, h_in=8, nneg=1, npos=3)
@@ -20,10 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import numpy as np
-#import psana.pyalgos.generic.Graphics as gr
-#import pyimgalgos.GlobalGraphics as gr
 import pyimgalgos.Graphics as gr
-#from psana.pyalgos.generic.NDArrUtils import info_ndarr
 from Detector.GlobalUtils import info_ndarr
 
 def arr_median_limits(arr, amin=None, amax=None, nneg=None, npos=None, fraclo=0.01, frachi=0.99):
