@@ -732,12 +732,12 @@ class DarkProc():
 
         #0/1/2/4/8/16/32 for good/hot-rms/cold-rms/saturated/cold/average above limit/average below limit,
         arr_sta = np.zeros(arr_av1.shape, dtype=np.uint64)
-        arr_sta += arr_sta_rms_hi    # hot rms
-        arr_sta += arr_sta_rms_lo*2  # cold rms
-        arr_sta += arr_sta_int_hi*4  # satturated
-        arr_sta += arr_sta_int_lo*8  # cold
-        arr_sta += arr_sta_ave_hi*16 # too large average
-        arr_sta += arr_sta_ave_lo*32 # too small average
+        arr_sta += arr_sta_rms_hi.astype(np.uint64)    # hot rms
+        arr_sta += arr_sta_rms_lo.astype(np.uint64)*2  # cold rms
+        arr_sta += arr_sta_int_hi.astype(np.uint64)*4  # satturated
+        arr_sta += arr_sta_int_lo.astype(np.uint64)*8  # cold
+        arr_sta += arr_sta_ave_hi.astype(np.uint64)*16 # too large average
+        arr_sta += arr_sta_ave_lo.astype(np.uint64)*32 # too small average
 
         self.arr_av1 = arr_av1
         self.arr_rms = arr_rms
