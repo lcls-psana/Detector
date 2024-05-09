@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag V02-00-84
+2024-05-09 Daniel Damiani
+- src/DetectorTypes.py - set detector type for HXX-DG1-BMMON-01 to DdlDetector
+
 Tag: V02-00-83
 2024-03-18 Mikhail Dubrovin
 - add **kwargs to det.image and pass them to det.calib, add warning if the cashed kwargs have changed
