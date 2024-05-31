@@ -26,6 +26,6 @@ Import('*')
 #
 #standardSConscript()
 #standardSConscript(PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref", CCFLAGS="-std=gnu++11")
-standardSConscript(UTESTS=['test_detector', 'test_unittest_sample'], PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref", CCFLAGS="-std=gnu++11")
+standardSConscript(UTESTS=['unittest_detector', 'test_unittest_sample'], PYEXTMOD="detector_ext", DOCGEN="doxy-all pyana-ref", CCFLAGS="-std=gnu++11")
 
 # EOF
