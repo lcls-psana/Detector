@@ -110,6 +110,52 @@ def issue_2024_03_12():
         #print(gu.info_ndarr(det.image(evt), '  det.image', last=5))
 
 
+def issue_2024_05_16():
+    """ISSUE: test of epix10ka2m scaling
+       REASON:
+       FIXED:
+       datinfo -e xcsl1030422 -r 237 -d XcsEndstation.0:Epix10ka2M.0
+    """
+    import psana
+    import Detector.GlobalUtils as gu
+    import Detector.UtilsGraphics as ug
+    flimg = None
+    ds = psana.DataSource('exp=xcsl1030422:run=237')
+    det = psana.Detector('XcsEndstation.0:Epix10ka2M.0')
+    for i, evt in enumerate(ds.events()):
+        if i > 10: break
+        print('Ev %03d' % i)
+        print(gu.info_ndarr(det.raw(evt),   '  det.raw', last=10))
+        clb = det.calib(evt)
+        img = det.image(evt, nda_in=clb, cmpars=(7,0,200,10), edges=True, mrows=10, mcols=10,
+                        central=True, wcentral=5)
+        print(gu.info_ndarr(clb, '  det.calib', last=5))
+        print(gu.info_ndarr(img, '  det.image', last=5))
+
+        if flimg is None:
+            flimg = ug.fleximage(img, arr=None, h_in=8, nneg=1, npos=3)
+        else:
+            flimg.update(img, arr=None)
+        ug.gr.show(mode='DO NOT HOLD')
+        #break
+    ug.gr.show()
+
+
+def issue_2024_05_18():
+    """ISSUE: Silke: jungfrau det.caliib does not work in ana-4.0.61, works in ana-4.0.60
+       REASON:
+       FIXED:
+       datinfo -e cxilx7422 -r 101 -d jungfrau4M # WORKS in ana-4.0.61 and ana-4.0.60
+    """
+    import psana
+    ds = psana.DataSource('exp=cxilx7422:run=101')
+    det = psana.Detector('jungfrau4M')
+    evt = next(ds.events())
+    clb = det.calib(evt, cmpars=(7,0,10), mbits=0) # .shape
+    import Detector.GlobalUtils as gu
+    print(gu.info_ndarr(clb, 'det.calib'))  #last=5
+
+
 def issue_2024_MM_DD():
     """ISSUE:
        REASON:
@@ -153,6 +199,8 @@ def selector():
     TNAME = args.tname  # sys.argv[1] if len(sys.argv)>1 else '0'
     if   TNAME in  ('1',): issue_2024_03_08() # Vincent: det.image does not pass parameters to det.calib
     elif TNAME in  ('2',): issue_2024_03_12() # test det.calib > new calib_jungfrau_v2
+    elif TNAME in  ('3',): issue_2024_05_16() # test of epix10ka2m scaling
+    elif TNAME in  ('4',): issue_2024_05_18() # Silke: jungfrau det.caliib does not work in ana-4.0.61, works in ana-4.0.60
     else:
         print(USAGE())
         sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
