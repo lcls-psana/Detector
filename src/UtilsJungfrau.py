@@ -286,11 +286,6 @@ def calib_jungfrau(det, evt, cmpars=(7,3,200,10), **kwa):
     return arrf * factor if mask is None else arrf * factor * mask # gain correction
 
 
-
-
-
-
-
 def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
     """
     v2 - improving performance, reduce time and memory consumption, use peds-offset constants
@@ -332,6 +327,7 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
        odc = cache.add_detcache(det, evt, **kwa)
        odc.cmps = det.common_mode(evt) if cmpars is None else cmpars
        odc.mask = det.mask_total(evt, **kwa)
+       #print('  XXX after det.mask_total **kwa:', odc.mask)
 
     #t0_sec = time()
     if kwa != odc.kwa:
@@ -363,13 +359,13 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
       shseg = arr.shape[-2:] # (512, 1024)
       for i in range(nsegs):
         arr1  = arr[i,:]
-        mask1 = mask[i,:]
-        gfac1 = gfac[:,i,:,:]
-        poff1 = poff[:,i,:,:]
+        mask1 = None if mask is None else mask[i,:]
+        gfac1 = None if gfac is None else gfac[:,i,:,:]
+        poff1 = None if poff is None else poff[:,i,:,:]
         arr1.shape  = (1,) + shseg
-        mask1.shape = (1,) + shseg
-        gfac1.shape = (3,1,) + shseg
-        poff1.shape = (3,1,) + shseg
+        if mask1 is not None: mask1.shape = (1,) + shseg
+        if gfac1 is not None: gfac1.shape = (3,1,) + shseg
+        if poff1 is not None: poff1.shape = (3,1,) + shseg
         #print(info_ndarr(arr1,  'XXX  arr1 '))
         #print(info_ndarr(poff1, 'XXX  poff1 '))
         out1 = calib_jungfrau_single_panel(arr1, gfac1, poff1, mask1, cmps)
@@ -430,11 +426,6 @@ def calib_jungfrau_single_panel(arr, gfac, poff, mask, cmps):
         logger.debug('TIME: common-mode correction time = %.6f sec' % (time()-t0_sec_cm))
 
     return arrf * factor if mask is None else arrf * factor * mask # gain correction
-
-
-
-
-
 
 
 def id_jungfrau_module(mco, fmt='%s-%s-%s'): # '%020d-%020d-%020d'
