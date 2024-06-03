@@ -7,7 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
-Tag V02-00-84
+Tag: V02-00-85
+2024-06-03 Mikhail Dubrovin
+ - rename test_detector to unittest_detector
+ - src/UtilsJungfrau.py - in calib_jungfrau_v2 add protection for None - fixing Silke's issue
+ - examples/test-issues-2024.py - add issue_2024_05_16, 18
+ - test/pytest_detector.py - add test for junngfrau calib with non-default parameters for Silke
+
+Tag: V02-00-84
 2024-05-09 Daniel Damiani
 - src/DetectorTypes.py - set detector type for HXX-DG1-BMMON-01 to DdlDetector
 
