@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-86
+2024-06-05 Mikhail Dubrovin
+- in det_calib for jungfrau use dataset = self.fname_xtc  in stead of debugging 'exp=cxilx7422:run=101'
+
 Tag: V02-00-85
 2024-06-03 Mikhail Dubrovin
  - rename test_detector to unittest_detector

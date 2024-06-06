@@ -1,6 +1,9 @@
 """
    Usage::
    pytest Detector/test/pytest_detector.py
+
+   # for debugging
+   python Detector/test/pytest_detector.py
 """
 import sys
 import psana
@@ -204,9 +207,9 @@ class det_jungfrau():
     def det_calib(self):
         """- test command calib.calib for jungfrau"""
         kwa={'mbits':0}
-        dataset = 'exp=cxilx7422:run=101' # self.fname_xtc
-        #pattern = 'shape:(8, 512, 1024) size:4194304 dtype:float32 [-0.07745222  0.36955786  0.00477444  0.02458291 -0.57804275...]'
-        pattern = 'shape:(8, 512, 1024) size:4194304 dtype:float32 [-0.0747131   0.38151434  0.          0.02539831 -0.585139  ...]'
+        dataset = self.fname_xtc  #dataset = 'exp=cxilx7422:run=101'
+        #pattern = 'shape:(8, 512, 1024) size:4194304 dtype:float32 [-0.0747131   0.38151434  0.          0.02539831 -0.585139  ...]'
+        pattern = 'shape:(8, 512, 1024) size:4194304 dtype:float32 [-0.18678276  0.41966578 -0.5464022   0.1396907  -0.47065526...]'
         compare_det_calib(dataset, detname='jungfrau4M', expected=pattern, **kwa)
 
 
