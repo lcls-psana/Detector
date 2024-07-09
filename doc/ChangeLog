@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-87
+2024-07-09 Mikhail Dubrovin
+- UtilsCalib.py - fix issue for correct job completion when irec<nrecs1
+
 Tag: V02-00-86
 2024-06-05 Mikhail Dubrovin
 - in det_calib for jungfrau use dataset = self.fname_xtc  in stead of debugging 'exp=cxilx7422:run=101'
