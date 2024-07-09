@@ -638,7 +638,8 @@ class DarkProc():
 
     def proc_block(self):
         t0_sec = time()
-        self.gate_lo, self.gate_hi, self.arr_med, self.abs_dev = proc_block(self.block, **self.kwa)
+        block = self.block if self.irec > self.nrecs1-1 else self.block[:self.irec+1,:]
+        self.gate_lo, self.gate_hi, self.arr_med, self.abs_dev = proc_block(block, **self.kwa)
         logger.info('data block processing total time %.3f sec' % (time()-t0_sec)\
               +info_ndarr(self.arr_med, '\n  arr_med[100:105]', first=100, last=105)\
               +info_ndarr(self.abs_dev, '\n  abs_dev[100:105]', first=100, last=105)\
@@ -680,7 +681,7 @@ class DarkProc():
         logger.info('summary')
         logger.info('%s\nraw data found/selected in %d events' % (80*'_', self.irec+1))
 
-        if self.irec>0:
+        if self.irec>1:
             logger.info('begin data summary stage')
         else:
             logger.info('irec=%d there are no arrays to save...' % self.irec)
@@ -700,6 +701,16 @@ class DarkProc():
         counter = self.irec
         nevlm = int(fraclm * counter)
         self.counter = counter
+
+        nrecs1  = self.nrecs1
+        irec    = self.irec
+
+        if irec<nrecs1:
+        #if False:
+            logger.warning('irec=%d < nrecs1=%d - process block for small number of events' % (irec, nrecs1))
+            self.proc_block()
+            self.init_proc()
+            self.add_block()
 
         arr_av1 = divide_protected(self.arr_sum1, self.arr_sum0)
         arr_av2 = divide_protected(self.arr_sum2, self.arr_sum0)
