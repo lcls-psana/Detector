@@ -7,6 +7,15 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-88
+2024-07-19 Mikhail Dubrovin
+- modified:
+  examples/test-issues-2024.py - add issue_2024_06_13, issue_2024_07_18
+  src/AreaDetector.py - replace calib_epix10ka_any with calib_epix10ka_v2
+  src/UtilsEpix10ka.py - add implementation for calib_epix10ka_v2
+  src/UtilsJungfrau.py - replace loop_segs with odc.loop_segs
+- add examples/test-scaling-mpi-epix10ka2m.py - test calib_epix10ka_v2 with timing in batch
+
 Tag: V02-00-87
 2024-07-09 Mikhail Dubrovin
 - UtilsCalib.py - fix issue for correct job completion when irec<nrecs1
