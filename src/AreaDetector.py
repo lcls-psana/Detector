@@ -225,7 +225,7 @@ from   Detector.PyDetectorAccess import PyDetectorAccess
 from   Detector.GlobalUtils import info_ndarr
 
 from Detector.UtilsJungfrau import calib_jungfrau_v2 # calib_jungfrau
-from Detector.UtilsEpix10ka import calib_epix10ka_any
+from Detector.UtilsEpix10ka import calib_epix10ka_v2, calib_epix10ka_any
 
 DTYPE_MASK = gu.dic_calib_type_to_dtype[gu.PIXEL_MASK]
 
@@ -1030,7 +1030,8 @@ class AreaDetector():
             return calib_jungfrau_v2(self, evt, cmpars, **kwargs)
         if self.is_epix10ka_any():
             kwargs['mbits']=mbits
-            return calib_epix10ka_any(self, evt, cmpars, **kwargs)
+            return calib_epix10ka_v2(self, evt, cmpars, **kwargs)
+            #return calib_epix10ka_any(self, evt, cmpars, **kwargs)
 
         rnum = self.runnum(evt)
 
