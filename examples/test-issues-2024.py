@@ -156,6 +156,52 @@ def issue_2024_05_18():
     print(gu.info_ndarr(clb, 'det.calib'))  #last=5
 
 
+def issue_2024_06_13():
+    """ISSUE: Vincent: det.calib(evt, cmpars=(7,0,10), mbits=0) DOES NOT WORK in ana-4.0.62! AGAIN???
+       REASON:
+       FIXED:
+    """
+    import Detector.GlobalUtils as gu
+    import psana as ps
+    ds_str = 'exp=xppl1021222:run=138'
+    ds = ps.MPIDataSource(ds_str)
+    det = ps.Detector('jungfrau1M')
+    ds.break_after(5)
+    for nevt, evt in enumerate(ds.events()):
+        # img = det.calib(evt) # works fine
+        img = det.calib(evt, cmpars=(7,0,10), mbits=0)
+        print(gu.info_ndarr(img, 'evt:%03d  det.calib' % nevt, last=5))
+
+
+def issue_2024_07_18():
+    """ISSUE: test det.calib_epix10ka_v2
+       REASON: add loop over segments in the algorithm of _v2
+       FIXED:
+       datinfo -e cxilx7422 -r 101 -d jungfrau4M # WORKS in ana-4.0.61 and ana-4.0.60
+    ds = MPIDataSource('exp=xcsl1030422:run=237')
+    det = Detector('XcsEndstation.0:Epix10ka2M.0')
+    """
+    import numpy as np
+    import psana
+    import Detector.GlobalUtils as gu
+    from time import time
+    ds = psana.DataSource('exp=xcsl1030422:run=237')
+    det = psana.Detector('XcsEndstation.0:Epix10ka2M.0')
+    nevents = 100
+    arrts = np.zeros(nevents, dtype=np.float64)
+    for nevt, evt in enumerate(ds.events()):
+        # img = det.calib(evt) # works fine
+        t0_sec = time()
+        img = det.calib(evt, cmpars=(7,7,200,10)) # loop_segs=True or False (df)
+        arrts[nevt] = dt = time()-t0_sec
+        print(gu.info_ndarr(img, 'evt:%03d  dt(sec)=%.3f det.calib' % (nevt, dt), last=4))
+        if nevt > nevents-2: break
+
+    print(gu.info_ndarr(arrts, 'array of times', last=nevents))
+    tmed = np.median(arrts) # , axis=0)
+    print('median time: %.3f sec' % tmed)
+
+
 def issue_2024_MM_DD():
     """ISSUE:
        REASON:
@@ -201,6 +247,8 @@ def selector():
     elif TNAME in  ('2',): issue_2024_03_12() # test det.calib > new calib_jungfrau_v2
     elif TNAME in  ('3',): issue_2024_05_16() # test of epix10ka2m scaling
     elif TNAME in  ('4',): issue_2024_05_18() # Silke: jungfrau det.caliib does not work in ana-4.0.61, works in ana-4.0.60
+    elif TNAME in  ('5',): issue_2024_06_13() # Vincent: det.calib(evt, cmpars=(7,0,10), mbits=0) DOES NOT WORK in ana-4.0.62! AGAIN???
+    elif TNAME in  ('6',): issue_2024_07_18() # Me: det.calib(evt, cmpars=(7,0,10)) > det.calib_epix10ka_v2
     else:
         print(USAGE())
         sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
