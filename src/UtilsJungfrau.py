@@ -311,13 +311,11 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
       - mask - user defined mask passed as optional parameter
     """
 
-    src = det.source # - src (psana.Source)   - Source object
-
     nda_raw = kwa.get('nda_raw', None)
-    loop_segs = kwa.get('loop_segs', True)
     arr = det.raw(evt) if nda_raw is None else nda_raw # shape:(<npanels>, 512, 1024) dtype:uint16
     if arr is None: return None
 
+    #src = det.source # - src (psana.Source)   - Source object
     detname = string_from_source(det.source)
     #print('XXX type(detname):', type(detname))
     odc = cache.detcache_for_detname(detname)
@@ -328,6 +326,7 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
        odc.cmps = det.common_mode(evt) if cmpars is None else cmpars
        odc.mask = det.mask_total(evt, **kwa)
        #print('  XXX after det.mask_total **kwa:', odc.mask)
+       odc.loop_segs = kwa.get('loop_segs', True)
 
     #t0_sec = time()
     if kwa != odc.kwa:
@@ -354,7 +353,7 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
                    +info_ndarr(cmps, '\n    common mode parameters ')
                    +'\n    loop over segments: %s' % loop_segs)
 
-    if loop_segs:
+    if odc.loop_segs:
       nsegs = arr.shape[0]
       shseg = arr.shape[-2:] # (512, 1024)
       for i in range(nsegs):
