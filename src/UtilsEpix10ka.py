@@ -14,6 +14,7 @@ Created on 2018-11-14 by Mikhail Dubrovin
 """
 
 import os
+import sys
 import numpy as np
 from time import time
 
@@ -24,10 +25,12 @@ from Detector.PyDataAccess import get_epix_data_object, get_epix10ka_config_obje
                                   get_epix10kaquad_config_object, get_epix10ka2m_config_object,\
                                   get_epix10ka_any_config_object
 from Detector.GlobalUtils import print_ndarr, info_ndarr, divide_protected
-from PSCalib.GlobalUtils import merge_masks
+from PSCalib.GlobalUtils import merge_masks, string_from_source
+#from PSCalib.GlobalUtils import save_textfile, string_from_source
 
 from Detector.UtilsCommonMode import common_mode_cols,\
                                      common_mode_rows_hsplit_nbanks, common_mode_2d_hsplit_nbanks
+ue = sys.modules[__name__]
 
 get_epix10ka_data_object = get_epix_data_object
 
@@ -214,10 +217,9 @@ def gain_maps_epix10ka_any(det, data=None):
 
 
 def info_gain_mode_arrays1(gmaps, first=0, last=5):
-    """ gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
-    """
+    """ gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps"""
     recs = [info_ndarr(gr, 'gr%d'%i, first, last) for i,gr in enumerate(gmaps)]
-    return 'gain range arrays:\n  %s' % ('  %s\n'.join(recs))
+    return 'gain range arrays:\n%s' % ('  \n'.join(recs))
 
 
 def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
@@ -226,8 +228,7 @@ def info_gain_mode_arrays(gr0, gr1, gr2, gr3, gr4, gr5, gr6, first=0, last=5):
 
 
 def pixel_gain_mode_statistics1(gmaps):
-    """returns statistics of pixels in defferent gain modes in gain maps
-    """
+    """returns statistics of pixels in defferent gain modes in gain maps"""
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
     arr1 = np.ones_like(gr0, dtype=np.int32)
     return [np.sum(np.select((gr,), (arr1,), default=0)) for gr in gmaps]
@@ -240,8 +241,7 @@ def pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
 
 #def pixel_gain_mode_fractions(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
 def pixel_gain_mode_fractions(det, data):
-    """returns fraction of pixels in defferent gain modes in gain maps
-    """
+    """returns fraction of pixels in defferent gain modes in gain maps"""
     gmaps = gain_maps_epix10ka_any(det, data)
     if gmaps is None: return None
     gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
@@ -258,8 +258,7 @@ def info_pixel_gain_mode_fractions(det, raw, msg='pixel gain mode fractions : ')
 
 
 def info_pixel_gain_mode_statistics1(gmaps):
-    """returns (str) with statistics of pixels in defferent gain modes in gain maps
-    """
+    """returns (str) with statistics of pixels in defferent gain modes in gain maps"""
     grp_stat = pixel_gain_mode_statistics1(gmaps)
     return ', '.join(['%7d' % npix for npix in grp_stat])
 
@@ -270,8 +269,7 @@ def info_pixel_gain_mode_statistics(gr0, gr1, gr2, gr3, gr4, gr5, gr6):
 
 
 def info_pixel_gain_mode_statistics_for_raw(det, raw, msg='pixel gain mode statistics: '):
-    """returns (str) with statistics of pixels in defferent gain modes in raw data
-    """
+    """returns (str) with statistics of pixels in defferent gain modes in raw data"""
     gmaps = gain_maps_epix10ka_any(det, raw)
     if gmaps is None: return None
     #gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmaps
@@ -431,6 +429,263 @@ def calib_epix10ka_any(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbit
 
 
 calib_epix10ka = calib_epix10ka_any
+
+
+
+class DetCache():
+    """ Cash of calibration constants for epix10ka2m.
+    """
+    def __init__(self, det, evt, **kwa):
+        logger.debug('DetCache for epix10ka2m')
+        #self.poff = None
+        #self.arr1 = None
+        self.kwa = kwa
+        self.peds = None
+        self.gfac = None
+        self.mask = None
+        self.outa = None
+        self.cmps = None
+        self.aone = None
+        self.isset = False
+        self.evnum = 0
+        self.add_calibcons(det, evt)
+
+    def kwargs_are_the_same(self, **kwa):
+        return self.kwa == kwa
+
+    def add_calibcons(self, det, evt):
+
+        self.detname = string_from_source(det.source)
+
+        #arr  = np.array(det.raw(evt), dtype=np.float32)
+        self.peds = det.pedestals(evt) # - 4d pedestals shape:(3, 1, 512, 1024) dtype:float32
+        if self.peds is None: return
+
+        gain = det.gain(evt)      # - 4d gains
+        if gain is None: gain = np.ones_like(self.peds)  # - 4d gains
+
+        self.gfac = divide_protected(np.ones_like(self.peds), gain)
+        self.outa = np.zeros(self.peds.shape[1:], dtype=np.float32)
+
+        #self.cmps  = det.common_mode(evt) if cmpars is None else cmpars
+        #self.mask = det.mask_total(evt, **kwa)
+
+        self.isset = True
+
+
+class Cache():
+    """ Wrapper around dict {detname:DetCache} for cache of calibration constants.
+    """
+    def __init__(self):
+        self.calibcons = {}
+
+    def add_detcache(self, det, evt, **kwa):
+        detname = string_from_source(det.source)
+        if isinstance(detname, str):
+            o = self.calibcons[detname] = DetCache(det, evt, **kwa)
+            return o
+        return None
+
+    def detcache_for_detname(self, detname):
+        return self.calibcons.get(detname, None)
+
+    def detcache_for_detobject(self, det):
+        detname = string_from_source(det.source)
+        return self.detcache_for_detname(detname)
+
+cache = Cache() # singleton
+
+
+def calib_epix10ka_v2(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits=None, mask=None, nda_raw=None
+    """
+    Returns calibrated epix10ka data.
+    In _v2 - (bool) parameter loop_segs allows to loop or not over segments
+
+    - gets constants
+    - gets raw data
+    - evaluates (code - pedestal - offset)
+    - applys common mode correction if turned on
+    - apply gain factor
+
+    Parameters
+
+    - det (psana.Detector) - Detector object
+    - evt (psana.Event)    - Event object
+    - cmpars (tuple) - common mode parameters
+          = None - use pars from calib directory
+          = cmpars=(<alg>, <mode>, <maxcorr>)
+            alg is not used
+            mode =0-correction is not applied, =1-in rows, =2-in cols-WORKS THE BEST
+            i.e: cmpars=(7,0,100) or (7,2,100)
+    - **kwa - used here and passed to det.mask_comb
+      - nda_raw - substitute for det.raw(evt)
+      - mbits - deprecated parameter of the det.mask_comb(...), det.mask_v2 is used by default
+      - mask - user defined mask passed as optional parameter
+      - loop_segs - (bool, False) on/off loop over segments - key feature of _v2
+    """
+
+    #t00 = time()
+
+    logger.debug('calib_epix10ka_v2')
+
+    nda_raw = kwa.get('nda_raw', None)
+    raw = det.raw(evt) if nda_raw is None else nda_raw # shape:(352, 384) or suppose to be later (<nsegs>, 352, 384) dtype:uint16
+    if raw is None: return None
+
+    #t01 = time()
+
+    detname = string_from_source(det.source) # str, i.e. XcsEndstation.0:Epix10ka2M.0
+    odc = cache.detcache_for_detname(detname)
+    first_entry = odc is None
+    if first_entry:
+       t_first = time()
+       odc = cache.add_detcache(det, evt, **kwa)
+       odc.cmps = det.common_mode(evt) if cmpars is None else cmpars
+       odc.mask = det.mask_total(evt, **kwa)
+       odc.aone = np.ones_like(raw, dtype=np.int8)
+       odc.loop_segs = kwa.get('loop_segs', False)
+
+       logger.info('\n  ====================== det.name: %s' % det.name\
+                   +'\n  detname from source: %s' % detname\
+                   +info_ndarr(raw,  '\n  calib_epix10ka_v2 first entry:\n    raw ')\
+                   +info_ndarr(odc.peds, '\n    peds')\
+                   +info_ndarr(odc.gfac, '\n    gfac')\
+                   +info_ndarr(odc.mask, '\n    mask')\
+                   +info_ndarr(odc.outa, '\n    outa')\
+                   +'\n    ' + info_ndarr(odc.cmps, 'common mode parameters ')
+                   +'\n    loop over segments: %s' % odc.loop_segs
+                   +'\n    1-st entry consumed time (sec): %.3f' % (time() - t_first))
+
+    odc.evnum += 1
+    cmps = odc.cmps
+    gfac = odc.gfac
+    peds = odc.peds
+    mask = odc.mask
+    aone = odc.aone
+    outa = odc.outa
+
+    arr = raw
+
+    gmap = ue.gain_maps_epix10ka_any(det, raw)  #shape:(7, 16, 352, 384)
+    if gmap is None: return None
+    gmap = np.array(gmap)
+
+    #t02 = time()
+
+    if not odc.evnum%100:
+        logger.debug(ue.info_gain_mode_arrays1(gmap)\
+               +'\n'+ue.info_pixel_gain_mode_statistics1(gmap))
+
+    if first_entry: logger.debug(info_ndarr(gmap, 'first_entry gmap'))
+
+    if odc.loop_segs:
+      nsegs = arr.shape[0]   # 16 for epix10ka2m
+      shseg = arr.shape[-2:] # (352, 384)
+      if first_entry: logger.debug('first_entry: number of segments: %d  segment shape: %s' % (nsegs, str(shseg)))
+
+      for i in range(nsegs):
+        # define per-segment arrays
+        #print('ev:%d seg:%02d' % (odc.evnum, i))
+        arr1s = arr[i,:]
+        aone1 = aone[i,:]
+        mask1 = None if mask is None else mask[i,:]
+        gfac1 = None if gfac is None else gfac[:,i,:,:]
+        peds1 = None if peds is None else peds[:,i,:,:]
+        gmap1 = None if gmap is None else gmap[:,i,:,:]
+        arr1s.shape  = (1,) + shseg
+        if mask1 is not None: mask1.shape = (1,) + shseg
+        if gfac1 is not None: gfac1.shape = (7,1,) + shseg
+        if peds1 is not None: peds1.shape = (7,1,) + shseg
+        if gmap1 is not None: gmap1.shape = (7,1,) + shseg
+        #print(info_ndarr(arr1s,  'XXX  arr1s '))
+        #print(info_ndarr(peds1, 'XXX  peds11 '))
+        #out1, t03_12 = calib_epix10ka_nda(arr1s, gfac1, peds1, mask1, cmps, gmap1, aone1)
+        out1 = calib_epix10ka_nda(arr1s, gfac1, peds1, mask1, cmps, gmap1, aone1)
+        #print(info_ndarr(out1, 'XXX  out1 '))
+        outa[i,:] = out1[0,:]
+      #print(info_ndarr(outa, 'XXX  outa '))
+      #sys.exit('TEST EXIT')
+      #return outa
+    else:
+      #outa, t03_12 = calib_epix10ka_nda(arr, gfac, peds, mask, cmps, gmap, aone)
+      outa = calib_epix10ka_nda(arr, gfac, peds, mask, cmps, gmap, aone)
+
+    #t13 = time()
+    #times = (t00, t01, t02) + t03_12 + (t13,)
+    return outa #, times # (t00, t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12, t13)
+
+
+def calib_epix10ka_nda(arr, gfac, peds, mask, cmps, gmap, aone):
+
+    #t03 = time()
+
+    raw = arr
+
+    # FH, FM, FL, AHL-H, AML-M, AHL-L, AML-L
+    gr0, gr1, gr2, gr3, gr4, gr5, gr6 = gmap
+
+    factor = np.select(gmap,\
+                       (gfac[0,:], gfac[1,:], gfac[2,:], gfac[3,:],\
+                        gfac[4,:], gfac[5,:], gfac[6,:]), default=1) # 2msec
+
+    #t04 = time()
+    pedest = np.select(gmap,\
+                       (peds[0,:], peds[1,:], peds[2,:], peds[3,:],\
+                        peds[4,:], peds[5,:], peds[6,:]), default=0)
+
+    #t05 = time()
+
+    arrf = np.array(raw & ue.M14, dtype=np.float32) - pedest
+    res = arrf
+
+    #t06 = time()
+
+    if True: # False: #cmps is not None:
+      mode, cormax = int(cmps[1]), cmps[2]
+      npixmin = cmps[3] if len(cmps)>3 else 10
+      if mode>0:
+
+        #t07 = time()
+        t0_sec_cm = time()
+
+        arr1 = aone # np.ones_like(mask, dtype=np.uint8)
+        grhm = np.select((gr0,  gr1,  gr3,  gr4), (arr1, arr1, arr1, arr1), default=0)
+        gmask = np.bitwise_and(grhm, mask) if mask is not None else grhm
+        if gmask.ndim == 2: gmask.shape = (1,gmask.shape[-2],gmask.shape[-1])
+
+        logger.debug(info_ndarr(gmask, 'gmask')\
+                     + '\n  per panel statistics of cm-corrected pixels: %s'%
+                     str(np.sum(gmask, axis=(1,2), dtype=np.uint32) if gmask is not None else None))
+
+        #t08 = time()
+
+        #sh = (nsegs, 352, 384)
+        hrows = 176 # int(352/2)
+        for s in range(arrf.shape[0]):
+
+          #t09 = time()
+
+          if mode & 4: # in banks: (352/2,384/8)=(176,48) pixels
+            ue.common_mode_2d_hsplit_nbanks(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], nbanks=8, cormax=cormax, npix_min=npixmin)
+            ue.common_mode_2d_hsplit_nbanks(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], nbanks=8, cormax=cormax, npix_min=npixmin)
+
+          #t10 = time()
+
+          if mode & 1: # in rows per bank: 384/8 = 48 pixels # 190ms
+            ue.common_mode_rows_hsplit_nbanks(arrf[s,], mask=gmask[s,], nbanks=8, cormax=cormax, npix_min=npixmin)
+
+          #t11 = time()
+
+          if mode & 2: # in cols per bank: 352/2 = 176 pixels # 150ms
+            ue.common_mode_cols(arrf[s,:hrows,:], mask=gmask[s,:hrows,:], cormax=cormax, npix_min=npixmin)
+            ue.common_mode_cols(arrf[s,hrows:,:], mask=gmask[s,hrows:,:], cormax=cormax, npix_min=npixmin)
+
+        logger.debug('TIME common-mode correction = %.6f sec for cmps=%s' % (time()-t0_sec_cm, str(cmps)))
+
+        #t12 = time()
+        res = arrf * factor if mask is None else arrf * factor * mask # gain correction
+
+    return res #, (t03, t04, t05, t06, t07, t08, t09, t10, t11, t12)
 
 
 def find_gain_mode(det, data=None):
