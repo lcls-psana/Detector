@@ -455,6 +455,8 @@ def calib_epix10ka_nda(arr, gfac, peds, mask, cmps, gmap, aone):
 
     t06 = time()
 
+    t07 = t08 = t09 = t10 = t11 = t12 = time()
+
     if True: # False: #cmps is not None:
       mode, cormax = int(cmps[1]), cmps[2]
       npixmin = cmps[3] if len(cmps)>3 else 10
@@ -528,7 +530,7 @@ def calib_epix10ka_local_v2(det, evt, cmpars=None, mbits=None, **kwargs):
 
 
 
-def test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='v00', CALIBMET=CALIB_LOCAL, loop_segs=False):
+def test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='v00', CALIBMET=CALIB_LOCAL, loop_segs=False, cmpars=(7,7,200,10)):
 
     from psana import MPIDataSource, Detector
 
@@ -584,11 +586,11 @@ def test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='v00', CALIBMET=CALIB_
             dt_sec = time()-t0_sec
             arrts[nevt] = dt_sec
         elif CALIBMET == CALIB_LOCAL:
-            calib, times = calib_epix10ka_local(det, evt, cmpars=(7,7,200,10))
+            calib, times = calib_epix10ka_local(det, evt, cmpars=cmpars)
             dt_sec = times[13] - times[0]
             arrts[nevt,:] = times
         elif CALIBMET == CALIB_LOCAL_V2:
-            calib, times = calib_epix10ka_local_v2(det, evt, cmpars=(7,7,200,10), loop_segs=loop_segs)
+            calib, times = calib_epix10ka_local_v2(det, evt, cmpars=cmpars, loop_segs=loop_segs)
             dt_sec = times[13] - times[0]
             arrts[nevt,:] = times
         elif CALIBMET == CALIB_V2:
@@ -697,8 +699,8 @@ def selector(mode):
     #if mode >-1 and mode<128: do_algo(cpu=mode, cmt='v0' if len(sys.argv)<3 else sys.argv[2], SHOW_FIGS=False, SAVE_FIGS=False)
     if   mode == 1: test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='16p-v1', CALIBMET=CALIB_STD)
     elif mode == 2: test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='16p-v2', CALIBMET=CALIB_LOCAL)
-    elif mode == 3: test_mpi_for_data(SHOW_FIGS=False,SAVE_FIGS=False,cmt='16p-v3', CALIBMET=CALIB_LOCAL_V2, loop_segs=False)
-    elif mode == 4: test_mpi_for_data(SHOW_FIGS=False,SAVE_FIGS=False,cmt='16p-v4', CALIBMET=CALIB_LOCAL_V2, loop_segs=True)
+    elif mode == 3: test_mpi_for_data(SHOW_FIGS=False,SAVE_FIGS=False,cmt='16p-v3', CALIBMET=CALIB_LOCAL_V2, loop_segs=False, cmpars=(7,7,200,10))
+    elif mode == 4: test_mpi_for_data(SHOW_FIGS=False,SAVE_FIGS=False,cmt='16p-v4', CALIBMET=CALIB_LOCAL_V2, loop_segs=True,  cmpars=(7,0,200,10))
     elif mode == 5: test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='16p-v5', CALIBMET=CALIB_V2, loop_segs=False)
     elif mode == 6: test_mpi_for_data(SHOW_FIGS=True, SAVE_FIGS=True, cmt='16p-v6', CALIBMET=CALIB_V2, loop_segs=True)
     elif mode ==-99: sort_records_in_files()
