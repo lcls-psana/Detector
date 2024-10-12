@@ -54,10 +54,10 @@ def info_det(det, par=None, env=None):
 
     if det is None: return s + ' DETECTOR IS NOT DEFINED IN --detname or -d'
 
-    dettype = gu.det_type_from_source(det.source) if hasattr('det', 'source') else 'N/A'
+    dettype = gu.det_type_from_source(det.source) if hasattr(det, 'source') else 'N/A'
 
-    s +='\n  det.src: %s' % str(det.source)\
-      + '\n  dettype: %s' % str(dettype)
+    s +='\n  X det.src: %s' % str(det.source)\
+      + '\n  X dettype: %s' % str(dettype)
 
     if   dettype == gu.PNCCD: pass
     elif dettype == gu.EPIX100A:
@@ -72,6 +72,12 @@ def info_det(det, par=None, env=None):
         from Detector.UtilsEpix10ka import get_epix10ka_config_object
         co = get_epix10ka_config_object(env, det.source)
         s += '\n  id_epix10ka: %s' % str(id_epix(co))
+
+    elif dettype in (gu.EPIX10KA2M, gu.EPIX10KAQUAD):
+        #from Detector.UtilsEpix import id_epix, is_trbit_high
+        from Detector.UtilsEpix10ka2M import get_epix10ka_any_config_object, id_epix10ka2m
+        co = get_epix10ka_any_config_object(env, det.source)
+        s += '\n  id_epix10ka2m: %s' % str(id_epix10ka2m(co))
 
     elif dettype == gu.CSPAD: pass
     elif dettype == gu.CSPAD2X2: pass
@@ -122,6 +128,8 @@ def loop_run_step_evt(**kwa):
     logger.info('calibDir: %s' % ds.env().calibDir().replace('//','/'))
     logger.info('dettype: %s' % dettype)
     logger.info('dettype of EPIX10KA2M: %s' % gu.EPIX10KA2M)
+
+    #sys.exit('TEST EXIT')
 
     counter_none = 0
     str_evt_keys = None
