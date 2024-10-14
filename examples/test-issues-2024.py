@@ -202,6 +202,18 @@ def issue_2024_07_18():
     print('median time: %.3f sec' % tmed)
 
 
+def issue_2024_10_08():
+    import psana
+    from Detector.UtilsEpix10ka2M import id_epix10ka2m_for_env_det
+
+    #ds, det = psana.DataSource('exp=xppl1002323:run=50'), psana.Detector('XppGon.0:Epix10ka2M.0')
+    #ds, det = psana.DataSource('exp=xcsl1036223:run=50'), psana.Detector('XcsEndstation.0:Epix10ka2M.0')
+    #ds, det = psana.DataSource('exp=mfxp1003323:run=8'), psana.Detector('MfxEndstation.0:Epix10ka2M.0')
+    #ds, det = psana.DataSource('exp=mfxp1003323:run=16'), psana.Detector('MfxEndstation.0:Epix10ka2M.0')
+    ds, det = psana.DataSource('exp=mfxp1003323:run=24'), psana.Detector('MfxEndstation.0:Epix10ka2M.0')
+    print('id_epix10ka2m:', id_epix10ka2m_for_env_det(ds.env(), det))
+
+
 def issue_2024_MM_DD():
     """ISSUE:
        REASON:
@@ -249,6 +261,7 @@ def selector():
     elif TNAME in  ('4',): issue_2024_05_18() # Silke: jungfrau det.caliib does not work in ana-4.0.61, works in ana-4.0.60
     elif TNAME in  ('5',): issue_2024_06_13() # Vincent: det.calib(evt, cmpars=(7,0,10), mbits=0) DOES NOT WORK in ana-4.0.62! AGAIN???
     elif TNAME in  ('6',): issue_2024_07_18() # Me: det.calib(evt, cmpars=(7,0,10)) > det.calib_epix10ka_v2
+    elif TNAME in  ('7',): issue_2024_10_08() # Me: test epix10ka2m panel ids
     else:
         print(USAGE())
         sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
