@@ -7,6 +7,16 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-89
+2024-10-11 Mikhail Dubrovin
+- modified:
+  - app/epix10ka_id - cosmetic
+  - app/datinfo - fix hasattr and use get_epix10ka_any_config_object
+  - app/geometry_deploy_constants - add optional parameters backwrd and addgeof
+  - examples/test-issues-2024.py - add issue_2024_10_08
+  - src/UtilsEpix10ka2M.py - add method id_epix10ka2m_for_env_det
+  - src/UtilsGeometryDeploy.py - add selection of the geomety file using id_detector
+
 Tag: V02-00-88
 2024-07-19 Mikhail Dubrovin
 - modified:
