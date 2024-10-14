@@ -48,6 +48,11 @@ def ids_epix10ka2m(co):
     ids = [id_epix10ka(co, ielem=i) for i in range(co.numberOfElements())]
     return ids
 
+def id_epix10ka2m_for_env_det(env, det):
+    #print(dir(det))
+    #print('det has source:', hasattr(det, 'source'))
+    co = get_epix10ka_any_config_object(env, det.source) if hasattr(det, 'source') else None
+    return str(id_epix10ka2m(co)) if co is not None else None
 
 def id_epix10ka2m(co):
     return '_'.join(ids_epix10ka2m(co))
