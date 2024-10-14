@@ -20,12 +20,22 @@ import psana
 import numpy as np
 from time import time #, localtime, strftime
 #import PSCalib.GlobalUtils as gu
+from Detector.UtilsEpix10ka2M import id_epix10ka2m_for_env_det
+
+
+#from PSCalib.UtilsPanelAlias import alias_for_id, id_for_alias, alias_file_formatted
+import PSCalib.UtilsPanelAlias as upa
+
 from PSCalib.GeometryAccess import GeometryAccess
 import Detector.UtilsCalib as uc
+
 gu = uc.cgu
 
 RAYONIX_PIXEL_SIZE = 44.271  # um 85.00 +/- 0.05mm/1920pixel
 
+def cond_msg(cond, msg='', logger_method=logger.warning):
+    if cond: logger_method(msg)
+    return cond
 
 def str_rayonix_geo_matrix_segment(d):
     """returns str like 'MTRX:V2:3840:3840:44.271:44.271' using configuration data.
@@ -54,7 +64,18 @@ def str_rayonix_geo_matrix_segment(d):
     return 'MTRX:V2:%d:%d:%.3f:%.3f' % (height, width, RAYONIX_PIXEL_SIZE*binning_s, RAYONIX_PIXEL_SIZE*binning_f)
 
 
+def det_aliasname(dtype, det_alias):
+    """ returns <dettype>_<detalias>, e.g. epix10ka2m_0002"""
+    return '%s_%s' % (dtype, det_alias)
+
+def fname_aliases(dir_dettype, dtype):
+    """returns pass like /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m/.aliases-epix10ka2m.txt"""
+    return '%s/.aliases-%s.txt' % (dir_dettype, dtype)
+
+
 def geometry_deploy_constants(**kwa):
+    """ """
+
     s = '\n'.join(['  %12s : %s' % (k, str(v)) for k,v in kwa.items()])
     logger.info('input parameters\n%s' % s)
 
@@ -67,13 +88,14 @@ def geometry_deploy_constants(**kwa):
     dirrepo    = kwa.get('dirrepo', './work')
     dircalib   = kwa.get('dircalib', None)
     deploy     = kwa.get('deploy', False)
+    backwrd    = kwa.get('backwrd', False)
     loglev     = kwa.get('loglev', 'DEBUG')
     dirmode    = kwa.get('dirmode',  0o2775)
     filemode   = kwa.get('filemode', 0o664)
     group      = kwa.get('group', 'ps-users')
     repoman    = kwa.get('repoman', None)
     name_parent= kwa.get('parent', 'IP')
-
+    addgeof    = kwa.get('addgeof', None)
     dsname = uc.str_dsname(exp, run, dsnamex)
 
     logger.info('open dataset %s' % dsname)
@@ -84,19 +106,60 @@ def geometry_deploy_constants(**kwa):
     src = det.source
 
     strsrc = gu.string_from_source(src)
-    _detname = strsrc.replace(':','-').replace('.','-')
     int_dettype = gu.det_type_from_source(src)
-    dettype = gu.dic_det_type_to_name[int_dettype].lower()
-    dir_dettype = repoman.dir_in_repo(dettype)
-    logger.info('dettype: %s directory: %s' %  (dettype, dir_dettype))
+    dettype = gu.dic_det_type_to_name[int_dettype].lower() # epix10ka2m
+    dir_dettype = repoman.dir_in_repo(dettype) # /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m
+    fname_als = fname_aliases(dir_dettype, dettype) # /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m/.aliases-epix10ka2m.txt
+    is_epix10ka_any = int_dettype in (gu.EPIX10K, gu.EPIX10KAQUAD, gu.EPIX10KA2M) # True
+    id_det = id_epix10ka2m_for_env_det(ds.env(), det) if is_epix10ka_any else None # 0000000002-0172166401-1342177302-...
+    det_alias = upa.alias_for_id(id_det, fname=fname_als, exp=exp, run=int(run)) # 0002
+    det_aliasn = det_aliasname(dettype, det_alias) #epix10ka2m_0002
 
+    logger.info('\n  dettype: %s' % dettype\
+              + '\n  repository: %s' % dir_dettype\
+              + '\n  file with aliases: %s' % fname_als\
+              + '\n  id_det: %s' % upa.id_det_formatted(id_det, gap='\n    ')\
+              + '\n  alias for id_det: %s' % det_alias\
+              + '\n  detector type and alias: %s' % det_aliasn)
+    logger.debug(upa.alias_file_formatted(fname_als))
+
+    tsrun, tsnow = uc.tstamps_run_and_now(env, fmt='%Y%m%d%H%M%S') # e.g. 20241003211628
+
+    if is_epix10ka_any and addgeof is not None:
+        # Add reference like epix10ka2m_0002_20241003211628.data to existing geometry file
+        # Extra parameters:
+        # --addgeof <file-name> - existing geometry file evaluated from optical metrology
+        # --tstamp <YYYYmmDDHHMMSS> - non-default timestamp if specified, else tsrun
+        # -D - confirms deployment
+
+        path_ref = '%s/%s_%s.data' % (dir_dettype, det_aliasn, (tsrun if tstamp is None else tstamp))
+        path_geo = '%s/%s' % (dir_dettype, addgeof)
+
+        if cond_msg(not os.path.exists(path_geo), msg='DOES NOT EXIST: %s' % path_geo, logger_method=logger.warning):
+            logger.info('path_ref: %s' % path_ref) # -a 2021-02-02-geometry-epix10ks2m.1-recentred-for-psana.txt
+            return
+
+        cmd = 'ln -s %s %s' % (addgeof, path_ref)
+        logger.info('cmd: %s' % cmd)
+        if deploy:
+            if cond_msg(os.path.exists(path_ref),\
+                        msg='EXIT DUE TO EXISTING REFERENCE %s' % path_ref, logger_method=logger.warning):
+                return
+            os.system(cmd)
+            logger.info('deployed reference: %s' % path_ref)
+        else:
+            logger.warning('!!! add -D to deploy reference !!!')
+        return
+
+    _detname = det_aliasn.split('_')[-1]
+    if backwrd:
+        _detname = strsrc.replace(':','-').replace('.','-')
+        tsrun, _ = uc.tstamps_run_and_now(env, fmt='%Y%m%d') # e.g. 20241003
 
     pattern = fname_prefix = '%s_%s' % (dettype, _detname)
-
     list_of_files = [name for name in os.listdir(dir_dettype) if fname_prefix in name]
     logger.info('list of found in repository geometry files for dettype_detname: %s\n  %s' % (fname_prefix, '\n  '.join(list_of_files)))
 
-    tsrun, tsnow = uc.tstamps_run_and_now(env, fmt='%Y%m%d') #TSTAMP_FORMAT = '%Y%m%d%H%M%S'
     fname = uc.find_file_for_timestamp(dir_dettype, pattern, tsrun)
 
     if fname is None: fname = '%s/%s_default.data' % (dir_dettype, dettype) # use default if not found
