@@ -32,6 +32,8 @@ USAGE = '\n%s -e <experiment> -d <detector> -r <run-number> [-D] [-L <logging-mo
       + '\nEx.13 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.2 -D -c ./calib' % SCRNAME\
       + '\nEx.14 for epix10kaquad : %s -e xpptut15 -r 590 -d MecTargetChamber.0:Epix10kaQuad.3 -D -c ./calib' % SCRNAME\
       + '\nEx.15 for rayonix      : %s -e xpptut15 -r 240 -d XppEndstation.0:Rayonix.0 -D -c ./calib' % SCRNAME\
+      + '\nEx.16 for epix10ka2m   : %s -e mfxp1003323 -r 24 -d MfxEndstation.0:Epix10ka2M.0 -D -c calib --runrange 24-end' % SCRNAME\
+      + '\nEx.17 add new geometry : %s -e mfxp1003323 -r 24 -d MfxEndstation.0:Epix10ka2M.0 -a 2021-02-02-geometry-epix10ks2m.1-recentred-for-psana.txt' % SCRNAME\
       + '\n\nHelp:  %s -h\n' % SCRNAME
 
 
@@ -53,6 +55,7 @@ def argument_parser():
     d_dsnamex  = None # ':smd:dir=<path>/xtc/ or <path>/xtc/<file-name>.xtc'
     d_dircalib = None # './calib'
     d_deploy   = False
+    d_backwrd  = False
     d_loglev   = 'INFO'
     d_dirmode  = 0o2775
     d_filemode = 0o664
@@ -64,6 +67,7 @@ def argument_parser():
     d_rotx     = 0
     d_roty     = 0
     d_rotz     = 0
+    d_addgeof  = None
 
     #h_dirstart= 'directory of the log file for records at start, default = %s' % d_dirstart
     h_exp     = 'experiment name, default = %s' % d_exp
@@ -76,6 +80,7 @@ def argument_parser():
     h_dirrepo = 'non-default repository of calibration results, default = %s' % d_dirrepo
     h_dircalib= 'deployment calib directory if different from standard one, default = %s' % d_dircalib
     h_deploy  = 'deploy constants to the calib dir, default = %s' % d_deploy
+    h_backwrd = 'use deprecated four-field detector name for backward compatability, default = %s' % d_backwrd
     h_loglev  = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_loglev)
     h_dirmode = 'mode for all mkdir, default = %s' % oct(d_dirmode)
     h_filemode= 'mode for all saved files, default = %s' % oct(d_filemode)
@@ -87,6 +92,7 @@ def argument_parser():
     h_rotx    = 'detector rotation angle [degree] around axis x, default = %f' % d_rotx
     h_roty    = 'detector position angle [degree] around axis y, default = %f' % d_roty
     h_rotz    = 'detector position angle [degree] around axis z, default = %f' % d_rotz
+    h_addgeof = 'if not None, the detector alias linked to this geometry file with tstamp, default = %s' % str(d_addgeof)
 
     parser = argparse.ArgumentParser(usage=USAGE, description=DESCRIPTION)
 
@@ -102,15 +108,17 @@ def argument_parser():
     parser.add_argument('--dirmode',       default=d_dirmode, type=int, help=h_dirmode)
     parser.add_argument('--filemode',      default=d_filemode,type=int, help=h_filemode)
     parser.add_argument('--group',         default=d_group,   type=str, help=h_group)
-    parser.add_argument('-D', '--deploy',  default=d_deploy, action='store_true', help=h_deploy)
+    parser.add_argument('-D', '--deploy',  default=d_deploy,  action='store_true', help=h_deploy)
+    parser.add_argument('-B', '--backwrd', default=d_backwrd, action='store_true', help=h_backwrd)
     parser.add_argument('-R', '--runrange',default=d_runrange,type=str, help=h_runrange)
-    parser.add_argument('--parent',        default=d_parent,  type=str  , help=h_parent)
+    parser.add_argument('--parent',        default=d_parent,  type=str,   help=h_parent)
     parser.add_argument('--posx',          default=d_posx,    type=float, help=h_posx)
     parser.add_argument('--posy',          default=d_posy,    type=float, help=h_posy)
     parser.add_argument('--posz',          default=d_posz,    type=float, help=h_posz)
     parser.add_argument('--rotx',          default=d_rotx,    type=float, help=h_rotx)
     parser.add_argument('--roty',          default=d_roty,    type=float, help=h_roty)
     parser.add_argument('--rotz',          default=d_rotz,    type=float, help=h_rotz)
+    parser.add_argument('-a', '--addgeof', default=d_addgeof, type=str,   help=h_addgeof)
 
     return parser
 
