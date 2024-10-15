@@ -351,7 +351,7 @@ def calib_jungfrau_v2(det, evt, cmpars=(7,3,200,10), **kwa):
                    +info_ndarr(mask, '\n    mask')\
                    +info_ndarr(outa, '\n    outa')\
                    +info_ndarr(cmps, '\n    common mode parameters ')
-                   +'\n    loop over segments: %s' % loop_segs)
+                   +'\n    loop over segments: %s' % odc.loop_segs)
 
     if odc.loop_segs:
       nsegs = arr.shape[0]
