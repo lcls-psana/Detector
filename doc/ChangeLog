@@ -7,6 +7,11 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-90
+2024-10-15 Mikhail Dubrovin
+- src/UtilsJungfrau.py - fix: loop_segs > odc.loop_segs
+- test/unittest_detector - update comments
+
 Tag: V02-00-89
 2024-10-11 Mikhail Dubrovin
 - modified:
