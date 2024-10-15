@@ -1,10 +1,10 @@
 #!@PYTHON@
 """
    Usage::
-   scons test-Detector # see also setings in Detector/SConscript for UTESTS=['test_calibrun']
+   scons test-Detector # see also setings in Detector/SConscript for UTESTS=['unittest_detector']
 
    OR for test purpose:
-   python Detector/test/test_detector
+   python Detector/test/unittest_detector
 
    WARNING unittest DOES NOT LIKE TABS IN CODE !!!!! USE SPACES !!!!!
 """
