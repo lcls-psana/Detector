@@ -683,7 +683,8 @@ def calib_epix10ka_nda(arr, gfac, peds, mask, cmps, gmap, aone):
         logger.debug('TIME common-mode correction = %.6f sec for cmps=%s' % (time()-t0_sec_cm, str(cmps)))
 
         #t12 = time()
-        res = arrf * factor if mask is None else arrf * factor * mask # gain correction
+
+      res = arrf * factor if mask is None else arrf * factor * mask # gain correction
 
     return res #, (t03, t04, t05, t06, t07, t08, t09, t10, t11, t12)
 
