@@ -214,6 +214,31 @@ def issue_2024_10_08():
     print('id_epix10ka2m:', id_epix10ka2m_for_env_det(ds.env(), det))
 
 
+def issue_2024_11_15(args):
+    """
+    https://jira.slac.stanford.edu/browse/ECS-6830
+    datinfo -d epix10k2M -e xcsl1012022 -r 144
+    EventKey(type=psana.Epix.ArrayV1, src='DetInfo(XcsEndstation.0:Epix10ka2M.0)', alias='epix10k2M')
+    """
+    import psana
+    import Detector.GlobalUtils as gu
+    ds, det = psana.DataSource('exp=xcsl1012022:run=144'), psana.Detector('XcsEndstation.0:Epix10ka2M.0')
+    arr = None
+    for nevt, evt in enumerate(ds.events()):
+        arr = det.calib(evt) if args.addpar is None else\
+              det.calib(evt, cmpars=(7, 0, 100))  # cmpars=(7, 0, 100), cmpars=(7, 2, 10, 10)
+        if nevt>1: break
+        print(gu.info_ndarr(arr, 'evt:%03d det.calib' % nevt, last=4))
+
+    import pyimgalgos.GlobalGraphics as gg
+    fighi, axhi, hi = gg.hist1d(arr.flatten(), bins=100, amp_range=(-8,40),\
+                              weights=None, color=None, show_stat=True, log=True, \
+                              figsize=(6,5), axwin=(0.15, 0.12, 0.78, 0.80), \
+                              title='spectrum', xlabel='ADU', ylabel=None, titwin=None)
+    gg.show()
+
+
+
 def issue_2024_MM_DD():
     """ISSUE:
        REASON:
@@ -226,19 +251,22 @@ def issue_2024_MM_DD():
 
 def argument_parser():
     from argparse import ArgumentParser
-    d_tname = '0'
-    d_dsname = 'exp=xpplw3319:run=293'  # None
+    d_tname   = '0'
+    d_dsname  = 'exp=xpplw3319:run=293'  # None
     d_detname = 'epix_alc3'  # None
     d_logmode = 'INFO' # 'DEBUG'  # 'INFO'
-    h_tname  = 'test name, usually numeric number, default = %s' % d_tname
+    d_addpar  = None
+    h_tname   = 'test name, usually numeric number, default = %s' % d_tname
     h_dsname  = 'dataset name, default = %s' % d_dsname
-    h_detname  = 'input ndarray source name, default = %s' % d_detname
+    h_detname = 'input ndarray source name, default = %s' % d_detname
     h_logmode = 'logging mode, one of %s, default = %s' % (STR_LEVEL_NAMES, d_logmode)
+    h_addpar  = 'additional parameter, default = %s' % d_addpar
     parser = ArgumentParser(description='%s is a bunch of tests for annual issues' % SCRNAME, usage=USAGE())
     parser.add_argument('tname',            default=d_tname,    type=str,   help=h_tname)
     parser.add_argument('-d', '--dsname',   default=d_dsname,   type=str,   help=h_dsname)
     parser.add_argument('-s', '--detname',  default=d_detname,  type=str,   help=h_detname)
     parser.add_argument('-L', '--logmode',  default=d_logmode,  type=str,   help=h_logmode)
+    parser.add_argument('-a', '--addpar',   default=d_addpar,   type=str,   help=h_addpar)
     return parser
 
 
@@ -262,6 +290,7 @@ def selector():
     elif TNAME in  ('5',): issue_2024_06_13() # Vincent: det.calib(evt, cmpars=(7,0,10), mbits=0) DOES NOT WORK in ana-4.0.62! AGAIN???
     elif TNAME in  ('6',): issue_2024_07_18() # Me: det.calib(evt, cmpars=(7,0,10)) > det.calib_epix10ka_v2
     elif TNAME in  ('7',): issue_2024_10_08() # Me: test epix10ka2m panel ids
+    elif TNAME in  ('8',): issue_2024_11_15(args) # Vincent: ECS-6830 det.calib does not work in ana-4.0.63-py3
     else:
         print(USAGE())
         sys.exit('TEST %s IS NOT IMPLEMENTED'%TNAME)
