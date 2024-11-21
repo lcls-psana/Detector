@@ -112,13 +112,14 @@ def geometry_deploy_constants(**kwa):
     fname_als = fname_aliases(dir_dettype, dettype) # /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m/.aliases-epix10ka2m.txt
     is_epix10ka_any = int_dettype in (gu.EPIX10K, gu.EPIX10KAQUAD, gu.EPIX10KA2M) # True
     id_det = id_epix10ka2m_for_env_det(ds.env(), det) if is_epix10ka_any else None # 0000000002-0172166401-1342177302-...
-    det_alias = upa.alias_for_id(id_det, fname=fname_als, exp=exp, run=int(run)) # 0002
-    det_aliasn = det_aliasname(dettype, det_alias) #epix10ka2m_0002
+    det_alias    = None if id_det is None else upa.alias_for_id(id_det, fname=fname_als, exp=exp, run=int(run)) # 0002
+    det_aliasn   = None if id_det is None else det_aliasname(dettype, det_alias) #epix10ka2m_0002
+    id_det_fmted = None if id_det is None else upa.id_det_formatted(id_det, gap='\n    ')
 
     logger.info('\n  dettype: %s' % dettype\
               + '\n  repository: %s' % dir_dettype\
               + '\n  file with aliases: %s' % fname_als\
-              + '\n  id_det: %s' % upa.id_det_formatted(id_det, gap='\n    ')\
+              + '\n  id_det: %s' % id_det_fmted\
               + '\n  alias for id_det: %s' % det_alias\
               + '\n  detector type and alias: %s' % det_aliasn)
     logger.debug(upa.alias_file_formatted(fname_als))
@@ -151,8 +152,9 @@ def geometry_deploy_constants(**kwa):
             logger.warning('!!! add -D to deploy reference !!!')
         return
 
-    _detname = det_aliasn.split('_')[-1]
-    if backwrd:
+    _detname = None if det_aliasn is None else det_aliasn.split('_')[-1]
+
+    if (not is_epix10ka_any) or backwrd:
         _detname = strsrc.replace(':','-').replace('.','-')
         tsrun, _ = uc.tstamps_run_and_now(env, fmt='%Y%m%d') # e.g. 20241003
 
