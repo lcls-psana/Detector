@@ -7,6 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+
+Tag: V02-00-91
+2024-11-21 Mikhail Dubrovin
+- examples/test-issues-2024.py - add issue_2024_11_15
+- src/UtilsEpix10ka.py - fix in calib_epix10ka_v2 > calib_epix10ka_nda the gain correction was turned off with common mode correction
+- src/UtilsGeometryDeploy.py - add protection for detectors with misssing id_det,
+	                       use old 4-field name for all detectors beside epix10ka
+
 Tag: V02-00-90
 2024-10-15 Mikhail Dubrovin
 - src/UtilsJungfrau.py - fix: loop_segs > odc.loop_segs
