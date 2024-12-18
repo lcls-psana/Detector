@@ -626,12 +626,14 @@ def calib_epix10ka_nda(arr, gfac, peds, mask, cmps, gmap, aone):
 
     factor = np.select(gmap,\
                        (gfac[0,:], gfac[1,:], gfac[2,:], gfac[3,:],\
-                        gfac[4,:], gfac[5,:], gfac[6,:]), default=1) # 2msec
+                        gfac[4,:], gfac[5,:], gfac[6,:]), default=1)\
+             if gfac is not None else 1
 
     #t04 = time()
     pedest = np.select(gmap,\
                        (peds[0,:], peds[1,:], peds[2,:], peds[3,:],\
-                        peds[4,:], peds[5,:], peds[6,:]), default=0)
+                        peds[4,:], peds[5,:], peds[6,:]), default=0)\
+             if peds is not None else 0
 
     #t05 = time()
 
