@@ -8,6 +8,12 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 
+Tag: V02-00-92
+2024-12-18 Mikhail Dubrovin
+	modified:   src/UtilsEpix10ka.py - add protectionn for missing peds, gfac
+	modified:   test/pytest_detector.py - add class det_epix10kaquad
+
+
 Tag: V02-00-91
 2024-11-21 Mikhail Dubrovin
 - examples/test-issues-2024.py - add issue_2024_11_15
