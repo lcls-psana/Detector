@@ -37,15 +37,20 @@ def compare_det_raw(fname_xtc, detname='XppGon.0:Epix100a.1', expected='shape:(7
     evt = next(ds.events())
     s = info_ndarr(det.raw(evt))
     print('\n  1-st event raw: %s' % s.rstrip('\n'))
-    assert s == expected
+    assert s == expected, '\n expected: %s\n extracted: %s' % (expected, s)
 
 def compare_det_calib(fname_xtc, detname='XppGon.0:Epix100a.1', expected='shape:(704, 768) size:540672 dtype:uint16 [3861 4050 3976 3992 3778...]', **kwa):
     ds = psana.DataSource(fname_xtc)
     det = psana.Detector(detname)
     evt = next(ds.events())
-    s = info_ndarr(det.calib(evt))
+    print(info_ndarr(det.gain(evt), '  gain:'))
+    print(info_ndarr(det.pedestals(evt), '  peds:'))
+    cmpars = kwa.get('cmpars', None)
+    print('  compare_det_calib cmpars:', cmpars)
+    s = info_ndarr(det.calib(evt)) if cmpars is None else\
+        info_ndarr(det.calib(evt, mpars=cmpars))
     print('\n  1-st event calib: %s' % s.rstrip('\n'))
-    assert s == expected
+    assert s == expected, '\n expected : %s\n extracted: %s' % (expected, s)
 
 def is_turned_off(turned_off=True):
     if turned_off: print('\nWARNING: TEST IS TURNED OFF')
@@ -213,8 +218,45 @@ class det_jungfrau():
         compare_det_calib(dataset, detname='jungfrau4M', expected=pattern, **kwa)
 
 
+
+class det_epix10kaquad():
+
+    def __init__(self):
+        """
+        """
+        print('__init__ for %s' % self.__class__.__name__)
+        self.fname_xtc = path_to_xtc_test_file(fname='data-xcsl1004621-r0010-3events-epix10kaquad.xtc')
+        print('fname_xtc: %s' % self.fname_xtc)
+        #print('\n\n======== %s' % self.__class__.__name__) ##.split('_')[-1])
+        #self.dircalib = '/sdf/data/lcls/ds/xcs/xcsl1004621/calib'
+        #self.dircalib = './calib'
+        self.dircalib = path_to_calibdir() # /tmp/data_test/calib
+        self.dirwork = './work'
+        print('psana.calib-dir', self.dircalib)
+        fname_peds = '%s/Epix10kaQuad::CalibV1/XcsEndstation.0:Epix10kaQuad.0/pedestals/10-end.data' % self.dircalib
+        self.logname = logname_prefix(self.dirwork, prefix='log-subproc-epix10kaquad')
+        psana.setOption('psana.calib-dir', self.dircalib)
+        self.test_det_completed = False
+        self.turn_off = False
+
+    def __del__(self):
+        print('__del__ for %s' % self.__class__.__name__)
+
+    def xtc_file_is_available(self):
+        """- test that xtc file is available for epix10kaquad"""
+        data_exists()
+        path_exists(self.fname_xtc)
+
+    def det_calib(self):
+        """- test command calib.calib for epix10kaquad"""
+        kwa={'mbits':0, 'cmpars':(7, 7, 200, 10)} # 'cmpars':(7, 0, 100)}
+        dataset = self.fname_xtc  #dataset = 'exp=cxilx7422:run=101'
+        pattern = 'shape:(4, 352, 384) size:540672 dtype:float32 [ 0.30045673 -0.18167636 -0.12195122  0.59725136  0.26542106...]'
+        compare_det_calib(dataset, detname='XcsEndstation.0:Epix10kaQuad.0', expected=pattern, **kwa)
+
 epix100a = det_epix100a()
 jungfrau = det_jungfrau()
+epix10kaquad = det_epix10kaquad()
 
 """ pytest executes all methods with 'test' in the name
     WORKS FOR COMMAND: pytest Detector/test/pytest_detector.py"""
@@ -239,6 +281,13 @@ def test_jungfrau_xtc_file_is_available():
 def test_jungfrau_calib():
     jungfrau.det_calib()
 
+def test_epix10kaquad_xtc_file_is_available():
+    print(sys._getframe().f_code.co_name)
+    epix10kaquad.xtc_file_is_available()
+
+def test_epix10kaquad_calib():
+    epix10kaquad.det_calib()
+
 
 if __name__ == '__main__':
   """DEBUGGING, WORKS ONLY FOR COMMAND: python Detector/test/pytest_detector.py"""
@@ -247,8 +296,10 @@ if __name__ == '__main__':
     test_epix100a_raw()
     test_epix100a_calibrun()
     test_epix100a_image()
-  if True:
     test_jungfrau_xtc_file_is_available()
     test_jungfrau_calib()
+  if True:
+    test_epix10kaquad_xtc_file_is_available()
+    test_epix10kaquad_calib()
 
 # EOF
