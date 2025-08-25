@@ -567,7 +567,9 @@ def calib_epix10ka_v2(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits
     arr = raw
 
     gmap = ue.gain_maps_epix10ka_any(det, raw)  #shape:(7, 16, 352, 384)
-    if gmap is None: return None
+    if gmap is None:
+        if first_entry: logger.warning('gmap is None')
+        return None
     gmap = np.array(gmap)
 
     #t02 = time()
@@ -576,7 +578,7 @@ def calib_epix10ka_v2(det, evt, cmpars=None, **kwa): # cmpars=(7,2,10,10), mbits
         logger.debug(ue.info_gain_mode_arrays1(gmap)\
                +'\n'+ue.info_pixel_gain_mode_statistics1(gmap))
 
-    if first_entry: logger.debug(info_ndarr(gmap, 'first_entry gmap'))
+    if first_entry: logger.info(info_ndarr(gmap, 'first_entry gmap'))
 
     if odc.loop_segs:
       nsegs = arr.shape[0]   # 16 for epix10ka2m
