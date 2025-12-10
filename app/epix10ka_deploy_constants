@@ -68,6 +68,7 @@ def option_parser():
     d_exp     = None # 'mfxx32516'
     d_det     = None # 'NoDetector.0:Epix10ka.3'
     d_run     = None # 1021
+    d_runbegin= None
     d_runend  = 'end'
     d_tstamp  = None # 20180910111049
     d_dsnamex = None # ':smd:dir=/reg/d/psdm/mfx/mfxx32516/scratch/.../xtc/combined or exp=mfxx32516:run=11:smd:dir=...'
@@ -93,8 +94,9 @@ def option_parser():
 
     h_exp     = 'experiment name, default = %s' % d_exp
     h_det     = 'detector name, default = %s' % d_det
-    h_run     = 'run number for beginning of the validity range, default = %s' % str(d_run)
-    h_runend  = 'run number for ending of the validity range, default = %s' % str(d_runend)
+    h_run     = 'run number of the dark dataset, default = %s' % str(d_run)
+    h_runbegin= 'run number for begin validity range, default = %s' % str(d_runbegin)
+    h_runend  = 'run number for end validity range, default = %s' % str(d_runend)
     h_tstamp  = 'non-default time stamp (<YYYYmmddHHMMSS) or run number(<10000) for constants selection in repo. '\
                 'By default run time is used, default = %s' % str(d_tstamp)
     h_dsnamex = 'dataset string or xtc file name or extension after exp=<exp>:run=<run> beginning with colon ":", default = %s' % d_dsnamex
@@ -129,6 +131,7 @@ def option_parser():
     parser.add_option(      '--low',     default=d_low,     action='store', type='float',  help=h_low)
     parser.add_option('-p', '--proc',    default=d_proc,    action='store', type='string', help=h_proc)
     parser.add_option('-I', '--paninds', default=d_paninds, action='store', type='string', help=h_paninds)
+    parser.add_option('--runbegin',      default=d_runbegin,action='store', type='string', help=h_runbegin)
     parser.add_option('--runend',        default=d_runend,  action='store', type='string', help=h_runend)
     parser.add_option('--dirmode',       default=d_dirmode, action='store', type='int',    help=h_dirmode)
     parser.add_option('--filemode',      default=d_filemode,action='store', type='int',    help=h_filemode)

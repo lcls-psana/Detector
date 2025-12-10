@@ -8,6 +8,12 @@ Please describe any modifications that you made to the package in the
 reverse time order.
 
 
+Tag: V02-00-93
+	2025-12-10 Mikhail Dubrovin
+	add/use parameter --runbegin
+	modified:   app/epix10ka_deploy_constants
+	modified:   src/UtilsEpix10kaCalib.py
+
 Tag: V02-00-92
 2024-12-18 Mikhail Dubrovin
 	modified:   src/UtilsEpix10ka.py - add protectionn for missing peds, gfac

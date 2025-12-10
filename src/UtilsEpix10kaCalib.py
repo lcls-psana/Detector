@@ -5,8 +5,8 @@ CALIBRATION - TEST PULSES
 
 @author: blaj
 """
-from __future__ import print_function
-from __future__ import division
+#from __future__ import print_function
+#from __future__ import division
 
 import os
 import sys
@@ -1593,6 +1593,7 @@ def deploy_constants(*args, **opts):
     exp        = opts.get('exp', None)
     detname    = opts.get('det', None)
     irun       = opts.get('run', None)
+    brun       = opts.get('runbegin', None)
     erun       = opts.get('runend', 'end')
     tstamp     = opts.get('tstamp', None)
     dsnamex    = opts.get('dsnamex', None)
@@ -1709,12 +1710,12 @@ def deploy_constants(*args, **opts):
         #ctypedir = .../calib/Epix10ka::CalibV1/MfxEndstation.0:Epix10ka.0/'
         calibgrp = calib_group(dettype) # 'Epix10ka::CalibV1'
         ctypedir = '%s/%s/%s' % (calibdir, calibgrp, strsrc)
+        ofname   = '%s-%s.data' % (str(irun) if brun is None else brun, erun)
+        logger.info('file intended for deployment %s/%s/%s' % (ctypedir, octype, ofname))
 
         if deploy:
-            ofname   = '%d-%s.data' % (irun, erun)
-            lfname   = None
-            verbos   = True
-            logger.info('deploy file %s/%s/%s' % (ctypedir, octype, ofname))
+            lfname = None
+            #verbos = True
             deploy_file(fmerge, ctypedir, octype, ofname, lfname, verbos=(logmode=='DEBUG'),\
                        filemode=filemode, dirmode=dirmode, group=group)
         else:
