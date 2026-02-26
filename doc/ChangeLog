@@ -11,8 +11,13 @@ Tag: V02-00-94
 	2026-05-01 Daniel Damiani
 	modified:   src/DetectorTypes.py - add EM3L0-BMMON, SP1L2-BMMON, and XRT-HRM-DIO
 
+Tag: V02-00-??
+2025-12-10 Mikhail Dubrovin
+	- add examples/test-issues-2026.py with issue_2026_01_20():
+          for https://jira.slac.stanford.edu/browse/ECS-9567
+
 Tag: V02-00-93
-	2025-12-10 Mikhail Dubrovin
+2025-12-10 Mikhail Dubrovin
 	add/use parameter --runbegin
 	modified:   app/epix10ka_deploy_constants
 	modified:   src/UtilsEpix10kaCalib.py
