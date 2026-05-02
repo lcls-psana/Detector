@@ -7,6 +7,9 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-94
+	2026-05-01 Daniel Damiani
+	modified:   src/DetectorTypes.py - add EM3L0-BMMON, SP1L2-BMMON, and XRT-HRM-DIO
 
 Tag: V02-00-93
 	2025-12-10 Mikhail Dubrovin
