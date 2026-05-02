@@ -201,4 +201,7 @@ bld_info = {
     "MEC-USR-DIO"      : DdlDetector,
     "MFX-USB-ENCODER-01" : UsdUsbDetector,
     "HXX-DG1-BMMON-01" : DdlDetector,
+    "EM3L0-BMMON"      : DdlDetector,
+    "SP1L2-BMMON"      : DdlDetector,
+    "XRT-HRM-DIO"      : DdlDetector,
 }
