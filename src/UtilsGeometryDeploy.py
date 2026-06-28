@@ -108,21 +108,24 @@ def geometry_deploy_constants(**kwa):
     strsrc = gu.string_from_source(src)
     int_dettype = gu.det_type_from_source(src)
     dettype = gu.dic_det_type_to_name[int_dettype].lower() # epix10ka2m
-    dir_dettype = repoman.dir_in_repo(dettype) # /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m
+    dir_dettype = repoman.dir_in_repo(dettype) # /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m or .../geometry/epix10ka
     fname_als = fname_aliases(dir_dettype, dettype) # /sdf/group/lcls/ds/ana/detector/calib/geometry/epix10ka2m/.aliases-epix10ka2m.txt
-    is_epix10ka_any = int_dettype in (gu.EPIX10K, gu.EPIX10KAQUAD, gu.EPIX10KA2M) # True
+    is_epix10ka_any = int_dettype in (gu.EPIX10K, gu.EPIX10KA, gu.EPIX10KAQUAD, gu.EPIX10KA2M) # True
     id_det = id_epix10ka2m_for_env_det(ds.env(), det) if is_epix10ka_any else None # 0000000002-0172166401-1342177302-...
     det_alias    = None if id_det is None else upa.alias_for_id(id_det, fname=fname_als, exp=exp, run=int(run)) # 0002
     det_aliasn   = None if id_det is None else det_aliasname(dettype, det_alias) #epix10ka2m_0002
     id_det_fmted = None if id_det is None else upa.id_det_formatted(id_det, gap='\n    ')
 
-    logger.info('\n  dettype: %s' % dettype\
-              + '\n  repository: %s' % dir_dettype\
+    logger.info('\n  strsrc: %s' % strsrc\
+              + '\n  int_dettype: %s' % str(int_dettype)\
+              + '\n  dettype: %s' % dettype\
+              + '\n  repository/dir_dettype: %s' % dir_dettype\
               + '\n  file with aliases: %s' % fname_als\
+              + '\n  is_epix10ka_any: %s' % is_epix10ka_any\
               + '\n  id_det: %s' % id_det_fmted\
               + '\n  alias for id_det: %s' % det_alias\
               + '\n  detector type and alias: %s' % det_aliasn)
-    logger.debug(upa.alias_file_formatted(fname_als))
+    logger.debug(upa.alias_file_formatted(fname_als) if os.path.exists(fname_als) else 'file with aliases is None')
 
     tsrun, tsnow = uc.tstamps_run_and_now(env, fmt='%Y%m%d%H%M%S') # e.g. 20241003211628
 
