@@ -646,6 +646,9 @@ def get_uxi_config_object(env, src):
     """
     cfg = env.configStore()
 
+    o = cfg.get(_psana.Uxi.ConfigV4, src)
+    if o is not None: return o
+
     o = cfg.get(_psana.Uxi.ConfigV3, src)
     if o is not None: return o
 

@@ -7,6 +7,10 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V02-00-96
+2026-07-19 Daniel Damiani
+	modified:	src/PyDataAccess.py - support for Uxi ConfigV4
+
 Tag: V02-00-95
 2026-06-28 Mikhail Dubrovin
     - in UtilsGeometryDeploy.py geometry_deploy_constants add
