@@ -767,7 +767,12 @@ class AreaDetector():
                 if stat is None:
                     if self.pbits>0: print('calib-type: %s constants are NOT AVAILABLE' % ctype)
                     continue
-            cond = (stat & stcode) > 0
+            # NB: cast stcode to np.uint64 explicitly. NumPy >= 2 (NEP 50) no
+            # longer implicitly widens an array's dtype to accommodate a
+            # large Python int (e.g. stcode=(1<<64)-1) in a binary op; it
+            # instead raises OverflowError when the literal doesn't fit the
+            # array's dtype exactly.
+            cond = (stat & np.uint64(stcode)) > 0
             smask1 = np.asarray(np.select((cond,), (0,), default=1), dtype=DTYPE_MASK) # np.uint8
 
             smask = smask1 if smask is None else\
