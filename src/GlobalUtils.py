@@ -39,6 +39,17 @@ def divide_protected(num, den, vsub_zero=0):
     return pro_num / pro_den
 
 
+#def np_quantile(arr, q, axis=None, method='linear'):
+#    """This garbage is suggested by AI for numpy version changes.
+#     Wrapper for np.quantile with the keyword compatible with numpy <1.22
+#    (interpolation=) and >=1.22 (method=).
+#    """
+#    try:
+#        return np.quantile(arr, q, axis=axis, method=method)
+#    except TypeError:
+#        return np.quantile(arr, q, axis=axis, interpolation=method)
+
+
 def info_command_line_parameters(parser):
     """Prints input arguments and optional parameters"""
     opts = {}
