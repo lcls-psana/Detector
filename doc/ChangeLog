@@ -7,6 +7,14 @@ Package author: Mikhail Dubrovin
 Please describe any modifications that you made to the package in the
 reverse time order.
 
+Tag: V03-00-01
+2026-11-13 Mikhail Dubrovin
+	modified: GlobalUtils.py, UtilsCalib.py, UtilsGraphics.py
+	in order to fix: pytest Detector/test/pytest_detector.py
+        in  np.quantile replace interpolation= with method= for numpy v >=1.2
+
+Tag: V03-00-00 - ???
+
 Tag: V02-00-96
 2026-07-19 Daniel Damiani
 	modified:	src/PyDataAccess.py - support for Uxi ConfigV4
